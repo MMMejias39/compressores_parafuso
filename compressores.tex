@@ -178,7 +178,10 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$\tau$ & Torque (sempre com subscrito indicando o eixo/componente) & N\,m & Cap. 4, 6, 8 \\
 	$\text{THD}_i$ & Distorção harmônica total de corrente & \% & Cap. 3, 4 \\
 	$j$\dag & Ordem do harmônico na equação de bandas laterais & adimensional & Cap. 4 \\
-	$k_{\text{relé}}$\dag & Constante da curva de disparo do relé (IEC 60255) & adimensional & Cap. 4 \\ \bottomrule
+	$k_{\text{relé}}$\dag & Constante da curva de disparo do relé (IEC 60255) & adimensional & Cap. 4 \\
+	$VU$ & Desbalanço de tensão entre fases (NEMA MG1) & \% & Cap. 4 \\
+	$IU$ & Desbalanço de corrente entre fases (NEMA MG1) & \% & Cap. 4 \\
+	$\Delta T_{\text{fases}}$ & Espalhamento entre as três temperaturas de enrolamento por fase & K, $^{\circ}$C & Cap. 4 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Vibração, Fadiga e Rotordinâmica}
@@ -595,12 +598,21 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
  L = L_0 \cdot \exp \left( \frac{E_a}{R \cdot T_{\text{enrol}}} \right) 
 \end{equation}
 		\item \textbf{Excentricidade e Falhas de Rolamento:} Modeladas como um aumento no torque de atrito parasita $\tau_{\text{fric}}$, que desvia o consumo elétrico da curva teórica de compressão.
+		\item \textbf{Desbalanço de Tensão/Corrente entre Fases e Sobreaquecimento Localizado:} Por ser um motor trifásico, um pequeno desbalanço entre as três tensões de linha de alimentação ($V_{L,1}, V_{L,2}, V_{L,3}$) — comum em redes elétricas isoladas offshore sujeitas a flutuações de carga (Capítulo 1) — já é suficiente para produzir um desbalanço de corrente desproporcionalmente maior entre as três fases ($I_1, I_2, I_3$), por causa da baixa impedância de sequência negativa do motor: a fase mais carregada sobreaquece localmente mesmo que a corrente de linha única ($I$, Equação~\eqref{eq:s4-1}) pareça normal. O Gêmeo Digital monitora essa condição pelos dois índices adimensionais de desbalanço, na definição padronizada pela NEMA MG1 \cite{nemamg1} — o desvio máximo de cada grandeza em relação à média das três fases, normalizado pela própria média — complementados pelo espalhamento entre as três temperaturas de enrolamento medidas por RTD dedicado por fase ($T_1, T_2, T_3$):
+		\begin{equation}\label{eq:s4-8}
+		\begin{aligned}
+			VU &= 100 \cdot \frac{\max_i |V_{L,i} - \bar{V}_L|}{\bar{V}_L} \\[6pt]
+			IU &= 100 \cdot \frac{\max_i |I_i - \bar{I}|}{\bar{I}} \\[6pt]
+			\Delta T_{\text{fases}} &= \max(T_1, T_2, T_3) - \min(T_1, T_2, T_3)
+		\end{aligned}
+		\end{equation}
+		Onde $\bar{V}_L$ e $\bar{I}$ são as médias das três tensões de linha e das três correntes de fase, respectivamente. Um $IU$ persistente acima de poucos pontos percentuais mesmo com $VU$ pequeno — sintoma que a corrente de linha agregada sozinha não capta — já justifica investigação de curto entre espiras ou conexão frouxa no painel.
 	\end{enumerate}
-	
+
 	\subsection{\textbf{Equação de Acoplamento Global}}
 	A integração final que o Gêmeo Digital resolve para o subsistema elétrico é:
-	\begin{equation}\label{eq:s4-8}
- P_{\text{rede}} = \frac{1}{\eta_{\text{vsd}}} \left[ \frac{\tau_{\text{compressão}}(\theta, P) \cdot \omega}{\eta_{\text{mot}}(s, T)} + P_{\text{perdas\_mec}} \right] 
+	\begin{equation}\label{eq:s4-9}
+ P_{\text{rede}} = \frac{1}{\eta_{\text{vsd}}} \left[ \frac{\tau_{\text{compressão}}(\theta, P) \cdot \omega}{\eta_{\text{mot}}(s, T)} + P_{\text{perdas\_mec}} \right]
 \end{equation}
 	Esta equação correlaciona a pressão de armazenamento (até $10\,\text{bar}$) com a corrente consumida no painel, permitindo identificar se um aumento de consumo é devido a uma falha elétrica ou a um aumento de demanda/fuga no sistema pneumático.
 
@@ -608,7 +620,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s4-8} é o elo que impede diagnósticos ambíguos entre falha elétrica e falha pneumática — sem ela, um aumento de corrente no painel seria indistinguível de um aumento real de demanda de ar, levando a decisões erradas de manutenção.
+	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s4-9} é o elo que impede diagnósticos ambíguos entre falha elétrica e falha pneumática — sem ela, um aumento de corrente no painel seria indistinguível de um aumento real de demanda de ar, levando a decisões erradas de manutenção. O desbalanço de fase da Equação~\eqref{eq:s4-8} cobre a lacuna complementar: uma falha que se manifesta \textbf{entre} fases pode não alterar a corrente de linha agregada nem a potência total consumida, permanecendo invisível para a Equação~\eqref{eq:s4-9} até se agravar.
 
 	% --- Fim do Capítulo 4 ---
 	
@@ -2716,6 +2728,8 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 \bibitem{iec60255} International Electrotechnical Commission. \textit{IEC 60255 — Measuring relays and protection equipment}. Geneva.
 
 \bibitem{iec60034} International Electrotechnical Commission. \textit{IEC 60034-2-1 — Rotating electrical machines — Part 2-1: Standard methods for determining losses and efficiency from tests (excluding machines for traction vehicles)}. Geneva.
+
+\bibitem{nemamg1} National Electrical Manufacturers Association. \textit{NEMA MG 1 — Motors and Generators} (Parte 14, Application Data — Voltage and current unbalance). Rosslyn, VA.
 
 \bibitem{iso8573} International Organization for Standardization. \textit{ISO 8573-1 — Compressed air — Part 1: Contaminants and purity classes}. Geneva.
 
