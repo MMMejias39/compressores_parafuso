@@ -336,13 +336,59 @@ atualizada). Símbolos novos ($V_{L,i}$, $I_i$, $T_i$ para as grandezas por
 fase, mais $VU$, $IU$, $\Delta T_{\text{fases}}$) adicionados à tabela de
 Nomenclatura (Elétrica e Acionamento).
 
+## Capítulo 3 expandido e inconsistência oil-free do Capítulo 12 corrigida (26/07/2026)
+
+O Capítulo 3 tinha só uma linha por item (ex.: "Painel Elétrico e VSD: Controle
+de frequência e mitigação de harmônicas"), sem explicar o que cada componente
+é ou por que importa. Todos os 14 itens do capítulo (painel/VSD, motor,
+elemento compressor, separador, aftercooler, drenos, torres PSA, resistências,
+válvulas de comutação, filtros coalescentes, válvulas de bloqueio/retenção,
+vaso de pressão, PSV, transdutores) ganharam uma definição real, e o
+significado físico de cada equação já numerada (eq:s3-1 a eq:s3-5) foi
+reforçado (ex.: por que $\eta_{\text{vol}}<1$, por que só $U$ explica queda de
+$\dot Q$ com $A$ fixa, por que normalizar $\Delta P$ antes de comparar entre
+condições de carga).
+
+Ao escrever a definição do "Separador de Ar/Óleo" (item da Seção 3.2), ficou
+evidente uma **inconsistência real pré-existente**: o Capítulo 12 ("Sistema de
+Lubrificação e Gestão Térmica") tinha uma subseção "Balanço de Energia e
+**Injeção de Óleo**" e uma Equação 12.2 ($P_{\text{rede}} = P_{\text{int}} -
+\Delta P_{\text{sep}}$) que só fazem sentido numa arquitetura **oil-flooded**
+(óleo injetado na câmara de compressão, com separador ar/óleo no caminho do ar
+antes da rede) — contradizendo o restante do livro (Capítulos 1, 2, 3, 7, 8,
+11), que define repetidamente o compressor como **isento de óleo** na câmara
+de compressão. Provável resquício do rascunho original com GPAI, nunca
+ajustado quando a arquitetura oil-free foi fixada como escopo. Corrigido a
+pedido do autor:
+- "Injeção de Óleo" → "Balanço de Energia do **Circuito** de Óleo": a
+  Equação~12.1 agora iguala o calor removido pelo óleo à potência de atrito da
+  gearbox/mancais já modelada nas Equações 6.3, 6.4 e 7.4 (não mais uma troca
+  térmica com o ar de descarga). Símbolos $T_{\text{desc}}/T_{\text{inj}}$
+  (terminologia de oil-flooded) renomeados para $T_{\text{óleo,ret}}$ (retorno,
+  quente) / $T_{\text{óleo,sup}}$ (suprimento, após o resfriador).
+- "Eficiência do Separador de Ar/Óleo" → "Perda de Carga no **Deaerador** e
+  Pressão de Suprimento aos Mancais": a Equação~12.2 agora calcula a pressão
+  de óleo que chega aos mancais ($P_{\text{sup,óleo}} = P_{\text{bomba}} -
+  \Delta P_{\text{sep}}$), não mais a pressão de rede do ar comprimido — mesma
+  interpretação (deaeração do óleo de retorno) já usada na definição do
+  Capítulo 3.
+- Tabela de diagnóstico térmico e Diretriz Técnica Final do Capítulo 12
+  atualizadas para os novos símbolos. Nenhuma equação foi renumerada (labels
+  `eq:s12-1`/`eq:s12-2` mantidos).
+
+**Se uma sessão futura tocar o Capítulo 12 (ou qualquer menção a "circuito de
+óleo")**: o óleo deste documento nunca entra em contato com o ar de processo —
+ele existe só para lubrificar/resfriar a gearbox e os mancais. Não reintroduza
+linguagem de "injeção de óleo" ou "separador ar/óleo" no caminho do ar.
+
 ## Estado atual (última sessão)
 
-Documento compila limpo, 99 páginas (166 equações numeradas ao todo), sem
+Documento compila limpo, 101 páginas (166 equações numeradas ao todo), sem
 erros/referências indefinidas/labels duplicados. Repositório git inicializado
 (ver "Visão de longo prazo" acima), tag `v1.0` no commit inicial; desde então
-dois commits nesta sessão (revisão de numeração de equações; cobertura de
-desbalanço de fase) — use `git log` para o histórico exato.
+quatro commits nesta sessão (revisão de numeração de equações; cobertura de
+desbalanço de fase; atualização deste arquivo; expansão do Capítulo 3 e
+correção do Capítulo 12) — use `git log` para o histórico exato.
 
 Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Bibliografia (45 referências) verificada uma a uma contra fontes reais; 3 tinham
@@ -369,6 +415,10 @@ Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Adicionada cobertura de desbalanço de fase (tensão/corrente/temperatura) no
   motor elétrico do Capítulo 4, com nova Equação 4.8 (ver "Cobertura de
   desbalanço de fase" acima).
+- Capítulo 3 expandido (definição real de todos os 14 itens) e Capítulo 12
+  corrigido para eliminar linguagem de compressor oil-flooded ("injeção de
+  óleo", separador ar/óleo no caminho do ar) — ver "Capítulo 3 expandido e
+  inconsistência oil-free" acima.
 
 Não há tarefas pendentes conhecidas.
 
