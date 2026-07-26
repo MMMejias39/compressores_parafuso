@@ -701,6 +701,61 @@ def _cil_quads(eixo, lo, hi, c1, c2, r, cor, n_seg=28, amb=0.35, tampas=True):
                 cores.append(cor_tampa)
     return quads, cores
 
+def _engrenagem_quads(eixo, lo, hi, c1, c2, r_raiz, r_dente, n_dentes, cor,
+                      amb=0.35, tampas=True):
+    """Disco com dentes retangulares (engrenagem estilizada) -- mesma
+    convencao ciclica de eixos de `_cil_quads`, mas com um perfil radial
+    variavel (raiz/dente) em vez de raio constante."""
+    passo = 2 * np.pi / n_dentes
+    largura = 0.55 * passo
+    angs, rads = [], []
+    for i in range(n_dentes):
+        a0 = i * passo
+        angs += [a0, a0 + largura, a0 + largura, a0 + passo]
+        rads += [r_dente, r_dente, r_raiz, r_raiz]
+    angs = np.array(angs); rads = np.array(rads)
+    n_p = len(angs)
+
+    def ponto(ax_val, c1v, c2v):
+        if eixo == "x":
+            return (ax_val, c1v, c2v)
+        elif eixo == "y":
+            return (c2v, ax_val, c1v)
+        else:
+            return (c1v, c2v, ax_val)
+
+    def normal(c1v, c2v):
+        if eixo == "x":
+            return (0.0, c1v, c2v)
+        elif eixo == "y":
+            return (c2v, 0.0, c1v)
+        else:
+            return (c1v, c2v, 0.0)
+
+    quads, cores = [], []
+    for j in range(n_p):
+        j2 = (j + 1) % n_p
+        c1a, c2a = c1 + rads[j] * np.cos(angs[j]), c2 + rads[j] * np.sin(angs[j])
+        c1b, c2b = c1 + rads[j2] * np.cos(angs[j2]), c2 + rads[j2] * np.sin(angs[j2])
+        q = np.array([ponto(lo, c1a, c2a), ponto(lo, c1b, c2b),
+                      ponto(hi, c1b, c2b), ponto(hi, c1a, c2a)])
+        amid = (angs[j] + angs[j2]) / 2
+        nv = np.array(normal(np.cos(amid), np.sin(amid)))
+        quads.append(q); cores.append(_sombra3d(nv, cor, amb))
+    if tampas:
+        for ax_val, sinal in ((lo, -1.0), (hi, 1.0)):
+            centro = np.array(ponto(ax_val, c1, c2))
+            cor_tampa = _sombra3d(np.array(ponto(sinal, 0, 0)) -
+                                  np.array(ponto(0, 0, 0)), cor, amb + 0.05)
+            for j in range(n_p):
+                j2 = (j + 1) % n_p
+                c1a, c2a = c1 + rads[j] * np.cos(angs[j]), c2 + rads[j] * np.sin(angs[j])
+                c1b, c2b = c1 + rads[j2] * np.cos(angs[j2]), c2 + rads[j2] * np.sin(angs[j2])
+                quads.append(np.array([centro, ponto(ax_val, c1a, c2a),
+                                        ponto(ax_val, c1b, c2b)]))
+                cores.append(cor_tampa)
+    return quads, cores
+
 def _par_rotores_quads(x0, ylat, zlat, escala=1.0, wrap_deg=300.0, N_Z=50):
     """Par de rotores helicoidais (mesma geometria da Fig. 3.1) posicionado
     no espaco global: eixo helicoidal ao longo de X a partir de x0,
@@ -799,38 +854,63 @@ def fig_conjunto3d():
         qs, cs = par[0], par[1]
         quads.extend(qs); cores.extend(cs)
 
-    COR_MOTOR = (0.36, 0.45, 0.58)
-    COR_PE    = (0.30, 0.30, 0.32)
-    COR_ACOPL = (0.55, 0.55, 0.58)
-    COR_GB    = (0.80, 0.81, 0.84)
-    COR_BULL  = (0.62, 0.65, 0.70)
-    COR_PINLP = (0.55, 0.42, 0.28)
-    COR_PINHP = (0.35, 0.55, 0.42)
-    COR_EIXO  = (0.55, 0.55, 0.58)
-    COR_TUBO_SUC = (0.35, 0.55, 0.75)   # sucao/interestagio: tons de azul
-    COR_TUBO_DESC = (0.75, 0.40, 0.35)  # descarga final: tom quente
-    COR_IC    = (0.55, 0.72, 0.62)
+    COR_MOTOR   = (0.20, 0.30, 0.44)
+    COR_ALETA   = (0.24, 0.35, 0.50)
+    COR_CAIXAL  = (0.16, 0.24, 0.36)   # caixa de ligacao do motor
+    COR_PE      = (0.22, 0.22, 0.24)
+    COR_ACOPL   = (0.50, 0.51, 0.54)
+    COR_GB      = (0.74, 0.76, 0.79)
+    COR_GB_TAMPA= (0.60, 0.62, 0.66)
+    COR_BULL    = (0.58, 0.60, 0.64)
+    COR_PINLP   = (0.62, 0.47, 0.26)
+    COR_PINHP   = (0.42, 0.55, 0.47)
+    COR_EIXO    = (0.50, 0.50, 0.53)
+    COR_FLANGE  = (0.38, 0.38, 0.41)
+    COR_TUBO_SUC = (0.30, 0.50, 0.72)   # sucao/interestagio: tons de azul
+    COR_TUBO_DESC = (0.74, 0.36, 0.30)  # descarga final: tom quente
+    COR_IC      = (0.46, 0.66, 0.56)
+    COR_CHAO    = (0.88, 0.89, 0.90)
 
-    # --- Motor eletrico ---
-    ext(_cil_quads("x", 0.0, 3.4, 0.0, 0.0, 1.05, COR_MOTOR, n_seg=32))
-    ext(_caixa_quads(0.3, 3.1, -1.05, -1.35, -1.55, -1.05, COR_PE))
+    def flange(eixo, xc, c1, c2, r, cor=COR_FLANGE, largura=0.09):
+        ext(_cil_quads(eixo, xc - largura/2, xc + largura/2, c1, c2, r,
+                       cor, n_seg=24))
 
-    # --- Acoplamento ---
-    ext(_cil_quads("x", 3.4, 3.75, 0.0, 0.0, 0.42, COR_ACOPL, n_seg=24))
+    # --- Motor eletrico: corpo com aletas de refrigeracao, caixa de
+    # ligacao e pes de fixacao (em vez de um cilindro liso) ---
+    ext(_cil_quads("x", 0.0, 3.4, 0.0, 0.0, 1.0, COR_MOTOR, n_seg=40, tampas=False))
+    ext(_cil_quads("x", 0.0, 0.06, 0.0, 0.0, 1.0, COR_MOTOR, n_seg=40))       # tampa traseira
+    ext(_cil_quads("x", 3.34, 3.4, 0.0, 0.0, 1.0, COR_MOTOR, n_seg=40))      # tampa dianteira
+    for xa in np.arange(0.35, 3.05, 0.26):
+        ext(_cil_quads("x", xa, xa + 0.09, 0.0, 0.0, 1.11, COR_ALETA, n_seg=40, tampas=False))
+    ext(_caixa_quads(1.25, 2.05, -0.42, 0.42, 1.0, 1.62, COR_CAIXAL))         # caixa de ligacao
+    ext(_caixa_quads(0.25, 3.15, -1.05, -1.35, -1.65, -1.0, COR_PE))          # base/pes
 
-    # --- Gearbox ---
-    ext(_caixa_quads(3.75, 6.15, -1.4, 1.4, -1.7, 1.7, COR_GB))
-    ext(_cil_quads("x", 6.13, 6.24, 0.0, 0.0, 0.95, COR_BULL, n_seg=32))
-    ext(_cil_quads("x", 6.13, 6.24, 0.0, 1.3, 0.55, COR_PINLP, n_seg=24))
-    ext(_cil_quads("x", 6.13, 6.24, 0.0, -1.3, 0.42, COR_PINHP, n_seg=24))
+    # --- Acoplamento flexivel (com colar central) ---
+    ext(_cil_quads("x", 3.4, 3.78, 0.0, 0.0, 0.40, COR_ACOPL, n_seg=28))
+    flange("x", 3.59, 0.0, 0.0, 0.50, cor=COR_ACOPL, largura=0.10)
 
-    # --- Eixos para os estagios LP (cima) e HP (baixo) ---
+    # --- Gearbox: corpo com nervuras de reforco, tampa de inspecao e
+    # flange de acoplamento na face do motor ---
+    ext(_caixa_quads(3.78, 6.10, -1.35, 1.35, -1.65, 1.65, COR_GB))
+    for za in (-1.2, -0.4, 0.4, 1.2):
+        ext(_caixa_quads(3.78, 6.10, -1.37, -1.30, za - 0.08, za + 0.08, COR_GB_TAMPA))
+    ext(_caixa_quads(4.15, 5.35, 1.65, 1.80, -0.55, 0.55, COR_GB_TAMPA))      # tampa de inspecao
+    flange("x", 3.80, 0.0, 0.0, 0.62, cor=COR_GB_TAMPA, largura=0.10)
+
+    # --- Engrenagens (dentes reais, nao discos lisos) ---
+    ext(_engrenagem_quads("x", 6.08, 6.22, 0.0, 0.0, 0.80, 0.95, 26, COR_BULL))
+    ext(_engrenagem_quads("x", 6.08, 6.22, 0.0, 1.3, 0.44, 0.55, 16, COR_PINLP))
+    ext(_engrenagem_quads("x", 6.08, 6.22, 0.0, -1.3, 0.33, 0.42, 12, COR_PINHP))
+
+    # --- Eixos para os estagios LP (cima) e HP (baixo), com colar de
+    # acoplamento onde encontram o rotor ---
     X0_ROTORES = 7.35
-    ext(_cil_quads("x", 6.24, X0_ROTORES, 0.0, 1.3, 0.16, COR_EIXO, n_seg=16))
+    ext(_cil_quads("x", 6.22, X0_ROTORES, 0.0, 1.3, 0.16, COR_EIXO, n_seg=20))
+    flange("x", X0_ROTORES - 0.12, 0.0, 1.3, 0.30, cor=COR_EIXO, largura=0.14)
 
     # --- Estagio LP (maior: menor pressao, maior vazao) ---
     quads_lp, cores_lp, L_LP = _par_rotores_quads(
-        X0_ROTORES, ylat=0.0, zlat=1.3, escala=1.15, N_Z=46)
+        X0_ROTORES, ylat=0.0, zlat=1.3, escala=1.15, N_Z=50)
     quads.extend(quads_lp); cores.extend(cores_lp)
     fim_LP = X0_ROTORES + L_LP
 
@@ -838,35 +918,60 @@ def fig_conjunto3d():
     # jusante ao longo do fluxo pneumatico (o eixo mecanico ate ele e
     # apenas mais longo -- simplificacao esquematica) ---
     X0_HP = fim_LP + 1.3
-    ext(_cil_quads("x", 6.24, X0_HP, 0.0, -1.3, 0.13, COR_EIXO, n_seg=16))
+    ext(_cil_quads("x", 6.22, X0_HP, 0.0, -1.3, 0.13, COR_EIXO, n_seg=20))
+    flange("x", X0_HP - 0.10, 0.0, -1.3, 0.25, cor=COR_EIXO, largura=0.12)
     quads_hp, cores_hp, L_HP = _par_rotores_quads(
-        X0_HP, ylat=0.0, zlat=-1.3, escala=0.68, N_Z=46)
+        X0_HP, ylat=0.0, zlat=-1.3, escala=0.68, N_Z=50)
     quads.extend(quads_hp); cores.extend(cores_hp)
     fim_HP = X0_HP + L_HP
 
     # --- Tubulacao de processo (deslocada para +Y, "na frente" do trem
-    # mecanico, para nao se confundir com eixos/gearbox) ---
+    # mecanico, para nao se confundir com eixos/gearbox), com flanges nas
+    # juncoes -- em vez de tubos lisos "flutuando" ---
     Y_TUBO = 1.05
+    R_SUC, R_INTER, R_DESC = 0.20, 0.13, 0.19
+
     # sucao: bocal apontando para cima a partir do topo do estagio LP
     # (evita atravessar o corpo do rotor, que confunde o zsort do mplot3d)
     X_SUC = X0_ROTORES + 0.35
     Z_TOPO_LP = 1.3 + 1.15 + 0.05
-    ext(_cil_quads("z", Z_TOPO_LP, Z_TOPO_LP + 1.1, X_SUC, 0.0, 0.22, COR_TUBO_SUC, n_seg=20))
+    ext(_cil_quads("z", Z_TOPO_LP, Z_TOPO_LP + 1.1, X_SUC, 0.0, R_SUC, COR_TUBO_SUC, n_seg=22))
+    flange("z", Z_TOPO_LP + 0.05, X_SUC, 0.0, R_SUC + 0.09, largura=0.10)
+    flange("z", Z_TOPO_LP + 1.05, X_SUC, 0.0, R_SUC + 0.07, largura=0.08)
+
     # interestagio: sai da descarga do LP, desce ate a altura do HP,
-    # passando por uma "caixa" de intercooler, e entra na sucao do HP
-    ext(_cil_quads("y", 0.0, Y_TUBO, 1.3, fim_LP - 0.3, 0.14, COR_TUBO_SUC, n_seg=20))
+    # passando por uma "caixa" de intercooler (com tampas/nervuras), e
+    # entra na sucao do HP
+    ext(_cil_quads("y", 0.0, Y_TUBO, 1.3, fim_LP - 0.3, R_INTER, COR_TUBO_SUC, n_seg=18))
     ext(_caixa_quads(fim_LP - 0.75, fim_LP + 0.15, Y_TUBO - 0.05, Y_TUBO + 0.55,
                      -0.35, 1.05, COR_IC))
-    ext(_cil_quads("z", -1.3, 1.3, fim_LP - 0.3, Y_TUBO + 0.25, 0.14, COR_TUBO_SUC, n_seg=20))
-    ext(_cil_quads("x", fim_LP - 0.3, X0_HP - 0.15, Y_TUBO + 0.25, -1.3, 0.14, COR_TUBO_SUC, n_seg=20))
-    ext(_cil_quads("y", 0.0, Y_TUBO + 0.25, -1.3, X0_HP - 0.15, 0.14, COR_TUBO_SUC, n_seg=20))
+    for zc in (-0.05, 0.35, 0.75):
+        ext(_caixa_quads(fim_LP - 0.80, fim_LP - 0.75, Y_TUBO - 0.02, Y_TUBO + 0.52,
+                         zc, zc + 0.10, COR_GB_TAMPA))
+    ext(_cil_quads("z", -1.3, 1.3, fim_LP - 0.3, Y_TUBO + 0.25, R_INTER, COR_TUBO_SUC, n_seg=18))
+    ext(_cil_quads("x", fim_LP - 0.3, X0_HP - 0.15, Y_TUBO + 0.25, -1.3, R_INTER, COR_TUBO_SUC, n_seg=18))
+    ext(_cil_quads("y", 0.0, Y_TUBO + 0.25, -1.3, X0_HP - 0.15, R_INTER, COR_TUBO_SUC, n_seg=18))
+    flange("y", Y_TUBO + 0.25, -1.3, X0_HP - 0.15, R_INTER + 0.06, largura=0.08)
+
     # descarga final apos o HP
-    ext(_cil_quads("x", fim_HP - 0.15, fim_HP + 1.4, Y_TUBO, -1.3, 0.20, COR_TUBO_DESC, n_seg=20))
+    ext(_cil_quads("x", fim_HP - 0.15, fim_HP + 1.4, Y_TUBO, -1.3, R_DESC, COR_TUBO_DESC, n_seg=22))
+    flange("x", fim_HP + 0.05, Y_TUBO, -1.3, R_DESC + 0.08, cor=(0.55, 0.28, 0.24), largura=0.09)
+    flange("x", fim_HP + 1.35, Y_TUBO, -1.3, R_DESC + 0.06, cor=(0.55, 0.28, 0.24), largura=0.08)
+
+    # --- Plano de chao (contexto/sombra) -- evita o efeito de pecas
+    # "flutuando" no vazio ---
+    cx = (0.0 + fim_HP + 1.4) / 2
+    cy = 0.0
+    rx, ry = (fim_HP + 1.4) * 0.62, 2.6
+    ang_chao = np.linspace(0, 2 * np.pi, 60, endpoint=False)
+    z_chao = -1.3 - 0.68 - 0.75
+    chao = np.array([[cx + rx * np.cos(a), cy + ry * np.sin(a), z_chao] for a in ang_chao])
+    quads.append(chao); cores.append(np.array(COR_CHAO))
 
     fig = plt.figure(figsize=(13, 6.5))
     ax = fig.add_subplot(111, projection="3d")
     ax.add_collection3d(Poly3DCollection(
-        quads, facecolors=cores, edgecolors=cores, linewidths=0.1,
+        quads, facecolors=cores, edgecolors=cores, linewidths=0.08,
         zsort="average", rasterized=True))
     allpts = np.vstack([np.asarray(q).reshape(-1, 3) for q in quads])
     for setl, dim in zip((ax.set_xlim, ax.set_ylim, ax.set_zlim), range(3)):
@@ -879,8 +984,8 @@ def fig_conjunto3d():
 
     # --- Rotulos ---
     rotulos = [
-        (1.7, 0.0, 1.75, "Motor Elétrico"),
-        (4.95, 0.0, 2.05, "Gearbox"),
+        (1.7, 0.0, 2.05, "Motor Elétrico"),
+        (4.95, 0.0, 2.15, "Gearbox"),
         (X0_ROTORES + L_LP/2, 0.0, 1.3 + 1.15*1.0 + 0.55, "Estágio LP"),
         (X0_HP + L_HP/2, 0.0, -1.3 - 0.68*1.0 - 0.55, "Estágio HP"),
         (fim_LP - 0.3, Y_TUBO + 0.25, 0.35, "Intercooler"),
