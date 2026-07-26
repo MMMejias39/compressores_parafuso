@@ -389,7 +389,16 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\item \textbf{Rotores Helicoidais:} O par de rotores (macho e fêmea) reduz o volume do ar admitido através do engrenamento contínuo.
 		\item \textbf{Motor Elétrico e VSD:} O acionamento é realizado por um motor de indução trifásico. O inversor de frequência (\textit{Variable Speed Drive} - VSD) modula a velocidade angular $\omega$ para parear a vazão produzida com a demanda da planta, operando na faixa de pressão de $7\,\text{bar}$ a $10\,\text{bar}$.
 	\end{itemize}
-	
+
+	Para visualizar como esses elementos se conectam fisicamente — do acionamento elétrico até a descarga final de alta pressão —, a Figura~\ref{fig:2-3} apresenta o trem de compressão completo em perspectiva 3D: o motor elétrico aciona a caixa multiplicadora (gearbox) através de um acoplamento flexível; a gearbox distribui a rotação para os dois estágios de compressão (pinhões LP e HP engrenados à coroa central, mesma cinemática detalhada no Capítulo de Engenharia do Trem de Transmissão); o ar atmosférico admitido no estágio de baixa pressão (LP) é resfriado no intercooler antes de seguir para o estágio de alta pressão (HP), de onde é descarregado para o tratamento posterior (aftercooler e secagem, detalhados nos capítulos seguintes). É um esquema ilustrativo, não um desenho de projeto: motor, gearbox e tubulação são representados por formas geométricas simples, enquanto os dois pares de rotores reaproveitam a mesma técnica de varredura helicoidal usada no render do elemento compressor isolado apresentado no capítulo seguinte, em escalas proporcionalmente diferentes entre os estágios LP e HP (o de menor pressão é fisicamente maior, o de maior pressão é mais compacto).
+
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.80\textwidth]{figuras/fig_2_3_conjunto3d.pdf}
+		\caption{Trem de compressão completo em perspectiva 3D — do motor elétrico ao estágio HP e à saída para tratamento, passando pela gearbox e pelo intercooler. Esquema ilustrativo; motor, gearbox e tubulação são formas 3D simplificadas, e os pares de rotores reaproveitam a varredura helicoidal do perfil de engrenamento adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0.}
+		\label{fig:2-3}
+	\end{figure}
+
 	\subsection{\textbf{Subsistema de Resfriamento e Separação}}
 	Devido ao processo de compressão ser aproximadamente adiabático, a temperatura do ar na descarga do elemento compressor é elevada.
 	\begin{itemize}

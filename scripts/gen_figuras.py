@@ -622,6 +622,282 @@ def fig_parafuso3d():
                    check=True, capture_output=True)
     print("cropped", pdf)
 
+# =====================================================================
+# FIG 2.3 - Conjunto completo em 3D: motor -> acoplamento -> gearbox ->
+# estagio LP -> intercooler -> estagio HP -> saida. Reaproveita a mesma
+# geometria helicoidal da Fig. 3.1 (perfil derivado do SVG CC BY-SA, ver
+# nota acima) para os dois pares de rotores, em escalas diferentes
+# (LP maior, HP menor). Motor/gearbox/tubulacao sao primitivas simples
+# (cilindros e caixas) -- esquema ilustrativo, nao um desenho de projeto.
+# =====================================================================
+
+_LUZ3D = np.array([-0.45, -0.6, 0.66])
+_LUZ3D = _LUZ3D / np.linalg.norm(_LUZ3D)
+
+def _sombra3d(normal, cor, amb=0.35):
+    lam = abs(np.dot(normal, _LUZ3D))
+    return np.clip(np.array(cor, dtype=float) * (amb + (1 - amb) * lam), 0, 1)
+
+def _caixa_quads(x0, x1, y0, y1, z0, z1, cor, amb=0.35):
+    """Caixa (paralelepipedo) alinhada aos eixos globais, com sombreamento
+    plano por face (uma cor por face, conforme a normal)."""
+    faces = [
+        ([[x0, y0, z0], [x1, y0, z0], [x1, y1, z0], [x0, y1, z0]], (0, 0, -1)),
+        ([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], (0, 0, 1)),
+        ([[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]], (0, -1, 0)),
+        ([[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], (0, 1, 0)),
+        ([[x0, y0, z0], [x0, y1, z0], [x0, y1, z1], [x0, y0, z1]], (-1, 0, 0)),
+        ([[x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]], (1, 0, 0)),
+    ]
+    quads, cores = [], []
+    for poly, n in faces:
+        quads.append(np.array(poly, dtype=float))
+        cores.append(_sombra3d(np.array(n, dtype=float), cor, amb))
+    return quads, cores
+
+def _cil_quads(eixo, lo, hi, c1, c2, r, cor, n_seg=28, amb=0.35, tampas=True):
+    """Cilindro circular reto alinhado a um dos eixos globais ('x','y','z'),
+    de `lo` a `hi` nesse eixo, com o eixo transversal centrado em (c1, c2)
+    (nas duas outras coordenadas, em ordem ciclica x->y->z->x)."""
+    ang = np.linspace(0, 2 * np.pi, n_seg, endpoint=False)
+    quads, cores = [], []
+
+    def ponto(ax_val, c1v, c2v):
+        if eixo == "x":
+            return (ax_val, c1v, c2v)
+        elif eixo == "y":
+            return (c2v, ax_val, c1v)
+        else:
+            return (c1v, c2v, ax_val)
+
+    def normal(c1v, c2v):
+        if eixo == "x":
+            return (0.0, c1v, c2v)
+        elif eixo == "y":
+            return (c2v, 0.0, c1v)
+        else:
+            return (c1v, c2v, 0.0)
+
+    for j in range(n_seg):
+        j2 = (j + 1) % n_seg
+        c1a, c2a = c1 + r * np.cos(ang[j]), c2 + r * np.sin(ang[j])
+        c1b, c2b = c1 + r * np.cos(ang[j2]), c2 + r * np.sin(ang[j2])
+        q = np.array([ponto(lo, c1a, c2a), ponto(lo, c1b, c2b),
+                      ponto(hi, c1b, c2b), ponto(hi, c1a, c2a)])
+        nv = np.array(normal(np.cos((ang[j] + ang[j2]) / 2),
+                              np.sin((ang[j] + ang[j2]) / 2)))
+        quads.append(q); cores.append(_sombra3d(nv, cor, amb))
+    if tampas:
+        for ax_val, sinal in ((lo, -1.0), (hi, 1.0)):
+            centro = np.array(ponto(ax_val, c1, c2))
+            cor_tampa = _sombra3d(np.array(normal(0, 0)) + np.array(
+                ponto(sinal, 0, 0)) - np.array(ponto(0, 0, 0)), cor, amb + 0.05)
+            for j in range(n_seg):
+                j2 = (j + 1) % n_seg
+                c1a, c2a = c1 + r * np.cos(ang[j]), c2 + r * np.sin(ang[j])
+                c1b, c2b = c1 + r * np.cos(ang[j2]), c2 + r * np.sin(ang[j2])
+                quads.append(np.array([centro, ponto(ax_val, c1a, c2a),
+                                        ponto(ax_val, c1b, c2b)]))
+                cores.append(cor_tampa)
+    return quads, cores
+
+def _par_rotores_quads(x0, ylat, zlat, escala=1.0, wrap_deg=300.0, N_Z=50):
+    """Par de rotores helicoidais (mesma geometria da Fig. 3.1) posicionado
+    no espaco global: eixo helicoidal ao longo de X a partir de x0,
+    recentralizado lateralmente em (ylat, zlat) e escalado por `escala`.
+    Retorna (quads, cores, comprimento_axial_global)."""
+    WRAP_M = np.deg2rad(wrap_deg)
+    WRAP_F = -WRAP_M * _Z_M / _Z_F
+    COR_M = (0.72, 0.35, 0.32)
+    COR_F = (0.62, 0.40, 0.62)
+    CINZA = (0.62, 0.62, 0.65)
+
+    svg = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                       "rotor_mesh_commons.svg")
+    lobo_m, lobo_f = _svg_lobos(svg)
+    pm = _perfil_fechado(lobo_m, _C_M, _Z_M)
+    pf = _perfil_fechado(lobo_f, _C_F, _Z_F)
+    pm[:, 1] *= -1; pf[:, 1] *= -1
+    cm = _C_M * [1, -1]; cf = _C_F * [1, -1]
+    R_M = np.max(np.hypot(*(pm - cm).T))
+    L = 2.9 * R_M
+    centro_lat = (cm + cf) / 2.0
+    # O perfil vem do SVG em unidades de pixel (R_M ~ milhares) -- normaliza
+    # para que `escala` represente o raio do rotor macho em unidades globais
+    # da cena (mesma unidade usada para motor/gearbox/tubulacao).
+    escala = escala / R_M
+
+    quads, cores = [], []
+
+    def add_global(poly_local):
+        p = np.asarray(poly_local, dtype=float)
+        xg = x0 + escala * p[:, 2]
+        yg = ylat + escala * (p[:, 0] - centro_lat[0])
+        zg = zlat + escala * (p[:, 1] - centro_lat[1])
+        return np.column_stack([xg, yg, zg])
+
+    for prof, cen, wrap, cor in ((pm, cm, WRAP_M, COR_M),
+                                 (pf, cf, WRAP_F, COR_F)):
+        rel = prof - cen
+        r = np.hypot(rel[:, 0], rel[:, 1])
+        a0 = np.arctan2(rel[:, 1], rel[:, 0])
+        n_p = len(prof)
+        zs = np.linspace(0, L, N_Z)
+        grid = np.empty((N_Z, n_p, 3))
+        for i, z in enumerate(zs):
+            a = a0 + wrap * z / L
+            grid[i, :, 0] = cen[0] + r * np.cos(a)
+            grid[i, :, 1] = cen[1] + r * np.sin(a)
+            grid[i, :, 2] = z
+        for i in range(N_Z - 1):
+            for j in range(n_p):
+                j2 = (j + 1) % n_p
+                q_local = np.array([grid[i, j], grid[i, j2],
+                                    grid[i+1, j2], grid[i+1, j]])
+                nv = np.cross(q_local[1]-q_local[0], q_local[3]-q_local[0])
+                nn = np.linalg.norm(nv)
+                if nn < 1e-12:
+                    continue
+                quads.append(add_global(q_local))
+                cores.append(_sombra3d(nv/nn, cor, amb=0.32))
+        for i in (0, N_Z - 1):
+            c3 = np.array([cen[0], cen[1], zs[i]])
+            cor_tampa = _sombra3d(np.array([0, 0, 1.0]), cor, amb=0.40)
+            for j in range(n_p):
+                q_local = np.array([c3, grid[i, j], grid[i, (j+1) % n_p]])
+                quads.append(add_global(q_local)); cores.append(cor_tampa)
+        r_eixo = 0.55 * r.min()
+        ang = np.linspace(0, 2*np.pi, 40, endpoint=False)
+        for z0l, z1l, zcap in ((-0.22*L, 0.0, -0.22*L), (L, 1.22*L, 1.22*L)):
+            for j in range(40):
+                j2 = (j + 1) % 40
+                q_local = np.array([
+                    [cen[0]+r_eixo*np.cos(ang[j]),  cen[1]+r_eixo*np.sin(ang[j]),  z0l],
+                    [cen[0]+r_eixo*np.cos(ang[j2]), cen[1]+r_eixo*np.sin(ang[j2]), z0l],
+                    [cen[0]+r_eixo*np.cos(ang[j2]), cen[1]+r_eixo*np.sin(ang[j2]), z1l],
+                    [cen[0]+r_eixo*np.cos(ang[j]),  cen[1]+r_eixo*np.sin(ang[j]),  z1l]])
+                nv = np.array([np.cos((ang[j]+ang[j2])/2),
+                               np.sin((ang[j]+ang[j2])/2), 0.0])
+                quads.append(add_global(q_local))
+                cores.append(_sombra3d(nv, CINZA, amb=0.32))
+            c3 = np.array([cen[0], cen[1], zcap])
+            cor_tampa = _sombra3d(np.array([0, 0, 1.0]), CINZA, amb=0.40)
+            for j in range(40):
+                j2 = (j + 1) % 40
+                q_local = np.array([c3,
+                    [cen[0]+r_eixo*np.cos(ang[j]),  cen[1]+r_eixo*np.sin(ang[j]),  zcap],
+                    [cen[0]+r_eixo*np.cos(ang[j2]), cen[1]+r_eixo*np.sin(ang[j2]), zcap]])
+                quads.append(add_global(q_local)); cores.append(cor_tampa)
+
+    return quads, cores, L * escala
+
+def fig_conjunto3d():
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+
+    quads, cores = [], []
+    def ext(par):
+        qs, cs = par[0], par[1]
+        quads.extend(qs); cores.extend(cs)
+
+    COR_MOTOR = (0.36, 0.45, 0.58)
+    COR_PE    = (0.30, 0.30, 0.32)
+    COR_ACOPL = (0.55, 0.55, 0.58)
+    COR_GB    = (0.80, 0.81, 0.84)
+    COR_BULL  = (0.62, 0.65, 0.70)
+    COR_PINLP = (0.55, 0.42, 0.28)
+    COR_PINHP = (0.35, 0.55, 0.42)
+    COR_EIXO  = (0.55, 0.55, 0.58)
+    COR_TUBO_SUC = (0.35, 0.55, 0.75)   # sucao/interestagio: tons de azul
+    COR_TUBO_DESC = (0.75, 0.40, 0.35)  # descarga final: tom quente
+    COR_IC    = (0.55, 0.72, 0.62)
+
+    # --- Motor eletrico ---
+    ext(_cil_quads("x", 0.0, 3.4, 0.0, 0.0, 1.05, COR_MOTOR, n_seg=32))
+    ext(_caixa_quads(0.3, 3.1, -1.05, -1.35, -1.55, -1.05, COR_PE))
+
+    # --- Acoplamento ---
+    ext(_cil_quads("x", 3.4, 3.75, 0.0, 0.0, 0.42, COR_ACOPL, n_seg=24))
+
+    # --- Gearbox ---
+    ext(_caixa_quads(3.75, 6.15, -1.4, 1.4, -1.7, 1.7, COR_GB))
+    ext(_cil_quads("x", 6.13, 6.24, 0.0, 0.0, 0.95, COR_BULL, n_seg=32))
+    ext(_cil_quads("x", 6.13, 6.24, 0.0, 1.3, 0.55, COR_PINLP, n_seg=24))
+    ext(_cil_quads("x", 6.13, 6.24, 0.0, -1.3, 0.42, COR_PINHP, n_seg=24))
+
+    # --- Eixos para os estagios LP (cima) e HP (baixo) ---
+    X0_ROTORES = 7.35
+    ext(_cil_quads("x", 6.24, X0_ROTORES, 0.0, 1.3, 0.16, COR_EIXO, n_seg=16))
+
+    # --- Estagio LP (maior: menor pressao, maior vazao) ---
+    quads_lp, cores_lp, L_LP = _par_rotores_quads(
+        X0_ROTORES, ylat=0.0, zlat=1.3, escala=1.15, N_Z=46)
+    quads.extend(quads_lp); cores.extend(cores_lp)
+    fim_LP = X0_ROTORES + L_LP
+
+    # --- Estagio HP (menor: maior pressao, menor vazao), deslocado a
+    # jusante ao longo do fluxo pneumatico (o eixo mecanico ate ele e
+    # apenas mais longo -- simplificacao esquematica) ---
+    X0_HP = fim_LP + 1.3
+    ext(_cil_quads("x", 6.24, X0_HP, 0.0, -1.3, 0.13, COR_EIXO, n_seg=16))
+    quads_hp, cores_hp, L_HP = _par_rotores_quads(
+        X0_HP, ylat=0.0, zlat=-1.3, escala=0.68, N_Z=46)
+    quads.extend(quads_hp); cores.extend(cores_hp)
+    fim_HP = X0_HP + L_HP
+
+    # --- Tubulacao de processo (deslocada para +Y, "na frente" do trem
+    # mecanico, para nao se confundir com eixos/gearbox) ---
+    Y_TUBO = 1.05
+    # sucao: bocal apontando para cima a partir do topo do estagio LP
+    # (evita atravessar o corpo do rotor, que confunde o zsort do mplot3d)
+    X_SUC = X0_ROTORES + 0.35
+    Z_TOPO_LP = 1.3 + 1.15 + 0.05
+    ext(_cil_quads("z", Z_TOPO_LP, Z_TOPO_LP + 1.1, X_SUC, 0.0, 0.22, COR_TUBO_SUC, n_seg=20))
+    # interestagio: sai da descarga do LP, desce ate a altura do HP,
+    # passando por uma "caixa" de intercooler, e entra na sucao do HP
+    ext(_cil_quads("y", 0.0, Y_TUBO, 1.3, fim_LP - 0.3, 0.14, COR_TUBO_SUC, n_seg=20))
+    ext(_caixa_quads(fim_LP - 0.75, fim_LP + 0.15, Y_TUBO - 0.05, Y_TUBO + 0.55,
+                     -0.35, 1.05, COR_IC))
+    ext(_cil_quads("z", -1.3, 1.3, fim_LP - 0.3, Y_TUBO + 0.25, 0.14, COR_TUBO_SUC, n_seg=20))
+    ext(_cil_quads("x", fim_LP - 0.3, X0_HP - 0.15, Y_TUBO + 0.25, -1.3, 0.14, COR_TUBO_SUC, n_seg=20))
+    ext(_cil_quads("y", 0.0, Y_TUBO + 0.25, -1.3, X0_HP - 0.15, 0.14, COR_TUBO_SUC, n_seg=20))
+    # descarga final apos o HP
+    ext(_cil_quads("x", fim_HP - 0.15, fim_HP + 1.4, Y_TUBO, -1.3, 0.20, COR_TUBO_DESC, n_seg=20))
+
+    fig = plt.figure(figsize=(13, 6.5))
+    ax = fig.add_subplot(111, projection="3d")
+    ax.add_collection3d(Poly3DCollection(
+        quads, facecolors=cores, edgecolors=cores, linewidths=0.1,
+        zsort="average", rasterized=True))
+    allpts = np.vstack([np.asarray(q).reshape(-1, 3) for q in quads])
+    for setl, dim in zip((ax.set_xlim, ax.set_ylim, ax.set_zlim), range(3)):
+        lo, hi = allpts[:, dim].min(), allpts[:, dim].max()
+        pad = 0.05 * (hi - lo)
+        setl(lo - pad, hi + pad)
+    ax.set_box_aspect(tuple(np.ptp(allpts[:, d]) for d in range(3)))
+    ax.view_init(elev=20, azim=-60)
+    ax.set_axis_off()
+
+    # --- Rotulos ---
+    rotulos = [
+        (1.7, 0.0, 1.75, "Motor Elétrico"),
+        (4.95, 0.0, 2.05, "Gearbox"),
+        (X0_ROTORES + L_LP/2, 0.0, 1.3 + 1.15*1.0 + 0.55, "Estágio LP"),
+        (X0_HP + L_HP/2, 0.0, -1.3 - 0.68*1.0 - 0.55, "Estágio HP"),
+        (fim_LP - 0.3, Y_TUBO + 0.25, 0.35, "Intercooler"),
+        (X_SUC, 0.0, Z_TOPO_LP + 1.35, "Sucção\n(ar atmosférico)"),
+        (fim_HP + 0.9, Y_TUBO, -1.75, "Saída\n(Aftercooler/Secagem)"),
+    ]
+    for x, y, z, txt in rotulos:
+        ax.text(x, y, z, txt, fontsize=7.6, color="#1a1a1a", ha="center")
+
+    fig.tight_layout(pad=0)
+    save(fig, "fig_2_3_conjunto3d.pdf")
+    import subprocess
+    pdf = os.path.join(OUTDIR, "fig_2_3_conjunto3d.pdf")
+    subprocess.run(["pdfcrop", "--margins", "6", pdf, pdf],
+                   check=True, capture_output=True)
+    print("cropped", pdf)
+
 if __name__ == "__main__":
     # NOTE: fig_rotores() and fig_psa() are NOT called here on purpose.
     # fig_2_1_rotores.pdf and fig_15_1_psa.pdf are produced from real
@@ -641,6 +917,7 @@ if __name__ == "__main__":
     fig_basquin()
     fig_ekf()
     fig_parafuso3d()
+    fig_conjunto3d()
     print("done")
 
 # =====================================================================
