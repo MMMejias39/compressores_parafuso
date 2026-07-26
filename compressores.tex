@@ -2247,7 +2247,15 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\begin{equation}\label{eq:s19-9}
  RUL = \frac{1 - D}{\dot{D}} 
 \end{equation}
-	A incerteza de $\dot{D}$ (variabilidade de carga futura, dispersão de $C$ do material) pode ainda ser propagada por um Processo Gaussiano sobre a série de $D(t)$ estimada — preservando a camada probabilística da formulação original, mas agora como quantificação de incerteza em torno de um dano fisicamente calculado, e não como substituto da física.
+	A incerteza de $\dot{D}$ (variabilidade de carga futura, dispersão de $C$ do material) é propagada por um Processo Gaussiano (PG) ajustado sobre a série $D(t)$ estimada — um modelo bayesiano não paramétrico que, em vez de ajustar uma única curva a $D(t)$, define uma distribuição sobre todas as curvas compatíveis com o histórico observado, permitindo extrair não só a taxa média de acúmulo mas também sua variância. O PG é definido por uma função de covariância (\textit{kernel}); a mais comum é a exponencial quadrática, que codifica a suposição física central de que instantes de tempo próximos têm dano correlacionado (o dano evolui suavemente, não aos saltos). Dados os pontos já observados de $D(t)$, a média e a variância preditivas da taxa de acúmulo num instante futuro $t_*$ seguem a forma fechada de regressão por Processo Gaussiano \cite{gpml}, Equação~\eqref{eq:s19-10}:
+	\begin{equation}\label{eq:s19-10}
+	\begin{aligned}
+		k_{\text{GP}}(t,t') &= \sigma_f^2 \exp\left( -\frac{(t-t')^2}{2\,\ell_{\text{GP}}^2} \right) \\[6pt]
+		\bar{\dot{D}}(t_*) &= \mathbf{k}_{*,\text{GP}}^T \left( K_{\text{GP}} + \sigma_n^2 I \right)^{-1} \mathbf{d} \\[6pt]
+		\text{Var}[\dot{D}(t_*)] &= k_{\text{GP}}(t_*,t_*) - \mathbf{k}_{*,\text{GP}}^T \left( K_{\text{GP}} + \sigma_n^2 I \right)^{-1} \mathbf{k}_{*,\text{GP}}
+	\end{aligned}
+	\end{equation}
+	Onde $K_{\text{GP}}$ é a matriz de covariâncias entre os pontos observados de $D(t)$, $\mathbf{k}_{*,\text{GP}}$ é o vetor de covariâncias entre $t_*$ e esses pontos, $\mathbf{d}$ é o vetor das taxas de dano observadas, $\sigma_n^2$ é a variância do ruído de medição e $\ell_{\text{GP}}$ (não confundir com o vetor latente $\ell$ do VAE) é o comprimento de escala do \textit{kernel} — quanto maior, mais suave e mais correlacionada no tempo é a curva de dano assumida. A variância predita entra diretamente na Equação~\eqref{eq:s25-3} (propagação de incerteza, Capítulo de Diretrizes de Desenvolvimento) para produzir um intervalo de confiança em torno do RUL pontual da Equação~\eqref{eq:s19-9}, preservando a camada probabilística da formulação original do documento, mas agora como quantificação de incerteza em torno de um dano fisicamente calculado, e não como substituto da física.
 \end{itemize}
 
 \vspace{1em}
@@ -2256,7 +2264,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 \textbf{Diretriz Técnica Final:} A solução proposta integra o rigor das equações de primeira ordem com a flexibilidade da inteligência artificial. O modelo resultante compreende a relação causal entre a degradação mecânica ($\sigma_b$) e a ineficiência térmica ($\dot{I}$), permitindo uma manutenção preditiva baseada em evidências exergéticas.
 
-\begin{equation}\label{eq:s19-10}
+\begin{equation}\label{eq:s19-11}
 \boxed{\text{Min } J = \int (\dot{I} + \beta \dot{m}_{\text{CO}_2}) \, dt \quad \text{via PIML e Autoencoder}}
 \end{equation}
 
@@ -2528,15 +2536,23 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\subsection{Governança de Dados e Pré-processamento Robusto}
 	O sucesso dos algoritmos de inferência, como o EKF e o VAE, depende criticamente da integridade dos sinais de entrada. Em ambientes offshore, a telemetria é frequentemente ruidosa.
 	\begin{itemize}
-		\item \textbf{Filtragem Adaptativa:} Implementação de filtros de Savitzky-Golay para suavizar sinais de vibração sem atenuar transientes mecânicos importantes.
-		\item \textbf{Tratamento de Outliers:} Uso de técnicas de \textit{Isolation Forest} para identificar picos espúrios que poderiam causar falsos diagnósticos de falha.
+		\item \textbf{Filtragem Adaptativa (Savitzky-Golay):} Diferente de uma média móvel simples — que suaviza o ruído mas também "arredonda" picos e mudanças bruscas reais do sinal —, o filtro de Savitzky-Golay \cite{savgol} ajusta um polinômio de grau $p_{\text{SG}}$ por mínimos quadrados dentro de uma janela móvel de $2m_{\text{SG}}+1$ amostras centrada em cada ponto, e usa o valor do polinômio ajustado no centro da janela como a amostra suavizada. Como esse ajuste é linear nos dados de entrada, o resultado se reduz a uma convolução com coeficientes fixos $c_i$ (pré-calculados uma única vez a partir de $p_{\text{SG}}$ e $m_{\text{SG}}$), Equação~\eqref{eq:s25-1}:
+		\begin{equation}\label{eq:s25-1}
+ y_j^{\text{suav}} = \sum_{i=-m_{\text{SG}}}^{m_{\text{SG}}} c_i \cdotp y_{j+i}
+\end{equation}
+		É justamente o ajuste polinomial local — em vez de uma média constante — que preserva a amplitude e a largura de transientes reais (como o pico de um impacto mecânico incipiente), ao mesmo tempo em que atenua o ruído de alta frequência da instrumentação; por isso o filtro é preferido à média móvel para os sinais de vibração deste documento.
+		\item \textbf{Tratamento de Outliers (\textit{Isolation Forest}):} Ao contrário de métodos que primeiro modelam o que é "normal" para depois sinalizar desvios, o \textit{Isolation Forest} \cite{isoforest} explora diretamente a definição de anomalia — pontos raros e diferentes são mais fáceis de isolar. O algoritmo constrói um conjunto de árvores binárias aleatórias (\textit{isolation trees}), cada uma particionando os dados recursivamente por um atributo e um valor de corte escolhidos ao acaso; um ponto anômalo tende a ser isolado em poucas divisões (caminho curto até a raiz da árvore), enquanto um ponto normal exige muitas divisões (caminho longo). O escore de anomalia normaliza o comprimento médio do caminho de isolamento $E[L_{\text{iso}}(x)]$ sobre todas as árvores da floresta pelo comprimento médio esperado numa árvore de busca binária com $n_{\text{IF}}$ pontos, Equação~\eqref{eq:s25-2}:
+		\begin{equation}\label{eq:s25-2}
+ s_{\text{IF}}(x) = 2^{-\frac{E[L_{\text{iso}}(x)]}{c(n_{\text{IF}})}}, \quad c(n_{\text{IF}}) = 2\left[\ln(n_{\text{IF}}-1) + \gamma_{\text{EM}}\right] - \frac{2(n_{\text{IF}}-1)}{n_{\text{IF}}}
+\end{equation}
+		Onde $\gamma_{\text{EM}} \approx 0{,}5772$ é a constante de Euler-Mascheroni (subscrita para não colidir com a razão de calores específicos $\gamma$ usada nos capítulos de termodinâmica). Um escore $s_{\text{IF}}$ próximo de 1 indica forte probabilidade de anomalia (caminho de isolamento muito curto); próximo de 0,5, o ponto é indistinguível do comportamento normal. O Gêmeo Digital usa esse escore para filtrar picos espúrios de sensor antes que alimentem o EKF ou o VAE, evitando falsos diagnósticos de falha originados por ruído de instrumentação, não por degradação real do equipamento.
 	\end{itemize}
 	
 	\subsection{Quantificação de Incerteza (UQ)}
 	Um Gêmeo Digital de missão crítica não deve fornecer apenas valores determinísticos, mas sim intervalos de confiança para suportar a tomada de decisão segura.
 	\begin{itemize}
-		\item \textbf{Propagação de Erro:} A incerteza dos sensores deve ser propagada para os KPIs globais, como a destruição de exergia ($\dot{I}$). A Equação~\eqref{eq:s25-1} é a fórmula clássica de propagação de incerteza: cada temperatura medida $T_i$ contribui para a incerteza total de $\dot{I}$ na proporção de quão sensível $\dot{I}$ é àquela temperatura específica (a derivada parcial) multiplicada pela incerteza do próprio sensor $u(T_i)$, somadas em quadratura:
-		\begin{equation}\label{eq:s25-1}
+		\item \textbf{Propagação de Erro:} A incerteza dos sensores deve ser propagada para os KPIs globais, como a destruição de exergia ($\dot{I}$). A Equação~\eqref{eq:s25-3} é a fórmula clássica de propagação de incerteza: cada temperatura medida $T_i$ contribui para a incerteza total de $\dot{I}$ na proporção de quão sensível $\dot{I}$ é àquela temperatura específica (a derivada parcial) multiplicada pela incerteza do próprio sensor $u(T_i)$, somadas em quadratura:
+		\begin{equation}\label{eq:s25-3}
  u(\dot{I}) = \sqrt{\sum_{i=1}^{n} \left( \frac{\partial \dot{I}}{\partial T_i} \right)^2 u(T_i)^2}
 \end{equation}
 		\item \textbf{Redes Bayesianas:} Substituição de camadas densas por camadas bayesianas no PIML para obter a variância da predição ($\sigma^2$).
@@ -2552,8 +2568,8 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\subsection{Explicabilidade e Interface Humano-Máquina (XAI)}
 	Para que o Gêmeo Digital seja aceito pelos operadores, suas decisões devem ser auditáveis e compreensíveis.
 	\begin{itemize}
-		\item \textbf{Valores de SHAP:} Utilização de \textit{SHapley Additive exPlanations} para quantificar a contribuição de cada sensor em um diagnóstico de falha. A Equação~\eqref{eq:s25-2}, originada da teoria de jogos cooperativos, calcula a contribuição média da variável $x_i$ ($\phi_i$) testando o modelo $f$ com e sem essa variável, em todas as combinações possíveis ($S$) das demais variáveis — o resultado é um "crédito" justo de quanto cada sensor pesou na decisão do modelo, permitindo ao operador ver, por exemplo, que um alarme foi disparado principalmente por $T_{dp}$ e não por vibração:
-		\begin{equation}\label{eq:s25-2}
+		\item \textbf{Valores de SHAP:} Utilização de \textit{SHapley Additive exPlanations} para quantificar a contribuição de cada sensor em um diagnóstico de falha. A Equação~\eqref{eq:s25-4}, originada da teoria de jogos cooperativos, calcula a contribuição média da variável $x_i$ ($\phi_i$) testando o modelo $f$ com e sem essa variável, em todas as combinações possíveis ($S$) das demais variáveis — o resultado é um "crédito" justo de quanto cada sensor pesou na decisão do modelo, permitindo ao operador ver, por exemplo, que um alarme foi disparado principalmente por $T_{dp}$ e não por vibração:
+		\begin{equation}\label{eq:s25-4}
  \phi_i(f) = \sum_{S \subseteq \{x_1, \dots, x_n\} \setminus \{x_i\}} \frac{|S|! (n - |S| - 1)!}{n!} [f(S \cup \{x_i\}) - f(S)]
 \end{equation}
 		\item \textbf{Visualização Latente:} Projeção do espaço latente do VAE em duas dimensões para visualização intuitiva da trajetória de degradação do ativo.
@@ -2800,6 +2816,12 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 \bibitem{kalman} Kalman, R.E. \textit{A New Approach to Linear Filtering and Prediction Problems}. Journal of Basic Engineering, Transactions of the ASME, Series D, 1960.
 
 \bibitem{simon} Simon, D. \textit{Optimal State Estimation: Kalman, $H_\infty$, and Nonlinear Approaches}. John Wiley \& Sons, 2006.
+
+\bibitem{gpml} Rasmussen, C.E.; Williams, C.K.I. \textit{Gaussian Processes for Machine Learning}. MIT Press, 2006.
+
+\bibitem{savgol} Savitzky, A.; Golay, M.J.E. \textit{Smoothing and Differentiation of Data by Simplified Least Squares Procedures}. Analytical Chemistry, 36(8), 1627–1639, 1964.
+
+\bibitem{isoforest} Liu, F.T.; Ting, K.M.; Zhou, Z.-H. \textit{Isolation Forest}. Proceedings of the 8th IEEE International Conference on Data Mining (ICDM), 2008.
 
 \bibitem{vae} Kingma, D.P.; Welling, M. \textit{Auto-Encoding Variational Bayes}. arXiv:1312.6114, 2013.
 
