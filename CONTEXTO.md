@@ -89,15 +89,69 @@ commits sem pedido explícito do autor.
 - **Figuras**: cada figura tem `\label{fig:C-N}` (C = capítulo, N = sequencial) e é
   antecedida por um parágrafo que a referencia via `Figura~\ref{fig:C-N}` antes de
   aparecer.
-- **Estrutura em duas Partes**: o livro é dividido via `\part{}` (classe `article` —
-  não afeta a numeração contínua de `\section`) em **Parte I — O Compressor e Seus
-  Elementos** (Capítulos 2 a 18: física, engenharia e mecanismos de falha de cada
-  componente) e **Parte II — Metodologia do Gêmeo Digital e Equacionamento
+- **Estrutura em duas Partes**: o livro é dividido em **Parte I — O Compressor e
+  Seus Elementos** (Capítulos 2 a 18: física, engenharia e mecanismos de falha de
+  cada componente) e **Parte II — Metodologia do Gêmeo Digital e Equacionamento
   Integrado** (Capítulos 19 a 25 + Anexos de Implementação: EKF, VAE, PIML, MPC,
   PSO e a integração de tudo num motor de cálculo único). O Capítulo 1 (Introdução)
   fica antes da Parte I, como preâmbulo. A Seção 1.3 do próprio livro também
   descreve essa divisão — mantenha as duas em sincronia se o capítulo final de
   alguma das partes mudar.
+  **Implementação técnica — não use `\part{}` puro:** o comando `\part{}` padrão da
+  classe `article` neste documento renderiza o título **desalinhado à esquerda** em
+  vez de centralizado (causa não identificada — possivelmente interação com
+  `hyperref`; nem envolver `\part{}` num `\begin{center}` resolve, o `\part`
+  internamente escapa da centralização externa). A solução adotada foi **não usar
+  `\part{}` para exibição**: cada página de Parte é montada manualmente — bloco
+  `\clearpage`, `\thispagestyle{empty}`, `\phantomsection`,
+  `\addcontentsline{toc}{part}{...}` (para entrar no sumário/bookmarks do PDF) e
+  `\vspace*{\fill}...\begin{center}{\Huge\bfseries PARTE N}\\[2em]{\huge\bfseries
+  Título}\end{center}\vspace*{\fill}`, seguido de `\clearpage` antes do capítulo
+  seguinte. Ver as duas ocorrências no `.tex` (antes do Capítulo 2 e antes do
+  Capítulo 19) como modelo para qualquer Parte futura (ex.: um 3º volume da
+  enciclopédia).
+
+## Diagramação — pendências e convenções (relatório de 26/07/2026)
+
+Em 26/07/2026 foi feita uma revisão completa de diagramação do PDF compilado (compilação limpa
+conferida, mais inspeção visual das 87 páginas via `pdftoppm`). O diagnóstico completo, com página/
+linha de cada achado e a correção LaTeX sugerida, está em `relatorio_diagramacao.md` na raiz do
+projeto — **leia esse arquivo antes de mexer em qualquer aspecto de layout** (quebra de página, capa,
+tabelas, links, cabeçalho). Nenhuma das correções abaixo foi aplicada ao `.tex` ainda; ficaram só
+diagnosticadas. Implemente mediante pedido explícito do autor, uma de cada vez, recompilando e
+conferindo via `pdftoppm` antes de considerar concluída (mesma prática já usada para figuras).
+
+**Retrofit pendente (afeta conteúdo já existente):**
+- Links do `hyperref` sem `\hypersetup` → caixas vermelhas ao redor de toda referência/citação em
+  praticamente todas as páginas. Adicionar `\hypersetup{colorlinks=true, linkcolor=..., citecolor=...,
+  urlcolor=..., pdftitle=..., pdfauthor=...}` (ou `hidelinks` se o alvo for impressão P&B).
+- Nenhum `\clearpage`/`\newpage` antes da maioria dos 27 `\section` de capítulo → capítulos começam no
+  meio da página anterior, contradizendo o objetivo de capítulos autocontidos/referenciáveis
+  isoladamente (ver "Visão de longo prazo" acima). Inserir `\clearpage` antes de cada `\section` de
+  capítulo (os pontos já estão marcados no `.tex` pelos comentários `% --- Início do Capítulo N ---`).
+- Falta `fancyhdr`/cabeçalho corrente com o nome do capítulo atual — hoje só há número de página.
+- Falta `\usepackage{microtype}` — melhora justificação em todo o documento, adição de baixo risco.
+- 11 das 14 tabelas (inclusive as duas de Nomenclatura) usam grade antiga (`|l|l|`, `\hline` em toda
+  linha) em vez do estilo `booktabs` já carregado no preâmbulo e usado nas outras 3 — padronizar todas
+  em `booktabs` (sem barras verticais).
+- Capa (`titlepage`) muito austera para a extensão da obra e para o plano de virar "Volume I" de uma
+  coleção versionada (ver "Visão de longo prazo") — não tem regra, cor, elemento gráfico nem rótulo de
+  volume/versão. Ver relatório para sugestão mínima (regra horizontal + rótulo de volume/revisão,
+  aproveitando a Figura 3.1 em miniatura).
+- Capítulos sem identidade visual além do tamanho de fonte (são `\section`, não `\chapter` — a classe é
+  `article`) — opcional, via `titlesec`.
+- Larguras de figura (`0.55\textwidth` a `0.85\textwidth`) sem sistema — opcional, convergir para 2-3
+  larguras-padrão por tipo de figura.
+
+**Convenções a seguir a partir de agora em conteúdo novo** (para não acumular mais dívida do mesmo tipo
+enquanto o retrofit acima não é feito):
+- Todo `\section` novo de capítulo deve vir precedido de `\clearpage`.
+- Toda tabela nova deve usar `booktabs` (`\toprule`/`\midrule`/`\bottomrule`, sem barras verticais),
+  nunca o estilo de grade antigo — mesmo que o retrofit das tabelas existentes ainda não tenha sido
+  feito.
+- Colunas de tabela com texto corrido (tipo as de Nomenclatura) devem usar
+  `>{\raggedright\arraybackslash}p{Xcm}` em vez de `p{Xcm}` justificado, para evitar espaçamento
+  irregular em colunas estreitas.
 
 ## Figuras — como regenerar sem quebrar nada
 
@@ -227,3 +281,12 @@ Parte I, como preâmbulo. O parágrafo da Seção 1.3 ("Estrutura do Documento e
 Abordagem Metodológica") que já descrevia essas duas metades tinha faixas de
 capítulo desatualizadas ("2 a 14" / "15 a 24", de uma versão anterior do livro com
 menos capítulos) — foi corrigido para "2 a 18" / "19 a 25" ao mesmo tempo.
+
+(f) Revisão completa de diagramação (layout) do PDF, com inspeção visual das 87
+páginas via `pdftoppm`. Diagnóstico salvo em `relatorio_diagramacao.md` e resumido
+na seção "Diagramação — pendências e convenções" acima. Nenhuma correção foi
+aplicada ao `.tex` nesta sessão — ficou só o diagnóstico e as convenções para
+conteúdo novo (quebra de página por capítulo, tabelas em `booktabs`). O retrofit do
+conteúdo já existente (hyperref, cabeçalho corrente, microtype, tabelas antigas,
+capa) é uma tarefa pendente conhecida, a ser feita mediante pedido do autor — ver
+seção acima para a lista priorizada.
