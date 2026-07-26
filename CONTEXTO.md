@@ -205,9 +205,26 @@ intercooler → estágio HP → saída). Gerada por `fig_conjunto3d()`, que reap
 mesma varredura helicoidal de `fig_parafuso3d()` via uma versão parametrizada,
 `_par_rotores_quads(x0, ylat, zlat, escala, ...)`, chamada duas vezes (LP maior, HP
 menor) — mesmo crédito CC BY-SA do perfil de rotor se aplica aqui também. Motor,
-gearbox, eixos e tubulação de processo são primitivas 3D simples novas
-(`_caixa_quads()` para paralelepípedos, `_cil_quads(eixo, ...)` para cilindros ao
-longo de um dos 3 eixos). **Duas armadilhas para quem for mexer nessas funções:**
+gearbox, eixos e tubulação de processo usam as primitivas 3D `_caixa_quads()`
+(paralelepípedos) e `_cil_quads(eixo, ...)` (cilindros ao longo de um dos 3 eixos), mais
+`_engrenagem_quads(eixo, lo, hi, c1, c2, r_raiz, r_dente, n_dentes, ...)` (disco com
+dentes retangulares, para bull gear/pinhões — mesma convenção cíclica de eixos que
+`_cil_quads`, mas com raio variável raiz/dente em vez de raio constante).
+
+**A primeira versão (26/07/2026, mesmo dia) usava só cilindros/caixas lisos e o autor
+rejeitou por parecer "primitivas genéricas", não equipamento real.** A correção não foi
+mudar de ferramenta, foi adicionar detalhe de superfície: aletas de refrigeração no
+motor (vários `_cil_quads` finos de raio levemente maior, repetidos ao longo do corpo),
+caixa de ligação (uma `_caixa_quads` em cima do cilindro), nervuras e tampa de inspeção
+no gearbox, dentes reais nas engrenagens (`_engrenagem_quads` em vez de disco liso),
+flanges nas juntas de tubulação (`_cil_quads` curto e de raio maior no meio de um tubo
+mais fino) e um plano de chão (um único polígono N-gon plano, cor lisa sem
+`_sombra3d`, no ponto mais baixo da cena) para a peça não parecer flutuando no vazio.
+**Se for gerar uma figura mecânica nova neste projeto, não pare no primitivo liso —
+esse acabamento de superfície é o que separa "esquema de brinquedo" de "ilustração
+técnica" aos olhos do autor.**
+
+**Três armadilhas para quem for mexer nessas funções:**
 1. O perfil do SVG está em unidades de pixel (raio do rotor macho, `R_M`, da ordem de
    1300) — `_par_rotores_quads()` já normaliza dividindo por `R_M` antes de aplicar
    `escala`, de modo que `escala` passa a significar diretamente o raio do rotor em
@@ -215,10 +232,16 @@ longo de um dos 3 eixos). **Duas armadilhas para quem for mexer nessas funções
    figura nova, não esqueça dessa normalização — sem ela, o rotor fica ~1000x maior
    que todo o resto da cena e engole a figura inteira (foi exatamente esse o primeiro
    bug ao criar a Fig. 2.3).
-2. Em `_cil_quads(eixo, lo, hi, c1, c2, ...)`, a convenção de `(c1, c2)` segue a ordem
-   cíclica x→y→z→x das duas coordenadas *que sobram* após remover o eixo do cilindro
-   — ou seja, para `eixo="x"`: `(c1,c2)=(y,z)`; para `eixo="y"`: `(c1,c2)=(z,x)` (não
-   `(x,z)` — é fácil errar essa, já aconteceu); para `eixo="z"`: `(c1,c2)=(x,y)`.
+2. Em `_cil_quads(eixo, lo, hi, c1, c2, ...)` e em `_engrenagem_quads(...)`, a
+   convenção de `(c1, c2)` segue a ordem cíclica x→y→z→x das duas coordenadas *que
+   sobram* após remover o eixo — ou seja, para `eixo="x"`: `(c1,c2)=(y,z)`; para
+   `eixo="y"`: `(c1,c2)=(z,x)` (não `(x,z)` — é fácil errar essa, já aconteceu); para
+   `eixo="z"`: `(c1,c2)=(x,y)`.
+3. Geometria muito fina/sobreposta (ex.: um tubo atravessando o corpo de um rotor)
+   confunde o `zsort="average"` do `Poly3DCollection` do `mplot3d` (que não é um
+   z-buffer de verdade, só ordena polígono por polígono pela profundidade média) e
+   produz oclusão errada. Prefira encostar peças pela superfície (ex.: bocal de sucção
+   saindo tangente ao topo do rotor) em vez de fazer uma atravessar o volume da outra.
 
 O script `gen_figuras.py` já está protegido: as funções `fig_rotores()` e `fig_psa()`
 existem no arquivo (são rascunhos antigos em matplotlib, anteriores a eu encontrar as
@@ -430,10 +453,10 @@ inicializado (ver "Visão de longo prazo" acima); histórico completo
 reescrito em 26/07/2026 para remover trailers de coautoria (ver seção
 acima) — os hashes de commit mudaram desde qualquer anotação anterior a essa
 reescrita, sempre confira com `git log` em vez de citar um hash de memória.
-Tag `v1.0` no commit inicial (recriada). Sete commits nesta sessão até a
-reescrita (revisão de numeração de equações; cobertura de desbalanço de
-fase; duas atualizações deste arquivo; expansão do Capítulo 3 e correção do
-Capítulo 12; nova Figura 2.3 em 3D) — use `git log` para o histórico exato.
+Tag `v1.0` no commit inicial (recriada). Dez commits nesta sessão (contando os
+sete até a reescrita do histórico mais três depois: atualização deste
+arquivo, primeira versão da Figura 2.3 e a revisão visual dela) — use
+`git log` para o histórico exato.
 
 Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Bibliografia (45 referências) verificada uma a uma contra fontes reais; 3 tinham
@@ -467,8 +490,11 @@ Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Nova Figura 2.3 (Capítulo 2): render 3D do trem de compressão completo
   (motor → gearbox → estágio LP → intercooler → estágio HP → saída), a
   pedido do autor (preferência já registrada por figuras 3D/realistas em vez
-  de esquemas 2D) — ver "Figuras" acima para as funções novas em
-  `gen_figuras.py` e as duas armadilhas de quem for reutilizá-las.
+  de esquemas 2D). A primeira versão foi rejeitada por parecer "primitivas
+  genéricas" (cilindros/caixas lisos); revisada no mesmo dia com aletas,
+  nervuras, dentes de engrenagem reais e flanges — ver "Figuras" acima para
+  as funções novas em `gen_figuras.py`, a lição sobre nível de detalhe e as
+  três armadilhas de quem for reutilizá-las.
 
 Não há tarefas pendentes conhecidas.
 
