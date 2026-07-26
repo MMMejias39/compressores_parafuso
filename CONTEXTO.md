@@ -315,12 +315,34 @@ daquele capítulo (e suas referências `\eqref` em qualquer capítulo do
 documento) para manter a correspondência "sufixo do label = número exibido"
 descrita na seção de Convenções.
 
+## Cobertura de desbalanço de fase no motor elétrico (26/07/2026)
+
+O Capítulo 4 tratava o motor de indução trifásico com grandezas elétricas
+sempre agregadas (uma corrente $I$ única, uma temperatura de enrolamento
+$T_{\text{enrol}}$ única) — sem nenhuma equação distinguindo as três fases
+entre si, apesar de desbalanço de tensão/corrente entre fases ser um
+indicador clássico de falha incipiente (curto entre espiras, conexão
+frouxa), especialmente relevante em redes elétricas isoladas offshore
+(já citadas como desafio na Seção 1.4, mas nunca equacionadas). Foi
+adicionado um novo item de mecanismo de falha ("Desbalanço de
+Tensão/Corrente entre Fases e Sobreaquecimento Localizado") com a
+Equação~4.8: `VU` (desbalanço de tensão) e `IU` (desbalanço de corrente,
+nome escolhido para evitar `CU` — ambos na definição padronizada pela
+NEMA MG1, nova referência `nemamg1` na bibliografia) mais
+$\Delta T_{\text{fases}}$ (espalhamento entre as três temperaturas de
+enrolamento por RTD). A antiga Equação de Acoplamento Global foi
+renumerada de `eq:s4-8` para `eq:s4-9` (única referência cruzada, já
+atualizada). Símbolos novos ($V_{L,i}$, $I_i$, $T_i$ para as grandezas por
+fase, mais $VU$, $IU$, $\Delta T_{\text{fases}}$) adicionados à tabela de
+Nomenclatura (Elétrica e Acionamento).
+
 ## Estado atual (última sessão)
 
-Documento compila limpo, 98 páginas (165 equações numeradas ao todo), sem
+Documento compila limpo, 99 páginas (166 equações numeradas ao todo), sem
 erros/referências indefinidas/labels duplicados. Repositório git inicializado
-(ver "Visão de longo prazo" acima), tag `v1.0` no commit inicial — use
-`git log` para o histórico exato.
+(ver "Visão de longo prazo" acima), tag `v1.0` no commit inicial; desde então
+dois commits nesta sessão (revisão de numeração de equações; cobertura de
+desbalanço de fase) — use `git log` para o histórico exato.
 
 Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Bibliografia (45 referências) verificada uma a uma contra fontes reais; 3 tinham
@@ -344,6 +366,9 @@ Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Revisão de referenciamento de equações: Capítulo 3 (que não tinha nenhuma
   equação numerada) e mais 4 fórmulas soltas nos Capítulos 6, 11, 17, 22 e 26
   passaram a ter `\label`/`\eqref` (ver "Referenciamento de equações" acima).
+- Adicionada cobertura de desbalanço de fase (tensão/corrente/temperatura) no
+  motor elétrico do Capítulo 4, com nova Equação 4.8 (ver "Cobertura de
+  desbalanço de fase" acima).
 
 Não há tarefas pendentes conhecidas.
 
