@@ -3,6 +3,7 @@
 % --- Pacotes de Suporte ---
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage[expansion=false]{microtype}
 \usepackage[brazilian]{babel}
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -13,6 +14,7 @@
 \usepackage{float}
 \usepackage{booktabs}
 \usepackage{hyperref}
+\usepackage{fancyhdr}
 \usepackage{tabularx}
 \usepackage{longtable}
 
@@ -20,7 +22,23 @@
 \numberwithin{table}{section}
 \numberwithin{figure}{section}
 
-\geometry{margin=2.5cm}
+\geometry{margin=2.5cm, headheight=14.5pt}
+
+\hypersetup{
+	colorlinks=true,
+	linkcolor=black,
+	citecolor=black,
+	urlcolor=black,
+	pdftitle={Gêmeo Digital de Sistemas de Compressão Offshore},
+	pdfauthor={Marcelo Moreira Mejias}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+\fancyhead[L]{\nouppercase{\leftmark}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
 
 
 \begin{document}
@@ -46,6 +64,7 @@
 	
 	% --- DEDICATÓRIA ---
 	\newpage
+	\thispagestyle{empty}
 	\vspace*{\fill}
 	\begin{flushright}
 		\textit{Este trabalho foi criado para as futuras gerações da empresa e que já devem achar isso muito arcaico agora ou em poucos anos.}
@@ -235,6 +254,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	
 	% --- Capítulo 1: Introdução e Escopo ---
+	\clearpage
 	\section{\textbf{Introdução, Escopo e Fundamentação Normativa}}
 	
 	\subsection{\textbf{Visão Geral do Sistema}}
@@ -311,6 +331,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	% --- Início do Capítulo 2 ---
 
+	\clearpage
 	\section{\textbf{Arquitetura e Componentes do Sistema de Compressão}}
 	
 	O sistema de ar comprimido offshore é uma planta de utilidade crítica, composta por máquinas rotativas, trocadores de calor, vasos de pressão e sistemas de purificação \cite{brunkurz}. A integração desses elementos garante o fornecimento de energia pneumática estável para instrumentação e ferramentas de serviço. A Figura~\ref{fig:2-1} resume esses quatro pilares (Geração, Tratamento, Armazenamento e Gestão, já introduzidos no Capítulo 1) como um diagrama de blocos, com a camada de Gestão realimentando dados e ações de controle sobre as três primeiras — a mesma estrutura de malha fechada que este documento equaciona capítulo a capítulo.
@@ -406,6 +427,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	% --- Início do Capítulo 3 ---
 	
+	\clearpage
 	\section{\textbf{Detalhamento de Componentes, Acessórios e Instrumentação}}
 	
 	Antes de detalhar cada subsistema individualmente, é útil visualizar o coração do pacote: o elemento compressor (airend), onde os dois rotores helicoidais executam fisicamente a compressão. A Figura~\ref{fig:3-1} apresenta o par de rotores em perspectiva tridimensional, obtida por varredura helicoidal do mesmo perfil de engrenamento assimétrico $5{:}6$ já apresentado na Figura~\ref{fig:2-2}: o rotor macho (à direita) recebe uma torção total de $300^\circ$ ao longo do comprimento, enquanto a fêmea gira em sentido contrário com hélice oposta, na razão $5/6$ da torção do macho — exatamente a relação cinemática que mantém o contato de vedação contínuo durante a rotação. Os tocos de eixo nas extremidades são os assentos dos rolamentos e, no lado de acionamento, a interface com a caixa multiplicadora (gearbox). As subseções seguintes detalham os blocos que cercam esse núcleo — motor elétrico, acoplamento, gearbox e acessórios — e sua instrumentação associada.
@@ -469,6 +491,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	% --- Início do Capítulo 4: Subsistema Elétrico e Acionamento Dinâmico ---
 	
+	\clearpage
 	\section{\textbf{Subsistema Elétrico e Acionamento Dinâmico}}
 	
 	Este capítulo detalha a modelagem do fluxo de energia desde o painel de distribuição até o eixo do compressor, integrando eletrônica de potência, eletromagnetismo e a modelagem matemática de modos de falha para o Gêmeo Digital.
@@ -557,6 +580,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	% --- Início do Capítulo 5: Trem de Potência, Compressão em Dois Estágios e Termofluídica ---
 	
+	\clearpage
 	\section{\textbf{Trem de Potência, Compressão em Dois Estágios e Termofluídica}}
 	
 	Este capítulo detalha a conversão de energia mecânica em pneumática, o gerenciamento térmico interestágios e os sistemas de suporte (lubrificação e drenagem), fundamentais para a integridade do Gêmeo Digital.
@@ -692,6 +716,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	% --- Início do Capítulo 6: Engenharia do Trem de Transmissão e Matriz de Confiabilidade ---
 	
+	\clearpage
 	\section{\textbf{Engenharia do Trem de Transmissão e Matriz de Confiabilidade}}
 	
 	Este capítulo detalha a modelagem física do sistema de transmissão de potência, integrando a cinemática da caixa multiplicadora com a dinâmica de falhas mecânicas. O objetivo é estabelecer o modelo de referência para o Gêmeo Digital, permitindo o isolamento entre perdas mecânicas e termodinâmicas.
@@ -786,6 +811,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	% --- Início do Capítulo 7: Sistema de Lubrificação e Dinâmica de Mancais (Versão Expandida) ---
 	
+	\clearpage
 	\section{\textbf{Sistema de Lubrificação, Arrefecimento de Óleo e Dinâmica de Mancais}}
 	
 	Este capítulo detalha a modelagem do sistema de suporte vital dos componentes rotativos. Em compressores isentos de óleo, o lubrificante é responsável pela integridade da caixa multiplicadora e dos mancais de alta rotação, atuando como o principal meio de transporte de calor dissipado por atrito mecânico.
@@ -890,6 +916,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	% --- Início do Capítulo 8: Dinâmica de Transmissão e Sincronismo (Versão Integral) ---
 	
+	\clearpage
 	\section{\textbf{Dinâmica de Transmissão, Sincronismo e Integridade de Engrenamentos}}
 	
 	Este capítulo detalha a modelagem física da transmissão de potência em compressores de múltiplos estágios, focando na cinemática de engrenamento, na integridade estrutural dos dentes, na dinâmica de rolamentos de precisão e nos efeitos de desalinhamento.
@@ -1027,6 +1054,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	% --- Início do Capítulo 9: Termodinâmica do Estágio LP e Dinâmica de Folgas (Versão Integral) ---
 	
+	\clearpage
 	\section{\textbf{Termodinâmica do Estágio LP, Dinâmica de Folgas e Resposta Vibracional}}
 	
 	Este capítulo detalha a física da compressão no primeiro estágio (LP), integrando a cinemática de engrenamento, o impacto das folgas micrométricas, o fenômeno de superaquecimento da carcaça e a assinatura vibracional resultante \cite{bently}. O modelo aqui descrito é a base para a detecção precoce de degradação nos rotores.
@@ -1140,6 +1168,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	% --- Início do Capítulo 10: Intercooler, Condensado e Distúrbios de Rede ---
 	
+	\clearpage
 	\section{\textbf{Dinâmica do Intercooler, Gestão de Condensado e Distúrbios de Rede}}
 	
 	Este capítulo detalha a modelagem do resfriamento intermediário, integrando a termodinâmica de troca térmica, a psicrometria de condensação e a distinção entre falhas internas e distúrbios operacionais externos, como o impacto térmico de operações de \textit{offloading}.
@@ -1271,6 +1300,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	% --- Início do Capítulo 11: Estágio HP, Sincronismo e Integridade Mecânica ---
 	
+	\clearpage
 	\section{\textbf{Estágio de Alta Pressão (HP), Sincronismo e Integridade Mecânica}}
 	
 	O estágio de Alta Pressão (HP) representa o maior desafio para o Gêmeo Digital, operando sob condições extremas de temperatura e pressão diferencial ($\Delta P$). Neste estágio, as folgas são reduzidas e qualquer desvio mecânico ou térmico pode resultar em falhas catastróficas.
@@ -1387,6 +1417,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	% --- Início do Capítulo 12: Sistema de Lubrificação e Gestão Térmica ---
 	
+	\clearpage
 	\section{\textbf{Sistema de Lubrificação e Gestão Térmica}}
 	
 	O Gêmeo Digital integra o balanço de energia entre a fase gasosa e o fluido lubrificante, permitindo monitorar a eficiência do resfriamento e a integridade do elemento separador em tempo real.
@@ -1436,6 +1467,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	% --- Início do Capítulo 13: Sistema de Controle, Válvulas e Estratégias de Modulação ---
 	
+	\clearpage
 	\section{\textbf{Sistema de Controle, Válvulas e Estratégias de Modulação}}
 	
 	Este capítulo descreve a inteligência operacional do compressor, modelando a resposta dinâmica das válvulas e a lógica de controle para otimizar o consumo energético, operando com ou sem instrumentação de vazão.
@@ -1498,6 +1530,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	\textbf{Diretriz Técnica Final:} O custo de ciclo da Equação~\eqref{eq:s13-6} é a métrica que conecta a estratégia de modulação (carga/alívio) diretamente ao custo energético — qualquer ajuste de \textit{setpoint} de pressão proposto pelo Gêmeo Digital deve ser avaliado por seu impacto em $C_{op}$, não apenas pela estabilidade de pressão que produz.
 
+	\clearpage
 	\section{Aftercooler, Filtragem Primária e Gestão de Condensado}
 	
 	Este capítulo detalha a modelagem do resfriamento posterior e da remoção de contaminantes líquidos. O Gêmeo Digital atua nesta etapa para garantir que o ar entregue à secadora PSA esteja dentro dos limites de temperatura e saturação, protegendo a integridade do material dessecante.
@@ -1583,6 +1616,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	\textbf{Diretriz Técnica Final:} Um $KPI_{treat}$ próximo de 1 na Equação~\eqref{eq:s14-7} indica que o aftercooler está resfriando o ar até próximo da temperatura da água de resfriamento — condição necessária para proteger o leito dessecante do secador PSA a jusante; valores decrescentes aqui devem disparar investigação \textbf{antes} que o ponto de orvalho no secador seja afetado, não depois.
 
+		\clearpage
 		\section{\textbf{Sistema de Secagem por Adsorção (PSA e Tambor Rotativo)}}
 		
 		O sistema de secagem representa o estágio final de tratamento no Gêmeo Digital, monitorando a remoção de vapor de água para atingir o Ponto de Orvalho sob Pressão ($PDP$). O sistema integra torres de adsorção oscilante (\textbf{PSA}) e secadores de \textbf{tambor rotativo} por calor de compressão (HOC). A Figura~\ref{fig:15-1} ilustra o princípio de operação alternada das duas torres: enquanto uma adsorve umidade do ar de processo (A), a outra é regenerada (D) pela expansão de parte do ar já seco, e os papéis se invertem ciclicamente — o ar úmido entra (I), o ar seco sai (O) e a purga de regeneração é exaurida (E).
@@ -1704,6 +1738,7 @@ HI_{des} = \frac{\Delta P_{nom}}{\Delta P_{real}} \cdot \frac{PDP_{target}}{PDP_
 \end{equation}
 	
 	
+\clearpage
 \section{Distribuição e Armazenamento (Header e Vasos Pulmão)}
 
 Nesta etapa, o Gêmeo Digital gerencia a integração de múltiplos compressores operando em paralelo e a distribuição do ar comprimido para os diferentes setores da unidade offshore. O sistema utiliza uma lógica de controle escalonada para garantir que, em cenários de perda de geração ou vazamentos críticos, o suprimento para os sistemas de segurança seja preservado através do fechamento seletivo de ramais.
@@ -1807,6 +1842,7 @@ SPC_{fleet} = \frac{\sum_{i=1}^{N_{\text{frota}}} \dot{W}_{tot,i}}{\sum_{i=1}^{N
 
 
 
+\clearpage
 \section{Modelagem Digital Twin: IA, Exergia e Sustentabilidade}
 
 A modelagem do Gêmeo Digital consolida o fluxo de dados massivo proveniente da rede de automação e do PI System, integrando variáveis críticas de processo com algoritmos de Inteligência Artificial e termodinâmica de segunda lei. O sistema monitora a performance mecânica, a qualidade do ar e o impacto ambiental em tempo real.
@@ -1915,6 +1951,7 @@ A tabela abaixo conecta cada variável crítica de automação ao indicador de I
 
 
 
+\clearpage
 \section{Unificação do Modelo Matemático e Matriz Global de Variáveis}
 
 Este capítulo estabelece a síntese definitiva do Gêmeo Digital, integrando a totalidade das equações físicas, modelos estocásticos e algoritmos de inteligência artificial desenvolvidos ao longo deste estudo. A unificação abrange o fluxo completo de energia e massa, desde o relé de proteção no MCC até o header de distribuição final, consolidando a governança de dados para integridade mecânica, eficiência exergética e conformidade normativa.
@@ -2052,6 +2089,7 @@ A lógica de proteção e otimização do Gêmeo Digital baseia-se na correlaç�
 \vspace*{\fill}
 \clearpage
 
+\clearpage
 \section{Modelos de Solução, Acompanhamento e Redução de Dimensionalidade}
 
 Este capítulo descreve a engenharia de integração do Gêmeo Digital, detalhando como o vasto equacionamento multidisciplinar é fundido em um motor de inferência robusto e como a complexidade de dados é tratada para diagnósticos de alta fidelidade. A abordagem proposta transcende o monitoramento convencional ao integrar modelos de primeira ordem com algoritmos de aprendizado profundo.
@@ -2161,6 +2199,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 \boxed{\text{Min } J = \int (\dot{I} + \beta \dot{m}_{\text{CO}_2}) \, dt \quad \text{via PIML e Autoencoder}}
 \end{equation}
 
+	\clearpage
 	\section{Fundamentos Teóricos, Algoritmos e Metodologia do Gêmeo Digital}
 	
 	Este capítulo estabelece a arquitetura analítica e o rigor metodológico necessários para a implementação do Gêmeo Digital (DT). A abordagem integra a mecânica clássica, a termodinâmica avançada e o aprendizado de máquina para criar um sistema de suporte à decisão prescritiva em operações offshore.
@@ -2280,6 +2319,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 
 	
+	\clearpage
 	\section{Estimação de Estados via Filtro de Kalman Estendido (EKF)}
 
 	Este capítulo detalha o motor de estimação de estados não observáveis, fundamental para a percepção de variáveis internas do compressor que não possuem instrumentação direta. O filtro de Kalman foi publicado por Rudolf Kalman em 1960 como solução recursiva ótima para estimação linear sob ruído gaussiano \cite{kalman}; sua extensão a sistemas não lineares (EKF), usada aqui, tornou-se padrão em estimação de estado de processos físicos desde então \cite{simon}.
@@ -2331,6 +2371,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	\textbf{Diretriz Técnica Final:} O ciclo de predição-correção da Equação~\eqref{eq:s21-3} só produz estimativas confiáveis se as matrizes de covariância $Q$ e $\mathcal{R}$ refletirem a incerteza real do modelo físico e dos sensores de campo — valores de $Q$/$\mathcal{R}$ copiados de outra instalação sem recalibração são a causa mais comum de um EKF que diverge ou passa a ignorar as medições.
 
+	\clearpage
 	\section{Redução de Dimensionalidade via Autoencoder Variacional (VAE)}
 	
 	A redução de dimensionalidade via VAE permite a compressão de dados complexos em assinaturas de saúde simplificadas, facilitando a detecção precoce de anomalias.
@@ -2360,6 +2401,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	\textbf{Diretriz Técnica Final:} O peso $\beta$ na Equação~\eqref{eq:s22-1} controla diretamente a sensibilidade do resíduo da Equação~\eqref{eq:s22-2}: um $\beta$ alto demais organiza o espaço latente às custas da fidelidade de reconstrução, mascarando desvios reais; o Gêmeo Digital deve validar $E_{\text{rec}}$ contra falhas históricas conhecidas antes de confiar no limiar $\tau$ de disparo do diagnóstico.
 
+	\clearpage
 	\section{Aprendizado Informado pela Física (PIML)}
 
 	O aprendizado informado pela física garante que a inteligência artificial opere estritamente dentro dos limites impostos pelas leis termodinâmicas e mecânicas. A formulação de redes neurais informadas pela física (PINNs), que fundamenta o PIML aqui aplicado, foi sistematizada por Raissi, Perdikaris e Karniadakis em 2019 como forma de incorporar equações diferenciais diretamente na função de perda de redes neurais \cite{piml}, e consolidada como campo de pesquisa na revisão abrangente de Karniadakis e colaboradores \cite{piml2}.
@@ -2383,6 +2425,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	\textbf{Diretriz Técnica Final:} O peso $\lambda$ na Equação~\eqref{eq:s23-2} deve ser calibrado por validação cruzada, não fixado arbitrariamente — $\lambda$ excessivo faz a rede ignorar os dados reais em favor da física idealizada, enquanto $\lambda$ insuficiente permite predições que violam conservação de massa/energia mesmo com baixo erro nos dados de treino.
 
+	\clearpage
 	\section{Otimização e Controle: MPC e PSO}
 	
 	A camada de decisão e otimização utiliza algoritmos preditivos e heurísticos para maximizar a eficiência exergética e a vida útil dos componentes.
@@ -2413,6 +2456,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	\textbf{Diretriz Técnica Final:} MPC e PSO cumprem papéis complementares, não intercambiáveis: o MPC (Equação~\eqref{eq:s24-1}) resolve o controle em tempo real dentro das restrições de integridade, enquanto o PSO é reservado para sintonia de hiperparâmetros e busca de setpoints globais offline — usar PSO no laço de controle em tempo real introduz latência incompatível com a proteção mecânica do compressor.
 
+	\clearpage
 	\section{Diretrizes para o Desenvolvimento e Evolução do Gêmeo Digital}
 	
 	Este capítulo apresenta recomendações técnicas essenciais para futuros desenvolvedores, focando na robustez, escalabilidade e confiabilidade do sistema em ambientes operacionais offshore.
@@ -2468,6 +2512,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\appendix
 	\renewcommand{\thesection}{\Alph{section}}
 	
+	\clearpage
 	\section{Implementação Base e Ferramentas Padrão}
 	
 	Este anexo descreve a infraestrutura fundamental e a lógica de programação para a execução do Gêmeo Digital em ambiente de produção, utilizando bibliotecas de código aberto consagradas e integração com sistemas legados.
@@ -2547,6 +2592,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	\newpage
 	
+	\clearpage
 	\section{Implementação de Alta Performance e Physics-ML}
 	
 	Este anexo detalha o uso de frameworks de vanguarda para simulações de alta fidelidade, operadores neurais e visualização avançada em tempo real.

@@ -114,23 +114,29 @@ commits sem pedido explícito do autor.
 ## Diagramação — pendências e convenções (relatório de 26/07/2026)
 
 Em 26/07/2026 foi feita uma revisão completa de diagramação do PDF compilado (compilação limpa
-conferida, mais inspeção visual das 87 páginas via `pdftoppm`). O diagnóstico completo, com página/
-linha de cada achado e a correção LaTeX sugerida, está em `relatorio_diagramacao.md` na raiz do
-projeto — **leia esse arquivo antes de mexer em qualquer aspecto de layout** (quebra de página, capa,
-tabelas, links, cabeçalho). Nenhuma das correções abaixo foi aplicada ao `.tex` ainda; ficaram só
-diagnosticadas. Implemente mediante pedido explícito do autor, uma de cada vez, recompilando e
-conferindo via `pdftoppm` antes de considerar concluída (mesma prática já usada para figuras).
+conferida, mais inspeção visual das páginas via `pdftoppm`). O diagnóstico completo original, com
+página/linha de cada achado, está em `relatorio_diagramacao.md` na raiz do projeto. **Os itens 1, 2, 3
+e 5 do relatório já foram implementados** (ver abaixo); os demais (4, 6, 7, 8) seguem pendentes —
+implemente mediante pedido explícito do autor, uma de cada vez, recompilando e conferindo via
+`pdftoppm` antes de considerar concluída (mesma prática já usada para figuras).
 
-**Retrofit pendente (afeta conteúdo já existente):**
-- Links do `hyperref` sem `\hypersetup` → caixas vermelhas ao redor de toda referência/citação em
-  praticamente todas as páginas. Adicionar `\hypersetup{colorlinks=true, linkcolor=..., citecolor=...,
-  urlcolor=..., pdftitle=..., pdfauthor=...}` (ou `hidelinks` se o alvo for impressão P&B).
-- Nenhum `\clearpage`/`\newpage` antes da maioria dos 27 `\section` de capítulo → capítulos começam no
-  meio da página anterior, contradizendo o objetivo de capítulos autocontidos/referenciáveis
-  isoladamente (ver "Visão de longo prazo" acima). Inserir `\clearpage` antes de cada `\section` de
-  capítulo (os pontos já estão marcados no `.tex` pelos comentários `% --- Início do Capítulo N ---`).
-- Falta `fancyhdr`/cabeçalho corrente com o nome do capítulo atual — hoje só há número de página.
-- Falta `\usepackage{microtype}` — melhora justificação em todo o documento, adição de baixo risco.
+**Já implementado (26/07/2026):**
+- **Item 1 — links do hyperref**: adicionado `\hypersetup{colorlinks=true, linkcolor=black,
+  citecolor=black, urlcolor=black, pdftitle=..., pdfauthor=...}` no preâmbulo — sem mais caixas
+  vermelhas ao redor de `\ref`/`\eqref`/`\cite`.
+- **Item 2 — quebra de página por capítulo**: `\clearpage` inserido antes de cada um dos 27 `\section`
+  de capítulo (script Python de uma execução só, mecânico — ver histórico do commit). Documento passou
+  de 87 para 95 páginas (trade-off aceito, o mesmo já assumido por qualquer livro com `\chapter`).
+- **Item 3 — cabeçalho corrente**: `fancyhdr` configurado (`\pagestyle{fancy}`, `\sectionmark`
+  redefinido, `\fancyhead[L]{\nouppercase{\leftmark}}`, `\fancyhead[R]{\thepage}`). Exigiu
+  `headheight=14.5pt` na `\geometry{}` (senão fancyhdr emite warning). Páginas especiais (capa,
+  dedicatória, páginas de Parte) mantêm `\thispagestyle{empty}`, sem cabeçalho.
+- **Item 5 — microtype**: adicionado `\usepackage[expansion=false]{microtype}` logo após `fontenc`.
+  **Atenção**: expansion=true causa erro fatal de compilação neste documento ("font expansion: auto
+  expansion is only possible with scalable fonts") — as fontes usadas não são escaláveis o suficiente.
+  Manter `expansion=false` (só protrusion) se microtype for tocado no futuro.
+
+**Ainda pendente (itens 4, 6, 7, 8 do relatório):**
 - 11 das 14 tabelas (inclusive as duas de Nomenclatura) usam grade antiga (`|l|l|`, `\hline` em toda
   linha) em vez do estilo `booktabs` já carregado no preâmbulo e usado nas outras 3 — padronizar todas
   em `booktabs` (sem barras verticais).
