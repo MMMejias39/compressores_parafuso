@@ -1,0 +1,11 @@
+# Artefatos de compilação do LaTeX (regeráveis via pdflatex)
+*.aux
+*.log
+*.out
+*.toc
+*.nav
+*.snm
+
+# Ambiente Python e cache (regenerável via scripts/venv)
+scripts/venv/
+scripts/__pycache__/
