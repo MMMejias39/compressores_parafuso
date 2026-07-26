@@ -199,6 +199,27 @@ usa `pdfcrop` (do TeX Live) após salvar — mantenha-o instalado. O antigo cort
 esquemático (`fig_3_1_corte.pdf` / `fig_corte_pacote()`) foi substituído a pedido do
 autor, mas função e PDF foram mantidos caso se queira reutilizá-los.
 
+Há uma quarta figura na mesma família: `figuras/fig_2_3_conjunto3d.pdf` (Figura 2.3,
+Capítulo 2 — trem de compressão completo: motor → acoplamento → gearbox → estágio LP →
+intercooler → estágio HP → saída). Gerada por `fig_conjunto3d()`, que reaproveita a
+mesma varredura helicoidal de `fig_parafuso3d()` via uma versão parametrizada,
+`_par_rotores_quads(x0, ylat, zlat, escala, ...)`, chamada duas vezes (LP maior, HP
+menor) — mesmo crédito CC BY-SA do perfil de rotor se aplica aqui também. Motor,
+gearbox, eixos e tubulação de processo são primitivas 3D simples novas
+(`_caixa_quads()` para paralelepípedos, `_cil_quads(eixo, ...)` para cilindros ao
+longo de um dos 3 eixos). **Duas armadilhas para quem for mexer nessas funções:**
+1. O perfil do SVG está em unidades de pixel (raio do rotor macho, `R_M`, da ordem de
+   1300) — `_par_rotores_quads()` já normaliza dividindo por `R_M` antes de aplicar
+   `escala`, de modo que `escala` passa a significar diretamente o raio do rotor em
+   unidades da cena (mesma unidade do motor/gearbox). Se copiar essa lógica para uma
+   figura nova, não esqueça dessa normalização — sem ela, o rotor fica ~1000x maior
+   que todo o resto da cena e engole a figura inteira (foi exatamente esse o primeiro
+   bug ao criar a Fig. 2.3).
+2. Em `_cil_quads(eixo, lo, hi, c1, c2, ...)`, a convenção de `(c1, c2)` segue a ordem
+   cíclica x→y→z→x das duas coordenadas *que sobram* após remover o eixo do cilindro
+   — ou seja, para `eixo="x"`: `(c1,c2)=(y,z)`; para `eixo="y"`: `(c1,c2)=(z,x)` (não
+   `(x,z)` — é fácil errar essa, já aconteceu); para `eixo="z"`: `(c1,c2)=(x,y)`.
+
 O script `gen_figuras.py` já está protegido: as funções `fig_rotores()` e `fig_psa()`
 existem no arquivo (são rascunhos antigos em matplotlib, anteriores a eu encontrar as
 imagens reais no Commons) mas **não são chamadas** no bloco `if __name__ == "__main__":`
@@ -381,14 +402,38 @@ pedido do autor:
 ele existe só para lubrificar/resfriar a gearbox e os mancais. Não reintroduza
 linguagem de "injeção de óleo" ou "separador ar/óleo" no caminho do ar.
 
+## Convenção de commits: sem trailer de coautoria (26/07/2026)
+
+O autor pediu explicitamente para remover a linha `Co-Authored-By: Claude
+Sonnet 5 <noreply@anthropic.com>` de **todos** os commits do repositório —
+inclusive os 4 commits anteriores a esta sessão, que já vinham com essa linha
+(comportamento padrão do Claude Code, não pedido pelo autor). O histórico
+inteiro foi reescrito via `git filter-branch --msg-filter` para remover a
+linha das 10 mensagens de commit então existentes, preservando o conteúdo
+(árvores idênticas, só hash/mensagem mudaram); a tag `v1.0` foi recriada
+apontando para o novo hash do commit inicial; os backups automáticos do
+`filter-branch` (`refs/original/*`) foram removidos, o reflog expirado e o
+repositório passou por `git gc --aggressive --prune=now`. Não havia remoto
+configurado, então a reescrita foi segura (sem necessidade de force-push).
+
+**Regra permanente**: nunca inclua `Co-Authored-By: Claude...` (ou qualquer
+outra menção de autoria/coautoria de IA) em mensagens de commit deste
+repositório, mesmo que seja o comportamento padrão do Claude Code. O autor
+foi explícito: não é uma questão de crédito técnico, é não associar autoria
+de IA a um livro que é dele. Vale para qualquer sessão futura, indefinidamente.
+
 ## Estado atual (última sessão)
 
-Documento compila limpo, 101 páginas (166 equações numeradas ao todo), sem
-erros/referências indefinidas/labels duplicados. Repositório git inicializado
-(ver "Visão de longo prazo" acima), tag `v1.0` no commit inicial; desde então
-quatro commits nesta sessão (revisão de numeração de equações; cobertura de
-desbalanço de fase; atualização deste arquivo; expansão do Capítulo 3 e
-correção do Capítulo 12) — use `git log` para o histórico exato.
+Documento compila limpo, 102 páginas (166 equações numeradas, 16 figuras ao
+todo), sem erros/referências indefinidas/labels duplicados. Repositório git
+inicializado (ver "Visão de longo prazo" acima); histórico completo
+reescrito em 26/07/2026 para remover trailers de coautoria (ver seção
+acima) — os hashes de commit mudaram desde qualquer anotação anterior a essa
+reescrita, sempre confira com `git log` em vez de citar um hash de memória.
+Tag `v1.0` no commit inicial (recriada). Sete commits nesta sessão até a
+reescrita (revisão de numeração de equações; cobertura de desbalanço de
+fase; duas atualizações deste arquivo; expansão do Capítulo 3 e correção do
+Capítulo 12; nova Figura 2.3 em 3D) — use `git log` para o histórico exato.
 
 Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Bibliografia (45 referências) verificada uma a uma contra fontes reais; 3 tinham
@@ -419,6 +464,11 @@ Principais mudanças de 26/07/2026 (sessão longa, dia único):
   corrigido para eliminar linguagem de compressor oil-flooded ("injeção de
   óleo", separador ar/óleo no caminho do ar) — ver "Capítulo 3 expandido e
   inconsistência oil-free" acima.
+- Nova Figura 2.3 (Capítulo 2): render 3D do trem de compressão completo
+  (motor → gearbox → estágio LP → intercooler → estágio HP → saída), a
+  pedido do autor (preferência já registrada por figuras 3D/realistas em vez
+  de esquemas 2D) — ver "Figuras" acima para as funções novas em
+  `gen_figuras.py` e as duas armadilhas de quem for reutilizá-las.
 
 Não há tarefas pendentes conhecidas.
 
