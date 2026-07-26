@@ -92,11 +92,17 @@ commits sem pedido explícito do autor.
 - **Estrutura em duas Partes**: o livro é dividido em **Parte I — O Compressor e
   Seus Elementos** (Capítulos 2 a 18: física, engenharia e mecanismos de falha de
   cada componente) e **Parte II — Metodologia do Gêmeo Digital e Equacionamento
-  Integrado** (Capítulos 19 a 25 + Anexos de Implementação: EKF, VAE, PIML, MPC,
-  PSO e a integração de tudo num motor de cálculo único). O Capítulo 1 (Introdução)
-  fica antes da Parte I, como preâmbulo. A Seção 1.3 do próprio livro também
-  descreve essa divisão — mantenha as duas em sincronia se o capítulo final de
-  alguma das partes mudar.
+  Integrado** (Capítulos 19 a 27: EKF, VAE, PIML, MPC, PSO, a integração de tudo
+  num motor de cálculo único, e a implementação de referência/frameworks). Os
+  Capítulos 26 e 27 (implementação) **não são Anexos** — em 26/07/2026 o `\appendix`
+  que os separava com numeração A/B foi removido a pedido do autor: como o livro já
+  está dividido em Parte I/II, não fazia sentido também isolar esses dois capítulos
+  como apêndices lettered dentro da Parte II. Eles são capítulos numerados normais,
+  na sequência (a numeração de equações `eq:s26-*`/`eq:s27-*` já pressupunha isso —
+  nenhuma equação precisou ser renomeada). O Capítulo 1 (Introdução) fica antes da
+  Parte I, como preâmbulo. A Seção 1.3 do próprio livro também descreve essa
+  divisão — mantenha as duas em sincronia se o capítulo final de alguma das partes
+  mudar.
   **Implementação técnica — não use `\part{}` puro:** o comando `\part{}` padrão da
   classe `article` neste documento renderiza o título **desalinhado à esquerda** em
   vez de centralizado (causa não identificada — possivelmente interação com
@@ -111,53 +117,65 @@ commits sem pedido explícito do autor.
   Capítulo 19) como modelo para qualquer Parte futura (ex.: um 3º volume da
   enciclopédia).
 
-## Diagramação — pendências e convenções (relatório de 26/07/2026)
+## Diagramação — convenções (relatório de 26/07/2026, todos os itens implementados)
 
 Em 26/07/2026 foi feita uma revisão completa de diagramação do PDF compilado (compilação limpa
-conferida, mais inspeção visual das páginas via `pdftoppm`). O diagnóstico completo original, com
-página/linha de cada achado, está em `relatorio_diagramacao.md` na raiz do projeto. **Os itens 1, 2, 3
-e 5 do relatório já foram implementados** (ver abaixo); os demais (4, 6, 7, 8) seguem pendentes —
-implemente mediante pedido explícito do autor, uma de cada vez, recompilando e conferindo via
-`pdftoppm` antes de considerar concluída (mesma prática já usada para figuras).
+conferida, mais inspeção visual das páginas via `pdftoppm`). O diagnóstico original está em
+`relatorio_diagramacao.md` na raiz do projeto. **Todos os 8 itens do relatório foram implementados**
+no mesmo dia — o arquivo fica só como referência histórica do diagnóstico, não há mais pendência de
+diagramação em aberto.
 
-**Já implementado (26/07/2026):**
-- **Item 1 — links do hyperref**: adicionado `\hypersetup{colorlinks=true, linkcolor=black,
-  citecolor=black, urlcolor=black, pdftitle=..., pdfauthor=...}` no preâmbulo — sem mais caixas
-  vermelhas ao redor de `\ref`/`\eqref`/`\cite`.
-- **Item 2 — quebra de página por capítulo**: `\clearpage` inserido antes de cada um dos 27 `\section`
-  de capítulo (script Python de uma execução só, mecânico — ver histórico do commit). Documento passou
-  de 87 para 95 páginas (trade-off aceito, o mesmo já assumido por qualquer livro com `\chapter`).
-- **Item 3 — cabeçalho corrente**: `fancyhdr` configurado (`\pagestyle{fancy}`, `\sectionmark`
-  redefinido, `\fancyhead[L]{\nouppercase{\leftmark}}`, `\fancyhead[R]{\thepage}`). Exigiu
-  `headheight=14.5pt` na `\geometry{}` (senão fancyhdr emite warning). Páginas especiais (capa,
-  dedicatória, páginas de Parte) mantêm `\thispagestyle{empty}`, sem cabeçalho.
-- **Item 5 — microtype**: adicionado `\usepackage[expansion=false]{microtype}` logo após `fontenc`.
-  **Atenção**: expansion=true causa erro fatal de compilação neste documento ("font expansion: auto
-  expansion is only possible with scalable fonts") — as fontes usadas não são escaláveis o suficiente.
-  Manter `expansion=false` (só protrusion) se microtype for tocado no futuro.
+**O que foi feito:**
+- **Item 1 — links do hyperref**: `\hypersetup{colorlinks=true, linkcolor=black, citecolor=black,
+  urlcolor=black, pdftitle=..., pdfauthor=...}` no preâmbulo — sem mais caixas vermelhas ao redor de
+  `\ref`/`\eqref`/`\cite`.
+- **Item 2 — quebra de página por capítulo**: `\clearpage` antes de cada um dos 27 `\section` de
+  capítulo. Documento foi de 87 para 95 páginas nesse passo (trade-off aceito).
+- **Item 3 — cabeçalho corrente**: `fancyhdr` (`\pagestyle{fancy}`, `\sectionmark` redefinido,
+  `\fancyhead[L]{\nouppercase{\leftmark}}`, `\fancyhead[R]{\thepage}`). Exigiu `headheight=14.5pt` na
+  `\geometry{}`. Páginas especiais (capa, dedicatória, páginas de Parte) mantêm
+  `\thispagestyle{empty}`, sem cabeçalho.
+- **Item 4 — tabelas em `booktabs`**: as 14 tabelas antigas (`|l|l|`, `\hline` em toda linha) e as 7
+  tabelas de Nomenclatura (`longtable`) foram convertidas para `\toprule`/`\midrule`/`\bottomrule`, sem
+  barras verticais. Colunas largas de texto corrido usam
+  `>{\raggedright\arraybackslash}p{Xcm}` em vez de `p{Xcm}` justificado. Havia ainda uma
+  pseudo-tabela em `$$\begin{array}{|l|l|l|}...$$` (Capítulo 27, "Resumo da Stack de Vanguarda") fora
+  do escopo original das 14 — convertida também, para uma `tabular` booktabs normal fora de modo
+  matemático (o uso de `array` em modo matemático só para desenhar grade era impróprio).
+- **Item 5 — microtype**: `\usepackage[expansion=false]{microtype}` logo após `fontenc`. **Atenção**:
+  `expansion=true` causa erro fatal de compilação neste documento ("font expansion: auto expansion is
+  only possible with scalable fonts") — as fontes usadas não são escaláveis o suficiente. Manter
+  `expansion=false` se microtype for tocado no futuro.
+- **Item 6 — capa**: adicionados rótulo de coleção/volume (`\colecaotitulo`, `\volumeatual`, `\revdata`
+  — macros definidas no preâmbulo, reutilizáveis por um Volume II futuro), regras horizontais acima/
+  abaixo do bloco de título, e a Figura 3.1 (render 3D dos rotores) em miniatura (`width=0.42\textwidth`
+  — largura própria da capa, não faz parte do sistema de larguras do item 8).
+- **Item 7 — identidade visual dos capítulos**: `titlesec` redefine `\section` para exibir
+  `\chapterword~\thesection` (rótulo "Capítulo N") + regra fina abaixo do título. `\chapterword` é uma
+  macro (`\newcommand{\chapterword}{Capítulo}`, no preâmbulo) — existe justamente para poder virar
+  "Anexo" ou outra palavra num capítulo futuro que precise, via `\renewcommand`, sem tocar no
+  `\titleformat`. **Não há mais `\appendix`/numeração A-B no documento** (removido em 26/07/2026, ver
+  "Estrutura em duas Partes" acima) — os Capítulos 26 e 27 são capítulos numerados normais, com
+  `\chapterword` no valor padrão "Capítulo" como todos os outros. `\section*` (Prefácio, Nomenclatura)
+  não é afetado — continua exibindo só o título em negrito, sem rótulo nem regra (comportamento padrão
+  do `titlesec`, confirmado visualmente).
+- **Item 8 — larguras de figura padronizadas em 3 categorias** (das 15 figuras do corpo do livro,
+  fora o thumbnail da capa que é um caso à parte): `0.60\textwidth` para gráficos/curvas técnicas
+  (a maioria — Vogel, Basquin, EKF, LMTD, PSAT, etc.), `0.75\textwidth` para diagramas com legendas/
+  caixas de texto (arquitetura do sistema, gearbox, Campbell, PSA) e `0.80\textwidth` para a única
+  figura composta/complexa do livro (Figura 3.1, render 3D). Ao adicionar uma figura nova, classifique-a
+  numa dessas 3 categorias em vez de escolher uma largura ad-hoc.
 
-**Ainda pendente (itens 4, 6, 7, 8 do relatório):**
-- 11 das 14 tabelas (inclusive as duas de Nomenclatura) usam grade antiga (`|l|l|`, `\hline` em toda
-  linha) em vez do estilo `booktabs` já carregado no preâmbulo e usado nas outras 3 — padronizar todas
-  em `booktabs` (sem barras verticais).
-- Capa (`titlepage`) muito austera para a extensão da obra e para o plano de virar "Volume I" de uma
-  coleção versionada (ver "Visão de longo prazo") — não tem regra, cor, elemento gráfico nem rótulo de
-  volume/versão. Ver relatório para sugestão mínima (regra horizontal + rótulo de volume/revisão,
-  aproveitando a Figura 3.1 em miniatura).
-- Capítulos sem identidade visual além do tamanho de fonte (são `\section`, não `\chapter` — a classe é
-  `article`) — opcional, via `titlesec`.
-- Larguras de figura (`0.55\textwidth` a `0.85\textwidth`) sem sistema — opcional, convergir para 2-3
-  larguras-padrão por tipo de figura.
-
-**Convenções a seguir a partir de agora em conteúdo novo** (para não acumular mais dívida do mesmo tipo
-enquanto o retrofit acima não é feito):
-- Todo `\section` novo de capítulo deve vir precedido de `\clearpage`.
+**Convenções permanentes para conteúdo novo** (para não reabrir a mesma dívida técnica):
+- Todo `\section` novo de capítulo deve vir precedido de `\clearpage` (o rótulo "Capítulo N" do
+  `titlesec` é automático, não precisa repetir manualmente).
 - Toda tabela nova deve usar `booktabs` (`\toprule`/`\midrule`/`\bottomrule`, sem barras verticais),
-  nunca o estilo de grade antigo — mesmo que o retrofit das tabelas existentes ainda não tenha sido
-  feito.
+  nunca `\hline`/grade antiga. Nunca usar `\begin{array}` em modo matemático só para desenhar uma
+  grade de texto — isso é uma tabela, use `tabular`.
 - Colunas de tabela com texto corrido (tipo as de Nomenclatura) devem usar
-  `>{\raggedright\arraybackslash}p{Xcm}` em vez de `p{Xcm}` justificado, para evitar espaçamento
-  irregular em colunas estreitas.
+  `>{\raggedright\arraybackslash}p{Xcm}` em vez de `p{Xcm}` justificado.
+- Figura nova: escolher uma das 3 larguras-padrão do item 8 acima conforme o tipo de conteúdo, não um
+  valor ad-hoc.
 
 ## Figuras — como regenerar sem quebrar nada
 
@@ -250,49 +268,32 @@ implementação — que já eram usados no texto sem constar na bibliografia).
 
 ## Estado atual (última sessão)
 
-Documento compila limpo, 85 páginas, sem erros/referências indefinidas/labels
-duplicados. Alterações de 26/07/2026: (a) bibliografia completada a partir de
-`documentos de apoio/referências iniciais.docx` (ver seção acima); (b) a Figura 3.1
-deixou de ser o corte
-esquemático 2D (o autor não gostou do resultado) e passou a ser um render 3D do par
-de rotores engrenados, gerado por `fig_parafuso3d()` em `gen_figuras.py` a partir do
-perfil da Figura 2.2 (ver seção "Figuras" acima). Parágrafo introdutório e caption da
-Figura 3.1 foram reescritos de acordo. Verificação visual feita via `pdftoppm`
-(prática usada consistentemente neste projeto para checar layout antes de considerar
-uma figura pronta). (c) Criada `apresentacao_compressores.tex`/`.pdf`, apresentação
-Beamer de 21 slides (tema Metropolis, 16:9) resumindo o livro para uso em reuniões
-(ver seção "Arquivos e pastas" acima) — compila limpo, sem overfull visível, conferida
-via `pdftoppm` slide a slide. Não há tarefas pendentes conhecidas.
+Documento compila limpo, 97 páginas, sem erros/referências indefinidas/labels
+duplicados. Repositório git inicializado (ver "Visão de longo prazo" acima),
+tag `v1.0` no commit inicial — use `git log` para o histórico exato.
+
+Principais mudanças de 26/07/2026 (sessão longa, dia único):
+- Bibliografia (45 referências) verificada uma a uma contra fontes reais; 3 tinham
+  título fabricado/não verificável e foram corrigidas (`api684`, `dompc`, `lysholm`
+  — ver "Veracidade de referências e fontes" acima para a regra permanente).
+- Figura 3.1 deixou de ser um corte esquemático 2D e passou a ser o render 3D do
+  par de rotores (`fig_parafuso3d()` em `gen_figuras.py`, ver seção "Figuras").
+- Livro dividido em Parte I (Capítulos 2-18) e Parte II (Capítulos 19-27), cada uma
+  com página dedicada centralizada (ver "Estrutura em duas Partes" acima).
+- Diagramação completa — todos os 8 itens do `relatorio_diagramacao.md`
+  implementados (ver "Diagramação — convenções" acima): hyperref sem caixas
+  vermelhas, quebra de página por capítulo, cabeçalho corrente, tabelas em
+  booktabs, microtype, capa com rótulo de volume/revisão, identidade visual
+  "Capítulo N" via `titlesec`, larguras de figura padronizadas em 3 categorias.
+- Os antigos "Anexo A"/"Anexo B" (`\appendix`) foram removidos — os Capítulos 26 e
+  27 (implementação) agora são capítulos numerados normais dentro da Parte II, já
+  que a divisão em Partes tornou a separação por Anexo redundante (a pedido do
+  autor).
+- Criada `apresentacao_compressores.tex`/`.pdf` (Beamer, 21 slides, tema
+  Metropolis) resumindo o livro para uso em reuniões (ver "Arquivos e pastas").
+
+Não há tarefas pendentes conhecidas.
 
 Observação: há 4 JPEGs soltos em `figuras/` baixados pelo autor como referência
 visual (thumbnails de baixa resolução, licença não verificada) — **não** usá-los no
 documento; serviram só de inspiração para o render 3D da Figura 3.1.
-
-(d) Todas as 45 referências do `thebibliography` foram verificadas uma a uma contra
-fontes reais (normas, editoras, periódicos, DOIs). 3 tinham título fabricado ou não
-verificável e foram corrigidas: `api684` (título real da norma API RP 684/TR 684-1),
-`dompc` (título real do artigo, Control Engineering Practice 140:105676, 2023) e
-`lysholm` (trocado o "livro" inexistente pela patente real e verificável US
-2.111.568). `fleming` e `bently` foram completados (ano/volume e coautor faltantes).
-Ver seção "Veracidade de referências e fontes" acima para a regra permanente daqui
-em diante.
-
-(e) O livro foi rediagramado em duas Partes explícitas via `\part{}` (article
-class — não afeta a numeração de `\section`, que continua contínua 1-25 + Anexos
-A/B): **Parte I — O Compressor e Seus Elementos** (Capítulos 2 a 18, inserida logo
-antes do Capítulo 2) e **Parte II — Metodologia do Gêmeo Digital e Equacionamento
-Integrado** (Capítulos 19 a 25 + Anexos de Implementação, inserida logo após a
-Equação~(18.6) que fecha o Capítulo 18). O Capítulo 1 (Introdução) fica antes da
-Parte I, como preâmbulo. O parágrafo da Seção 1.3 ("Estrutura do Documento e
-Abordagem Metodológica") que já descrevia essas duas metades tinha faixas de
-capítulo desatualizadas ("2 a 14" / "15 a 24", de uma versão anterior do livro com
-menos capítulos) — foi corrigido para "2 a 18" / "19 a 25" ao mesmo tempo.
-
-(f) Revisão completa de diagramação (layout) do PDF, com inspeção visual das 87
-páginas via `pdftoppm`. Diagnóstico salvo em `relatorio_diagramacao.md` e resumido
-na seção "Diagramação — pendências e convenções" acima. Nenhuma correção foi
-aplicada ao `.tex` nesta sessão — ficou só o diagnóstico e as convenções para
-conteúdo novo (quebra de página por capítulo, tabelas em `booktabs`). O retrofit do
-conteúdo já existente (hyperref, cabeçalho corrente, microtype, tabelas antigas,
-capa) é uma tarefa pendente conhecida, a ser feita mediante pedido do autor — ver
-seção acima para a lista priorizada.

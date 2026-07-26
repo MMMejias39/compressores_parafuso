@@ -15,6 +15,7 @@
 \usepackage{booktabs}
 \usepackage{hyperref}
 \usepackage{fancyhdr}
+\usepackage{titlesec}
 \usepackage{tabularx}
 \usepackage{longtable}
 
@@ -40,6 +41,18 @@
 \fancyhead[R]{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 
+% --- Identificação de volume/revisão (coleção versionada, ver CONTEXTO.md) ---
+\newcommand{\colecaotitulo}{Enciclopédia de Máquinas Rotodinâmicas}
+\newcommand{\volumeatual}{Volume I}
+\newcommand{\revdata}{Rev. 26/07/2026}
+
+% --- Identidade visual dos capítulos (\section = capítulo nesta classe article) ---
+\newcommand{\chapterword}{Capítulo}
+\titleformat{\section}
+	{\normalfont\Large\bfseries}
+	{\chapterword~\thesection}{1em}{}
+	[\vspace{-0.5em}\rule{\textwidth}{0.4pt}]
+
 
 \begin{document}
 
@@ -52,14 +65,20 @@
 	% --- CAPA ---
 	\begin{titlepage}
 		\centering
-		\vspace*{2cm}
+		\vspace*{1.5cm}
+		{\large \textsc{\colecaotitulo\ --- \volumeatual}} \\[1cm]
+		\rule{\textwidth}{0.4pt} \\[0.8cm]
 		{\Huge \textbf{Gêmeo Digital de Sistemas de Compressão Offshore}} \\[0.5cm]
-		{\Large \textbf{Diretrizes Técnicas, Modelagem e Implementação}} \\[4cm]
-		
+		{\Large \textbf{Diretrizes Técnicas, Modelagem e Implementação}} \\[0.8cm]
+		\rule{\textwidth}{0.4pt} \\[1.5cm]
+
+		\includegraphics[width=0.42\textwidth]{figuras/fig_3_1_parafuso3d.pdf} \\[1.5cm]
+
 		\vfill
 		{\large \textbf{Autor: Engenheiro Marcelo Moreira Mejias, M.Sc.}} \\[0.5cm]
-	
-		{\large \today}
+
+		{\large \today} \\[0.3cm]
+		{\normalsize \revdata}
 	\end{titlepage}
 	
 	% --- DEDICATÓRIA ---
@@ -109,129 +128,129 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 \renewcommand{\arraystretch}{1.15}
 
 \subsection*{Constantes e Grandezas Termodinâmicas Gerais}
-\begin{longtable}{|p{2.0cm}|p{6.1cm}|p{2.1cm}|p{4.2cm}|}
-	\hline
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \hline
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{6.1cm} >{\raggedright\arraybackslash}p{2.1cm} >{\raggedright\arraybackslash}p{4.2cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
 	\endhead
-	$P$ & Pressão & Pa, bar & Todos \\ \hline
-	$T$ & Temperatura & K, $^{\circ}$C & Todos \\ \hline
-	$\rho$ & Massa específica (densidade) & kg\,m$^{-3}$ & Termofluídica \\ \hline
-	$v$ & Velocidade do escoamento & m\,s$^{-1}$ & Perda de carga, filtros \\ \hline
-	$\dot{m}$ & Vazão mássica & kg\,s$^{-1}$ & Todos \\ \hline
-	$\dot{V}$ & Vazão volumétrica & m$^3$\,s$^{-1}$ & Todos \\ \hline
-	$\dot{W}$ & Potência (trabalho por unidade de tempo) & W, kW & Todos \\ \hline
-	$\dot{Q}$ & Taxa de transferência de calor & W & Trocadores \\ \hline
-	$n$ & Índice politrópico do processo de compressão & adimensional & Cap. 5, 9, 11 \\ \hline
-	$R$ & Constante do gás (ar) & J\,kg$^{-1}$\,K$^{-1}$ & Todos \\ \hline
-	$\gamma$ & Razão de calores específicos ($c_p/c_v$) do ar & adimensional ($\approx 1.4$) & Termofluídica \\ \hline
-	$c_p$ & Calor específico a pressão constante & J\,kg$^{-1}$\,K$^{-1}$ & Termofluídica \\ \hline
-	$\eta$ & Eficiência (com subscrito indicando qual: $\eta_{vol}$, $\eta_{is}$, $\eta_{mec}$, etc.) & adimensional & Todos \\ \hline
-	$\Pi$ & Razão de pressão do estágio ($P_2/P_1$) & adimensional & Cap. 9, 11 \\ \hline
-	$\omega$ & Velocidade angular do rotor/eixo & rad\,s$^{-1}$ & Todos \\ \hline
+	$P$ & Pressão & Pa, bar & Todos \\
+	$T$ & Temperatura & K, $^{\circ}$C & Todos \\
+	$\rho$ & Massa específica (densidade) & kg\,m$^{-3}$ & Termofluídica \\
+	$v$ & Velocidade do escoamento & m\,s$^{-1}$ & Perda de carga, filtros \\
+	$\dot{m}$ & Vazão mássica & kg\,s$^{-1}$ & Todos \\
+	$\dot{V}$ & Vazão volumétrica & m$^3$\,s$^{-1}$ & Todos \\
+	$\dot{W}$ & Potência (trabalho por unidade de tempo) & W, kW & Todos \\
+	$\dot{Q}$ & Taxa de transferência de calor & W & Trocadores \\
+	$n$ & Índice politrópico do processo de compressão & adimensional & Cap. 5, 9, 11 \\
+	$R$ & Constante do gás (ar) & J\,kg$^{-1}$\,K$^{-1}$ & Todos \\
+	$\gamma$ & Razão de calores específicos ($c_p/c_v$) do ar & adimensional ($\approx 1.4$) & Termofluídica \\
+	$c_p$ & Calor específico a pressão constante & J\,kg$^{-1}$\,K$^{-1}$ & Termofluídica \\
+	$\eta$ & Eficiência (com subscrito indicando qual: $\eta_{vol}$, $\eta_{is}$, $\eta_{mec}$, etc.) & adimensional & Todos \\
+	$\Pi$ & Razão de pressão do estágio ($P_2/P_1$) & adimensional & Cap. 9, 11 \\
+	$\omega$ & Velocidade angular do rotor/eixo & rad\,s$^{-1}$ & Todos \\ \bottomrule
 \end{longtable}
 
 \subsection*{Geometria e Física do Compressor de Parafuso}
-\begin{longtable}{|p{2.0cm}|p{6.1cm}|p{2.1cm}|p{4.2cm}|}
-	\hline
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \hline
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{6.1cm} >{\raggedright\arraybackslash}p{2.1cm} >{\raggedright\arraybackslash}p{4.2cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
 	\endhead
-	$V_i$ & Razão volumétrica interna do rotor ($V_1/V_2$), fixa por projeto & adimensional & Cap. 5 \\ \hline
-	$\pi_i$ & Razão de pressão interna ideal ($V_i^{\,n}$) & adimensional & Cap. 5 \\ \hline
-	$V_{\text{disp}}$ & Volume deslocado pelo rotor por rotação (definido pela geometria do perfil helicoidal) & m$^3$ & Cap. 3, 13 \\ \hline
-	$\delta$ & Folga radial ou de flanco entre rotores/carcaça & m, $\mu$m & Cap. 9, 11 \\ \hline
-	$A_{\text{leak}}$ & Área de fuga total entre câmaras de pressões distintas & m$^2$ & Cap. 9 \\ \hline
-	$Z$ & Número de lóbulos/dentes (sempre com subscrito: $Z_{\text{bull}}$, $Z_{\text{macho}}$, etc.) & adimensional & Cap. 6, 8, 9 \\ \hline
-	$GMF$ & Frequência de engrenamento (\textit{Gear Mesh Frequency}) & Hz & Cap. 6, 8 \\ \hline
-	$f_{bp}$ & Frequência de passagem dos lóbulos & Hz & Cap. 9, header \\ \hline
+	$V_i$ & Razão volumétrica interna do rotor ($V_1/V_2$), fixa por projeto & adimensional & Cap. 5 \\
+	$\pi_i$ & Razão de pressão interna ideal ($V_i^{\,n}$) & adimensional & Cap. 5 \\
+	$V_{\text{disp}}$ & Volume deslocado pelo rotor por rotação (definido pela geometria do perfil helicoidal) & m$^3$ & Cap. 3, 13 \\
+	$\delta$ & Folga radial ou de flanco entre rotores/carcaça & m, $\mu$m & Cap. 9, 11 \\
+	$A_{\text{leak}}$ & Área de fuga total entre câmaras de pressões distintas & m$^2$ & Cap. 9 \\
+	$Z$ & Número de lóbulos/dentes (sempre com subscrito: $Z_{\text{bull}}$, $Z_{\text{macho}}$, etc.) & adimensional & Cap. 6, 8, 9 \\
+	$GMF$ & Frequência de engrenamento (\textit{Gear Mesh Frequency}) & Hz & Cap. 6, 8 \\
+	$f_{bp}$ & Frequência de passagem dos lóbulos & Hz & Cap. 9, header \\ \bottomrule
 \end{longtable}
 
 \subsection*{Elétrica e Acionamento}
-\begin{longtable}{|p{2.0cm}|p{6.1cm}|p{2.1cm}|p{4.2cm}|}
-	\hline
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \hline
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{6.1cm} >{\raggedright\arraybackslash}p{2.1cm} >{\raggedright\arraybackslash}p{4.2cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
 	\endhead
-	$I$ & Corrente elétrica & A & Cap. 4 \\ \hline
-	$V_L$ & Tensão de linha & V & Cap. 4, 19 \\ \hline
-	$f$ & Frequência elétrica de alimentação/VSD & Hz & Cap. 4 \\ \hline
-	$s$ & Escorregamento do motor de indução & adimensional & Cap. 4 \\ \hline
-	$N_{mot}$\dag & Rotação medida do motor (RPM) & RPM & Cap. 4, 6, 8 \\ \hline
-	$p$ & Número de polos do motor & adimensional & Cap. 4 \\ \hline
-	$\tau$ & Torque (sempre com subscrito indicando o eixo/componente) & N\,m & Cap. 4, 6, 8 \\ \hline
-	$\text{THD}_i$ & Distorção harmônica total de corrente & \% & Cap. 3, 4 \\ \hline
-	$j$\dag & Ordem do harmônico na equação de bandas laterais & adimensional & Cap. 4 \\ \hline
-	$k_{\text{relé}}$\dag & Constante da curva de disparo do relé (IEC 60255) & adimensional & Cap. 4 \\ \hline
+	$I$ & Corrente elétrica & A & Cap. 4 \\
+	$V_L$ & Tensão de linha & V & Cap. 4, 19 \\
+	$f$ & Frequência elétrica de alimentação/VSD & Hz & Cap. 4 \\
+	$s$ & Escorregamento do motor de indução & adimensional & Cap. 4 \\
+	$N_{mot}$\dag & Rotação medida do motor (RPM) & RPM & Cap. 4, 6, 8 \\
+	$p$ & Número de polos do motor & adimensional & Cap. 4 \\
+	$\tau$ & Torque (sempre com subscrito indicando o eixo/componente) & N\,m & Cap. 4, 6, 8 \\
+	$\text{THD}_i$ & Distorção harmônica total de corrente & \% & Cap. 3, 4 \\
+	$j$\dag & Ordem do harmônico na equação de bandas laterais & adimensional & Cap. 4 \\
+	$k_{\text{relé}}$\dag & Constante da curva de disparo do relé (IEC 60255) & adimensional & Cap. 4 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Vibração, Fadiga e Rotordinâmica}
-\begin{longtable}{|p{2.0cm}|p{6.1cm}|p{2.1cm}|p{4.2cm}|}
-	\hline
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \hline
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{6.1cm} >{\raggedright\arraybackslash}p{2.1cm} >{\raggedright\arraybackslash}p{4.2cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
 	\endhead
-	$\sigma_b$ & Tensão de flexão na raiz do dente (modelo de Lewis) & MPa & Cap. 8, 19, 20 \\ \hline
-	$b$ & Largura de face do dente da engrenagem (equação de Lewis) & mm & Cap. 8 \\ \hline
-	$b_f$\dag & Expoente da curva S-N de Basquin (Regra de Miner) & adimensional & Cap. 20 \\ \hline
-	$D$ & Dano acumulado por fadiga (Regra de Palmgren-Miner), $D=1$ na falha & adimensional & Cap. 20 \\ \hline
-	$L_{10h}$ & Vida nominal do rolamento com 90\% de confiabilidade & horas & Cap. 8, 11 \\ \hline
-	$N_{\text{rot}}$\dag & Rotação do eixo do rolamento (RPM) & RPM & Cap. 8 \\ \hline
-	$\omega_{cr}$ & Velocidade crítica (rotordinâmica) & rad\,s$^{-1}$ & Cap. 8 \\ \hline
-	$v_{\text{rms}}$ & Severidade de vibração global (ISO 10816 \cite{iso10816}) & mm\,s$^{-1}$ & Cap. 19 \\ \hline
+	$\sigma_b$ & Tensão de flexão na raiz do dente (modelo de Lewis) & MPa & Cap. 8, 19, 20 \\
+	$b$ & Largura de face do dente da engrenagem (equação de Lewis) & mm & Cap. 8 \\
+	$b_f$\dag & Expoente da curva S-N de Basquin (Regra de Miner) & adimensional & Cap. 20 \\
+	$D$ & Dano acumulado por fadiga (Regra de Palmgren-Miner), $D=1$ na falha & adimensional & Cap. 20 \\
+	$L_{10h}$ & Vida nominal do rolamento com 90\% de confiabilidade & horas & Cap. 8, 11 \\
+	$N_{\text{rot}}$\dag & Rotação do eixo do rolamento (RPM) & RPM & Cap. 8 \\
+	$\omega_{cr}$ & Velocidade crítica (rotordinâmica) & rad\,s$^{-1}$ & Cap. 8 \\
+	$v_{\text{rms}}$ & Severidade de vibração global (ISO 10816 \cite{iso10816}) & mm\,s$^{-1}$ & Cap. 19 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Psicrometria e Trocadores de Calor}
-\begin{longtable}{|p{2.0cm}|p{6.1cm}|p{2.1cm}|p{4.2cm}|}
-	\hline
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \hline
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{6.1cm} >{\raggedright\arraybackslash}p{2.1cm} >{\raggedright\arraybackslash}p{4.2cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
 	\endhead
-	$U$ & Coeficiente global de transferência de calor & W\,m$^{-2}$\,K$^{-1}$ & Cap. 5, 10, 12, 14 \\ \hline
-	$A$ & Área de troca térmica & m$^2$ & Cap. 5, 10, 14 \\ \hline
-	$\Delta T_{lm}$ (LMTD) & Diferença de temperatura média logarítmica & K & Cap. 10, 14 \\ \hline
-	$\epsilon$ & Efetividade do trocador de calor & adimensional & Cap. 7, 10, 14 \\ \hline
-	$R_f$ & Resistência térmica adicional por incrustação (\textit{fouling}) & m$^2$\,K\,W$^{-1}$ & Cap. 10 \\ \hline
-	$W$\dag & Razão de umidade (kg água / kg ar seco) — notação ASHRAE & adimensional & Cap. 10, 14 \\ \hline
-	$\phi$ & Umidade relativa & \%, adimensional & Cap. 10 \\ \hline
-	$P_{\text{sat}}(T)$ & Pressão de saturação do vapor d'água na temperatura $T$ & kPa & Cap. 10 \\ \hline
-	$T_{dp}$ & Ponto de orvalho sob pressão & $^{\circ}$C & Cap. 3, 14, 15, 19 \\ \hline
-	$e_{\text{filme}}$\dag & Espessura do filme de óleo no mancal & m, $\mu$m & Cap. 7 \\ \hline
-	$k_{ads}$\dag & Constante de taxa de adsorção do dessecante & s$^{-1}$ & Cap. 14 \\ \hline
-	$\dot{Q}_{\text{gerado}}$ & Calor total gerado dentro do invólucro do pacote (motor, VSD, gearbox, casco) & W & Cap. 2 \\ \hline
-	$\dot{Q}_{\text{hood}}$ & Calor removido pelo exaustor forçado do invólucro & W & Cap. 2, 14 \\ \hline
-	$\dot{m}_{\text{vent}}$ & Vazão mássica de ar de ventilação forçada do invólucro & kg\,s$^{-1}$ & Cap. 2 \\ \hline
-	$\eta_{purge}$ & Fração da vazão total não perdida como ar de purga de regeneração & adimensional & Cap. 14 \\ \hline
-	$\dot{Q}_{\text{disp}}$ & Calor residual disponível para recuperação (aftercooler + óleo + hood) & W & Cap. 14 \\ \hline
-	$\epsilon_{\text{recup}}$ & Efetividade do trocador de recuperação de calor para regeneração & adimensional & Cap. 14 \\ \hline
+	$U$ & Coeficiente global de transferência de calor & W\,m$^{-2}$\,K$^{-1}$ & Cap. 5, 10, 12, 14 \\
+	$A$ & Área de troca térmica & m$^2$ & Cap. 5, 10, 14 \\
+	$\Delta T_{lm}$ (LMTD) & Diferença de temperatura média logarítmica & K & Cap. 10, 14 \\
+	$\epsilon$ & Efetividade do trocador de calor & adimensional & Cap. 7, 10, 14 \\
+	$R_f$ & Resistência térmica adicional por incrustação (\textit{fouling}) & m$^2$\,K\,W$^{-1}$ & Cap. 10 \\
+	$W$\dag & Razão de umidade (kg água / kg ar seco) — notação ASHRAE & adimensional & Cap. 10, 14 \\
+	$\phi$ & Umidade relativa & \%, adimensional & Cap. 10 \\
+	$P_{\text{sat}}(T)$ & Pressão de saturação do vapor d'água na temperatura $T$ & kPa & Cap. 10 \\
+	$T_{dp}$ & Ponto de orvalho sob pressão & $^{\circ}$C & Cap. 3, 14, 15, 19 \\
+	$e_{\text{filme}}$\dag & Espessura do filme de óleo no mancal & m, $\mu$m & Cap. 7 \\
+	$k_{ads}$\dag & Constante de taxa de adsorção do dessecante & s$^{-1}$ & Cap. 14 \\
+	$\dot{Q}_{\text{gerado}}$ & Calor total gerado dentro do invólucro do pacote (motor, VSD, gearbox, casco) & W & Cap. 2 \\
+	$\dot{Q}_{\text{hood}}$ & Calor removido pelo exaustor forçado do invólucro & W & Cap. 2, 14 \\
+	$\dot{m}_{\text{vent}}$ & Vazão mássica de ar de ventilação forçada do invólucro & kg\,s$^{-1}$ & Cap. 2 \\
+	$\eta_{purge}$ & Fração da vazão total não perdida como ar de purga de regeneração & adimensional & Cap. 14 \\
+	$\dot{Q}_{\text{disp}}$ & Calor residual disponível para recuperação (aftercooler + óleo + hood) & W & Cap. 14 \\
+	$\epsilon_{\text{recup}}$ & Efetividade do trocador de recuperação de calor para regeneração & adimensional & Cap. 14 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Exergia e Sustentabilidade}
-\begin{longtable}{|p{2.0cm}|p{6.1cm}|p{2.1cm}|p{4.2cm}|}
-	\hline
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \hline
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{6.1cm} >{\raggedright\arraybackslash}p{2.1cm} >{\raggedright\arraybackslash}p{4.2cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
 	\endhead
-	$\dot{I}$ & Taxa de destruição de exergia (irreversibilidade) & W & Cap. 15, 19 \\ \hline
-	$\psi$\dag & Exergia específica de fluxo (notação de Kotas) & J\,kg$^{-1}$ & Cap. 15, 19 \\ \hline
-	$\eta_{ex}$ & Eficiência exergética global & adimensional & Cap. 15, 19 \\ \hline
-	$T_0$ & Temperatura do ambiente de referência (morto termodinâmico) & K & Cap. 15, 19 \\ \hline
-	$\dot{S}_{gen}$ & Taxa de geração de entropia & W\,K$^{-1}$ & Cap. 15, 19 \\ \hline
-	$h$ & Entalpia específica & J\,kg$^{-1}$ & Cap. 15, 19 \\ \hline
-	$s$ (contexto exergético) & Entropia específica & J\,kg$^{-1}$\,K$^{-1}$ & Cap. 15, 19 \\ \hline
-	$N_{\text{frota}}$\dag & Número de compressores ativos na frota (somatórios) & adimensional & Cap. 14 \\ \hline
+	$\dot{I}$ & Taxa de destruição de exergia (irreversibilidade) & W & Cap. 15, 19 \\
+	$\psi$\dag & Exergia específica de fluxo (notação de Kotas) & J\,kg$^{-1}$ & Cap. 15, 19 \\
+	$\eta_{ex}$ & Eficiência exergética global & adimensional & Cap. 15, 19 \\
+	$T_0$ & Temperatura do ambiente de referência (morto termodinâmico) & K & Cap. 15, 19 \\
+	$\dot{S}_{gen}$ & Taxa de geração de entropia & W\,K$^{-1}$ & Cap. 15, 19 \\
+	$h$ & Entalpia específica & J\,kg$^{-1}$ & Cap. 15, 19 \\
+	$s$ (contexto exergético) & Entropia específica & J\,kg$^{-1}$\,K$^{-1}$ & Cap. 15, 19 \\
+	$N_{\text{frota}}$\dag & Número de compressores ativos na frota (somatórios) & adimensional & Cap. 14 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Estimação de Estado, IA e Otimização}
-\begin{longtable}{|p{2.0cm}|p{6.1cm}|p{2.1cm}|p{4.2cm}|}
-	\hline
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \hline
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{6.1cm} >{\raggedright\arraybackslash}p{2.1cm} >{\raggedright\arraybackslash}p{4.2cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
 	\endhead
-	$x$ & Vetor de estados do sistema (EKF) & --- & Cap. 20 \\ \hline
-	$z$ & Vetor de medições/observações (EKF) ou variável genérica de entrada (VAE) & --- & Cap. 19, 20 \\ \hline
-	$g$\dag & Função não linear de observação do EKF, $z=g(x)$ & --- & Cap. 20 \\ \hline
-	$Q$ & Matriz de covariância do ruído de processo (EKF) & --- & Cap. 20 \\ \hline
-	$\mathcal{R}$\dag & Matriz de covariância do ruído de \textbf{medição} (EKF) & --- & Cap. 20 \\ \hline
-	$F_k, G_k$ & Jacobianas de transição de estado e de observação (EKF) & --- & Cap. 20 \\ \hline
-	$\ell$\dag & Vetor do espaço latente (VAE) & --- & Cap. 15, 20 \\ \hline
-	$E_{\text{rec}}$ & Erro de reconstrução (VAE), usado como resíduo de anomalia & --- & Cap. 15, 20 \\ \hline
-	$J$ & Função de custo/objetivo (MPC, PSO) & --- & Cap. 15, 20 \\ \hline
-	$H$ & Horizonte de predição (MPC) & passos & Cap. 15, 20 \\ \hline
-	$k$ & Índice de tempo discreto (sempre como subscrito: $x_k$, $z_k$) & --- & Cap. 15, 20 \\ \hline
+	$x$ & Vetor de estados do sistema (EKF) & --- & Cap. 20 \\
+	$z$ & Vetor de medições/observações (EKF) ou variável genérica de entrada (VAE) & --- & Cap. 19, 20 \\
+	$g$\dag & Função não linear de observação do EKF, $z=g(x)$ & --- & Cap. 20 \\
+	$Q$ & Matriz de covariância do ruído de processo (EKF) & --- & Cap. 20 \\
+	$\mathcal{R}$\dag & Matriz de covariância do ruído de \textbf{medição} (EKF) & --- & Cap. 20 \\
+	$F_k, G_k$ & Jacobianas de transição de estado e de observação (EKF) & --- & Cap. 20 \\
+	$\ell$\dag & Vetor do espaço latente (VAE) & --- & Cap. 15, 20 \\
+	$E_{\text{rec}}$ & Erro de reconstrução (VAE), usado como resíduo de anomalia & --- & Cap. 15, 20 \\
+	$J$ & Função de custo/objetivo (MPC, PSO) & --- & Cap. 15, 20 \\
+	$H$ & Horizonte de predição (MPC) & passos & Cap. 15, 20 \\
+	$k$ & Índice de tempo discreto (sempre como subscrito: $x_k$, $z_k$) & --- & Cap. 15, 20 \\ \bottomrule
 \end{longtable}
 }
 
@@ -277,7 +296,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	\begin{enumerate}
 		\item \textbf{Parte I — O Compressor e Seus Elementos (Capítulos 2 a 18):} Cada capítulo desmonta um subconjunto do trem de compressão — rotores, trem de potência, sistema elétrico, lubrificação, estágios LP e HP, intercooler, aftercooler, secagem PSA, distribuição e armazenamento — e o trata sob três lentes aplicadas de forma consistente: primeiro o \textbf{elemento de máquina} em si (o que é, sua função, seus acessórios); depois a \textbf{modelagem termodinâmica e mecânica} que rege seu comportamento em regime normal (as equações de primeiros princípios); e por fim os \textbf{mecanismos de falha} que podem degradá-lo, com o respectivo indicador digital de detecção. O capítulo final desta parte (18) unifica todo esse equacionamento disperso numa matriz global de variáveis — a síntese física completa da máquina, ainda sem nenhum algoritmo de aprendizado.
-		\item \textbf{Parte II — Metodologia do Gêmeo Digital e Equacionamento Integrado (Capítulos 19 a 25, mais os Anexos de Implementação):} Somente depois que o equacionamento físico de cada componente está estabelecido, o documento apresenta a metodologia de integração: como as equações dispersas dos capítulos anteriores se conectam em um motor de cálculo unificado, como o estado do sistema é estimado a partir de medições ruidosas (Filtro de Kalman Estendido), como a alta dimensionalidade dos dados de campo é reduzida sem perda de informação crítica (Autoencoder Variacional), como o conhecimento físico é injetado diretamente no treinamento da rede neural para impedir predições termodinamicamente impossíveis (\textit{Physics-Informed Machine Learning}), e como o sistema resultante toma decisões operacionais em tempo real (MPC e PSO).
+		\item \textbf{Parte II — Metodologia do Gêmeo Digital e Equacionamento Integrado (Capítulos 19 a 27):} Somente depois que o equacionamento físico de cada componente está estabelecido, o documento apresenta a metodologia de integração: como as equações dispersas dos capítulos anteriores se conectam em um motor de cálculo unificado, como o estado do sistema é estimado a partir de medições ruidosas (Filtro de Kalman Estendido), como a alta dimensionalidade dos dados de campo é reduzida sem perda de informação crítica (Autoencoder Variacional), como o conhecimento físico é injetado diretamente no treinamento da rede neural para impedir predições termodinamicamente impossíveis (\textit{Physics-Informed Machine Learning}), e como o sistema resultante toma decisões operacionais em tempo real (MPC e PSO).
 	\end{enumerate}
 
 	A justificativa para essa ordem é direta: um modelo de inteligência artificial treinado sobre um sistema cuja física não foi antes explicitada é, na melhor das hipóteses, um interpolador estatístico sem garantia de comportamento fora da faixa de dados vista em treinamento — e, na pior das hipóteses, uma caixa-preta que pode recomendar uma ação que viola a integridade estrutural ou a segurança do equipamento sem que ninguém perceba o porquê. O PIML, apresentado na Parte II, só consegue penalizar uma predição por violar a conservação de massa ou a Segunda Lei da Termodinâmica porque essas leis já foram equacionadas, componente a componente, na Parte I. A física não é um complemento decorativo ao modelo de IA deste documento — é a restrição que o torna confiável o suficiente para operar em uma plataforma offshore.
@@ -338,7 +357,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.85\textwidth]{figuras/fig_2_2_arquitetura.pdf}
+		\includegraphics[width=0.75\textwidth]{figuras/fig_2_2_arquitetura.pdf}
 		\caption{Diagrama de blocos da arquitetura do sistema: os quatro pilares funcionais e a realimentação do Gêmeo Digital sobre a planta física.}
 		\label{fig:2-1}
 	\end{figure}
@@ -348,7 +367,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.55\textwidth]{figuras/fig_2_1_rotores.pdf}
+		\includegraphics[width=0.60\textwidth]{figuras/fig_2_1_rotores.pdf}
 		\caption{Perfil de engrenamento assimétrico de rotores helicoidais (relação 5:6), com centros dos eixos indicados. Adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0 (traços reforçados e marcadores de centro adicionados pelo autor).}
 		\label{fig:2-2}
 	\end{figure}
@@ -434,7 +453,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.8\textwidth]{figuras/fig_3_1_parafuso3d.pdf}
+		\includegraphics[width=0.80\textwidth]{figuras/fig_3_1_parafuso3d.pdf}
 		\caption{Par de rotores helicoidais do elemento compressor (airend) em perspectiva 3D, gerado por varredura helicoidal do perfil de engrenamento da Figura~\ref{fig:2-2} (torção de $300^\circ$ no rotor macho, relação $5{:}6$, hélices opostas). Elaboração 3D original do autor; perfil 2D adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0.}
 		\label{fig:3-1}
 	\end{figure}
@@ -657,7 +676,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.72\textwidth]{figuras/fig_5_1_vi_perdas.pdf}
+		\includegraphics[width=0.60\textwidth]{figuras/fig_5_1_vi_perdas.pdf}
 		\caption{Perdas termodinâmicas por sub/sobrecompressão em função do descasamento entre a razão de pressão real e a razão interna ideal do rotor.}
 		\label{fig:5-1}
 	\end{figure}
@@ -756,15 +775,15 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{table}[h!]
 		\centering
 		\small
-		\begin{tabular}{|l|l|l|l|}
-			\hline
-			\textbf{Componente} & \textbf{Mecanismo de Falha} & \textbf{Causa Raiz} & \textbf{Indicador Digital} \\ \hline
-			Acoplamento & Desalinhamento & Assentamento / Térmico & Pico em $2 \times \text{RPM}$ \\ \hline
-			Acoplamento & Fadiga do Elemento & Sobrecarga & Resíduo de torque $r_{\tau}$ \\ \hline
-			Engrenagens & \textit{Pitting} (Fadiga) & Carga cíclica & Bandas laterais em $GMF$ \\ \hline
-			Engrenagens & \textit{Scuffing} & Falha de filme de óleo & $\uparrow T$ óleo de retorno \\ \hline
-			Mancais & Desgaste de Metal & Contaminação & $\downarrow P_{\text{óleo}}$ e vibração \\ \hline
-			Selos & Desgaste Labirinto & Vibração excessiva & $\downarrow \eta_{\text{vol}}$ e $\uparrow T_{\text{suc}}$ \\ \hline
+		\begin{tabular}{l l l l}
+			\toprule
+			\textbf{Componente} & \textbf{Mecanismo de Falha} & \textbf{Causa Raiz} & \textbf{Indicador Digital} \\ \midrule
+			Acoplamento & Desalinhamento & Assentamento / Térmico & Pico em $2 \times \text{RPM}$ \\
+			Acoplamento & Fadiga do Elemento & Sobrecarga & Resíduo de torque $r_{\tau}$ \\
+			Engrenagens & \textit{Pitting} (Fadiga) & Carga cíclica & Bandas laterais em $GMF$ \\
+			Engrenagens & \textit{Scuffing} & Falha de filme de óleo & $\uparrow T$ óleo de retorno \\
+			Mancais & Desgaste de Metal & Contaminação & $\downarrow P_{\text{óleo}}$ e vibração \\
+			Selos & Desgaste Labirinto & Vibração excessiva & $\downarrow \eta_{\text{vol}}$ e $\uparrow T_{\text{suc}}$ \\ \bottomrule
 		\end{tabular}
 		\caption{Mecanismos de falha do acoplamento, engrenagens, mancais e selos da caixa multiplicadora, com o respectivo indicador digital monitorado pelo Gêmeo Digital.}
 	\end{table}
@@ -837,7 +856,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 		\begin{figure}[h!]
 			\centering
-			\includegraphics[width=0.68\textwidth]{figuras/fig_7_1_vogel.pdf}
+			\includegraphics[width=0.60\textwidth]{figuras/fig_7_1_vogel.pdf}
 			\caption{Curva de viscosidade de Vogel — queda não linear da viscosidade com a temperatura (valores ilustrativos).}
 			\label{fig:7-1}
 		\end{figure}
@@ -880,14 +899,14 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\centering
 		\small
 		\renewcommand{\arraystretch}{1.5}
-		\begin{tabular}{|l|l|l|}
-			\hline
-			\textbf{Componente} & \textbf{Mecanismo de Falha} & \textbf{Indicador no Gêmeo Digital} \\ \hline
-			\textbf{Motor da Bomba} & Sobrecarga / Curto-circuito & $\uparrow I_{\text{pump}}$ (Resíduo de Corrente) \\ \hline
-			\textbf{Bomba de Óleo} & Cavitação ou Desgaste & $\downarrow P_{\text{oil}}$ vs $\uparrow \text{RPM}$ da Bomba \\ \hline
-			\textbf{Filtro de Óleo} & Colmatagem (Saturação) & $\uparrow \Delta P_{\text{filt}}$ (Normalizado pela viscosidade) \\ \hline
-			\textbf{Resfriador} & Incrustação (\textit{Fouling}) & $\downarrow \epsilon$ (Queda na Efetividade Térmica) \\ \hline
-			\textbf{Mancais} & Desgaste de Metal Patente & $\uparrow T_{\text{brg}}$ e $\uparrow$ Vibração de Alta Frequência \\ \hline
+		\begin{tabular}{l l l}
+			\toprule
+			\textbf{Componente} & \textbf{Mecanismo de Falha} & \textbf{Indicador no Gêmeo Digital} \\ \midrule
+			\textbf{Motor da Bomba} & Sobrecarga / Curto-circuito & $\uparrow I_{\text{pump}}$ (Resíduo de Corrente) \\
+			\textbf{Bomba de Óleo} & Cavitação ou Desgaste & $\downarrow P_{\text{oil}}$ vs $\uparrow \text{RPM}$ da Bomba \\
+			\textbf{Filtro de Óleo} & Colmatagem (Saturação) & $\uparrow \Delta P_{\text{filt}}$ (Normalizado pela viscosidade) \\
+			\textbf{Resfriador} & Incrustação (\textit{Fouling}) & $\downarrow \epsilon$ (Queda na Efetividade Térmica) \\
+			\textbf{Mancais} & Desgaste de Metal Patente & $\uparrow T_{\text{brg}}$ e $\uparrow$ Vibração de Alta Frequência \\ \bottomrule
 		\end{tabular}
 		\caption{Matriz de mecanismos de falha do sistema de lubrificação (bomba, filtro, resfriador e mancais).}
 	\end{table}
@@ -926,7 +945,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.62\textwidth]{figuras/fig_8_1_gearbox.pdf}
+		\includegraphics[width=0.75\textwidth]{figuras/fig_8_1_gearbox.pdf}
 		\caption{Esquema cinemático simplificado da caixa multiplicadora: coroa (\textit{bull gear}) acionando os pinhões LP e HP, com engrenagem de sincronismo (\textit{timing}).}
 		\label{fig:8-1}
 	\end{figure}
@@ -968,7 +987,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 		\begin{figure}[h!]
 			\centering
-			\includegraphics[width=0.68\textwidth]{figuras/fig_8_3_l10h.pdf}
+			\includegraphics[width=0.60\textwidth]{figuras/fig_8_3_l10h.pdf}
 			\caption{Sensibilidade da vida nominal do rolamento ($L_{10h}$) à carga equivalente — note a escala logarítmica no eixo vertical.}
 			\label{fig:8-3}
 		\end{figure}
@@ -1025,15 +1044,15 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\centering
 		\small
 		\renewcommand{\arraystretch}{1.5}
-		\begin{tabular}{|l|l|l|}
-			\hline
-			\textbf{Falha} & \textbf{Causa Raiz} & \textbf{Indicador Digital} \\ \hline
-			Desgaste de Rolamento & Fadiga / Contaminação & Picos em BPFO/BPFI e $\uparrow$ Curtose \\ \hline
-			Pitting nos Dentes & Sobrecarga Cíclica & Bandas laterais na $GMF$ \\ \hline
-			Quebra de Dente & Fadiga de Raiz (Lewis) & Impactos no envelope de vibração \\ \hline
-			Desalinhamento & Montagem / Térmico & Vibração $2 \times \text{RPM}$ e $\uparrow K_m$ \\ \hline
-			\textit{Scuffing} & Falha de Lubrificação & $\uparrow T$ de Flash e Partículas no Óleo \\ \hline
-			Erro de Sincronismo & Desgaste \textit{Timing Gears} & Desvio de fase $\Delta \phi$ e oscilação de torque \\ \hline
+		\begin{tabular}{l l l}
+			\toprule
+			\textbf{Falha} & \textbf{Causa Raiz} & \textbf{Indicador Digital} \\ \midrule
+			Desgaste de Rolamento & Fadiga / Contaminação & Picos em BPFO/BPFI e $\uparrow$ Curtose \\
+			Pitting nos Dentes & Sobrecarga Cíclica & Bandas laterais na $GMF$ \\
+			Quebra de Dente & Fadiga de Raiz (Lewis) & Impactos no envelope de vibração \\
+			Desalinhamento & Montagem / Térmico & Vibração $2 \times \text{RPM}$ e $\uparrow K_m$ \\
+			\textit{Scuffing} & Falha de Lubrificação & $\uparrow T$ de Flash e Partículas no Óleo \\
+			Erro de Sincronismo & Desgaste \textit{Timing Gears} & Desvio de fase $\Delta \phi$ e oscilação de torque \\ \bottomrule
 		\end{tabular}
 		\caption{Matriz de falhas do trem de transmissão: rolamentos, dentes de engrenagem, alinhamento e sincronismo.}
 	\end{table}
@@ -1084,7 +1103,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 		\begin{figure}[h!]
 			\centering
-			\includegraphics[width=0.68\textwidth]{figuras/fig_9_1_etav.pdf}
+			\includegraphics[width=0.60\textwidth]{figuras/fig_9_1_etav.pdf}
 			\caption{Eficiência volumétrica em função da folga do rotor, para diferentes razões de pressão do estágio.}
 			\label{fig:9-1}
 		\end{figure}
@@ -1139,15 +1158,15 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\centering
 		\small
 		\renewcommand{\arraystretch}{1.5}
-		\begin{tabular}{|l|l|l|l|}
-			\hline
-			\textbf{Falha} & \textbf{Causa Raiz} & \textbf{Indicador Digital} & \textbf{Resposta Vibracional} \\ \hline
-			Desgaste de Folgas & Erosão / Particulados & $\downarrow \Pi$ e $\downarrow \eta_v$ & $\uparrow$ Amplitude em $f_{bp}$ \\ \hline
-			Superaquecimento & Falha Arrefecimento & $\uparrow T_c$ e $\uparrow T_2$ & $\uparrow$ Vibração Axial \\ \hline
-			Contato (\textit{Rubbing}) & Dilatação Térmica & $\uparrow \uparrow T_2$ súbito & Picos HF / Emissão Acústica \\ \hline
-			Perda de \textit{Coating} & Ciclos Térmicos & $\uparrow n$ (Politrópico) & $\uparrow$ Ruído de fundo \\ \hline
-			Erosão do Perfil & Contaminação & $\uparrow A_{\text{leak}}$ calculado & Bandas laterais em $f_{bp}$ \\ \hline
-			Desalinhamento & Falha Sincronismo & Oscilação de Torque & Picos em $1 \times$ e $2 \times$ RPM \\ \hline
+		\begin{tabular}{l l l l}
+			\toprule
+			\textbf{Falha} & \textbf{Causa Raiz} & \textbf{Indicador Digital} & \textbf{Resposta Vibracional} \\ \midrule
+			Desgaste de Folgas & Erosão / Particulados & $\downarrow \Pi$ e $\downarrow \eta_v$ & $\uparrow$ Amplitude em $f_{bp}$ \\
+			Superaquecimento & Falha Arrefecimento & $\uparrow T_c$ e $\uparrow T_2$ & $\uparrow$ Vibração Axial \\
+			Contato (\textit{Rubbing}) & Dilatação Térmica & $\uparrow \uparrow T_2$ súbito & Picos HF / Emissão Acústica \\
+			Perda de \textit{Coating} & Ciclos Térmicos & $\uparrow n$ (Politrópico) & $\uparrow$ Ruído de fundo \\
+			Erosão do Perfil & Contaminação & $\uparrow A_{\text{leak}}$ calculado & Bandas laterais em $f_{bp}$ \\
+			Desalinhamento & Falha Sincronismo & Oscilação de Torque & Picos em $1 \times$ e $2 \times$ RPM \\ \bottomrule
 		\end{tabular}
 		\caption{Matriz de falhas integrada do estágio LP: causa raiz, indicador digital e assinatura vibracional.}
 	\end{table}
@@ -1193,7 +1212,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.68\textwidth]{figuras/fig_10_1_lmtd.pdf}
+		\includegraphics[width=0.60\textwidth]{figuras/fig_10_1_lmtd.pdf}
 		\caption{Perfil de temperatura ao longo de um trocador em contracorrente — origem física da LMTD.}
 		\label{fig:10-1}
 	\end{figure}
@@ -1243,7 +1262,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.68\textwidth]{figuras/fig_10_2_psat.pdf}
+		\includegraphics[width=0.60\textwidth]{figuras/fig_10_2_psat.pdf}
 		\caption{Correlação de Arden Buck para a pressão de saturação do vapor d'água em função da temperatura.}
 		\label{fig:10-2}
 	\end{figure}
@@ -1267,13 +1286,13 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\centering
 		\small
 		\renewcommand{\arraystretch}{1.5}
-		\begin{tabular}{|l|l|l|l|}
-			\hline
-			\textbf{Mecanismo} & \textbf{Indicador Primário} & \textbf{Variável de Controle} & \textbf{Ação do Gêmeo} \\ \hline
-			\textit{Offloading} & $\uparrow T_{w,\text{in}}$ & $\epsilon \approx \text{constante}$ & Alerta de Rede Externa \\ \hline
-			\textit{Fouling} & $\downarrow \epsilon$ e $\uparrow R_f$ & $U_{\text{real}} < U_{\text{limit}}$ & Sugestão de Limpeza \\ \hline
-			Baixo Fluxo Água & $\uparrow \Delta T_{w}$ & $\downarrow \Delta P_{w}$ & Checar Bombas/Válvulas \\ \hline
-			Falha Drenagem & $\uparrow \Delta P_{\text{ar}}$ & $\text{Vib}_{\text{HF,HP}} > \text{limit}$ & Alerta de Arraste/Erosão \\ \hline
+		\begin{tabular}{l l l l}
+			\toprule
+			\textbf{Mecanismo} & \textbf{Indicador Primário} & \textbf{Variável de Controle} & \textbf{Ação do Gêmeo} \\ \midrule
+			\textit{Offloading} & $\uparrow T_{w,\text{in}}$ & $\epsilon \approx \text{constante}$ & Alerta de Rede Externa \\
+			\textit{Fouling} & $\downarrow \epsilon$ e $\uparrow R_f$ & $U_{\text{real}} < U_{\text{limit}}$ & Sugestão de Limpeza \\
+			Baixo Fluxo Água & $\uparrow \Delta T_{w}$ & $\downarrow \Delta P_{w}$ & Checar Bombas/Válvulas \\
+			Falha Drenagem & $\uparrow \Delta P_{\text{ar}}$ & $\text{Vib}_{\text{HF,HP}} > \text{limit}$ & Alerta de Arraste/Erosão \\ \bottomrule
 		\end{tabular}
 		\caption{Matriz de falhas do intercooler: distúrbios externos versus falhas internas do trocador.}
 	\end{table}
@@ -1383,14 +1402,14 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\centering
 		\small
 		\renewcommand{\arraystretch}{1.5}
-		\begin{tabular}{|l|l|l|c|}
-			\hline
-			\textbf{Falha} & \textbf{Indicador Primário} & \textbf{Variável de Controle} & \textbf{Impacto SPC} \\ \hline
-			\textit{Rubbing} Térmico & $\uparrow$ Vibração Global & $T_{HP,\text{out}} > T_{\text{limit}}$ & $\uparrow \uparrow$ \\ \hline
-			Desgaste \textit{Gears} & $\uparrow$ Harmônicos $f_{gmf}$ & Erro de Fase & $\uparrow$ \\ \hline
-			Fadiga Rolamento & $\uparrow T_{\text{mancal}}$ & $L_{10h} \to 0$ & $\uparrow$ \\ \hline
-			Vazamento Selos & $\uparrow P_{\text{cárter}}$ & $\downarrow \eta_{v,HP}$ & $\uparrow \uparrow$ \\ \hline
-			Arraste Líquido & $\uparrow$ Emissão Acústica & Picos de Torque $\Delta \tau$ & Crítico \\ \hline
+		\begin{tabular}{l l l c}
+			\toprule
+			\textbf{Falha} & \textbf{Indicador Primário} & \textbf{Variável de Controle} & \textbf{Impacto SPC} \\ \midrule
+			\textit{Rubbing} Térmico & $\uparrow$ Vibração Global & $T_{HP,\text{out}} > T_{\text{limit}}$ & $\uparrow \uparrow$ \\
+			Desgaste \textit{Gears} & $\uparrow$ Harmônicos $f_{gmf}$ & Erro de Fase & $\uparrow$ \\
+			Fadiga Rolamento & $\uparrow T_{\text{mancal}}$ & $L_{10h} \to 0$ & $\uparrow$ \\
+			Vazamento Selos & $\uparrow P_{\text{cárter}}$ & $\downarrow \eta_{v,HP}$ & $\uparrow \uparrow$ \\
+			Arraste Líquido & $\uparrow$ Emissão Acústica & Picos de Torque $\Delta \tau$ & Crítico \\ \bottomrule
 		\end{tabular}
 		\caption{Matriz de diagnóstico do estágio HP e impacto relativo de cada falha no SPC.}
 	\end{table}
@@ -1447,13 +1466,13 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{table}[H]
 		\centering
 		\resizebox{\textwidth}{!}{
-			\begin{tabular}{|l|c|c|l|}
-				\hline
-				\textbf{Falha} & \textbf{Sintoma $T_{\text{desc}}$} & \textbf{Sintoma $\Delta P_{\text{sep}}$} & \textbf{Diagnóstico Digital} \\ \hline
-				Trocador Obstruído & $\uparrow \uparrow$ & Nominal & \textbf{Falha no Arrefecimento} \\ \hline
-				Separador Saturado & Nominal & $\uparrow \uparrow$ & \textbf{Troca de Elemento Filtrante} \\ \hline
-				Baixo Nível de Óleo & $\uparrow$ (Instável) & $\downarrow$ & \textbf{Risco de Cavitação / Desgaste} \\ \hline
-				Válvula Termostática Presa & $\uparrow$ ou $\downarrow$ & Nominal & \textbf{Falha de Controle Térmico} \\ \hline
+			\begin{tabular}{l c c l}
+				\toprule
+				\textbf{Falha} & \textbf{Sintoma $T_{\text{desc}}$} & \textbf{Sintoma $\Delta P_{\text{sep}}$} & \textbf{Diagnóstico Digital} \\ \midrule
+				Trocador Obstruído & $\uparrow \uparrow$ & Nominal & \textbf{Falha no Arrefecimento} \\
+				Separador Saturado & Nominal & $\uparrow \uparrow$ & \textbf{Troca de Elemento Filtrante} \\
+				Baixo Nível de Óleo & $\uparrow$ (Instável) & $\downarrow$ & \textbf{Risco de Cavitação / Desgaste} \\
+				Válvula Termostática Presa & $\uparrow$ ou $\downarrow$ & Nominal & \textbf{Falha de Controle Térmico} \\ \bottomrule
 			\end{tabular}
 		}
 		\caption{Matriz de diagnóstico térmico do sistema de lubrificação e resfriamento.}
@@ -1506,13 +1525,13 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{table}[H]
 		\centering
 		\resizebox{\textwidth}{!}{
-			\begin{tabular}{|l|c|c|l|}
-				\hline
-				\textbf{Falha} & \textbf{Comportamento $dP/dt$} & \textbf{Consumo Elétrico} & \textbf{Diagnóstico Digital} \\ \hline
-				Vazamento \textit{Blow-off} & Baixo na Carga & $\uparrow$ SPC & \textbf{Perda de Eficiência Pneumática} \\ \hline
-				Válvula Admissão Presa & Zero (não sobe) & $\downarrow$ (Vazio) & \textbf{Falha Mecânica no Atuador} \\ \hline
-				Filtro Obstruído & Lento & $\downarrow$ Torque & \textbf{Manutenção Preventiva Filtro} \\ \hline
-				Vazamento na Rede & Baixo (Carga/Alívio) & Constante & \textbf{Vazamento Externo à Máquina} \\ \hline
+			\begin{tabular}{l c c l}
+				\toprule
+				\textbf{Falha} & \textbf{Comportamento $dP/dt$} & \textbf{Consumo Elétrico} & \textbf{Diagnóstico Digital} \\ \midrule
+				Vazamento \textit{Blow-off} & Baixo na Carga & $\uparrow$ SPC & \textbf{Perda de Eficiência Pneumática} \\
+				Válvula Admissão Presa & Zero (não sobe) & $\downarrow$ (Vazio) & \textbf{Falha Mecânica no Atuador} \\
+				Filtro Obstruído & Lento & $\downarrow$ Torque & \textbf{Manutenção Preventiva Filtro} \\
+				Vazamento na Rede & Baixo (Carga/Alívio) & Constante & \textbf{Vazamento Externo à Máquina} \\ \bottomrule
 			\end{tabular}
 		}
 		\caption{Matriz de diagnóstico do sistema de controle e válvulas de modulação.}
@@ -1591,15 +1610,15 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{table}[h!]
 		\centering
 		\small
-		\begin{tabular}{|l|l|l|l|l|}
-			\hline
+		\begin{tabular}{l l l l l}
+			\toprule
 			\textbf{Evento} & \textbf{Temperatura Saída} & \textbf{$\Delta P$ Filtros} & \textbf{Umidade Saída} & \textbf{Diagnóstico Digital} \\
-			\hline
+			\midrule
 			Incrustação AC & $\uparrow$ (Elevada) & Nominal & $\uparrow$ (Vapor) & \textbf{Baixa Troca Térmica} \\
 			Filtro Saturado & Nominal & $\uparrow \uparrow$ & Nominal & \textbf{Troca de Elemento} \\
 			Dreno Aberto & Nominal & $\downarrow$ & Nominal & \textbf{Vazamento de Ar} \\
 			Dreno Fechado & Nominal & $\uparrow$ (Oscilante) & $\uparrow \uparrow$ (Líquida) & \textbf{Risco de Alagamento} \\
-			\hline
+			\bottomrule
 		\end{tabular}
 		\caption{Matriz de diagnóstico de tratamento primário.}
 	\end{table}
@@ -1623,7 +1642,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 		\begin{figure}[h!]
 			\centering
-			\includegraphics[width=0.55\textwidth]{figuras/fig_15_1_psa.pdf}
+			\includegraphics[width=0.75\textwidth]{figuras/fig_15_1_psa.pdf}
 			\caption{Princípio de operação das torres PSA em ciclos alternados de adsorção (A) e regeneração/dessorção (D). I = entrada de ar úmido, O = saída de ar seco, E = exaustão da purga. Fonte: \textit{Pressure swing adsorption principle}, Cmglee, Wikimedia Commons, licença CC BY-SA 4.0.}
 			\label{fig:15-1}
 		\end{figure}
@@ -1641,7 +1660,7 @@ q_d = q_{eq} \cdot \exp \left( -k_{ads} \cdot \frac{t_{ads}}{t_{res}} \right)
 
 			\begin{figure}[h!]
 				\centering
-				\includegraphics[width=0.68\textwidth]{figuras/fig_15_2_adsorcao.pdf}
+				\includegraphics[width=0.60\textwidth]{figuras/fig_15_2_adsorcao.pdf}
 				\caption{Capacidade de adsorção dinâmica normalizada em função do tempo relativo de adsorção, para diferentes constantes de taxa $k_{ads}$.}
 				\label{fig:15-2}
 			\end{figure}
@@ -1806,14 +1825,14 @@ A operação com múltiplos compressores em paralelo introduz riscos específico
 \begin{table}[h!]
 \centering
 \noindent\resizebox{\textwidth}{!}{
-	\begin{tabular}{|l|l|l|l|}
-		\hline
-		\textbf{Falha} & \textbf{Indicador Primário} & \textbf{Causa Provável} & \textbf{Ação Digital Twin} \\ \hline
-		\textbf{PSV Travada (Fechada)} & $P > P_{set}$ sem alívio & Corrosão / Travamento & Trip de Emergência da Frota \\ \hline
-		\textbf{Falha de Sequenciamento} & $\downarrow P_{tank}$ (Standby ativo) & Erro de lógica / Partida falha & Comando forçado de partida \\ \hline
-		\textbf{Vazamento Crítico} & $\frac{dP}{dt} \ll 0$ (Gradiente alto) & Ruptura de linha principal & Antecipação do corte de ramais \\ \hline
-		\textbf{Falha na Check Valve} & $\dot{m}_i < 0$ (Refluxo) & Quebra da portinhola & Isolamento da Unidade $i$ \\ \hline
-		\textbf{PSV Travada (Aberta)} & Disparo prematuro & Fadiga da mola / Sujeira & Alarme de perda de eficiência \\ \hline
+	\begin{tabular}{l l l l}
+		\toprule
+		\textbf{Falha} & \textbf{Indicador Primário} & \textbf{Causa Provável} & \textbf{Ação Digital Twin} \\ \midrule
+		\textbf{PSV Travada (Fechada)} & $P > P_{set}$ sem alívio & Corrosão / Travamento & Trip de Emergência da Frota \\
+		\textbf{Falha de Sequenciamento} & $\downarrow P_{tank}$ (Standby ativo) & Erro de lógica / Partida falha & Comando forçado de partida \\
+		\textbf{Vazamento Crítico} & $\frac{dP}{dt} \ll 0$ (Gradiente alto) & Ruptura de linha principal & Antecipação do corte de ramais \\
+		\textbf{Falha na Check Valve} & $\dot{m}_i < 0$ (Refluxo) & Quebra da portinhola & Isolamento da Unidade $i$ \\
+		\textbf{PSV Travada (Aberta)} & Disparo prematuro & Fadiga da mola / Sujeira & Alarme de perda de eficiência \\ \bottomrule
 	\end{tabular}
 }
 \caption{Matriz de diagnóstico de falhas de frota e distribuição (header e vasos pulmão).}
@@ -1926,13 +1945,13 @@ A tabela abaixo conecta cada variável crítica de automação ao indicador de I
 \begin{table}[h!]
 \centering
 \noindent\resizebox{\textwidth}{!}{
-	\begin{tabular}{|l|l|l|l|}
-		\hline
-		\textbf{Variável PI} & \textbf{Indicador IA} & \textbf{Risco / Norma} & \textbf{Ação Gêmeo Digital} \\ \hline
-		\textbf{$T_{dp}$ (Orvalho)} & $\uparrow$ Resíduo & ISO 8573-1 / Corrosão & Antecipar ciclo de secagem \\ \hline
-		\textbf{$\Delta P$ Filtros} & $\uparrow E_{rec}$ & Perda de Carga & Alarme de manutenção preditiva \\ \hline
-		\textbf{$P, T$ Estágio} & Desvio de Curva & $\uparrow$ Consumo / $\uparrow$ GEE & Ajuste de carga e rotação \\ \hline
-		\textbf{$\dot{m}$ (Vazão)} & Balanço de Massa & Vazamento de Inventário & Localizar perda mássica \\ \hline
+	\begin{tabular}{l l l l}
+		\toprule
+		\textbf{Variável PI} & \textbf{Indicador IA} & \textbf{Risco / Norma} & \textbf{Ação Gêmeo Digital} \\ \midrule
+		\textbf{$T_{dp}$ (Orvalho)} & $\uparrow$ Resíduo & ISO 8573-1 / Corrosão & Antecipar ciclo de secagem \\
+		\textbf{$\Delta P$ Filtros} & $\uparrow E_{rec}$ & Perda de Carga & Alarme de manutenção preditiva \\
+		\textbf{$P, T$ Estágio} & Desvio de Curva & $\uparrow$ Consumo / $\uparrow$ GEE & Ajuste de carga e rotação \\
+		\textbf{$\dot{m}$ (Vazão)} & Balanço de Massa & Vazamento de Inventário & Localizar perda mássica \\ \bottomrule
 	\end{tabular}
 }
 \caption{Matriz de diagnóstico, normas associadas e ações de sustentabilidade do Gêmeo Digital.}
@@ -1963,33 +1982,33 @@ A observabilidade total do sistema é garantida pelo monitoramento de variáveis
 \begin{table}[h!]
 	\centering
 	\resizebox{\textwidth}{!}{
-		\begin{tabular}{|c|l|l|c|l|l|}
-			\hline
-			\textbf{Ponto} & \textbf{Localização} & \textbf{Variável} & \textbf{Tag} & \textbf{Unidade} & \textbf{Definição / Função} \\ \hline
+		\begin{tabular}{c l l c l l}
+			\toprule
+			\textbf{Ponto} & \textbf{Localização} & \textbf{Variável} & \textbf{Tag} & \textbf{Unidade} & \textbf{Definição / Função} \\ \midrule
 			\textbf{A} & \textbf{MCC / Relé} & Tensão de Linha & $V_L$ & $\text{V}$ & Potencial elétrico de alimentação \\ \cline{3-6} 
 			& & Corrente de Fase & $I$ & $\text{A}$ & Carga elétrica do motor principal \\ \cline{3-6} 
 			& & Frequência & $f$ & $\text{Hz}$ & Ciclo da rede / Velocidade do VFD \\ \cline{3-6} 
-			& & Fator de Potência & $\cos \phi$ & $-$ & Eficiência da conversão elétrica \\ \hline
+			& & Fator de Potência & $\cos \phi$ & $-$ & Eficiência da conversão elétrica \\
 			\textbf{B} & \textbf{Transmissão} & Velocidade Angular & $\omega$ & $\text{rad}\,\cdotp\,\text{s}^{-1}$ & Rotação real do eixo primário \\ \cline{3-6} 
 			& & Torque no Eixo & $\tau$ & $\text{N}\,\cdotp\,\text{m}$ & Momento torsor transmitido \\ \cline{3-6} 
 			& & Vibração Global & $v_{\text{rms}}$ & $\text{mm}\,\cdotp\,\text{s}^{-1}$ & Severidade vibratória (ISO 10816) \\ \cline{3-6} 
-			& & Tensão no Dente & $\sigma_b$ & $\text{MPa}$ & Esforço na raiz da engrenagem \\ \hline
+			& & Tensão no Dente & $\sigma_b$ & $\text{MPa}$ & Esforço na raiz da engrenagem \\
 			\textbf{C} & \textbf{Estágio LP} & Pressão Sucção & $P_{s,lp}$ & $\text{bar}$ & Pressão de entrada (atmosférica) \\ \cline{3-6} 
 			& & Temp. Descarga & $T_{d,lp}$ & $^{\circ}\text{C}$ & Calor de compressão do 1º estágio \\ \cline{3-6} 
-			& & Folga Interna & $\delta_{lp}$ & $\mu\text{m}$ & Espaço residual entre parafusos \\ \hline
+			& & Folga Interna & $\delta_{lp}$ & $\mu\text{m}$ & Espaço residual entre parafusos \\
 			\textbf{D} & \textbf{Intercooler} & Temp. Água In & $T_{w,in}$ & $^{\circ}\text{C}$ & Temperatura do fluido de resfriamento \\ \cline{3-6} 
 			& & Delta Pressão & $\Delta P_{ic}$ & $\text{bar}$ & Perda de carga no trocador \\ \cline{3-6} 
-			& & Vazão Condensado & $\dot{m}_{c}$ & $\text{kg}\,\cdotp\,\text{h}^{-1}$ & Taxa de remoção de umidade \\ \hline
+			& & Vazão Condensado & $\dot{m}_{c}$ & $\text{kg}\,\cdotp\,\text{h}^{-1}$ & Taxa de remoção de umidade \\
 			\textbf{E} & \textbf{Estágio HP} & Pressão Descarga & $P_{d,hp}$ & $\text{bar}$ & Pressão final de compressão \\ \cline{3-6} 
 			& & Temp. Descarga & $T_{d,hp}$ & $^{\circ}\text{C}$ & Temperatura crítica do 2º estágio \\ \cline{3-6} 
-			& & Folga Interna & $\delta_{hp}$ & $\mu\text{m}$ & Desgaste/Dilatação térmica HP \\ \hline
-			\textbf{F} & \textbf{Aftercooler} & Temp. Saída & $T_{ac,out}$ & $^{\circ}\text{C}$ & Temperatura pré-secagem \\ \hline
+			& & Folga Interna & $\delta_{hp}$ & $\mu\text{m}$ & Desgaste/Dilatação térmica HP \\
+			\textbf{F} & \textbf{Aftercooler} & Temp. Saída & $T_{ac,out}$ & $^{\circ}\text{C}$ & Temperatura pré-secagem \\
 			\textbf{G} & \textbf{Secador PSA} & Ponto de Orvalho & $T_{dp}$ & $^{\circ}\text{C}$ & Umidade residual (ISO 8573-1) \\ \cline{3-6} 
-			& & Vazão de Purga & $\dot{m}_{p}$ & $\text{kg}\,\cdotp\,\text{s}^{-1}$ & Ar perdido na regeneração \\ \hline
+			& & Vazão de Purga & $\dot{m}_{p}$ & $\text{kg}\,\cdotp\,\text{s}^{-1}$ & Ar perdido na regeneração \\
 			\textbf{H} & \textbf{Vaso Pulmão} & Pressão Vaso & $P_{tk}$ & $\text{bar}$ & Energia potencial acumulada \\ \cline{3-6} 
-			& & Nível Condensado & $L_{tk}$ & $\%$ & Acúmulo de líquido no pulmão \\ \hline
+			& & Nível Condensado & $L_{tk}$ & $\%$ & Acúmulo de líquido no pulmão \\
 			\textbf{I} & \textbf{Header} & Vazão de Demanda & $\dot{m}_{tot}$ & $\text{kg}\,\cdotp\,\text{s}^{-1}$ & Consumo real da unidade offshore \\ \cline{3-6} 
-			& & Status Ramal & $\delta_{i}$ & $\text{bin}$ & Lógica de corte (Serviço/Processo) \\ \hline
+			& & Status Ramal & $\delta_{i}$ & $\text{bin}$ & Lógica de corte (Serviço/Processo) \\ \bottomrule
 		\end{tabular}
 	}
 	\caption{Matriz completa de variáveis e instrumentação do Gêmeo Digital.}
@@ -2049,16 +2068,16 @@ A lógica de proteção e otimização do Gêmeo Digital baseia-se na correlaç�
 \begin{table}[h!]
 	\centering
 	\resizebox{\textwidth}{!}{
-		\begin{tabular}{|l|c|c|l|l|}
-			\hline
-			\textbf{Indicador Crítico} & \textbf{Tag} & \textbf{Nível} & \textbf{Condição de Gatilho} & \textbf{Ação Automática} \\ \hline
-			\textbf{Ponto de Orvalho} & $T_{dp}$ & \textbf{H} & $T_{dp} > -40^{\circ}\text{C}$ & Antecipar regeneração PSA / Alarme ISO 8573 \\ \hline
-			\textbf{Pressão do Vaso} & $P_{tk}$ & \textbf{LL} & $P < P_{\text{min}}$ & Corte de Linha de Serviços ($\delta_{\text{serv}}=0$) \\ \hline
-			\textbf{Tensão no Dente} & $\sigma_b$ & \textbf{H} & $\sigma_b > 0.85 \sigma_{\text{adm}}$ & Limitação de torque via VFD / Unload \\ \hline
-			\textbf{Vibração Global} & $v_{\text{rms}}$ & \textbf{HH} & $v > 7.1\,\text{mm}\,\cdotp\,\text{s}^{-1}$ & Trip Mecânico Imediato (ESD) \\ \hline
-			\textbf{Erro de Reconstrução} & $E_{\text{rec}}$ & \textbf{H} & $E > \tau_{\text{limiar}}$ & Diagnóstico de falha incipiente (Mancais) \\ \hline
-			\textbf{Destruição Exergética} & $\dot{I}$ & \textbf{H} & $\uparrow$ Tendência ($+15\%$) & Ajuste de setpoint de resfriamento e purga \\ \hline
-			\textbf{Emissões GEE} & $\dot{m}_{\text{CO}_2}$ & \textbf{H} & $\dot{m} > \dot{m}_{\text{target}}$ & Rebalanceamento de carga da frota \\ \hline
+		\begin{tabular}{l c c l l}
+			\toprule
+			\textbf{Indicador Crítico} & \textbf{Tag} & \textbf{Nível} & \textbf{Condição de Gatilho} & \textbf{Ação Automática} \\ \midrule
+			\textbf{Ponto de Orvalho} & $T_{dp}$ & \textbf{H} & $T_{dp} > -40^{\circ}\text{C}$ & Antecipar regeneração PSA / Alarme ISO 8573 \\
+			\textbf{Pressão do Vaso} & $P_{tk}$ & \textbf{LL} & $P < P_{\text{min}}$ & Corte de Linha de Serviços ($\delta_{\text{serv}}=0$) \\
+			\textbf{Tensão no Dente} & $\sigma_b$ & \textbf{H} & $\sigma_b > 0.85 \sigma_{\text{adm}}$ & Limitação de torque via VFD / Unload \\
+			\textbf{Vibração Global} & $v_{\text{rms}}$ & \textbf{HH} & $v > 7.1\,\text{mm}\,\cdotp\,\text{s}^{-1}$ & Trip Mecânico Imediato (ESD) \\
+			\textbf{Erro de Reconstrução} & $E_{\text{rec}}$ & \textbf{H} & $E > \tau_{\text{limiar}}$ & Diagnóstico de falha incipiente (Mancais) \\
+			\textbf{Destruição Exergética} & $\dot{I}$ & \textbf{H} & $\uparrow$ Tendência ($+15\%$) & Ajuste de setpoint de resfriamento e purga \\
+			\textbf{Emissões GEE} & $\dot{m}_{\text{CO}_2}$ & \textbf{H} & $\dot{m} > \dot{m}_{\text{target}}$ & Rebalanceamento de carga da frota \\ \bottomrule
 		\end{tabular}
 	}
 	\caption{Matriz de decisão, alarmes e ações de controle do Gêmeo Digital.}
@@ -2177,7 +2196,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.7\textwidth]{figuras/fig_20_1_basquin.pdf}
+		\includegraphics[width=0.60\textwidth]{figuras/fig_20_1_basquin.pdf}
 		\caption{Curva S-N de Basquin (escala log-log) — base da contagem de ciclos da Regra de Palmgren-Miner.}
 		\label{fig:19-1}
 	\end{figure}
@@ -2360,7 +2379,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	\begin{figure}[h!]
 		\centering
-		\includegraphics[width=0.75\textwidth]{figuras/fig_21_1_ekf.pdf}
+		\includegraphics[width=0.60\textwidth]{figuras/fig_21_1_ekf.pdf}
 		\caption{Ciclo de predição-correção do EKF: estimativa convergindo para o estado real a partir de medições ruidosas, com banda de incerteza $P_{k|k}$.}
 		\label{fig:21-1}
 	\end{figure}
@@ -2509,13 +2528,11 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\textbf{Diretriz Técnica Final:} O desenvolvedor deve tratar o Gêmeo Digital como um organismo vivo. A calibração contínua via EKF e a consistência física via PIML são os diferenciais que garantem a segurança estrutural e a eficiência exergética em tempo real.
 	
 	\newpage
-	\appendix
-	\renewcommand{\thesection}{\Alph{section}}
-	
+
 	\clearpage
 	\section{Implementação Base e Ferramentas Padrão}
-	
-	Este anexo descreve a infraestrutura fundamental e a lógica de programação para a execução do Gêmeo Digital em ambiente de produção, utilizando bibliotecas de código aberto consagradas e integração com sistemas legados.
+
+	Este capítulo descreve a infraestrutura fundamental e a lógica de programação para a execução do Gêmeo Digital em ambiente de produção, utilizando bibliotecas de código aberto consagradas e integração com sistemas legados.
 	
 	\textbf{1. Stack Tecnológica de Referência}
 	Para garantir a interoperabilidade entre os modelos físicos e de aprendizado de máquina, recomenda-se a seguinte configuração:
@@ -2588,14 +2605,14 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A implementação de referência deste anexo (EKF em NumPy puro, PIML em PyTorch) é suficiente para prototipagem e validação offline; migrar para produção exige, no mínimo, versionamento de modelo, testes de regressão contra o histórico de falhas conhecidas e o pipeline de retreinamento descrito no Capítulo de Diretrizes de Desenvolvimento — implantar o protótipo diretamente em campo sem essa camada de engenharia de MLOps é o erro mais comum na transição de Digital Twins de piloto para operação contínua.
+	\textbf{Diretriz Técnica Final:} A implementação de referência deste capítulo (EKF em NumPy puro, PIML em PyTorch) é suficiente para prototipagem e validação offline; migrar para produção exige, no mínimo, versionamento de modelo, testes de regressão contra o histórico de falhas conhecidas e o pipeline de retreinamento descrito no Capítulo de Diretrizes de Desenvolvimento — implantar o protótipo diretamente em campo sem essa camada de engenharia de MLOps é o erro mais comum na transição de Digital Twins de piloto para operação contínua.
 
 	\newpage
 	
 	\clearpage
 	\section{Implementação de Alta Performance e Physics-ML}
 	
-	Este anexo detalha o uso de frameworks de vanguarda para simulações de alta fidelidade, operadores neurais e visualização avançada em tempo real.
+	Este capítulo detalha o uso de frameworks de vanguarda para simulações de alta fidelidade, operadores neurais e visualização avançada em tempo real.
 	
 	\textbf{1. Frameworks de Physics-ML (NVIDIA Modulus)}
 	O uso do \textbf{NVIDIA Modulus} \cite{modulus} permite a criação de \text{Surrogate Models} baseados em PINNs e Operadores Neurais de Fourier (FNO) que substituem solvers de CFD lentos.
@@ -2641,16 +2658,17 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\end{itemize}
 	
 	\textbf{6. Resumo da Stack de Vanguarda}
-	$$
-	\begin{array}{|l|l|l|}
-		\hline
-		\textbf{Camada} & \textbf{Ferramenta} & \textbf{Função} \\ \hline
-		\text{Physics-ML Core} & \text{NVIDIA Modulus} & \text{PINNs e FNO para substituição de CFD} \\ \hline
-		\text{PDE Solver} & \text{DeepXDE} & \text{Resolução de problemas inversos} \\ \hline
-		\text{Controle/MPC} & \text{do-mpc} & \text{MHE e Otimização com restrições} \\ \hline
-		\text{Visualização 3D} & \text{NVIDIA Omniverse} & \text{Interface operacional fotorrealista} \\ \hline
-	\end{array}
-	$$
+
+	\begin{center}
+	\begin{tabular}{lll}
+		\toprule
+		\textbf{Camada} & \textbf{Ferramenta} & \textbf{Função} \\ \midrule
+		Physics-ML Core & NVIDIA Modulus & PINNs e FNO para substituição de CFD \\
+		PDE Solver & DeepXDE & Resolução de problemas inversos \\
+		Controle/MPC & do-mpc & MHE e Otimização com restrições \\
+		Visualização 3D & NVIDIA Omniverse & Interface operacional fotorrealista \\ \bottomrule
+	\end{tabular}
+	\end{center}
 	
 	\vspace{1em}
 	\hrule

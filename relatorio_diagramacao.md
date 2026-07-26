@@ -1,6 +1,6 @@
-> **Atualização de 26/07/2026**: os itens 1, 2, 3 e 5 abaixo já foram implementados no `.tex`
-> (ver "Diagramação — pendências e convenções" no `CONTEXTO.md` para o detalhe de cada mudança).
-> Os itens 4, 6, 7 e 8 seguem pendentes.
+> **Atualização de 26/07/2026**: todos os 8 itens abaixo já foram implementados no `.tex`
+> (ver "Diagramação — convenções" no `CONTEXTO.md` para o detalhe de cada mudança). Este arquivo
+> fica só como registro histórico do diagnóstico original.
 
 # Relatório de Diagramação — `compressores.pdf`
 
