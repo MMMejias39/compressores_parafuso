@@ -266,11 +266,61 @@ de carga, Atlas Copco no filtro coalescente, Brun & Kurz no contexto offshore,
 Hanlon nos rotores, Moran na termodinâmica, e Modulus/DeepXDE/do-mpc no anexo de
 implementação — que já eram usados no texto sem constar na bibliografia).
 
+## Referenciamento de equações — convenção reforçada (26/07/2026)
+
+Em 26/07/2026 foi feita uma varredura completa do `.tex` procurando equações sem
+numeração ou embutidas em `$...$` no meio do texto corrido (dificultando o
+`\eqref{}` a partir de outros capítulos). Achados e correções, por capítulo:
+
+- **Capítulo 3** (Detalhamento de Componentes): tinha **zero** equações
+  `\begin{equation}` apesar de conter 5 fórmulas físicas reais, todas em `$...$`
+  dentro de itens de `itemize` (vazão do elemento compressor, calor do
+  aftercooler, potência do aquecedor de regeneração PSA, perda de carga do
+  filtro coalescente, dinâmica de pressão do vaso pulmão). Convertidas para
+  `eq:s3-1` a `eq:s3-5`, cada uma precedida de frase explicativa, seguindo a
+  convenção já usada nos demais capítulos.
+- **Capítulo 17** (linha da destruição de exergia): havia um `$$ \dot{I} = T_0
+  \cdot \dot{S}_{gen} $$` (sintaxe TeX antiga, sem numeração) logo antes da
+  Equação~17-3, que já contém a mesma relação — em vez de duplicar o número,
+  a linha foi reescrita como math inline dentro do parágrafo (a própria frase já
+  dizia "essa é a mesma relação que abre a Equação 17-3").
+- **Capítulo 6**: $f_r = \text{RPM}/60$ e $f_g = f_r \cdot Z$ (frequências de
+  monitoramento) estavam embutidas em `itemize`; viraram `eq:s6-7`, com a antiga
+  `eq:s6-7` (Torque de Referência) renumerada para `eq:s6-8`.
+- **Capítulo 11**: $f_{gmf} = Z \cdot f_{\text{rot}}$ estava embutida em texto
+  corrido; virou `eq:s11-8`, com as três equações seguintes do capítulo
+  (Δτ, HI_HP, SPC) renumeradas de `eq:s11-8/9/10` para `eq:s11-9/10/11`
+  (referências cruzadas no próprio Cap. 11 e uma no Cap. 15 atualizadas).
+- **Capítulo 22** (VAE): a reparametrização $\ell = \mu + \sigma \cdot \epsilon$
+  estava embutida em `itemize`, virou `eq:s22-1`; as equações de perda VAE e
+  erro de reconstrução foram renumeradas de `eq:s22-1/2` para `eq:s22-2/3`.
+- **Capítulo 26**: eficiência exergética $\eta_{ex} = 1-(\dot I/\dot{Ex}_{in})$
+  estava embutida em `itemize`, virou `eq:s26-3` (não exigiu renumeração — era
+  a última do capítulo).
+
+**Casos revisados e mantidos como estão** (não são o mesmo problema): pequenas
+substituições de valor concreto dentro de uma frase (ex.: "$D=1$ na falha",
+"$\delta_{serv}=0$" ao descrever um nível de alarme específico) e definições de
+símbolo em frases "Onde $X = ...$" logo após uma equação já numerada (ex.: $\psi$
+no Cap. 17, $\omega_s$ no Cap. 4) — esse é o padrão já estabelecido no documento
+para explicar um termo, não uma equação nova a referenciar.
+
+**Regra permanente daqui em diante**: toda fórmula que expresse uma relação
+física/matemática substantiva (não uma simples troca de símbolo por um valor
+numérico específico, nem a definição de um termo dentro do "Onde ... é ..." que
+já segue uma equação) deve estar em `\begin{equation}\label{eq:sC-N}...\end{equation}`,
+nunca solta em `$...$`/`$$...$$` dentro do texto corrido. Ao inserir uma equação
+no meio de um capítulo já numerado, renumere em cascata os labels seguintes
+daquele capítulo (e suas referências `\eqref` em qualquer capítulo do
+documento) para manter a correspondência "sufixo do label = número exibido"
+descrita na seção de Convenções.
+
 ## Estado atual (última sessão)
 
-Documento compila limpo, 97 páginas, sem erros/referências indefinidas/labels
-duplicados. Repositório git inicializado (ver "Visão de longo prazo" acima),
-tag `v1.0` no commit inicial — use `git log` para o histórico exato.
+Documento compila limpo, 98 páginas (165 equações numeradas ao todo), sem
+erros/referências indefinidas/labels duplicados. Repositório git inicializado
+(ver "Visão de longo prazo" acima), tag `v1.0` no commit inicial — use
+`git log` para o histórico exato.
 
 Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Bibliografia (45 referências) verificada uma a uma contra fontes reais; 3 tinham
@@ -291,6 +341,9 @@ Principais mudanças de 26/07/2026 (sessão longa, dia único):
   autor).
 - Criada `apresentacao_compressores.tex`/`.pdf` (Beamer, 21 slides, tema
   Metropolis) resumindo o livro para uso em reuniões (ver "Arquivos e pastas").
+- Revisão de referenciamento de equações: Capítulo 3 (que não tinha nenhuma
+  equação numerada) e mais 4 fórmulas soltas nos Capítulos 6, 11, 17, 22 e 26
+  passaram a ter `\label`/`\eqref` (ver "Referenciamento de equações" acima).
 
 Não há tarefas pendentes conhecidas.
 

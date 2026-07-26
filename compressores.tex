@@ -466,32 +466,47 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	\subsection{\textbf{Unidade Compressora e Circuito de Óleo}}
 	\begin{itemize}
-		\item \textbf{Elemento Compressor:} Parafuso rotativo com vazão $\dot{m} = \rho \cdot V_{\text{disp}} \cdot \frac{\omega}{2\pi} \cdot \eta_{\text{vol}}$, onde $V_{\text{disp}}$ é o volume deslocado pelo par de rotores a cada rotação completa, fixado pela geometria do perfil helicoidal (comprimento, diâmetro e ângulo de hélice dos rotores).
+		\item \textbf{Elemento Compressor:} Parafuso rotativo cuja vazão mássica teórica, Equação~\eqref{eq:s3-1}, é o produto da densidade do ar de sucção pelo volume deslocado pelo par de rotores a cada rotação completa ($V_{\text{disp}}$, fixado pela geometria do perfil helicoidal — comprimento, diâmetro e ângulo de hélice dos rotores) e pela rotação, corrigido pela eficiência volumétrica real:
+		\begin{equation}\label{eq:s3-1}
+ \dot{m} = \rho \cdot V_{\text{disp}} \cdot \frac{\omega}{2\pi} \cdot \eta_{\text{vol}}
+\end{equation}
 		\item \textbf{Separador Ar/Óleo:} Remoção de contaminantes com perda de carga $\Delta P_{\text{sep}}$.
 	\end{itemize}
 	
 	\subsection{\textbf{Resfriamento e Drenagem}}
 	\begin{itemize}
-		\item \textbf{Aftercooler:} Trocador de calor regido por $\dot{Q} = U A \Delta T_{\text{LMTD}}$.
+		\item \textbf{Aftercooler:} Trocador de calor cuja taxa de rejeição térmica, Equação~\eqref{eq:s3-2}, segue a forma clássica de projeto — coeficiente global de transferência ($U$) vezes área de troca ($A$) vezes a diferença de temperatura média logarítmica ($\Delta T_{\text{LMTD}}$, detalhada no Capítulo de Dinâmica do Intercooler):
+		\begin{equation}\label{eq:s3-2}
+ \dot{Q} = U \cdot A \cdot \Delta T_{\text{LMTD}}
+\end{equation}
 		\item \textbf{Drenos Automáticos:} Remoção de condensado via sensores de nível ou temporização.
 	\end{itemize}
 	
 	\subsection{\textbf{Purificação e Secagem (Sistema PSA)}}
 	\begin{itemize}
 		\item \textbf{Torres de Adsorção:} Preenchidas com \textbf{Alumina Ativada} para retenção de umidade.
-		\item \textbf{Resistências de Aquecimento:} Utilizadas em ciclos de regeneração térmica: $P_{\text{term}} = \dot{m}_{\text{purge}} \cdot c_p \cdot \Delta T$.
+		\item \textbf{Resistências de Aquecimento:} Utilizadas em ciclos de regeneração térmica; a Equação~\eqref{eq:s3-3} calcula a potência necessária como a vazão mássica de ar de purga vezes o calor específico vezes o salto de temperatura imposto ao ar de regeneração:
+		\begin{equation}\label{eq:s3-3}
+ P_{\text{term}} = \dot{m}_{\text{purge}} \cdot c_p \cdot \Delta T
+\end{equation}
 		\item \textbf{Válvulas de Comutação:} Gerenciam os ciclos de carga e regeneração das torres.
 	\end{itemize}
 	
 	\subsection{\textbf{Filtragem e Válvulas de Linha}}
 	\begin{itemize}
-		\item \textbf{Filtros Coalescentes:} Perda de carga modelada por $\Delta P = \zeta \cdot \frac{\rho v^2}{2}$.
+		\item \textbf{Filtros Coalescentes:} A perda de carga, Equação~\eqref{eq:s3-4}, segue a forma clássica de perda de carga localizada — coeficiente de perda do elemento filtrante ($\zeta$) vezes a pressão dinâmica do escoamento:
+		\begin{equation}\label{eq:s3-4}
+ \Delta P = \zeta \cdot \frac{\rho v^2}{2}
+\end{equation}
 		\item \textbf{Válvulas de Bloqueio e Retenção:} Garantem o isolamento e o fluxo unidirecional.
 	\end{itemize}
 	
 	\subsection{\textbf{Armazenamento e Segurança}}
 	\begin{itemize}
-		\item \textbf{Vaso de Pressão (Pulmão):} Armazenamento até $10\,\text{bar}$ com dinâmica $\frac{dP_{\text{res}}}{dt} = \frac{R T}{V} \Delta \dot{m}$.
+		\item \textbf{Vaso de Pressão (Pulmão):} Armazenamento até $10\,\text{bar}$, com a dinâmica de pressão interna dada pela Equação~\eqref{eq:s3-5} — proporcional ao desbalanço instantâneo entre vazão de entrada e saída:
+		\begin{equation}\label{eq:s3-5}
+ \frac{dP_{\text{res}}}{dt} = \frac{R T}{V} \Delta \dot{m}
+\end{equation}
 		\item \textbf{PSV (Válvula de Segurança):} Proteção mecânica contra sobrepressão conforme ASME VIII.
 	\end{itemize}
 	
@@ -809,14 +824,14 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\end{itemize}
 	
 	\subsection{\textbf{Frequências de Monitoramento}}
-	\begin{itemize}
-		\item \textbf{Rotação ($f_r$):} $f_r = \text{RPM} / 60$.
-		\item \textbf{Engrenamento ($GMF$):} $f_g = f_r \cdot Z$.
-	\end{itemize}
-	
-	\vspace{1em}
-	\textbf{Equação de Torque de Referência:} A Equação~\eqref{eq:s6-7} sintetiza tudo o que foi apresentado neste capítulo em um único torque teórico esperado no eixo do motor: soma o trabalho politrópico de compressão dos dois estágios (LP e HP) com as perdas da gearbox, e converte de potência para torque dividindo pela rotação do motor e pela eficiência da caixa multiplicadora — este é o valor de referência contra o qual o torque real medido é comparado no resíduo mecânico $r_{\text{mec}}$ da Equação~\eqref{eq:s6-6}:
+	As frequências características usadas ao longo deste documento como referência de diagnóstico espectral seguem diretamente da cinemática do trem de potência — a Equação~\eqref{eq:s6-7} converte a rotação medida (RPM) na frequência de giro do eixo ($f_r$) e, a partir dela, na frequência de engrenamento ($GMF$, aqui $f_g$) pelo número de dentes $Z$:
 	\begin{equation}\label{eq:s6-7}
+ f_r = \frac{\text{RPM}}{60} \quad ; \quad f_g = f_r \cdot Z
+\end{equation}
+
+	\vspace{1em}
+	\textbf{Equação de Torque de Referência:} A Equação~\eqref{eq:s6-8} sintetiza tudo o que foi apresentado neste capítulo em um único torque teórico esperado no eixo do motor: soma o trabalho politrópico de compressão dos dois estágios (LP e HP) com as perdas da gearbox, e converte de potência para torque dividindo pela rotação do motor e pela eficiência da caixa multiplicadora — este é o valor de referência contra o qual o torque real medido é comparado no resíduo mecânico $r_{\text{mec}}$ da Equação~\eqref{eq:s6-6}:
+	\begin{equation}\label{eq:s6-8}
  \boxed{\tau_{\text{ref}} = \frac{1}{\omega_{\text{mot}} \cdot \eta_{\text{gb}}} \left[ \sum_{i=1}^{2} \left( \frac{n}{n-1} P_{\text{in},i} \dot{V}_{\text{in},i} \left( \pi_i^{\frac{n-1}{n}} - 1 \right) \right) + P_{\text{loss,gb}} \right]}
 \end{equation}
 
@@ -824,7 +839,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} O torque de referência da Equação~\eqref{eq:s6-7} é o valor teórico esperado a partir das condições de processo; o resíduo mecânico ($r_{\text{mec}}$) desta seção só é um diagnóstico útil se comparado continuamente contra esse torque de referência recalculado em tempo real — nunca contra um valor de projeto fixo.
+	\textbf{Diretriz Técnica Final:} O torque de referência da Equação~\eqref{eq:s6-8} é o valor teórico esperado a partir das condições de processo; o resíduo mecânico ($r_{\text{mec}}$) desta seção só é um diagnóstico útil se comparado continuamente contra esse torque de referência recalculado em tempo real — nunca contra um valor de projeto fixo.
 
 	% --- Fim do Capítulo 6 ---
 	
@@ -1379,15 +1394,18 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		Se $\delta_{\text{res}} \le 0$, ocorre contato metálico, detectado por picos de vibração e queda súbita de $\eta_{is}$.
 		
 		\item \textbf{Desgaste de Engrenagens e Perda de Sincronismo:}
-		Causado por fadiga ou falha de lubrificação. O sintoma é o aumento dos harmônicos da frequência de engrenamento ($f_{gmf} = Z \cdot f_{\text{rot}}$) e alteração na fase vibracional entre os eixos.
+		Causado por fadiga ou falha de lubrificação. O sintoma é o aumento dos harmônicos da frequência de engrenamento — Equação~\eqref{eq:s11-8}, mesma definição cinemática já usada no Capítulo de Engenharia do Trem de Transmissão — e alteração na fase vibracional entre os eixos:
+		\begin{equation}\label{eq:s11-8}
+ f_{gmf} = Z \cdot f_{\text{rot}}
+\end{equation}
 		
 		\item \textbf{Falha de Selagem e \textit{Blow-by}:}
 		Degradação dos selos de labirinto ou anéis de carvão. O Gêmeo Digital monitora o aumento da pressão no cárter ($P_{\text{cárter}}$) e a redução da vazão mássica efetiva.
 		
 		\item \textbf{Calço Hidráulico por Arraste de Condensado:}
 		Falha no dreno do intercooler. O líquido incompressível gera um pico de torque instantâneo ($\Delta \tau$):
-		\begin{equation}\label{eq:s11-8}
- \Delta \tau = I \cdot \frac{d\omega}{dt} + \tau_{\text{impacto}} 
+		\begin{equation}\label{eq:s11-9}
+ \Delta \tau = I \cdot \frac{d\omega}{dt} + \tau_{\text{impacto}}
 \end{equation}
 		Resulta em quebra de dentes de engrenagens ou cisalhamento de chavetas.
 		
@@ -1416,12 +1434,12 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	\subsection{\textbf{Indicador de Saúde Global e KPI Final}}
 	O Gêmeo Digital consolida os desvios no Índice de Saúde ($HI_{HP}$):
-	\begin{equation}\label{eq:s11-9}
+	\begin{equation}\label{eq:s11-10}
  HI_{HP} = w_1 \left( \frac{\eta_{v,\text{real}}}{\eta_{v,\text{nom}}} \right) + w_2 \left( \frac{T_{\text{out,nom}}}{T_{\text{out,real}}} \right) + w_3 \left( \frac{V_{\text{nom}}}{V_{\text{real}}} \right) 
 \end{equation}
 	
 	O Consumo de Potência Específica ($SPC$) é o KPI final:
-	\begin{equation}\label{eq:s11-10}
+	\begin{equation}\label{eq:s11-11}
  \boxed{SPC = \frac{\dot{W}_{LP,\text{tot}} + \dot{W}_{HP,\text{tot}}}{\dot{V}_{\text{free\_air}}}} 
 \end{equation}
 	Unidade: $\text{kW} \cdotp \text{m}^{-3} \cdotp \text{min}$.
@@ -1430,7 +1448,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} O SPC da Equação~\eqref{eq:s11-10} é o KPI comercial que a operação enxerga, mas sua causa raiz — quando se degrada — está quase sempre em um dos termos do Índice de Saúde da Equação~\eqref{eq:s11-9}; o Gêmeo Digital deve sempre apresentar os dois juntos, nunca o SPC isolado sem a decomposição por componente.
+	\textbf{Diretriz Técnica Final:} O SPC da Equação~\eqref{eq:s11-11} é o KPI comercial que a operação enxerga, mas sua causa raiz — quando se degrada — está quase sempre em um dos termos do Índice de Saúde da Equação~\eqref{eq:s11-10}; o Gêmeo Digital deve sempre apresentar os dois juntos, nunca o SPC isolado sem a decomposição por componente.
 
 	% --- Fim do Capítulo 11 ---
 	
@@ -1744,7 +1762,7 @@ HI_{des} = \frac{\Delta P_{nom}}{\Delta P_{real}} \cdot \frac{PDP_{target}}{PDP_
 			\begin{equation}\label{eq:s15-9}
 \eta_{purge} = 1 - \frac{\dot{m}_{purge}}{\dot{m}_{total}}
 \end{equation}
-			O Gêmeo Digital deve reportar $\eta_{purge}$ junto ao $SPC$ (Equação~\eqref{eq:s11-10}): um SPC aparentemente saudável pode mascarar uma purga excessiva — por exemplo, um ciclo de regeneração mal ajustado ou uma válvula solenoide vazando entre torres — que já está sendo paga em consumo elétrico antes mesmo de chegar ao consumidor.
+			O Gêmeo Digital deve reportar $\eta_{purge}$ junto ao $SPC$ (Equação~\eqref{eq:s11-11}): um SPC aparentemente saudável pode mascarar uma purga excessiva — por exemplo, um ciclo de regeneração mal ajustado ou uma válvula solenoide vazando entre torres — que já está sendo paga em consumo elétrico antes mesmo de chegar ao consumidor.
 		\end{itemize}
 		
 		\vspace{1em}
@@ -1900,9 +1918,7 @@ E_{rec} = \sum_{j=1}^{M} (z_j - \hat{z}_j)^2
 
 \textbf{Da entropia à exergia — uma explicação conceitual:} A Segunda Lei da Termodinâmica estabelece que a entropia de um sistema isolado nunca diminui: todo processo real — atrito, transferência de calor sob diferença finita de temperatura, ou um gás escoando livremente por um vazamento — gera entropia ($\dot{S}_{gen} \ge 0$), e esse aumento é irreversível, não há como "desfazê-lo" sem gastar ainda mais energia em outro lugar. A Primeira Lei garante que a energia total se conserva (nunca é destruída), mas a Segunda Lei revela algo que a Primeira não enxerga: a \textit{qualidade} dessa energia — sua capacidade de realizar trabalho útil — se degrada continuamente à medida que a entropia aumenta. É exatamente essa perda de qualidade, invisível para um balanço de energia comum, que a \textbf{exergia} foi criada para medir.
 
-Formalmente, exergia é o trabalho útil máximo que poderia ser extraído de um fluxo de energia ou matéria, levando-o reversivelmente até o equilíbrio com o ambiente de referência (pressão e temperatura atmosféricas, $P_0$ e $T_0$). A energia nunca é destruída; a exergia, sim — e a quantidade destruída é diretamente proporcional à entropia gerada pelo processo:
-$$ \dot{I} = T_0 \cdot \dot{S}_{gen} $$
-Essa é a mesma relação que abre a Equação~\eqref{eq:s17-3} logo abaixo: destruição de exergia é, literalmente, entropia gerada multiplicada pela temperatura ambiente — uma forma de converter a "desordem" termodinâmica (um conceito abstrato, medido em J/K) em uma grandeza concreta e comparável, medida em Watts.
+Formalmente, exergia é o trabalho útil máximo que poderia ser extraído de um fluxo de energia ou matéria, levando-o reversivelmente até o equilíbrio com o ambiente de referência (pressão e temperatura atmosféricas, $P_0$ e $T_0$). A energia nunca é destruída; a exergia, sim — e a quantidade destruída é diretamente proporcional à entropia gerada pelo processo, $\dot{I} = T_0 \cdot \dot{S}_{gen}$: essa é a mesma relação que abre a Equação~\eqref{eq:s17-3} logo abaixo, destruição de exergia é, literalmente, entropia gerada multiplicada pela temperatura ambiente — uma forma de converter a "desordem" termodinâmica (um conceito abstrato, medido em J/K) em uma grandeza concreta e comparável, medida em Watts.
 
 \textbf{Exemplo aplicado a este documento:} um vazamento interno entre os rotores do compressor (a folga $\delta$ discutida nos capítulos anteriores) deixa o ar de alta pressão escoar para uma câmara de baixa pressão sem produzir nenhum trabalho útil. A energia contida nesse ar não desaparece — ela permanece no sistema, agora dissipada como calor e turbulência —, então um balanço de energia convencional não acusaria perda alguma. A exergia é o que revela o prejuízo real: o \textit{potencial} daquele ar pressurizado de realizar trabalho foi destruído de forma permanente, e $\dot{I}$ quantifica exatamente quantos Watts esse potencial valia. É essa mesma unidade (Watts de exergia destruída) que permite comparar, lado a lado e na mesma régua, o vazamento por folga interna, a incrustação no trocador de calor e o atrito no mancal — e assim priorizar qual intervenção realmente devolve mais eficiência à máquina.
 
@@ -2399,18 +2415,21 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	O VAE projeta o vetor de 28 variáveis em um espaço latente ($\ell$) modelado por distribuições gaussianas:
 	\begin{itemize}
 		\item \textbf{Encoder:} Mapeia a entrada $z$ para os parâmetros $\mu$ (média) e $\sigma$ (desvio padrão).
-		\item \textbf{Reparametrização:} $\ell = \mu + \sigma \cdotp \epsilon$, onde $\epsilon \sim \mathcal{N}(0,1)$.
+		\item \textbf{Reparametrização:} Para permitir a retropropagação do gradiente através de uma amostragem estocástica, o vetor latente é obtido deslocando a média por um ruído gaussiano padrão escalado pelo desvio padrão aprendido, conforme a Equação~\eqref{eq:s22-1}:
+		\begin{equation}\label{eq:s22-1}
+ \ell = \mu + \sigma \cdotp \epsilon, \quad \epsilon \sim \mathcal{N}(0,1)
+\end{equation}
 	\end{itemize}
-	
+
 	\subsection{Função de Perda e Regularização}
 	O treinamento busca o equilíbrio entre a fidelidade da reconstrução e a organização do espaço latente:
-	\begin{equation}\label{eq:s22-1}
+	\begin{equation}\label{eq:s22-2}
 	L_{\text{VAE}} = \underbrace{\| z - \hat{z} \|^2}_{\text{Erro de Reconstrução}} + \beta \cdotp \underbrace{D_{KL} [ \mathcal{N}(\mu, \sigma) \parallel \mathcal{N}(0, 1) ]}_{\text{Divergência KL}}
 \end{equation}
 	
 	\subsection{Diagnóstico de Falhas por Resíduo}
 	A saúde do sistema é monitorada pelo erro de reconstrução. Desvios em relação ao padrão aprendido indicam degradação mecânica ou térmica:
-	\begin{equation}\label{eq:s22-2}
+	\begin{equation}\label{eq:s22-3}
  E_{\text{rec}} = \sum_{i=1}^{M} (z_i - \hat{z}_i)^2
 \end{equation}
 
@@ -2418,7 +2437,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} O peso $\beta$ na Equação~\eqref{eq:s22-1} controla diretamente a sensibilidade do resíduo da Equação~\eqref{eq:s22-2}: um $\beta$ alto demais organiza o espaço latente às custas da fidelidade de reconstrução, mascarando desvios reais; o Gêmeo Digital deve validar $E_{\text{rec}}$ contra falhas históricas conhecidas antes de confiar no limiar $\tau$ de disparo do diagnóstico.
+	\textbf{Diretriz Técnica Final:} O peso $\beta$ na Equação~\eqref{eq:s22-2} controla diretamente a sensibilidade do resíduo da Equação~\eqref{eq:s22-3}: um $\beta$ alto demais organiza o espaço latente às custas da fidelidade de reconstrução, mascarando desvios reais; o Gêmeo Digital deve validar $E_{\text{rec}}$ contra falhas históricas conhecidas antes de confiar no limiar $\tau$ de disparo do diagnóstico.
 
 	\clearpage
 	\section{Aprendizado Informado pela Física (PIML)}
@@ -2597,7 +2616,10 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	
 	\textbf{4. Indicadores Globais de Saúde (KPIs)}
 	\begin{itemize}
-		\item \textbf{Eficiência Exergética:} $\eta_{\text{ex}} = 1 - (\dot{I} / \dot{E}x_{\text{in}})$.
+		\item \textbf{Eficiência Exergética:} Razão entre a exergia efetivamente aproveitada e a exergia total de entrada, conforme a Equação~\eqref{eq:s26-3}:
+		\begin{equation}\label{eq:s26-3}
+ \eta_{\text{ex}} = 1 - \frac{\dot{I}}{\dot{E}x_{\text{in}}}
+\end{equation}
 		\item \textbf{Health Index (HI):} Normalização ponderada dos resíduos do VAE e EKF.
 	\end{itemize}
 
