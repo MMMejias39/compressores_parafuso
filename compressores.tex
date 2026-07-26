@@ -463,59 +463,64 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	\subsection{\textbf{Subsistema de Potência e Acionamento}}
 	\begin{itemize}
-		\item \textbf{Painel Elétrico e VSD:} Controle de frequência e mitigação de harmônicas ($\text{THD}_i$).
-		\item \textbf{Motor Elétrico:} Conversão eletromecânica com eficiência $\eta_{\text{mot}}$.
+		\item \textbf{Painel Elétrico e VSD:} O painel elétrico é o ponto de entrega de energia do pacote — recebe a alimentação de média/baixa tensão da plataforma, protege o circuito com relés de disparo (detalhados no Capítulo de Subsistema Elétrico) e abriga o Inversor de Frequência (\textit{Variable Speed Drive}, VSD). O VSD converte a frequência fixa da rede numa frequência variável, permitindo modular a velocidade angular $\omega$ do motor para casar a vazão produzida com a demanda da planta em vez de operar sempre a rotação nominal. O efeito colateral desse chaveamento eletrônico de alta frequência é a distorção harmônica total de corrente ($\text{THD}_i$) injetada na rede — quanto maior a distorção, maior o aquecimento adicional no motor e a interferência em outros equipamentos sensíveis da rede elétrica isolada da plataforma, por isso ela é monitorada e mitigada (filtros de linha, técnicas de modulação PWM).
+		\item \textbf{Motor Elétrico:} Motor de indução trifásico responsável por converter a energia elétrica recebida do VSD em energia mecânica no eixo, entregue ao trem de potência (Capítulo de Trem de Potência). A eficiência de conversão $\eta_{\text{mot}}$ é a razão entre a potência mecânica efetivamente disponível no eixo e a potência elétrica consumida — a diferença entre as duas é dissipada como calor nos enrolamentos e no núcleo, e é justamente essa parcela de perda que aquece o motor e limita sua vida útil. O circuito equivalente completo, o escorregamento e os mecanismos de falha elétrica (incluindo desbalanço entre fases) são modelados em detalhe no Capítulo de Subsistema Elétrico.
 	\end{itemize}
 	
 	\subsection{\textbf{Unidade Compressora e Circuito de Óleo}}
 	\begin{itemize}
-		\item \textbf{Elemento Compressor:} Parafuso rotativo cuja vazão mássica teórica, Equação~\eqref{eq:s3-1}, é o produto da densidade do ar de sucção pelo volume deslocado pelo par de rotores a cada rotação completa ($V_{\text{disp}}$, fixado pela geometria do perfil helicoidal — comprimento, diâmetro e ângulo de hélice dos rotores) e pela rotação, corrigido pela eficiência volumétrica real:
+		\item \textbf{Elemento Compressor:} É o próprio par de rotores helicoidais (\textit{airend}) apresentado na Figura~\ref{fig:3-1} — o núcleo físico onde a compressão de fato acontece, por redução geométrica contínua do volume entre os lóbulos em engrenamento (ciclo já descrito no Capítulo de Arquitetura). A vazão mássica teórica que ele entrega, Equação~\eqref{eq:s3-1}, é o produto da densidade do ar de sucção pelo volume deslocado pelo par de rotores a cada rotação completa ($V_{\text{disp}}$, fixado pela geometria do perfil helicoidal — comprimento, diâmetro e ângulo de hélice dos rotores) e pela rotação, corrigido pela eficiência volumétrica real $\eta_{\text{vol}}$:
 		\begin{equation}\label{eq:s3-1}
  \dot{m} = \rho \cdot V_{\text{disp}} \cdot \frac{\omega}{2\pi} \cdot \eta_{\text{vol}}
 \end{equation}
-		\item \textbf{Separador Ar/Óleo:} Remoção de contaminantes com perda de carga $\Delta P_{\text{sep}}$.
+		O termo $\eta_{\text{vol}}$ é o que separa a vazão teórica (puramente geométrica) da vazão real: parte do ar comprimido escapa de volta para câmaras de pressão mais baixa através das folgas microscópicas entre rotores e carcaça, um mecanismo detalhado no Capítulo de Termodinâmica do Estágio LP. Quanto maior o desgaste dessas folgas ao longo da vida do equipamento, menor $\eta_{\text{vol}}$ e maior o desvio entre a vazão prevista por esta equação e a vazão real entregue à rede.
+		\item \textbf{Separador de Ar/Óleo (Deaeração do Circuito de Lubrificação):} Como o compressor deste documento é isento de óleo na câmara de compressão (não há óleo em contato com o ar de processo), este separador não atua no ar comprimido em si, mas no óleo de lubrificação da gearbox e dos mancais: o óleo que retorna ao cárter após lubrificar engrenagens e mancais chega aerado (com bolhas de ar incorporadas pelo respingo/turbulência do engrenamento), e precisa liberar esse ar antes de ser recirculado pela bomba — óleo aerado perde capacidade de sustentar o filme lubrificante e de dissipar calor. A perda de carga que esse separador impõe ao próprio óleo, $\Delta P_{\text{sep}}$, é monitorada porque seu aumento progressivo indica saturação ou obstrução do elemento.
 	\end{itemize}
 	
 	\subsection{\textbf{Resfriamento e Drenagem}}
 	\begin{itemize}
-		\item \textbf{Aftercooler:} Trocador de calor cuja taxa de rejeição térmica, Equação~\eqref{eq:s3-2}, segue a forma clássica de projeto — coeficiente global de transferência ($U$) vezes área de troca ($A$) vezes a diferença de temperatura média logarítmica ($\Delta T_{\text{LMTD}}$, detalhada no Capítulo de Dinâmica do Intercooler):
+		\item \textbf{Aftercooler:} É o trocador de calor final do pacote, posicionado logo após a descarga do último estágio de compressão (HP) e antes da filtragem/secagem. Sua função é reduzir a temperatura do ar — tipicamente acima de $100\,^{\circ}\text{C}$ na saída do estágio HP — para um patamar compatível com os elementos filtrantes e, principalmente, para forçar a condensação da umidade que o ar carrega antes que ela chegue ao secador PSA (detalhado no Capítulo de Secagem). Normalmente é resfriado a água do mar ou a ar ambiente, conforme a disponibilidade na plataforma. Sua taxa de rejeição térmica, Equação~\eqref{eq:s3-2}, segue a forma clássica de projeto de trocadores — coeficiente global de transferência ($U$, que piora com incrustação/\textit{fouling}) vezes área de troca ($A$, fixa por projeto) vezes a diferença de temperatura média logarítmica ($\Delta T_{\text{LMTD}}$, detalhada no Capítulo de Dinâmica do Intercooler):
 		\begin{equation}\label{eq:s3-2}
  \dot{Q} = U \cdot A \cdot \Delta T_{\text{LMTD}}
 \end{equation}
-		\item \textbf{Drenos Automáticos:} Remoção de condensado via sensores de nível ou temporização.
+		Como $A$ é fixa, qualquer queda na taxa de calor removido para a mesma vazão e mesma diferença de temperatura de entrada só pode ser explicada por uma queda em $U$ — é esse raciocínio que permite ao Gêmeo Digital atribuir uma perda de performance térmica à incrustação do trocador, e não a outra causa.
+		\item \textbf{Drenos Automáticos:} Válvulas que removem periodicamente a água líquida que se acumula no fundo do vaso separador de condensado, logo após o aftercooler — o mesmo condensado quantificado no Capítulo de Intercooler. Podem ser acionadas por um sensor de nível (abrem só quando há líquido acumulado, mais eficiente) ou por temporizador (abrem em ciclos fixos, mais simples porém desperdiça ar comprimido a cada purga). Um dreno que trava aberto perde ar de processo continuamente; um que trava fechado permite que a água se acumule e seja arrastada para os estágios seguintes — ambos os modos de falha são detalhados no Capítulo de Aftercooler e Filtragem.
 	\end{itemize}
 	
 	\subsection{\textbf{Purificação e Secagem (Sistema PSA)}}
 	\begin{itemize}
-		\item \textbf{Torres de Adsorção:} Preenchidas com \textbf{Alumina Ativada} para retenção de umidade.
-		\item \textbf{Resistências de Aquecimento:} Utilizadas em ciclos de regeneração térmica; a Equação~\eqref{eq:s3-3} calcula a potência necessária como a vazão mássica de ar de purga vezes o calor específico vezes o salto de temperatura imposto ao ar de regeneração:
+		\item \textbf{Torres de Adsorção:} Duas colunas cilíndricas preenchidas com material dessecante (tipicamente \textbf{Alumina Ativada} ou peneira molecular) que retém fisicamente as moléculas de vapor d'água na superfície de seus grãos porosos à medida que o ar úmido passa por elas sob pressão. O princípio de adsorção por oscilação de pressão (\textit{Pressure Swing Adsorption}, PSA) alterna as duas torres entre dois papéis: enquanto uma seca o ar de processo, a outra é regenerada — o ciclo completo, a cinética de saturação do leito e o cálculo do ponto de orvalho resultante são detalhados no Capítulo de Sistema de Secagem.
+		\item \textbf{Resistências de Aquecimento:} Utilizadas nos ciclos de regeneração térmica dos secadores que precisam de calor externo para "expulsar" a umidade retida no dessecante saturado (ao contrário dos secadores PSA a frio, que regeneram apenas por expansão do ar de purga). A Equação~\eqref{eq:s3-3} calcula a potência elétrica necessária como a vazão mássica de ar de purga vezes o calor específico do ar vezes o salto de temperatura imposto a esse ar de regeneração:
 		\begin{equation}\label{eq:s3-3}
  P_{\text{term}} = \dot{m}_{\text{purge}} \cdot c_p \cdot \Delta T
 \end{equation}
-		\item \textbf{Válvulas de Comutação:} Gerenciam os ciclos de carga e regeneração das torres.
+		Esse consumo elétrico de regeneração é significativo o suficiente para justificar a recuperação de calor residual de outras partes do pacote (aftercooler, óleo, exaustão do invólucro), estratégia detalhada no Capítulo de Sistema de Secagem.
+		\item \textbf{Válvulas de Comutação:} Válvulas solenoides que alternam o caminho do fluxo de ar entre as duas torres a cada ciclo — direcionando o ar úmido de processo para a torre em adsorção e o ar de purga (ou o ar quente de regeneração) para a torre que está sendo regenerada. Uma falha de comutação (válvula presa ou com vazamento entre torres) compromete a secagem mesmo com o leito dessecante em boas condições, por isso é diagnosticada separadamente da saturação do próprio material.
 	\end{itemize}
 	
 	\subsection{\textbf{Filtragem e Válvulas de Linha}}
 	\begin{itemize}
-		\item \textbf{Filtros Coalescentes:} A perda de carga, Equação~\eqref{eq:s3-4}, segue a forma clássica de perda de carga localizada — coeficiente de perda do elemento filtrante ($\zeta$) vezes a pressão dinâmica do escoamento:
+		\item \textbf{Filtros Coalescentes:} Elementos filtrantes de meio fibroso instalados a jusante do aftercooler que capturam aerossóis finos de óleo (do circuito de lubrificação) e partículas sólidas residuais, protegendo o leito dessecante do secador PSA — o material adsorvente é facilmente contaminado e perde capacidade permanentemente se exposto a óleo. À medida que o meio filtrante retém contaminantes, a perda de carga que ele impõe ao escoamento cresce; a Equação~\eqref{eq:s3-4} modela essa perda pela forma clássica de perda de carga localizada — coeficiente de perda do elemento filtrante ($\zeta$, que cresce com a saturação) vezes a pressão dinâmica do escoamento:
 		\begin{equation}\label{eq:s3-4}
  \Delta P = \zeta \cdot \frac{\rho v^2}{2}
 \end{equation}
-		\item \textbf{Válvulas de Bloqueio e Retenção:} Garantem o isolamento e o fluxo unidirecional.
+		Como $\rho$ e $v$ variam com a condição de operação, o Gêmeo Digital normaliza $\Delta P$ medido por essas duas variáveis antes de comparar contra o limite de substituição do elemento — comparar $\Delta P$ bruto entre duas condições de carga distintas levaria a falsos alarmes.
+		\item \textbf{Válvulas de Bloqueio e Retenção:} Duas famílias com papéis distintos: as válvulas de \textbf{bloqueio} (manuais ou motorizadas) isolam trechos da tubulação para manutenção sem despressurizar todo o sistema; as válvulas de \textbf{retenção} (\textit{check valves}) permitem o fluxo em um único sentido e impedem que o ar armazenado no vaso pulmão reflua para o compressor quando este for parado ou perder pressão — sem elas, a parada de uma unidade em operação em frota (Capítulo de Distribuição e Armazenamento) despressurizaria seu próprio circuito através da rede comum.
 	\end{itemize}
 	
 	\subsection{\textbf{Armazenamento e Segurança}}
 	\begin{itemize}
-		\item \textbf{Vaso de Pressão (Pulmão):} Armazenamento até $10\,\text{bar}$, com a dinâmica de pressão interna dada pela Equação~\eqref{eq:s3-5} — proporcional ao desbalanço instantâneo entre vazão de entrada e saída:
+		\item \textbf{Vaso de Pressão (Pulmão):} Reservatório cilíndrico de ar já seco e filtrado, dimensionado conforme ASME Seção VIII Div. 1 para operar até aproximadamente $10\,\text{bar}$. Funciona como um amortecedor de pulsações e um buffer de energia entre a produção (descontínua, sujeita a ciclos de carga/alívio do compressor) e o consumo da planta — sem ele, cada oscilação de demanda se propagaria diretamente para a pressão de rede. Sua dinâmica de pressão interna, Equação~\eqref{eq:s3-5}, é proporcional ao desbalanço instantâneo entre a vazão que entra (produção) e a que sai (consumo da planta):
 		\begin{equation}\label{eq:s3-5}
  \frac{dP_{\text{res}}}{dt} = \frac{R T}{V} \Delta \dot{m}
 \end{equation}
-		\item \textbf{PSV (Válvula de Segurança):} Proteção mecânica contra sobrepressão conforme ASME VIII.
+		Quando $\Delta \dot{m} = 0$ (produção e consumo equilibrados), a pressão do vaso permanece constante; um $\Delta \dot{m}$ persistentemente negativo (consumo maior que produção) é o sinal precoce de que a rede está prestes a atingir um nível de alarme de pressão baixa (Capítulo de Distribuição e Armazenamento).
+		\item \textbf{PSV (Válvula de Segurança):} \textit{Pressure Safety Valve} — dispositivo puramente mecânico, independente de qualquer lógica de controle ou instrumentação eletrônica, que abre automaticamente por ação de mola quando a pressão interna excede um limite pré-ajustado, aliviando o excesso para a atmosfera. É a última camada de proteção contra sobrepressão do vaso, exigida pela norma ASME VIII como redundância física ao controle de pressão normal do sistema — mesmo que toda a lógica de controle do Gêmeo Digital falhe, a PSV continua protegendo o equipamento.
 	\end{itemize}
 	
 	\subsection{\textbf{Instrumentação}}
 	\begin{itemize}
-		\item \textbf{Transdutores e Sensores:} Monitoramento de $P, T, \phi$ (umidade) e ponto de orvalho ($T_{dp}$).
+		\item \textbf{Transdutores e Sensores:} O conjunto de pontos de medição distribuídos ao longo de todo o trem descrito neste capítulo — pressão ($P$) em cada estágio e no vaso pulmão, temperatura ($T$) na descarga de cada trocador, umidade relativa ($\phi$) e ponto de orvalho sob pressão ($T_{dp}$) na saída do secador. Nenhuma das equações apresentadas neste capítulo é calculável pelo Gêmeo Digital sem que a variável correspondente esteja de fato instrumentada em campo — é por isso que a Diretriz Técnica Final abaixo trata a cobertura de instrumentação como um limite físico do modelo, não um detalhe de implementação.
 	\end{itemize}
 
 	\vspace{1em}
@@ -1468,39 +1473,39 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	\clearpage
 	\section{\textbf{Sistema de Lubrificação e Gestão Térmica}}
-	
-	O Gêmeo Digital integra o balanço de energia entre a fase gasosa e o fluido lubrificante, permitindo monitorar a eficiência do resfriamento e a integridade do elemento separador em tempo real.
-	
-	\subsection{\textbf{Balanço de Energia e Injeção de Óleo}}
-	A taxa de calor removida pelo óleo ($\dot{Q}_{\text{óleo}}$) é fundamental para manter a temperatura de descarga dentro dos limites operacionais e garantir a vedação interna:
+
+	Este capítulo revisita o circuito de óleo já introduzido no Capítulo de Trem de Potência e detalhado no Capítulo de Sistema de Lubrificação, agora sob a ótica específica da gestão térmica do conjunto gearbox/mancais em condições de carga do estágio HP. Como o compressor deste documento é isento de óleo na câmara de compressão (nenhum óleo entra em contato com o ar de processo — ver Capítulo de Arquitetura), o papel do óleo aqui é exclusivamente remover o calor gerado por atrito na caixa multiplicadora e nos mancais e devolvê-lo já resfriado ao circuito; o Gêmeo Digital monitora esse balanço térmico e a integridade do elemento deaerador em tempo real.
+
+	\subsection{\textbf{Balanço de Energia do Circuito de Óleo}}
+	A taxa de calor que o óleo remove do conjunto gearbox/mancais ($\dot{Q}_{\text{óleo}}$) é a mesma potência de atrito dissipada nesses componentes (Equações~\eqref{eq:s6-3}, \eqref{eq:s6-4} e \eqref{eq:s7-4}) — é fundamental mantê-la dentro da capacidade do resfriador para não elevar a temperatura de operação dos mancais além do limite do lubrificante:
 	\begin{equation}\label{eq:s12-1}
- \dot{Q}_{\text{óleo}} = \dot{m}_{\text{óleo}} \cdotp c_{p,\text{óleo}} \cdotp (T_{\text{desc}} - T_{\text{inj}}) 
+ \dot{Q}_{\text{óleo}} = \dot{m}_{\text{óleo}} \cdotp c_{p,\text{óleo}} \cdotp (T_{\text{óleo,ret}} - T_{\text{óleo,sup}})
 \end{equation}
-	Onde $\dot{m}_{\text{óleo}}$ é a vazão mássica de óleo e $T_{\text{inj}}$ é a temperatura de injeção após o trocador de calor.
-	
-	\subsection{\textbf{Eficiência do Separador de Ar/Óleo}}
-	A perda de carga no elemento separador ($\Delta P_{\text{sep}}$) aumenta com a saturação e o tempo de uso. O modelo prevê a pressão na rede ($P_{\text{rede}}$) subtraindo as perdas internas:
+	Onde $\dot{m}_{\text{óleo}}$ é a vazão mássica de óleo, $T_{\text{óleo,ret}}$ é a temperatura de retorno do óleo (já aquecido, saindo da gearbox/mancais) e $T_{\text{óleo,sup}}$ é a temperatura de suprimento após passar pelo resfriador de óleo — a mesma elevação de temperatura já modelada pelo balanço térmico do Capítulo de Sistema de Lubrificação (Equação~\eqref{eq:s7-5}), aqui reorganizada para isolar $\dot{Q}_{\text{óleo}}$ como a grandeza monitorada.
+
+	\subsection{\textbf{Perda de Carga no Deaerador e Pressão de Suprimento aos Mancais}}
+	Antes de alimentar os mancais e o engrenamento, o óleo de retorno passa por um separador de ar (deaerador) que libera as bolhas de ar incorporadas por respingo/turbulência durante a lubrificação — óleo aerado não sustenta o filme lubrificante nem dissipa calor com a mesma eficácia (ver Capítulo de Detalhamento de Componentes). A perda de carga nesse elemento ($\Delta P_{\text{sep}}$) cresce com a saturação e o tempo de uso; o modelo prevê a pressão que efetivamente chega aos mancais subtraindo essa perda da pressão de descarga da bomba de óleo ($P_{\text{bomba}}$, mantida pela bomba através da pressão $\Delta P_{\text{óleo}}$ já introduzida na Equação~\eqref{eq:s5-3}):
 	\begin{equation}\label{eq:s12-2}
- P_{\text{rede}} = P_{\text{int}} - \Delta P_{\text{sep}} 
+ P_{\text{sup,óleo}} = P_{\text{bomba}} - \Delta P_{\text{sep}}
 \end{equation}
-	Onde $\Delta P_{\text{sep}}$ é modelado em função da vazão volumétrica e da viscosidade cinemática do óleo $\nu(T)$.
-	
+	Onde $\Delta P_{\text{sep}}$ é modelado em função da vazão volumétrica e da viscosidade cinemática do óleo $\nu(T)$. Uma queda de $P_{\text{sup,óleo}}$ abaixo do mínimo de projeto arrisca lubrificação insuficiente do engrenamento e dos mancais, mesmo que a vazão de óleo na saída da bomba esteja nominal.
+
 	\subsection{\textbf{Mecanismos de Falha Térmica}}
 	\begin{itemize}
-		\item \textbf{Obstrução do Trocador de Calor:} Detectada pelo aumento progressivo da diferença $(T_{\text{inj}} - T_{\text{amb}})$.
-		\item \textbf{Degradação do Óleo:} Monitorada via desvio na condutividade térmica e aumento da temperatura de descarga para a mesma razão de pressão.
+		\item \textbf{Obstrução do Trocador de Calor:} Detectada pelo aumento progressivo da diferença $(T_{\text{óleo,sup}} - T_{\text{amb}})$ — o resfriador não está mais rejeitando o calor esperado para a mesma carga térmica.
+		\item \textbf{Degradação do Óleo:} Monitorada via desvio na condutividade térmica e aumento da temperatura de retorno do óleo para a mesma potência de atrito dissipada.
 	\end{itemize}
-	
+
 	\subsection{\textbf{Matriz de Diagnóstico Térmico}}
-	A tabela abaixo cruza os sintomas de temperatura de descarga e perda de carga no separador para distinguir entre quatro causas raiz distintas de degradação térmica.
+	A tabela abaixo cruza os sintomas de temperatura do óleo e perda de carga no deaerador para distinguir entre quatro causas raiz distintas de degradação térmica.
 	\begin{table}[H]
 		\centering
 		\resizebox{\textwidth}{!}{
 			\begin{tabular}{l c c l}
 				\toprule
-				\textbf{Falha} & \textbf{Sintoma $T_{\text{desc}}$} & \textbf{Sintoma $\Delta P_{\text{sep}}$} & \textbf{Diagnóstico Digital} \\ \midrule
+				\textbf{Falha} & \textbf{Sintoma $T_{\text{óleo,ret}}$} & \textbf{Sintoma $\Delta P_{\text{sep}}$} & \textbf{Diagnóstico Digital} \\ \midrule
 				Trocador Obstruído & $\uparrow \uparrow$ & Nominal & \textbf{Falha no Arrefecimento} \\
-				Separador Saturado & Nominal & $\uparrow \uparrow$ & \textbf{Troca de Elemento Filtrante} \\
+				Deaerador Saturado & Nominal & $\uparrow \uparrow$ & \textbf{Troca de Elemento Filtrante} \\
 				Baixo Nível de Óleo & $\uparrow$ (Instável) & $\downarrow$ & \textbf{Risco de Cavitação / Desgaste} \\
 				Válvula Termostática Presa & $\uparrow$ ou $\downarrow$ & Nominal & \textbf{Falha de Controle Térmico} \\ \bottomrule
 			\end{tabular}
@@ -1512,7 +1517,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A distinção entre os quatro cenários da matriz acima depende de observar $T_{\text{desc}}$ e $\Delta P_{\text{sep}}$ \textbf{simultaneamente} — isoladamente, cada sintoma é compatível com mais de uma causa raiz, e é justamente o cruzamento das duas variáveis que o Gêmeo Digital usa para eliminar a ambiguidade diagnóstica.
+	\textbf{Diretriz Técnica Final:} A distinção entre os quatro cenários da matriz acima depende de observar $T_{\text{óleo,ret}}$ e $\Delta P_{\text{sep}}$ \textbf{simultaneamente} — isoladamente, cada sintoma é compatível com mais de uma causa raiz, e é justamente o cruzamento das duas variáveis que o Gêmeo Digital usa para eliminar a ambiguidade diagnóstica.
 
 	% --- Início do Capítulo 13: Sistema de Controle, Válvulas e Estratégias de Modulação ---
 	
