@@ -1003,6 +1003,165 @@ def fig_conjunto3d():
                    check=True, capture_output=True)
     print("cropped", pdf)
 
+# =====================================================================
+# FIG 22.1 - Arquitetura do Autoencoder Variacional (VAE)
+# =====================================================================
+def fig_vae_arq():
+    from matplotlib.patches import Polygon
+    fig, ax = plt.subplots(figsize=(7.6, 3.4))
+    ax.axis("off")
+    ax.set_aspect("equal")
+
+    def trapezio(x0, x1, h0, h1, cor, yc=0.0):
+        pts = [(x0, yc - h0/2), (x1, yc - h1/2), (x1, yc + h1/2), (x0, yc + h0/2)]
+        ax.add_patch(Polygon(pts, closed=True, facecolor=cor, edgecolor=NAVY, lw=1.3))
+
+    # Entrada
+    ax.add_patch(patches.Rectangle((0.0, -1.1), 0.55, 2.2, facecolor="#dbe7f2", edgecolor=NAVY, lw=1.3))
+    ax.text(0.28, 1.45, r"$z$" "\n(28 var.)", ha="center", fontsize=8.4, color=NAVY)
+
+    # Encoder (funil estreitando)
+    trapezio(0.55, 2.6, 2.2, 0.55, "#c9dcee")
+    ax.text(1.55, 1.75, r"Encoder $q_\phi$", ha="center", fontsize=8.6, color=NAVY, style="italic")
+
+    # Espaco latente
+    ax.add_patch(patches.FancyBboxPatch((2.6, -0.28), 0.7, 0.56, boxstyle="round,pad=0.02,rounding_size=0.05",
+                                         facecolor=RED, edgecolor=NAVY, lw=1.4, alpha=0.85))
+    ax.text(2.95, 0.0, r"$\ell$" "\n" r"$(\mu,\sigma)$", ha="center", va="center", fontsize=7.6, color="white", fontweight="bold")
+    ax.text(2.95, -1.05, r"$\ell = \mu + \sigma \cdot \epsilon$", ha="center", fontsize=7.6, color=RED)
+    ax.text(2.95, 1.55, "Espaço\nLatente", ha="center", fontsize=8.2, color=RED, fontweight="bold")
+
+    # Decoder (funil alargando)
+    trapezio(3.3, 5.35, 0.55, 2.2, "#c9dcee")
+    ax.text(4.35, 1.75, r"Decoder $p_\theta$", ha="center", fontsize=8.6, color=NAVY, style="italic")
+
+    # Saida (reconstrucao)
+    ax.add_patch(patches.Rectangle((5.35, -1.1), 0.55, 2.2, facecolor="#f2ddd5", edgecolor=NAVY, lw=1.3))
+    ax.text(5.63, 1.45, r"$\hat{z}$" "\n(reconstrução)", ha="center", fontsize=8.4, color=NAVY)
+
+    # Erro de reconstrucao
+    ax.annotate("", xy=(5.35, -1.55), xytext=(0.0, -1.55),
+                arrowprops=dict(arrowstyle="<->", color=GRAY, lw=1.1))
+    ax.text(2.95, -1.85, r"$E_{\text{rec}} = \sum (z_i - \hat{z}_i)^2$", ha="center", fontsize=8.2, color=GRAY)
+
+    ax.set_xlim(-0.3, 6.0)
+    ax.set_ylim(-2.2, 2.0)
+    save(fig, "fig_22_1_vae.pdf")
+
+# =====================================================================
+# FIG 24.1 - Ciclo de horizonte deslizante do MPC
+# =====================================================================
+def fig_mpc_horizonte():
+    fig, ax = plt.subplots(figsize=(6.4, 3.8))
+
+    k0 = 10
+    t_hist = np.arange(0, k0+1)
+    y_hist = 3.0 + 0.15*t_hist + 0.3*np.sin(t_hist/1.6)
+    ax.plot(t_hist, y_hist, color=NAVY, lw=2.0, marker="o", ms=3.5, label="Medido (passado)")
+
+    H = 8
+    t_pred = np.arange(k0, k0+H+1)
+    y_ref = np.full_like(t_pred, 5.2, dtype=float)
+    y_pred = y_hist[-1] + (y_ref - y_hist[-1]) * (1 - np.exp(-(t_pred-k0)/3.2))
+    ax.plot(t_pred, y_pred, color=RED, lw=2.0, ls="--", marker="o", ms=3.5, label="Predito (horizonte $H$)")
+    ax.plot(np.arange(0, k0+H+1), np.full(k0+H+1, 5.2), color=GREEN, lw=1.4, ls=":", label=r"Referência $y_{\text{ref}}$")
+
+    lim = 5.9
+    ax.axhline(lim, color=RED, lw=1.3, alpha=0.6)
+    ax.text(k0+H+0.2, lim, r"$\sigma_{\text{adm}}$", color=RED, fontsize=8, va="center")
+
+    ax.axvline(k0, color=GRAY, lw=1.0, ls="-")
+    ax.text(k0, 6.1, "agora ($k$)", ha="center", fontsize=8, color=GRAY)
+    ax.axvspan(k0, k0+H, color="#f2ddd5", alpha=0.35)
+    ax.annotate("", xy=(k0+H, 0.35), xytext=(k0, 0.35), arrowprops=dict(arrowstyle="<->", color=GRAY, lw=1.0))
+    ax.text(k0+H/2, 0.55, r"Horizonte de predição $H$", ha="center", fontsize=7.8, color=GRAY)
+
+    ax.annotate(r"aplica só $u(k)$," "\ndepois re-otimiza", xy=(k0+1, y_pred[1]), xytext=(k0+2.3, 2.2),
+                fontsize=7.6, color=NAVY, ha="left",
+                arrowprops=dict(arrowstyle="->", color=NAVY, lw=1.0, connectionstyle="arc3,rad=-0.2"))
+
+    ax.set_xlabel("Passo de tempo discreto $k$")
+    ax.set_ylabel("Variável de processo $y$")
+    ax.set_title("MPC — horizonte deslizante de predição", fontsize=10, color=NAVY)
+    ax.legend(fontsize=7.4, frameon=False, loc="lower left")
+    ax.set_xlim(0, k0+H+2)
+    ax.set_ylim(0, 6.6)
+    save(fig, "fig_24_1_mpc.pdf")
+
+# =====================================================================
+# FIG 24.2 - Convergencia do enxame no PSO
+# =====================================================================
+def fig_pso_enxame():
+    rng = np.random.default_rng(7)
+    fig, axes = plt.subplots(1, 2, figsize=(8.4, 3.6))
+
+    xg, yg = np.meshgrid(np.linspace(-3, 3, 200), np.linspace(-3, 3, 200))
+    J = (xg-1.2)**2 + (yg-0.8)**2 + 0.5*np.sin(2*xg)*np.cos(2*yg)
+    alvo = (1.2, 0.8)
+
+    for ax, titulo, espalho, cor_p in (
+        (axes[0], "Iteração inicial", 2.4, "#8a5a2b"),
+        (axes[1], "Após convergência", 0.35, GREEN),
+    ):
+        ax.contourf(xg, yg, J, levels=18, cmap="Blues_r", alpha=0.55)
+        n_part = 22
+        px = np.clip(alvo[0] + rng.normal(0, espalho, n_part), -2.75, 2.75)
+        py = np.clip(alvo[1] + rng.normal(0, espalho, n_part), -2.75, 2.75)
+        ax.scatter(px, py, s=22, color=cor_p, edgecolor=NAVY, linewidth=0.6, zorder=4, label="Partículas")
+        if espalho > 1.0:
+            for xi, yi in zip(px, py):
+                dx, dy = 0.35*(alvo[0]-xi) + rng.normal(0,0.15), 0.35*(alvo[1]-yi) + rng.normal(0,0.15)
+                xf = np.clip(xi+dx, -2.85, 2.85)
+                yf = np.clip(yi+dy, -2.85, 2.85)
+                ax.annotate("", xy=(xf, yf), xytext=(xi, yi),
+                            arrowprops=dict(arrowstyle="->", color=GRAY, lw=0.7, alpha=0.8))
+        ax.scatter(*alvo, marker="*", s=170, color=RED, edgecolor="white", linewidth=0.8, zorder=5, label=r"$g_{\text{best}}$")
+        ax.set_title(titulo, fontsize=9.4, color=NAVY)
+        ax.set_xlim(-3, 3); ax.set_ylim(-3, 3)
+        ax.set_xticks([]); ax.set_yticks([])
+        ax.legend(fontsize=7.2, frameon=False, loc="upper left")
+
+    fig.suptitle("PSO — convergência do enxame para o mínimo global", fontsize=10, color=NAVY)
+    fig.tight_layout(rect=[0, 0, 1, 0.93])
+    save(fig, "fig_24_2_pso.pdf")
+
+# =====================================================================
+# FIG 25.1 - Isolamento de um ponto anomalo (Isolation Forest)
+# =====================================================================
+def fig_isoforest():
+    rng = np.random.default_rng(3)
+    fig, ax = plt.subplots(figsize=(6.0, 4.4))
+
+    normais = rng.normal(loc=(0, 0), scale=(0.55, 0.55), size=(60, 2))
+    outlier = np.array([2.6, 2.3])
+
+    ax.scatter(normais[:, 0], normais[:, 1], s=18, color=BLUE, alpha=0.75, label="Pontos normais", zorder=3)
+    ax.scatter(*outlier, s=55, color=RED, marker="D", zorder=5, label="Ponto anômalo")
+
+    cortes_outlier = [("v", 1.4), ("h", 1.3)]
+    cor_corte = "#8a5a2b"
+    ax.axvline(1.4, ymin=0.55, ymax=1.0, color=cor_corte, lw=1.4, ls="--")
+    ax.axhline(1.3, xmin=0.55, xmax=1.0, color=cor_corte, lw=1.4, ls="--")
+    ax.annotate("isolado em 2 cortes", xy=outlier, xytext=(2.75, 1.55),
+                fontsize=8, color=cor_corte, ha="left",
+                arrowprops=dict(arrowstyle="->", color=cor_corte, lw=1.0))
+
+    cortes_normal = [(-0.3, -3, 3, "v"), (0.4, -3, 0.3, "h"), (-1.0, -3, -0.3, "v"), (0.1, -1.0, -0.3, "h")]
+    for c in cortes_normal:
+        if c[3] == "v":
+            ax.plot([c[0], c[0]], [c[1], c[2]], color=LGRAY, lw=1.0, ls=":")
+        else:
+            ax.plot([c[1], c[2]], [c[0], c[0]], color=LGRAY, lw=1.0, ls=":")
+    ax.annotate("ponto normal:\nprecisa de mais cortes\npara isolar", xy=(-0.2, -0.15), xytext=(-2.9, 2.0),
+                fontsize=8, color=GRAY, ha="left",
+                arrowprops=dict(arrowstyle="->", color=GRAY, lw=1.0, connectionstyle="arc3,rad=0.2"))
+
+    ax.set_xlim(-3, 3.4); ax.set_ylim(-3, 3.0)
+    ax.set_xlabel("Atributo $x_1$"); ax.set_ylabel("Atributo $x_2$")
+    ax.set_title("Isolation Forest — anomalias isolam-se em menos cortes", fontsize=9.6, color=NAVY)
+    ax.legend(fontsize=7.6, frameon=False, loc="lower left")
+    save(fig, "fig_25_1_isoforest.pdf")
+
 if __name__ == "__main__":
     # NOTE: fig_rotores() and fig_psa() are NOT called here on purpose.
     # fig_2_1_rotores.pdf and fig_15_1_psa.pdf are produced from real
@@ -1023,6 +1182,10 @@ if __name__ == "__main__":
     fig_ekf()
     fig_parafuso3d()
     fig_conjunto3d()
+    fig_vae_arq()
+    fig_mpc_horizonte()
+    fig_pso_enxame()
+    fig_isoforest()
     print("done")
 
 # =====================================================================

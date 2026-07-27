@@ -2446,7 +2446,15 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	A redução de dimensionalidade via VAE permite a compressão de dados complexos em assinaturas de saúde simplificadas, facilitando a detecção precoce de anomalias.
 	
 	\subsection{Arquitetura Probabilística e Espaço Latente}
-	O VAE projeta o vetor de 28 variáveis em um espaço latente ($\ell$) modelado por distribuições gaussianas:
+	O VAE projeta o vetor de 28 variáveis em um espaço latente ($\ell$) modelado por distribuições gaussianas. A Figura~\ref{fig:22-1} ilustra essa arquitetura de "gargalo": o encoder comprime progressivamente a entrada $z$ até os poucos parâmetros do espaço latente, e o decoder expande esse gargalo de volta ao tamanho original, produzindo a reconstrução $\hat{z}$ — a diferença entre $z$ e $\hat{z}$ é justamente o erro de reconstrução usado como resíduo de diagnóstico mais adiante neste capítulo.
+
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.75\textwidth]{figuras/fig_22_1_vae.pdf}
+		\caption{Arquitetura do Autoencoder Variacional: o encoder comprime o vetor de entrada $z$ até o espaço latente $\ell$ (parametrizado por $\mu$ e $\sigma$), e o decoder reconstrói $\hat{z}$ a partir dele.}
+		\label{fig:22-1}
+	\end{figure}
+
 	\begin{itemize}
 		\item \textbf{Encoder:} Mapeia a entrada $z$ para os parâmetros $\mu$ (média) e $\sigma$ (desvio padrão).
 		\item \textbf{Reparametrização:} Para permitir a retropropagação do gradiente através de uma amostragem estocástica, o vetor latente é obtido deslocando a média por um ruído gaussiano padrão escalado pelo desvio padrão aprendido, conforme a Equação~\eqref{eq:s22-1}:
@@ -2503,7 +2511,15 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	A camada de decisão e otimização utiliza algoritmos preditivos e heurísticos para maximizar a eficiência exergética e a vida útil dos componentes.
 	
 	\subsection{Controle Preditivo Baseado em Modelo (MPC)}
-	O MPC, consolidado como referência de controle de processos industriais por Camacho e Bordons \cite{mpc} e formalizado em teoria, computação e projeto por Rawlings, Mayne e Diehl \cite{rawlings}, projeta o comportamento do sistema em um horizonte $H$ para otimizar as variáveis de controle ($u$):
+	O MPC, consolidado como referência de controle de processos industriais por Camacho e Bordons \cite{mpc} e formalizado em teoria, computação e projeto por Rawlings, Mayne e Diehl \cite{rawlings}, projeta o comportamento do sistema em um horizonte $H$ para otimizar as variáveis de controle ($u$). A Figura~\ref{fig:24-1} ilustra o princípio de horizonte deslizante (\textit{receding horizon}) que dá nome ao método: a cada instante $k$, o controlador usa o modelo físico para projetar a trajetória futura de $y$ ao longo de todo o horizonte $H$, otimiza toda a sequência de ações de controle, mas aplica apenas a primeira ($u(k)$) — no instante seguinte, com uma nova medição disponível, todo o processo se repete com o horizonte deslocado um passo à frente:
+
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.60\textwidth]{figuras/fig_24_1_mpc.pdf}
+		\caption{Princípio de horizonte deslizante do MPC: a trajetória prevista (tracejada) é otimizada até o fim do horizonte $H$, mas só a primeira ação de controle é aplicada antes de reotimizar.}
+		\label{fig:24-1}
+	\end{figure}
+
 	\begin{equation}\label{eq:s24-1}
 	\begin{aligned}
 		\text{Minimizar } J &= \sum_{k=1}^{H} [ y(k) - y_{\text{ref}}(k) ]^2 + \rho \sum_{k=0}^{H-1} [ \Delta u(k) ]^2 \\[4pt]
@@ -2511,16 +2527,25 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 		& \sigma_b(k) \le \sigma_{\text{adm}}
 	\end{aligned}
 \end{equation}
-	
+	É essa reotimização a cada passo — e não um cálculo único offline — que permite ao MPC reagir a distúrbios reais (uma flutuação de demanda, um desvio de temperatura) sem violar a restrição estrutural $\sigma_b(k) \le \sigma_{\text{adm}}$ em nenhum ponto do horizonte projetado.
+
 	\subsection{Otimização por Enxame de Partículas (PSO)}
 	Introduzido por Kennedy e Eberhart em 1995 como metaheurística inspirada no comportamento social de bandos e cardumes \cite{pso}, o PSO é usado aqui para a sintonização de setpoints globais em superfícies de custo não convexas, utilizando a dinâmica de partículas:
 	\begin{equation}\label{eq:s24-2}
- v_{i}^{t+1} = w v_{i}^t + c_1 r_1 (p_{\text{best},i} - x_{i}^t) + c_2 r_2 (g_{\text{best}} - x_{i}^t) 
+ v_{i}^{t+1} = w v_{i}^t + c_1 r_1 (p_{\text{best},i} - x_{i}^t) + c_2 r_2 (g_{\text{best}} - x_{i}^t)
 \end{equation}
 	\begin{itemize}
 		\item $p_{\text{best}}$: Melhor posição individual.
 		\item $g_{\text{best}}$: Melhor posição global do enxame.
 	\end{itemize}
+	A Figura~\ref{fig:24-2} mostra esse comportamento em duas iterações de um enxame sobre uma superfície de custo hipotética: inicialmente as partículas estão espalhadas e suas velocidades (setas) combinam o puxão em direção à melhor posição já visitada por cada uma ($p_{\text{best}}$) com o puxão em direção à melhor posição já vista por todo o enxame ($g_{\text{best}}$); depois de algumas iterações, o enxame converge e se concentra ao redor do mínimo global encontrado.
+
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.75\textwidth]{figuras/fig_24_2_pso.pdf}
+		\caption{Convergência do enxame de partículas do PSO sobre uma superfície de custo hipotética: dispersão inicial (esquerda) e concentração em torno do mínimo global $g_{\text{best}}$ após convergência (direita).}
+		\label{fig:24-2}
+	\end{figure}
 
 	\vspace{1em}
 	\hrule
@@ -2545,7 +2570,14 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 		\begin{equation}\label{eq:s25-2}
  s_{\text{IF}}(x) = 2^{-\frac{E[L_{\text{iso}}(x)]}{c(n_{\text{IF}})}}, \quad c(n_{\text{IF}}) = 2\left[\ln(n_{\text{IF}}-1) + \gamma_{\text{EM}}\right] - \frac{2(n_{\text{IF}}-1)}{n_{\text{IF}}}
 \end{equation}
-		Onde $\gamma_{\text{EM}} \approx 0{,}5772$ é a constante de Euler-Mascheroni (subscrita para não colidir com a razão de calores específicos $\gamma$ usada nos capítulos de termodinâmica). Um escore $s_{\text{IF}}$ próximo de 1 indica forte probabilidade de anomalia (caminho de isolamento muito curto); próximo de 0,5, o ponto é indistinguível do comportamento normal. O Gêmeo Digital usa esse escore para filtrar picos espúrios de sensor antes que alimentem o EKF ou o VAE, evitando falsos diagnósticos de falha originados por ruído de instrumentação, não por degradação real do equipamento.
+		Onde $\gamma_{\text{EM}} \approx 0{,}5772$ é a constante de Euler-Mascheroni (subscrita para não colidir com a razão de calores específicos $\gamma$ usada nos capítulos de termodinâmica). Um escore $s_{\text{IF}}$ próximo de 1 indica forte probabilidade de anomalia (caminho de isolamento muito curto); próximo de 0,5, o ponto é indistinguível do comportamento normal. O Gêmeo Digital usa esse escore para filtrar picos espúrios de sensor antes que alimentem o EKF ou o VAE, evitando falsos diagnósticos de falha originados por ruído de instrumentação, não por degradação real do equipamento. A Figura~\ref{fig:25-1} ilustra a ideia geometricamente: um ponto anômalo isolado do resto dos dados é separado do restante em poucos cortes retangulares aleatórios, enquanto um ponto no meio do aglomerado normal só se isola depois de muitos cortes sucessivos.
+
+		\begin{figure}[h!]
+			\centering
+			\includegraphics[width=0.60\textwidth]{figuras/fig_25_1_isoforest.pdf}
+			\caption{Princípio do \textit{Isolation Forest}: um ponto anômalo se isola do restante dos dados em poucos cortes aleatórios; um ponto no meio de um aglomerado normal exige muito mais cortes.}
+			\label{fig:25-1}
+		\end{figure}
 	\end{itemize}
 	
 	\subsection{Quantificação de Incerteza (UQ)}
