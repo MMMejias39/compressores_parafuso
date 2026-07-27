@@ -472,6 +472,28 @@ só citados por nome. Estado por categoria:
 for aprofundar mais algo da Parte II, comece por aqui): Redes Bayesianas
 (Cap. 25) e os detalhes de MHE do do-mpc (Cap. 27).
 
+**Déficit de figuras identificado e corrigido**: a Parte II tinha só 2
+figuras em 9 capítulos (curva de Basquin no Cap. 19, ciclo do EKF no
+Cap. 21), contra 14 na Parte I — o autor notou a falta de ilustração das
+ferramentas matemáticas. Adicionadas 4 figuras didáticas 2D (estilo
+matplotlib já usado no livro, não 3D — aqui são conceitos de algoritmo, não
+peças físicas):
+- **Figura 22.1** (`fig_vae_arq()` → `fig_22_1_vae.pdf`): arquitetura do VAE
+  em "gargalo" (encoder → espaço latente $\ell(\mu,\sigma)$ → decoder).
+- **Figura 24.1** (`fig_mpc_horizonte()` → `fig_24_1_mpc.pdf`): horizonte
+  deslizante do MPC (medido, predito, referência, só $u(k)$ aplicado).
+- **Figura 24.2** (`fig_pso_enxame()` → `fig_24_2_pso.pdf`): convergência do
+  enxame do PSO (dois painéis lado a lado, dispersão inicial vs. convergida).
+- **Figura 25.1** (`fig_isoforest()` → `fig_25_1_isoforest.pdf`): princípio
+  geométrico do Isolation Forest (ponto anômalo isolado em poucos cortes).
+
+Armadilha encontrada ao gerar a Fig. 24.2 (PSO): partículas geradas por
+`rng.normal` sem limite podiam cair fora dos eixos do gráfico, produzindo
+setas/pontos "vazando" para fora do quadro — corrigido com `np.clip()` nas
+posições e nos alvos das setas de velocidade. Se gerar uma figura nova com
+posições aleatórias, sempre recorte (`clip`) para os limites dos eixos antes
+de desenhar.
+
 Trabalho feito nesta sessão: Savitzky-Golay (Cap. 25, forma de convolução
 com coeficientes pré-calculados, Equação 25.1), Isolation Forest (Cap. 25,
 escore de anomalia por comprimento de caminho de isolamento, Equação 25.2) e
@@ -491,16 +513,20 @@ de incerteza e SHAP) →`eq:s25-3`/`eq:s25-4`.
 
 ## Estado atual (última sessão)
 
-Documento compila limpo, 103 páginas (170 equações numeradas, 16 figuras ao
+Documento compila limpo, 105 páginas (170 equações numeradas, 20 figuras ao
 todo), sem erros/referências indefinidas/labels duplicados. Repositório git
 inicializado (ver "Visão de longo prazo" acima); histórico completo
 reescrito em 26/07/2026 para remover trailers de coautoria (ver seção
 acima) — os hashes de commit mudaram desde qualquer anotação anterior a essa
 reescrita, sempre confira com `git log` em vez de citar um hash de memória.
-Tag `v1.0` no commit inicial (recriada). Doze commits nesta sessão (os dez
-já registrados mais dois depois: atualização deste arquivo e o
-aprofundamento de Savitzky-Golay/Isolation Forest/Processo Gaussiano) — use
-`git log` para o histórico exato.
+Tag `v1.0` no commit inicial (recriada). Catorze commits nesta sessão (os
+doze já registrados mais dois depois: atualização deste arquivo e as 4
+figuras didáticas da Parte II) — use `git log` para o histórico exato.
+
+Observação: há um arquivo `recomenda compressores.txt` solto na raiz do
+projeto, não rastreado pelo git e não criado por mim — provavelmente notas
+do autor. Não mexer nele nem incluí-lo em commits sem o autor pedir
+explicitamente.
 
 Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Bibliografia (45 referências) verificada uma a uma contra fontes reais; 3 tinham
@@ -542,6 +568,9 @@ Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Inventário dos algoritmos da Parte II e aprofundamento de Savitzky-Golay,
   Isolation Forest e Processo Gaussiano (antes só citados por nome) — ver
   "Inventário de algoritmos da Parte II" acima.
+- 4 figuras didáticas novas na Parte II (VAE, MPC, PSO, Isolation Forest),
+  corrigindo o déficit de ilustração identificado pelo autor — ver
+  "Déficit de figuras identificado e corrigido" acima.
 
 Não há tarefas pendentes conhecidas.
 
