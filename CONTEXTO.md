@@ -445,17 +445,61 @@ repositório, mesmo que seja o comportamento padrão do Claude Code. O autor
 foi explícito: não é uma questão de crédito técnico, é não associar autoria
 de IA a um livro que é dele. Vale para qualquer sessão futura, indefinidamente.
 
+## Inventário de algoritmos da Parte II (26/07/2026)
+
+A pedido do autor, foi feito um levantamento de quais algoritmos já existem
+para rodar o Gêmeo Digital (Capítulos 19-27) e aprofundados os que apareciam
+só citados por nome. Estado por categoria:
+
+- **Estimação de estado**: EKF — teoria (Cap. 20-21) **e** código de
+  referência em NumPy (Cap. 26).
+- **Redução de dimensionalidade/anomalia**: VAE — equacionamento completo
+  (Cap. 22), sem código.
+- **Físico-informado**: PIML/PINNs — equacionamento (Cap. 19, 23) **e**
+  código em PyTorch (Cap. 26).
+- **Otimização/controle**: MPC e PSO — equacionamento completo (Cap. 19, 24),
+  sem código.
+- **Diagnóstico/RUL**: *rainflow* + Palmgren-Miner + Basquin (Cap. 19).
+- **Incerteza/explicabilidade**: propagação de incerteza GUM (Cap. 25, Eq.
+  25.3), Redes Bayesianas (citado, Cap. 25), SHAP (Cap. 25, Eq. 25.4).
+- **Pré-processamento**: Savitzky-Golay, Isolation Forest (Cap. 25) e
+  Processo Gaussiano para incerteza do RUL (Cap. 19) — **aprofundados nesta
+  sessão** (ver abaixo); antes eram só citados por nome, sem equação.
+- **Frameworks de alta performance** (Cap. 27): NVIDIA Modulus (PINNs/FNO),
+  DeepXDE (solver de PDE), do-mpc (MHE).
+
+**Candidatos ainda só citados por nome, sem equação** (se uma sessão futura
+for aprofundar mais algo da Parte II, comece por aqui): Redes Bayesianas
+(Cap. 25) e os detalhes de MHE do do-mpc (Cap. 27).
+
+Trabalho feito nesta sessão: Savitzky-Golay (Cap. 25, forma de convolução
+com coeficientes pré-calculados, Equação 25.1), Isolation Forest (Cap. 25,
+escore de anomalia por comprimento de caminho de isolamento, Equação 25.2) e
+Processo Gaussiano (Cap. 19, regressão bayesiana não paramétrica para
+propagar incerteza no RUL, Equação 19.10, conectada à Equação 25.3).
+Símbolos *namespaced* para não colidir com os já usados no livro: $p_{SG}$,
+$m_{SG}$ (grau/janela do SG, evitam colidir com $p$ = número de polos do
+motor e $m$ = módulo de engrenagem do Cap. 8), $n_{IF}$ (evita colidir com
+$n$ = índice politrópico), $\gamma_{EM}$ (evita colidir com $\gamma$ = razão
+de calores específicos) e $\ell_{GP}$ (evita colidir com $\ell$ = vetor
+latente do VAE). Três referências novas, verificadas via busca web contra
+fontes reais antes de inserir (DOI/editora conferidos): `savgol` (Savitzky
+e Golay, Analytical Chemistry 1964), `isoforest` (Liu, Ting e Zhou, ICDM
+2008) e `gpml` (Rasmussen e Williams, MIT Press 2006). Renumeração em
+cascata: `eq:s19-10`→`eq:s19-11`; `eq:s25-1`/`eq:s25-2` (antigas, propagação
+de incerteza e SHAP) →`eq:s25-3`/`eq:s25-4`.
+
 ## Estado atual (última sessão)
 
-Documento compila limpo, 102 páginas (166 equações numeradas, 16 figuras ao
+Documento compila limpo, 103 páginas (170 equações numeradas, 16 figuras ao
 todo), sem erros/referências indefinidas/labels duplicados. Repositório git
 inicializado (ver "Visão de longo prazo" acima); histórico completo
 reescrito em 26/07/2026 para remover trailers de coautoria (ver seção
 acima) — os hashes de commit mudaram desde qualquer anotação anterior a essa
 reescrita, sempre confira com `git log` em vez de citar um hash de memória.
-Tag `v1.0` no commit inicial (recriada). Dez commits nesta sessão (contando os
-sete até a reescrita do histórico mais três depois: atualização deste
-arquivo, primeira versão da Figura 2.3 e a revisão visual dela) — use
+Tag `v1.0` no commit inicial (recriada). Doze commits nesta sessão (os dez
+já registrados mais dois depois: atualização deste arquivo e o
+aprofundamento de Savitzky-Golay/Isolation Forest/Processo Gaussiano) — use
 `git log` para o histórico exato.
 
 Principais mudanças de 26/07/2026 (sessão longa, dia único):
@@ -495,6 +539,9 @@ Principais mudanças de 26/07/2026 (sessão longa, dia único):
   nervuras, dentes de engrenagem reais e flanges — ver "Figuras" acima para
   as funções novas em `gen_figuras.py`, a lição sobre nível de detalhe e as
   três armadilhas de quem for reutilizá-las.
+- Inventário dos algoritmos da Parte II e aprofundamento de Savitzky-Golay,
+  Isolation Forest e Processo Gaussiano (antes só citados por nome) — ver
+  "Inventário de algoritmos da Parte II" acima.
 
 Não há tarefas pendentes conhecidas.
 
