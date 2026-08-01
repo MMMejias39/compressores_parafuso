@@ -25,7 +25,9 @@
 \numberwithin{table}{section}
 \numberwithin{figure}{section}
 
-\geometry{margin=2.5cm, headheight=14.5pt}
+\geometry{margin=2.5cm, headheight=15pt}
+\addtolength{\topmargin}{-0.5pt}
+\setlength{\emergencystretch}{1em}
 
 \hypersetup{
 	colorlinks=true,
@@ -33,7 +35,9 @@
 	citecolor=black,
 	urlcolor=black,
 	pdftitle={Gêmeo Digital de Sistemas de Compressão Offshore},
-	pdfauthor={Marcelo Moreira Mejias}
+	pdfauthor={Marcelo Moreira Mejias},
+	pdfsubject={Diretrizes Técnicas, Modelagem e Implementação},
+	pdfkeywords={compressor de parafuso, offshore, gêmeo digital, PIML, EKF, MPC}
 }
 
 \pagestyle{fancy}
@@ -695,7 +699,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\item \textbf{Detecção:} Redução da eficiência volumétrica $\eta_{\text{vol}}$ e aumento da temperatura de descarga $T_{\text{out}}$.
 	\end{itemize}
 
-	\subsection{\textbf{Razão Volumétrica Interna ($V_i$) e Perdas por Sub/Sobrecompressão}}
+	\subsection{\textbf{Razão Volumétrica Interna ($V_i$) e Perdas por Sub- e Sobrecompressão}}
 	A física interna do compressor de parafuso é definida pela \textbf{razão volumétrica interna} $V_i$, conceito estabelecido junto com o próprio perfil de rotor assimétrico por Alf Lysholm na SRM sueca \cite{lysholm} e detalhado nas análises termodinâmicas clássicas de compressores de parafuso \cite{fleming}. Trata-se de um parâmetro fixo pela geometria do rotor e pela posição da aresta de descarga (\textit{discharge port}), e não pela pressão de descarga da rede:
 	\begin{equation}\label{eq:s5-6}
  V_i = \frac{V_1}{V_2} 
