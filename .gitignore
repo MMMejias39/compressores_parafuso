@@ -9,3 +9,7 @@
 # Ambiente Python e cache (regenerável via scripts/venv)
 scripts/venv/
 scripts/__pycache__/
+
+# Aplicativo simulador (regenerável via aplicativo/requirements.txt)
+aplicativo/venv/
+aplicativo/**/__pycache__/

@@ -1,0 +1,161 @@
+"""Testes de sanidade do simulador.
+
+Rodar a partir do diretório `aplicativo/`:
+
+    venv/bin/pytest tests/
+"""
+
+import math
+import sys
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from compressor_sim import dinamica, nucleo, parametros_default, simular, subsistemas
+
+
+# --- Núcleo ----------------------------------------------------------------
+
+def test_razao_pressao_interna():
+    # π_i = V_i^n com V_i = 4,0 e n = 1,35 (figura 5.1 / Eq. 13.9)
+    assert nucleo.razao_pressao_interna(4.0, 1.35) == pytest.approx(4.0**1.35)
+
+
+def test_minimo_curva_v_em_pi_i():
+    p1, v_dot2, v_i, n = 1e5, 0.15, 4.0, 1.35
+    pi_i = nucleo.razao_pressao_interna(v_i, n)
+    perda_min = nucleo.perda_vi(p1, v_dot2, pi_i, v_i, n)
+    assert perda_min == pytest.approx(0.0, abs=1e-6)
+    for pi in (0.7 * pi_i, 1.3 * pi_i):
+        assert nucleo.perda_vi(p1, v_dot2, pi, v_i, n) > perda_min
+
+
+def test_potencia_cresce_com_pi():
+    p1, v_dot, n, eta = 1e5, 0.15, 1.35, 0.96
+    w = [nucleo.potencia_politropica(p1, v_dot, pi, n, eta)
+         for pi in (2.0, 3.0, 4.0)]
+    assert w[0] < w[1] < w[2]
+
+
+def test_temperatura_descarga_coerente():
+    # T_out = T_in·π^((n-1)/n) — Eq. 11.1
+    assert nucleo.temperatura_descarga(300.0, 2.83, 1.35) == pytest.approx(
+        300.0 * 2.83 ** (0.35 / 1.35))
+
+
+def test_psicrometria():
+    # P_sat a 25 °C ≈ 3,17 kPa (Buck, Eq. 10.7)
+    assert nucleo.p_sat(298.15) == pytest.approx(3169, rel=0.02)
+    # Ar saturado: W > 0; ar seco: W = 0
+    assert nucleo.razao_umidade(303.15, 101325.0, 1.0) > 0.0
+    assert nucleo.razao_umidade(303.15, 101325.0, 0.0) == 0.0
+    # condensado nunca negativo (Eqs. 10.6/14.3)
+    assert nucleo.condensado(1.0, 0.010, 0.020) == 0.0
+
+
+# --- Subsistemas -------------------------------------------------------------
+
+def test_lmtd_maior_ou_igual_media_para_contracorrente():
+    # LMTD ≤ média aritmética das diferenças extremas (propriedade da média log)
+    dt1, dt2 = 40.0, 20.0
+    lm = subsistemas.lmtd(dt1, dt2)
+    assert dt2 < lm < dt1
+    assert lm <= (dt1 + dt2) / 2.0 + 1e-9
+
+
+def test_eps_ntu_limites():
+    for ntu, c_r in [(0.0, 0.5), (1.0, 0.3), (5.0, 0.9)]:
+        eps = subsistemas.eps_ntu_contracorrente(ntu, c_r)
+        assert 0.0 <= eps <= 1.0
+    assert subsistemas.eps_ntu_contracorrente(0.0, 0.5) == 0.0
+
+
+def test_fouling_degrada_ua():
+    ua_limpo = subsistemas.ua_com_fouling(4000.0, 0.0)
+    ua_sujo = subsistemas.ua_com_fouling(4000.0, 1e-4)
+    assert ua_sujo < ua_limpo
+
+
+def test_purga_entre_10_e_18_pct_default():
+    par = parametros_default()
+    assert 0.10 <= par["fator_purga"] <= 0.18  # :1971
+
+
+def test_autonomia_positiva_e_infinita_sem_demanda():
+    t = subsistemas.autonomia_vaso(2.0, 8e5, 6e5, 0.1, 1e5)
+    assert t == pytest.approx(40.0)  # Eq. 16.5: 2·(8e5-6e5)/(0.1·1e5)
+    assert subsistemas.autonomia_vaso(2.0, 8e5, 6e5, 0.0, 1e5) == math.inf
+
+
+# --- Cascata completa ----------------------------------------------------------
+
+def test_simular_defaults_plausivel():
+    res = simular()
+    k, pw = res["kpis"], res["potencias"]
+    assert pw["w_total"] > 0.0
+    assert 0.0 < k["eta_global"] < 1.0
+    assert k["t_descarga_hp_c"] > 100.0           # descarga HP > 100 °C (:584)
+    assert 4.0 <= k["spc"] <= 12.0                # faixa plausível kW·min/m³
+                                                  # (modelo de eixo, sem motor/VSD)
+    assert 0.0 <= k["efetividade_intercooler"] <= 1.0
+    assert k["condensado_total_kg_h"] >= 0.0
+    assert k["autonomia_min"] > 0.0
+    assert len(res["nos"]) == 6
+
+
+def test_n_compressores_escala_totais_sem_afetar_por_unidade():
+    r1 = simular({"n_compressores": 1})
+    r3 = simular({"n_compressores": 3})
+    # grandezas de planta escalam linearmente com n_compressores
+    assert r3["potencias"]["w_total_planta"] == pytest.approx(
+        3 * r1["potencias"]["w_total_planta"])
+    assert r3["kpis"]["fad_total_m3_min"] == pytest.approx(
+        3 * r1["kpis"]["fad_total_m3_min"])
+    # grandezas por unidade (intensivas) não mudam com n_compressores
+    assert r3["potencias"]["w_total"] == pytest.approx(r1["potencias"]["w_total"])
+    assert r3["kpis"]["spc"] == pytest.approx(r1["kpis"]["spc"])
+    assert r3["nos"][-1]["m_dot"] == pytest.approx(r1["nos"][-1]["m_dot"])
+
+
+def test_potencia_total_aumenta_com_pressao():
+    w8 = simular({"pi_total": 8.0})["potencias"]["w_total"]
+    w9 = simular({"pi_total": 9.0})["potencias"]["w_total"]
+    assert w9 > w8
+    # regra dos ~7 %/bar com n entre 1,3 e 1,4 (:1746) — faixa tolerante
+    assert (w9 - w8) / w8 == pytest.approx(0.07, abs=0.03)
+
+
+def test_umidade_nao_aumenta_ao_longo_do_tratamento():
+    res = simular()
+    ws = [no["w"] for no in res["nos"]]
+    assert ws[2] <= ws[1] + 1e-9   # intercooler condensa
+    assert ws[4] <= ws[3] + 1e-3   # aftercooler + separador (arraste pequeno)
+
+
+# --- Dinâmica temporal ---------------------------------------------------------
+
+def test_vsd_pressao_reage_a_evento_de_demanda():
+    # x_c segue o alvo por rampa de 1ª ordem (tau_vsd) — um degrau de demanda
+    # deve, portanto, produzir uma queda de pressão visível antes da recuperação,
+    # não uma reta (regressão: x_c instantâneo fazia dP/dt = 0 o tempo todo).
+    res = simular()
+    m_cap = res["nos"][-1]["m_dot"]
+    w_nom = res["potencias"]["w_total"]
+    d = dinamica.simular_transiente(
+        horizonte_min=15, m_dot_cap=m_cap, w_nom=w_nom, v_vaso=2.0, t_k=303.15,
+        p_set=8e5, p_limite=6e5, dem_base=0.08, t_ev=(360.0, 585.0),
+        fator_ev=2.0, modo="VSD", dp_db=0.5e5)
+    assert d["kpis"]["p_max_bar"] - d["kpis"]["p_min_bar"] > 0.05
+
+
+def test_vsd_pressao_constante_sem_evento():
+    res = simular()
+    m_cap = res["nos"][-1]["m_dot"]
+    w_nom = res["potencias"]["w_total"]
+    d = dinamica.simular_transiente(
+        horizonte_min=15, m_dot_cap=m_cap, w_nom=w_nom, v_vaso=2.0, t_k=303.15,
+        p_set=8e5, p_limite=6e5, dem_base=0.08,
+        t_ev=(math.inf, math.inf), fator_ev=2.0, modo="VSD", dp_db=0.5e5)
+    assert d["kpis"]["p_max_bar"] == pytest.approx(d["kpis"]["p_min_bar"], abs=1e-9)
