@@ -24,14 +24,15 @@ Code leu o código deste diretório.
 
 ```
 aplicativo/
-├── app.py                  # interface Streamlit (ponto de entrada, 2 abas)
+├── app.py                  # interface Streamlit (ponto de entrada, 3 abas)
 ├── compressor_sim/
 │   ├── constantes.py       # propriedades do ar e defaults (ASSUMIDO onde o livro não fecha valor)
 │   ├── nucleo.py           # estágios de compressão + psicrometria
 │   ├── subsistemas.py      # intercooler, separador, secador PSA, vaso/rede
 │   ├── sistema.py          # cascata completa: simular(params) -> resultados (1 unidade + totais de planta)
-│   └── dinamica.py         # simulação transiente do vaso/rede (VSD ou carga/alívio)
-├── tests/test_simulador.py # testes de sanidade (pytest) — 16 testes, todos passando
+│   ├── dinamica.py         # simulação transiente do vaso/rede (VSD ou carga/alívio)
+│   └── psa_ciclo.py        # rodízio de N torres do secador PSA (Eq. 15.1/15.2)
+├── tests/test_simulador.py # testes de sanidade (pytest) — 21 testes, todos passando
 └── requirements.txt        # streamlit, numpy, matplotlib, pytest
 ```
 
@@ -120,12 +121,53 @@ sempre com confirmação prévia por não ser processo desta sessão) — ambos 
 comportamentos confirmados como esperados (N=3 avaliado, "os números fazem
 sentido").
 
+## Aba de ciclo de torres do secador PSA (01/08/2026, commit `875e900`)
+
+A pedido do autor, adicionado o rodízio de N torres do secador PSA como
+3ª aba do app ("🌀 Secagem PSA"), com um seletor de topologia análogo ao
+`n_compressores`: **N vasos por compressor** (cada unidade em paralelo tem
+seu próprio secador dedicado — o gráfico é idêntico em todas, já que operam
+no mesmo ponto) ou **N vasos para o sistema** (um único banco compartilhado,
+dimensionado para a vazão total da planta — a purga escala por
+`n_compressores`).
+
+Novo módulo `compressor_sim/psa_ciclo.py`: generaliza o princípio de duas
+torres da Figura 15.1 do livro para N em rodízio round-robin. A Eq. 15.1
+(`q_d = q_eq·exp(-k_ads·t_ads/t_res)`) rege a capacidade de adsorção durante
+a fase ativa de cada torre; a recuperação durante a regeneração é uma
+**simplificação de modelagem** (retorno linear a q_eq) — não é uma equação
+do livro, já que o Capítulo 15 não fecha a cinética de dessorção, e está
+marcada como tal no docstring do módulo. A vazão de purga usa a Eq. 15.2.
+
+**Armadilha de ponto flutuante encontrada e corrigida**: a primeira
+implementação calculava o estado de cada torre (adsorvendo/regenerando)
+independentemente via `(t - offset_i) % t_ciclo < t_ads_max` por torre —
+isso falhava esporadicamente em fronteiras exatas de chaveamento (ex.:
+`n_vasos=3`, `t_ciclo=8.0`), produzindo instantes com 0 ou 2 torres
+regenerando simultaneamente por arredondamento, quebrando a invariante
+física do sistema (sempre exatamente 1 regenerando). Corrigido computando
+um **índice de slot global determinístico**
+(`slot = floor(t/t_regen)`, `torre_regenerando = slot % n_vasos`) como
+fonte única de verdade, eliminando a ambiguidade por construção em vez de
+tentar sincronizar N comparações independentes. **Se essa lógica for tocada
+de novo**: nunca decidir o estado de cada torre com comparações de ponto
+flutuante independentes entre si — sempre derivar de um cálculo
+compartilhado único.
+
+5 testes novos, incluindo um parametrizado (`n_vasos` = 2, 3, 4) que
+verifica a invariante "exatamente 1 torre regenerando" — foi esse teste que
+pegou o bug acima antes de chegar ao app.
+
+Testado interativamente pelo autor via navegador (extensão Claude-in-Chrome
+não conectada nesta sessão, então a verificação visual foi só do autor, não
+minha) — confirmado "os gráficos aparecem certos".
+
 ## Estado atual
 
-Código compila sem erro de sintaxe, 16/16 testes passam
+Código compila sem erro de sintaxe, 21/21 testes passam
 (`venv/bin/pytest tests/ -q`). Servidor Streamlit rodando em
-`localhost:8501`, reiniciado pela última vez após a feature de
-`n_compressores` (01/08/2026).
+`localhost:8501`, reiniciado pela última vez após a aba de secagem PSA
+(01/08/2026).
 
 O diretório `aplicativo/` foi commitado em 01/08/2026 (commit `693a2c6`,
 junto com este arquivo e as linhas de `.gitignore` para
