@@ -111,10 +111,47 @@ def razao_umidade(t_k: float, p: float, ur: float) -> float:
     return 0.622 * pv / (p - pv)
 
 
+def pressao_vapor(w: float, p: float) -> float:
+    """Pressão parcial de vapor d'água [Pa] — inversa da Eq. 10.6.
+
+    p_v = W·P / (0,622 + W)
+    """
+    return w * p / (0.622 + w)
+
+
 def ur_de_w(w: float, t_k: float, p: float) -> float:
     """Umidade relativa a partir da razão de umidade (inversa da Eq. 10.6)."""
-    pv = w * p / (0.622 + w)
-    return pv / p_sat(t_k)
+    return pressao_vapor(w, p) / p_sat(t_k)
+
+
+def temp_orvalho_c(p_vapor: float) -> float:
+    """Temperatura de ponto de orvalho sob pressão [°C] — inversa numérica
+    da Eq. 10.7 (fórmula de Buck).
+
+    Não há forma fechada simples para inverter a Eq. 10.7 com os três
+    parâmetros do livro (ao contrário da forma "Magnus" de 2 parâmetros,
+    mais comum); em vez de introduzir uma fórmula aproximada não citada no
+    livro, a inversão é feita por bisseção sobre a própria `p_sat()` — que
+    é monótona crescente em T, garantindo convergência.
+    """
+    if p_vapor <= 0.0:
+        return -90.0  # ar sem vapor d'água — piso convencional, sem PDP físico definido
+    lo_k, hi_k = 183.15, 363.15  # -90 °C a 90 °C, faixa ampla o suficiente
+    for _ in range(60):
+        mid_k = (lo_k + hi_k) / 2.0
+        if p_sat(mid_k) < p_vapor:
+            lo_k = mid_k
+        else:
+            hi_k = mid_k
+    return (lo_k + hi_k) / 2.0 - 273.15
+
+
+def temp_orvalho_de_w(w: float, p: float) -> float:
+    """Temperatura de ponto de orvalho sob pressão [°C] a partir da razão
+    de umidade W e da pressão local P — encadeia `pressao_vapor()` e
+    `temp_orvalho_c()`. Usada para reportar o PDP em cada ponto de estado
+    do trem (Eq. 10.6 + Eq. 10.7 combinadas)."""
+    return temp_orvalho_c(pressao_vapor(w, p))
 
 
 def condensado(m_dot_ar: float, w_in: float, w_out: float) -> float:
@@ -151,7 +188,10 @@ __all__ = [
     "spc",
     "p_sat",
     "razao_umidade",
+    "pressao_vapor",
     "ur_de_w",
+    "temp_orvalho_c",
+    "temp_orvalho_de_w",
     "condensado",
     "cp_umido",
     "densidade_ar",

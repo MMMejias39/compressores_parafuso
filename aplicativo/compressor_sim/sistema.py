@@ -100,6 +100,19 @@ def simular(par: dict | None = None) -> dict:
     p0 = p["p_amb"] - dp_filtro
     w_amb = nucleo.razao_umidade(p["t_amb"], p["p_amb"], p["ur_amb"])     # Eq. 10.6
 
+    # Vazão de AR SECO real entregue por um FAD de ar ÚMIDO — fórmula
+    # psicrométrica padrão (ASHRAE): volume específico do ar úmido por kg de
+    # ar seco é v = (R_ar·T/P)·(1+1,6078·W). "m_dot" acima segue sendo a
+    # base do trabalho de compressão (Eqs. 5.5/5.8/5.9) e fica deliberadamente
+    # sem essa correção: com vazão VOLUMÉTRICA fixa (regime de deslocamento
+    # positivo), P·V=nRT diz que o número de mols admitidos por ciclo não
+    # depende de quais moléculas são — o trabalho de compressão é, portanto,
+    # ~invariante à umidade. Quem MUDA com a umidade é quanto ar seco útil sai
+    # dessa mesma vazão volumétrica: "m_dot_seco" alimenta tudo que é balanço
+    # de massa de verdade (condensado, calor sensível via cp_úmido, purga,
+    # tabela de estados) — nunca a cadeia de potência.
+    m_dot_seco = m_dot / (1.0 + 1.6078 * w_amb)
+
     # --- 1. Divisão de estágios (geométrica, intercooler ideal) --------------
     p_rede = p["p_amb"] * p["pi_total"]
     pi_lp = pi_hp = math.sqrt(p["pi_total"] * p["p_amb"] / p0)
@@ -115,13 +128,13 @@ def simular(par: dict | None = None) -> dict:
 
     # --- 3. Intercooler -------------------------------------------------------
     ua = subsistemas.ua_com_fouling(p["ua_projeto"], p["r_f_equiv"])   # Eq. 10.5
-    c_ar = m_dot * nucleo.cp_umido(w_amb)                              # Eq. 10.8
+    c_ar = m_dot_seco * nucleo.cp_umido(w_amb)                         # Eq. 10.8
     t_hp_in = subsistemas.saida_trocador(t_lp_out, p["t_agua"], ua, c_ar)
     eps_inter = subsistemas.efetividade(t_lp_out, t_hp_in, p["t_agua"])  # Eq. 10.3
-    q_inter = subsistemas.calor_trocado(m_dot, c_ar / m_dot, t_lp_out, t_hp_in)
+    q_inter = subsistemas.calor_trocado(m_dot_seco, c_ar / m_dot_seco, t_lp_out, t_hp_in)
     # condensado no intercooler: sai saturado na pressão intermediária (Eq. 10.6)
     w_sat_inter = nucleo.razao_umidade(t_hp_in, p_inter, 1.0)
-    cond_inter = nucleo.condensado(m_dot, w_amb, w_sat_inter)
+    cond_inter = nucleo.condensado(m_dot_seco, w_amb, w_sat_inter)
     w_hp_in = min(w_amb, w_sat_inter)
 
     # --- 4. Estágio HP --------------------------------------------------------
@@ -134,18 +147,24 @@ def simular(par: dict | None = None) -> dict:
 
     # --- 5. Aftercooler + separador -------------------------------------------
     t_pos_after = subsistemas.saida_trocador(t_hp_out, p["t_agua"], ua, c_ar)
-    q_after = subsistemas.calor_trocado(m_dot, CP_AR, t_hp_out, t_pos_after)
+    q_after = subsistemas.calor_trocado(m_dot_seco, CP_AR, t_hp_out, t_pos_after)
     w_sat_after = nucleo.razao_umidade(t_pos_after, p_rede, 1.0)
-    cond_after = nucleo.condensado(m_dot, w_hp_in, w_sat_after)        # Eq. 14.3
+    cond_after = nucleo.condensado(m_dot_seco, w_hp_in, w_sat_after)   # Eq. 14.3
     agua_arraste = subsistemas.arraste(cond_after, p["eta_sep"])       # Eq. 14.4
-    w_pos_sep = min(w_hp_in, w_sat_after) + agua_arraste / m_dot
+    w_pos_sep = min(w_hp_in, w_sat_after) + agua_arraste / m_dot_seco
 
     # --- 6. Secador PSA --------------------------------------------------------
-    m_purge = p["fator_purga"] * m_dot              # fração de 10–18 % (:1971)
-    eta_pur = subsistemas.eta_purga(m_purge, m_dot)                    # Eq. 15.9
+    m_purge = p["fator_purga"] * m_dot_seco         # fração de 10–18 % (:1971)
+    eta_pur = subsistemas.eta_purga(m_purge, m_dot_seco)               # Eq. 15.9
     p_aquecedor = subsistemas.potencia_aquecedor(                      # Eq. 3.3
         m_purge, p["delta_t_regen"])
-    m_dot_util = m_dot - m_purge
+    m_dot_util = m_dot_seco - m_purge
+    # W de saída = saturação no PDP real medido (Eq. 10.6, mesma convenção de
+    # w_sat_inter/w_sat_after acima) — não mais W=0 fixo, que era um "ar
+    # infinitamente seco" sem base física. Liga o secador à mesma leitura de
+    # PDP real usada em HI_des (Eq. 15.7): degradar o PDP medido agora reduz
+    # de fato a qualidade do ar entregue à rede, não só o índice de saúde.
+    w_pos_secador = nucleo.razao_umidade(p["pdp_real_c"] + 273.15, p_rede, 1.0)
     sec_dry = subsistemas.sec_dry(p_aquecedor, W_DRUM_PADRAO, m_dot_util)  # Eq. 15.6
     hi_des = subsistemas.hi_des(                                      # Eq. 15.7
         DP_NOM_PSA, p["dp_real_psa"], PDP_ALVO_C, p["pdp_real_c"])
@@ -172,19 +191,47 @@ def simular(par: dict | None = None) -> dict:
     if not 0.0 <= eps_inter <= 1.0:
         avisos.append("Efetividade do intercooler fora de [0,1] — verificar UA/fouling.")
 
+    # "m_dot" na tabela abaixo é "m_dot_seco" (vazão de AR SECO) — invariante
+    # ao longo da compressão/resfriamento (convenção padrão de psicrometria:
+    # só a água muda de fase, o ar seco não condensa). É por isso que ela não
+    # cai nos pontos onde há condensação — quem cai ali é "w" (razão de
+    # umidade). Para não parecer que a massa se perde sem explicação (ou
+    # pior, que "aumenta"), cada ponto também traz "m_dot_total" =
+    # ṁ_seco·(1+w), a vazão real da corrente (ar + vapor d'água ainda não
+    # condensado) — essa sim cai em CADA ponto de condensação, e cai de novo
+    # (por um motivo diferente: purga, não condensação) no secador PSA.
+    # PDP (ponto de orvalho sob pressão) em cada ponto — Eqs. 10.6+10.7
+    # combinadas (razão de umidade -> pressão de vapor -> inversão de Buck).
+    # É a MESMA leitura que um sensor T_dp reportaria naquele ponto do trem;
+    # calculada para os 6 pontos por igual, para nenhum acessório do fluxo
+    # ficar sem essa grandeza.
+    pdp_admissao_c = nucleo.temp_orvalho_de_w(w_amb, p0)
+    pdp_pos_inter_c = nucleo.temp_orvalho_de_w(w_hp_in, p_inter)
+    pdp_pos_after_c = nucleo.temp_orvalho_de_w(w_pos_sep, p_rede)
+    pdp_pos_secador_c = nucleo.temp_orvalho_de_w(w_pos_secador, p_rede)
+
     nos = [
         {"nome": "Admissão (pós-filtro)", "p_bar": p0 / 1e5,
-         "t_c": p["t_amb"] - 273.15, "m_dot": m_dot, "w": w_amb},
+         "t_c": p["t_amb"] - 273.15, "m_dot": m_dot_seco, "w": w_amb,
+         "m_dot_total": m_dot_seco * (1.0 + w_amb), "pdp_c": pdp_admissao_c},
         {"nome": "Descarga LP", "p_bar": p_inter / 1e5,
-         "t_c": t_lp_out - 273.15, "m_dot": m_dot, "w": w_amb},
+         "t_c": t_lp_out - 273.15, "m_dot": m_dot_seco, "w": w_amb,
+         "m_dot_total": m_dot_seco * (1.0 + w_amb),
+         "pdp_c": nucleo.temp_orvalho_de_w(w_amb, p_inter)},
         {"nome": "Entrada HP (pós-intercooler)", "p_bar": p_inter / 1e5,
-         "t_c": t_hp_in - 273.15, "m_dot": m_dot, "w": w_hp_in},
+         "t_c": t_hp_in - 273.15, "m_dot": m_dot_seco, "w": w_hp_in,
+         "m_dot_total": m_dot_seco * (1.0 + w_hp_in), "pdp_c": pdp_pos_inter_c},
         {"nome": "Descarga HP", "p_bar": p_rede / 1e5,
-         "t_c": t_hp_out - 273.15, "m_dot": m_dot, "w": w_hp_in},
+         "t_c": t_hp_out - 273.15, "m_dot": m_dot_seco, "w": w_hp_in,
+         "m_dot_total": m_dot_seco * (1.0 + w_hp_in),
+         "pdp_c": nucleo.temp_orvalho_de_w(w_hp_in, p_rede)},
         {"nome": "Saída aftercooler", "p_bar": p_rede / 1e5,
-         "t_c": t_pos_after - 273.15, "m_dot": m_dot, "w": w_pos_sep},
+         "t_c": t_pos_after - 273.15, "m_dot": m_dot_seco, "w": w_pos_sep,
+         "m_dot_total": m_dot_seco * (1.0 + w_pos_sep), "pdp_c": pdp_pos_after_c},
         {"nome": "Rede (pós-secador)", "p_bar": p_rede / 1e5,
-         "t_c": t_pos_after - 273.15, "m_dot": m_dot_util, "w": 0.0},
+         "t_c": t_pos_after - 273.15, "m_dot": m_dot_util, "w": w_pos_secador,
+         "m_dot_total": m_dot_util * (1.0 + w_pos_secador),
+         "pdp_c": pdp_pos_secador_c},
     ]
 
     return {

@@ -42,8 +42,13 @@ DELTA_T_REGEN = 80.0       # K, aquecedor de regeneração (Eq. 3.3) — ASSUMID
 K_ADS_DEFAULT = 1.5        # constante de taxa de adsorção (Eq. 15.1) — meio da faixa
                            # ilustrativa do livro (0,5 a 3,0, Figura 15.2) — ASSUMIDO
 T_RES_PSA_DEFAULT_MIN = 4.0  # tempo de residência de projeto do leito [min] — ASSUMIDO
-T_CICLO_PSA_DEFAULT_MIN = 8.0  # duração total do ciclo por torre [min] — ASSUMIDO
-                                # (com N_VASOS_PSA_DEFAULT=2, dá t_ads = t_res = 4 min)
+T_ADS_PSA_DEFAULT_MIN = 6.0    # duração da fase de adsorção por torre [min] — ASSUMIDO
+T_REGEN_PSA_DEFAULT_MIN = 4.0  # duração da fase de regeneração por torre [min] — ASSUMIDO
+T_RESFRIAMENTO_PSA_DEFAULT_MIN = 2.0  # duração do resfriamento pós-regeneração
+                                       # [min] — ASSUMIDO; com os defaults acima e
+                                       # N_VASOS_PSA_DEFAULT=2, t_ads = t_regen +
+                                       # t_resfriamento exatamente, dando cobertura
+                                       # contínua sem gap (ver docstring do módulo)
 N_VASOS_PSA_DEFAULT = 2     # torres em rodízio — ASSUMIDO (mínimo do princípio PSA)
 DP_NOM_PSA = 0.30e5         # Pa, perda de carga nominal de projeto do leito (Eq. 15.7) — ASSUMIDO
 W_DRUM_PADRAO = 0.0         # W, potência do motor do tambor rotativo (Eq. 15.6) — este app

@@ -20,6 +20,7 @@ import matplotlib
 
 matplotlib.use("Agg")  # mesmo backend do scripts/gen_figuras.py
 
+import matplotlib.colors
 import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
@@ -130,9 +131,19 @@ with st.sidebar:
         n_vasos_psa = st.number_input(
             "Torres em rodízio N (assumido — mínimo do princípio PSA)",
             2, 6, 2, 1)
-        t_ciclo_psa = st.slider(
-            "Duração do ciclo por torre [min] (assumido)",
-            2.0, 30.0, 8.0, 0.5)
+        t_ads_psa = st.slider(
+            "Duração da adsorção por torre [min] (assumido)",
+            2.0, 20.0, 6.0, 0.5)
+        t_regen_psa = st.slider(
+            "Duração da regeneração por torre [min] (assumido)",
+            1.0, 15.0, 4.0, 0.5)
+        t_resfriamento_psa = st.slider(
+            "Resfriamento pós-regeneração [min] (assumido)",
+            0.0, 10.0, 2.0, 0.5,
+            help="Tempo em que a torre já regenerou mas ainda está quente "
+                 "demais para voltar a adsorver com eficiência — sem essa "
+                 "fase o rodízio simularia uma troca instantânea entre "
+                 "regeneração e adsorção que não existe fisicamente.")
         k_ads_psa = st.slider(
             "Constante de taxa de adsorção k_ads (Eq. 15.1, Fig. 15.2)",
             0.3, 4.0, 1.5, 0.1)
@@ -213,15 +224,32 @@ with tab_est:
     st.subheader("Pontos de estado ao longo do trem (uma unidade representativa)")
     st.dataframe(
         [{"Ponto": no["nome"], "P [bar abs]": round(no["p_bar"], 3),
-          "T [°C]": round(no["t_c"], 1), "ṁ [kg/s]": round(no["m_dot"], 4),
+          "T [°C]": round(no["t_c"], 1),
+          "PDP [°C]": round(no["pdp_c"], 2),
+          "ṁ ar seco [kg/s]": round(no["m_dot"], 4),
+          "ṁ total (ar+água) [kg/s]": round(no["m_dot_total"], 4),
           "W [kg/kg]": round(no["w"], 6)} for no in res["nos"]],
         width="stretch", hide_index=True,
+    )
+    st.caption(
+        "PDP (ponto de orvalho sob pressão, Eqs. 10.6+10.7) é a mesma "
+        "leitura que um sensor T_dp reportaria em cada ponto — sobe com a "
+        "compressão (mesmo W, mais concentrado sob maior pressão) e cai de "
+        "volta à própria temperatura nos pontos saturados pelos "
+        "trocadores (intercooler, aftercooler). ṁ ar seco é invariante à "
+        "condensação (convenção padrão de psicrometria — só a água muda de "
+        "fase); ṁ total é quem realmente cai a cada ponto de condensação e "
+        "de novo, por outro motivo (purga), no secador PSA. Estes valores "
+        "valem igualmente para cada um dos "
+        f"{pw['n_compressores']} compressores em paralelo — todos operam "
+        "no mesmo ponto por serem modelados como idênticos (ver "
+        "\"Planta\" acima)."
     )
 
     g1, g2 = st.columns(2)
 
     with g1:
-        st.subheader("Perfil de pressão e temperatura no trem")
+        st.subheader("Perfil de pressão, temperatura e ponto de orvalho no trem")
         nomes = [no["nome"].replace(" (pós-intercooler)", "\n(pós-intercooler)")
                  .replace(" (pós-filtro)", "\n(pós-filtro)")
                  .replace(" (pós-secador)", "\n(pós-secador)")
@@ -229,6 +257,7 @@ with tab_est:
         x = np.arange(len(nomes))
         press = [no["p_bar"] for no in res["nos"]]
         temps = [no["t_c"] for no in res["nos"]]
+        pdps = [no["pdp_c"] for no in res["nos"]]
 
         fig, ax1 = plt.subplots(figsize=(6.2, 3.6))
         ax1.plot(x, press, "o-", color=BLUE, label="Pressão [bar abs]")
@@ -236,13 +265,24 @@ with tab_est:
         ax1.tick_params(axis="y", labelcolor=BLUE)
         ax2 = ax1.twinx()
         ax2.plot(x, temps, "s--", color=RED, label="Temperatura [°C]")
-        ax2.set_ylabel("Temperatura [°C]", color=RED)
+        ax2.plot(x, pdps, "^:", color=GREEN, label="PDP [°C]")
+        ax2.set_ylabel("Temperatura / PDP [°C]", color=RED)
         ax2.tick_params(axis="y", labelcolor=RED)
         ax2.grid(False)
+        linhas = ax1.get_lines() + ax2.get_lines()
+        ax2.legend(linhas, [l.get_label() for l in linhas],
+                  fontsize=7, loc="upper right")
         ax1.set_xticks(x)
         ax1.set_xticklabels(nomes, fontsize=7, rotation=20, ha="right")
         fig.tight_layout()
         st.pyplot(fig)
+        st.caption(
+            "A distância vertical entre a linha de Temperatura (vermelha) "
+            "e a de PDP (verde) é a margem até o ar começar a condensar "
+            "naquele ponto — onde as duas se tocam, o ar está saturado "
+            "(100% UR), como acontece por construção logo após o "
+            "intercooler e o aftercooler."
+        )
 
     with g2:
         st.subheader("Curva em “V” — perdas V_i (Eqs. 5.8/5.9)")
@@ -431,7 +471,9 @@ with tab_psa:
     r_psa = psa_ciclo.simular_ciclo_psa(
         horizonte_min=horizonte_psa,
         m_dot_ar=m_dot_psa,
-        t_ciclo_min=t_ciclo_psa,
+        t_ads_min=t_ads_psa,
+        t_regen_min=t_regen_psa,
+        t_resfriamento_min=t_resfriamento_psa,
         n_vasos=n_vasos_psa,
         k_ads=k_ads_psa,
         t_res_min=t_res_psa,
@@ -442,8 +484,21 @@ with tab_psa:
     kp = r_psa["kpis"]
 
     st.subheader(f"Rodízio de {n_vasos_psa} torres — {topologia_psa.lower()}")
-    st.caption(f"Topologia escolhida: {legenda_topologia}")
+    st.caption(
+        f"Topologia escolhida: {legenda_topologia} Ciclo por torre: "
+        f"{kp['t_ciclo_min']:.1f} min (adsorção + regeneração + resfriamento)."
+    )
 
+    if kp["tempo_sem_secagem_min"] > 0:
+        st.error(
+            f"Cobertura de secagem **interrompida** por "
+            f"{kp['tempo_sem_secagem_min']:.1f} min no horizonte simulado — "
+            f"em alguns instantes nenhuma das {n_vasos_psa} torres está "
+            "disponível para adsorver (todas regenerando/resfriando ao "
+            "mesmo tempo). Ar não tratado passaria direto. Aumente N de "
+            "torres, reduza o resfriamento/regeneração, ou aumente a "
+            "duração da adsorção."
+        )
     if kp["q_min"] < 0.05:
         st.warning(
             f"Capacidade mínima do leito caiu para {kp['q_min']*100:.1f}% de "
@@ -452,12 +507,14 @@ with tab_psa:
             "mais torres em rodízio."
         )
 
-    d1, d2, d3 = st.columns(3)
+    d1, d2, d3, d4 = st.columns(4)
     d1.metric("Trocas no horizonte", f"{kp['n_trocas']}")
     d2.metric("Capacidade mín. do leito (fim da adsorção)",
              f"{kp['q_min'] * 100:.1f}% de q_eq")
     d3.metric("Purga de regeneração (Eq. 15.2)",
              f"{kp['purga_media_kg_s'] * 3600:.1f} kg/h")
+    d4.metric("Torres adsorvendo simultaneamente (mín.)",
+             f"{kp['n_adsorvendo_min']}")
 
     st.subheader("Indicadores Globais de Performance (Cap. 15)")
     e1, e2, e3 = st.columns(3)
@@ -491,16 +548,20 @@ with tab_psa:
     st.pyplot(fig8)
 
     st.subheader("Chaveamento entre torres")
-    estado_num = (r_psa["estado"] == "Regenerando").astype(float)
+    # 0 = Adsorvendo, 1 = Regenerando, 2 = Resfriando
+    mapa_estado = {"Adsorvendo": 0, "Regenerando": 1, "Resfriando": 2}
+    estado_num = np.vectorize(mapa_estado.get)(r_psa["estado"]).astype(float)
+    cmap_estado = matplotlib.colors.ListedColormap([BLUE, RED, "#d9a441"])
     fig9, ax9 = plt.subplots(figsize=(9.0, 0.9 + 0.5 * n_vasos_psa))
     ax9.imshow(
-        estado_num, aspect="auto", cmap="RdYlBu_r", vmin=0, vmax=1,
+        estado_num, aspect="auto", cmap=cmap_estado, vmin=-0.5, vmax=2.5,
         extent=[r_psa["t_min"][0], r_psa["t_min"][-1], n_vasos_psa - 0.5, -0.5],
     )
     ax9.set_yticks(range(n_vasos_psa))
     ax9.set_yticklabels([f"Torre {i + 1}" for i in range(n_vasos_psa)])
     ax9.set_xlabel("Tempo [min]")
-    ax9.set_title("Vermelho = regenerando · Azul = adsorvendo", fontsize=9)
+    ax9.set_title("Azul = adsorvendo · Vermelho = regenerando · "
+                  "Laranja = resfriando (fora de serviço)", fontsize=9)
     fig9.tight_layout()
     st.pyplot(fig9)
 

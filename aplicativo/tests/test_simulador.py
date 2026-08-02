@@ -63,6 +63,30 @@ def test_psicrometria():
     assert nucleo.condensado(1.0, 0.010, 0.020) == 0.0
 
 
+@pytest.mark.parametrize("t_c", [-40.0, -20.0, 0.0, 10.0, 25.0, 40.0])
+def test_temp_orvalho_inverte_p_sat_exatamente(t_c):
+    # temp_orvalho_c(p_sat(T)) deve recuperar o próprio T — inversa numérica
+    # da Eq. 10.7 (bisseção), sem fórmula aproximada não citada no livro
+    pv = nucleo.p_sat(t_c + 273.15)
+    assert nucleo.temp_orvalho_c(pv) == pytest.approx(t_c, abs=1e-3)
+
+
+def test_temp_orvalho_de_w_igual_a_t_quando_saturado():
+    # ar saturado (UR=100%) tem, por definição, PDP igual à própria temperatura
+    t_k, p = 298.15, 8e5
+    w_sat = nucleo.razao_umidade(t_k, p, 1.0)
+    assert nucleo.temp_orvalho_de_w(w_sat, p) == pytest.approx(t_k - 273.15, abs=1e-2)
+
+
+def test_temp_orvalho_sobe_com_pressao_a_w_constante():
+    # comprimir sem remover água concentra o vapor -> PDP sobe (fenômeno
+    # básico de ar comprimido, é por isso que ele condensa ao esfriar depois)
+    w = 0.02
+    pdp_baixa_p = nucleo.temp_orvalho_de_w(w, 1e5)
+    pdp_alta_p = nucleo.temp_orvalho_de_w(w, 8e5)
+    assert pdp_alta_p > pdp_baixa_p
+
+
 # --- Subsistemas -------------------------------------------------------------
 
 def test_lmtd_maior_ou_igual_media_para_contracorrente():
@@ -117,6 +141,18 @@ def test_autonomia_positiva_e_infinita_sem_demanda():
 
 # --- Cascata completa ----------------------------------------------------------
 
+def test_potencia_quase_invariante_a_umidade_mas_ar_seco_cai():
+    # deslocamento positivo: vazão volumétrica fixa -> P·V=nRT diz que o
+    # trabalho de compressão não depende de quais moléculas são admitidas.
+    # Quem cai com a umidade é o ar seco ÚTIL entregue pela mesma vazão.
+    seco = simular({"ur_amb": 0.10})
+    umido = simular({"ur_amb": 0.95})
+    assert umido["potencias"]["w_total"] == pytest.approx(
+        seco["potencias"]["w_total"], rel=0.01)
+    assert umido["nos"][0]["m_dot"] < seco["nos"][0]["m_dot"]
+    assert umido["kpis"]["condensado_total_kg_h"] > seco["kpis"]["condensado_total_kg_h"]
+
+
 def test_simular_defaults_plausivel():
     res = simular()
     k, pw = res["kpis"], res["potencias"]
@@ -129,6 +165,25 @@ def test_simular_defaults_plausivel():
     assert k["condensado_total_kg_h"] >= 0.0
     assert k["autonomia_min"] > 0.0
     assert len(res["nos"]) == 6
+    for no in res["nos"]:
+        assert "pdp_c" in no and "m_dot_total" in no
+
+
+def test_pdp_secador_bate_com_pdp_real_medido():
+    # o secador agora entrega ar saturado no PDP "medido" (pdp_real_c) em
+    # vez do antigo W=0 fixo (ar infinitamente seco, sem base física)
+    res = simular({"pdp_real_c": -30.0})
+    assert res["nos"][-1]["pdp_c"] == pytest.approx(-30.0, abs=0.05)
+    assert res["nos"][-1]["w"] > 0.0
+
+
+def test_pdp_sobe_ao_longo_da_compressao_sem_condensar():
+    # Admissão -> Descarga LP: mesma W (ainda não condensou), mas a pressão
+    # subiu -> PDP tem que subir também
+    res = simular()
+    admissao, descarga_lp = res["nos"][0], res["nos"][1]
+    assert admissao["w"] == pytest.approx(descarga_lp["w"])
+    assert descarga_lp["pdp_c"] > admissao["pdp_c"]
 
 
 def test_n_compressores_escala_totais_sem_afetar_por_unidade():
@@ -153,38 +208,60 @@ def test_potencia_total_aumenta_com_pressao():
     assert (w9 - w8) / w8 == pytest.approx(0.07, abs=0.03)
 
 
-# --- Ciclo de torres PSA ---------------------------------------------------
+# --- Ciclo de torres PSA (3 fases: adsorção, regeneração, resfriamento) ----
 
 @pytest.mark.parametrize("n_vasos", [2, 3, 4])
-def test_psa_exatamente_uma_torre_regenerando(n_vasos):
+def test_psa_cobertura_continua_quando_bem_dimensionado(n_vasos):
+    # t_ads = t_regen + t_resfriamento -> handoff exato entre torres, sem gap
     r = psa_ciclo.simular_ciclo_psa(
-        horizonte_min=30, m_dot_ar=0.5, t_ciclo_min=8.0, n_vasos=n_vasos,
-        k_ads=1.5, t_res_min=4.0, p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
-    n_regenerando = np.sum(r["estado"] == "Regenerando", axis=0)
-    assert (n_regenerando == 1).all()
+        horizonte_min=30, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
+        t_resfriamento_min=2.0, n_vasos=n_vasos, k_ads=1.5, t_res_min=4.0,
+        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
+    assert r["kpis"]["tempo_sem_secagem_min"] == pytest.approx(0.0)
+    assert r["kpis"]["n_adsorvendo_min"] >= 1
 
 
-def test_psa_capacidade_decai_e_recupera():
+def test_psa_gap_quando_resfriamento_nao_cabe_no_rodizio():
+    # N=2 com regen+resfriamento (7 min) > adsorção (3 min): pelas contas do
+    # rodízio, sobra um intervalo sem nenhuma torre disponível para secar —
+    # exatamente o problema físico que motivou a fase de resfriamento.
     r = psa_ciclo.simular_ciclo_psa(
-        horizonte_min=8, m_dot_ar=0.5, t_ciclo_min=8.0, n_vasos=2,
-        k_ads=1.5, t_res_min=4.0, p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
+        horizonte_min=10, m_dot_ar=0.5, t_ads_min=3.0, t_regen_min=4.0,
+        t_resfriamento_min=3.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
+    assert r["kpis"]["tempo_sem_secagem_min"] > 0.0
+    assert r["kpis"]["n_adsorvendo_min"] == 0
+
+
+def test_psa_capacidade_decai_regenera_e_mantem_no_resfriamento():
+    r = psa_ciclo.simular_ciclo_psa(
+        horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
+        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
     torre0 = r["q_norm"][0]
-    # torre 0 regenera em [0, 4): capacidade recupera monotonicamente até ~1
-    fase_regen = torre0[r["t_min"] < 4.0]
-    assert np.all(np.diff(fase_regen) >= -1e-9)
-    assert torre0[r["t_min"] < 4.0][-1] == pytest.approx(1.0, abs=0.03)
-    # torre 0 adsorve em [4, 8): capacidade cai monotonicamente
-    fase_ads = torre0[r["t_min"] >= 4.0]
+    t = r["t_min"]
+    # adsorvendo em [0, 6): capacidade cai monotonicamente
+    fase_ads = torre0[t < 6.0]
     assert np.all(np.diff(fase_ads) <= 1e-9)
+    # regenerando em [6, 10): capacidade recupera monotonicamente até ~1
+    fase_regen = torre0[(t >= 6.0) & (t < 10.0)]
+    assert np.all(np.diff(fase_regen) >= -1e-9)
+    assert fase_regen[-1] == pytest.approx(1.0, abs=0.03)
+    # resfriando em [10, 12): capacidade permanece em 1 (já restaurada)
+    fase_resfriamento = torre0[t >= 10.0]
+    assert np.all(fase_resfriamento == pytest.approx(1.0))
 
 
-def test_psa_purga_positiva_e_zero_fora_de_regeneracao():
+def test_psa_purga_so_durante_regeneracao_e_escala_com_torres_simultaneas():
     r = psa_ciclo.simular_ciclo_psa(
-        horizonte_min=8, m_dot_ar=0.5, t_ciclo_min=8.0, n_vasos=2,
-        k_ads=1.5, t_res_min=4.0, p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
-    assert (r["m_purge_kg_s"] > 0).all()  # com rodízio contínuo, purga nunca cessa
-    esperado = 0.5 * (1.05e5 / 8.4e5) * 0.15
-    assert r["m_purge_kg_s"][0] == pytest.approx(esperado)
+        horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
+        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
+    n_regenerando = np.sum(r["estado"] == "Regenerando", axis=0)
+    esperado_por_torre = 0.5 * (1.05e5 / 8.4e5) * 0.15
+    # purga é zero quando ninguém regenera, e escala com quantas regeneram
+    assert np.allclose(r["m_purge_kg_s"], n_regenerando * esperado_por_torre)
+    assert (r["m_purge_kg_s"][n_regenerando == 0] == 0.0).all()
 
 
 def test_umidade_nao_aumenta_ao_longo_do_tratamento():
