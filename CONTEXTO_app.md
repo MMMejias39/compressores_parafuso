@@ -32,7 +32,7 @@ aplicativo/
 │   ├── sistema.py          # cascata completa: simular(params) -> resultados (1 unidade + totais de planta)
 │   ├── dinamica.py         # simulação transiente do vaso/rede (VSD ou carga/alívio)
 │   └── psa_ciclo.py        # rodízio de N torres do secador PSA (Eq. 15.1/15.2)
-├── tests/test_simulador.py # testes de sanidade (pytest) — 24 testes, todos passando
+├── tests/test_simulador.py # testes de sanidade (pytest) — 36 testes, todos passando
 └── requirements.txt        # streamlit, numpy, matplotlib, pytest
 ```
 
@@ -194,11 +194,72 @@ criação — o livro é que estava desalinhado, agora os dois concordam.
 reduz `HI_des` (não aumenta) — é esse teste que teria pego o erro de
 sinal acima se a conversão para Kelvin não tivesse sido feita.
 
+## Revisão física: umidade, PDP e resfriamento do PSA (02/08/2026, commit `a53ef67`)
+
+O autor testou o app deliberadamente atrás de furos físicos antes de partir
+para simulação de defeitos, e achou dois reais:
+
+**1. Vazão mássica "aumentando" depois do secador.** Não era bem isso —
+`m_dot` na tabela de estados sempre foi vazão de AR SECO (convenção
+psicrométrica padrão: só a água condensa, o ar seco não muda), então
+ela nunca caía nos pontos de condensação, só a razão de umidade `w`
+caía. Sem uma coluna de vazão TOTAL para comparar, parecia que a massa
+"sumia sem explicação" até o secador. Adicionado `m_dot_total` (=
+ṁ_seco·(1+w)) em cada ponto — essa sim cai a cada condensação, e de
+novo (por purga, não secagem) no secador.
+
+**2. Ciclo do secador sem tempo de resfriamento.** O rodízio de torres
+alternava direto entre regenerando e adsorvendo, sem o tempo que a
+alumina leva para esfriar antes de voltar a adsorver com eficiência —
+fase física real, ausente do primeiro modelo. `psa_ciclo.py` reescrito
+com 3 fases (Adsorvendo → Regenerando → **Resfriando**, nova duração
+`t_resfriamento_min`). Consequência importante: a cobertura contínua
+(sempre ≥1 torre adsorvendo) deixou de ser garantida por construção —
+com N de torres insuficiente para o tempo de resfriamento, pode haver
+um intervalo em que **nenhuma** torre seca o ar. O módulo não esconde
+isso mais: calcula `n_adsorvendo_min`/`tempo_sem_secagem_min` e o app
+mostra um alerta vermelho quando ocorre.
+
+Isso levou a duas melhorias adicionais, feitas na mesma varredura:
+- **PDP em cada ponto do trem** (não só no secador): nova inversão
+  numérica (bisseção) da Eq. 10.7 em `nucleo.py` — a fórmula de Buck com
+  os 3 parâmetros do livro não tem inversa fechada simples, então em vez
+  de aproximar com a forma "Magnus" de 2 parâmetros (mais comum, mas
+  diferente da equação do livro), a inversão é numérica sobre a própria
+  `p_sat()`. Verificado por *round-trip* exato (erro < 1e-3°C) e por
+  consistência física: pontos saturados pelo intercooler/aftercooler dão
+  PDP = T exatamente, como deveria. Secador passou a entregar ar
+  saturado no PDP "medido" (`pdp_real_c`) em vez de W=0 fixo (ar
+  "infinitamente seco", sem base física) — liga de vez a leitura de PDP
+  usada em `HI_des` ao restante do balanço de massa.
+- **Terceira pergunta do autor, sobre umidade e potência**: por que a
+  potência de compressão não sobe com a umidade do ar de admissão? A
+  resposta correta **não** é "deveria subir" — para vazão volumétrica
+  fixa (compressor de deslocamento positivo), `P·V=nRT` diz que o
+  trabalho de compressão não depende de quais moléculas são admitidas
+  (ar ou vapor), só do número total de mols. A lacuna real era outra: o
+  app não reduzia o AR SECO realmente entregue por essa mesma vazão
+  volumétrica quando a umidade sobe. Nova variável `m_dot_seco`
+  (fórmula psicrométrica padrão ASHRAE, `v = (R_ar·T/P)·(1+1,6078·W)`)
+  substitui `m_dot` em todo balanço de massa real (condensado, calor
+  sensível, purga, tabela de estados) — a cadeia de potência
+  (`v_dot_lp`/`v_dot_hp`) continua deliberadamente em `m_dot` original,
+  sem essa correção, porque é ela que deve ficar ~invariante à umidade.
+  **Armadilha evitada**: minha primeira ideia (antes de derivar com
+  cuidado) era fazer a potência subir com a umidade — estaria errada.
+  Só percebi ao aplicar `P·V=nRT` explicitamente. Se uma sessão futura
+  for mexer aqui de novo: qualquer "correção de umidade" que reduza
+  `v_dot_lp`/`v_dot_hp` (não só `m_dot_seco`) está repetindo esse erro.
+
+12 testes novos nesta sessão, incluindo verificação de que a potência
+varia menos de 1% entre UR 10% e 95% (mas o ar seco entregue cai ~4% e o
+condensado sobe de 0,1 para 16 kg/h no mesmo intervalo) — 36 no total.
+
 ## Estado atual
 
-Código compila sem erro de sintaxe, 24/24 testes passam
+Código compila sem erro de sintaxe, 36/36 testes passam
 (`venv/bin/pytest tests/ -q`). Servidor Streamlit rodando em
-`localhost:8501`, reiniciado pela última vez após os KPIs do Cap. 15
+`localhost:8501`, reiniciado pela última vez após a correção de umidade
 (02/08/2026).
 
 O diretório `aplicativo/` foi commitado em 01/08/2026 (commit `693a2c6`,
