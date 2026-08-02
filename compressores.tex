@@ -1970,9 +1970,9 @@ q_d = q_{eq} \cdot \exp \left( -k_{ads} \cdot \frac{t_{ads}}{t_{res}} \right)
 SEC_{dry} = \frac{\dot{W}_{heater} + \dot{W}_{drum}}{\dot{m}_{dry}}
 \end{equation}
 
-			\item \textbf{Índice de Saúde do Dessecante ($HI_{des}$):} A Equação~\eqref{eq:s15-7} multiplica duas razões normalizadas — perda de carga nominal sobre perda de carga real, e ponto de orvalho alvo sobre ponto de orvalho real — de modo que o índice se degrada tanto se o leito colmatar (aumentando $\Delta P_{real}$) quanto se perder capacidade de secagem (piorando $PDP_{real}$):
+			\item \textbf{Índice de Saúde do Dessecante ($HI_{des}$):} A Equação~\eqref{eq:s15-7} multiplica duas razões normalizadas — perda de carga nominal sobre perda de carga real, e ponto de orvalho alvo sobre ponto de orvalho real — de modo que o índice se degrada tanto se o leito colmatar (aumentando $\Delta P_{real}$) quanto se perder capacidade de secagem (piorando $PDP_{real}$). A razão de ponto de orvalho precisa ser calculada em \textbf{Kelvin}, não em Celsius: como o $PDP$ é negativo na convenção deste documento (ex.: $-40\,^{\circ}$C na Classe 2), tomar a razão diretamente em Celsius inverte o sentido do índice — um $PDP_{real}$ pior (mais próximo de $0\,^{\circ}$C ou positivo) produziria um $HI_{des}$ \textit{maior}, o oposto do pretendido. A conversão ($+273{,}15$) é, portanto, obrigatória:
 			\begin{equation}\label{eq:s15-7}
-HI_{des} = \frac{\Delta P_{nom}}{\Delta P_{real}} \cdot \frac{PDP_{target}}{PDP_{real}}
+HI_{des} = \frac{\Delta P_{nom}}{\Delta P_{real}} \cdot \frac{PDP_{target} + 273{,}15}{PDP_{real} + 273{,}15}
 \end{equation}
 
 			\item \textbf{Perda de Eficiência por Purga ($\eta_{purge}$):} Todo o ar de purga usado para regenerar a torre saturada (Equação~\eqref{eq:s15-2}) é ar já comprimido a alto custo energético e depois descartado sem realizar trabalho útil na planta — em secadores PSA a frio, tipicamente entre 10\% e 18\% de toda a produção do compressor. A Equação~\eqref{eq:s15-9} expressa essa perda como uma eficiência: a fração da vazão total produzida que efetivamente chega ao consumidor final, descontada a purga:
