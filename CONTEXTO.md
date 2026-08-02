@@ -940,21 +940,45 @@ correção de unidades nas Equações 9.8 e 11.6, listas de figuras/tabelas com
 legendas curtas e hifenização, e subseções dos Caps. 26/27 com a indentação
 dos blocos de código Python corrigida.
 
-Observação: há quatro arquivos soltos na raiz do projeto, não rastreados pelo
-git e não criados por mim — `recomenda compressores.txt` (análise externa via
-Copilot CLI, ver "Correção de extração de texto" acima),
-`Manus_parecer_final_compressores.md` (análise externa da Manus AI, **lida e
-implementada em 29-30/07/2026**, ver as duas seções acima), `dicas_kimi.md`
-(análise externa da Kimi, **lida e implementada em 01/08/2026**, ver seção
-acima) e `referências extras para as fórmulas.md` — este último **não é
-markdown apesar da extensão**: é um `.odt` (OpenDocument Text) renomeado,
-conteúdo binário, ainda não examinado. Não mexer em nenhum deles nem
-incluí-los em commits sem o autor pedir explicitamente. Diferença de
-qualidade entre os três relatórios já lidos, útil para calibrar ceticismo no
-futuro: o Copilot acertou o sintoma e errou a causa; o Manus acertou os três
-problemas normativos, todos confirmados na fonte primária; o Kimi acertou o
-diagnóstico de diagramação mas subestimou a extensão de alguns itens (relatou
-1 tabela com overfull grave, a varredura achou 5).
+Observação: os arquivos de análise externa que ficavam soltos na raiz do
+projeto foram movidos para `arquivos_apoio/` em 02/08/2026 (a pedido do
+autor — "não apague, coloque no subdiretório"). O subdiretório inteiro
+continua **não rastreado pelo git**, mesmo status de antes, só mudou o
+caminho. Conteúdo:
+
+- `recomenda compressores.txt` (análise externa via Copilot CLI, ver
+  "Correção de extração de texto" acima)
+- `Manus_parecer_final_compressores.md` (análise externa da Manus AI,
+  **lida e implementada em 29-30/07/2026**, ver as duas seções acima)
+- `dicas_kimi.md` (análise externa da Kimi, **lida e implementada em
+  01/08/2026**, ver seção acima)
+- `referências extras para as fórmulas.md` — **não é markdown apesar da
+  extensão**: é um `.odt` (OpenDocument Text) renomeado, conteúdo
+  binário, ainda não examinado
+- `Backlog_kimi_compress.md`, `compressores.txt`, `dicas_COPILOT.md` —
+  três arquivos que **apareceram na raiz durante a sessão de
+  02/08/2026, sem terem sido criados por mim nem pelo autor
+  explicitamente pedido**; ainda não lidos nem examinados. `dicas_COPILOT.md`
+  pelo nome parece um quarto relatório externo (Copilot, diferente do
+  `recomenda compressores.txt` que também é do Copilot CLI) — checar se
+  são a mesma análise duplicada ou relatórios distintos antes de tratar
+  como novo material.
+
+Não mexer em nenhum arquivo de `arquivos_apoio/` nem incluí-los em commits
+sem o autor pedir explicitamente. Diferença de qualidade entre os três
+relatórios já lidos, útil para calibrar ceticismo no futuro: o Copilot
+acertou o sintoma e errou a causa; o Manus acertou os três problemas
+normativos, todos confirmados na fonte primária; o Kimi acertou o
+diagnóstico de diagramação mas subestimou a extensão de alguns itens
+(relatou 1 tabela com overfull grave, a varredura achou 5).
+
+**Também detectado nesta sessão, não investigado**: `compressores.tex` tem
+uma modificação não rastreada que não vim de mim — uma nova referência
+bibliográfica `\bibitem{isa51}` (ANSI/ISA-5.1-2024) — sinal de que o autor
+(ou outra ferramenta) andou editando o `.tex` fora desta sessão de
+acompanhamento. Não mexi nela; se for retomar o livro, confira com
+`git diff compressores.tex` antes de assumir que a árvore de trabalho só
+tem o que está documentado aqui.
 
 Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Bibliografia (45 referências) verificada uma a uma contra fontes reais; 3 tinham
