@@ -91,6 +91,24 @@ def test_purga_entre_10_e_18_pct_default():
     assert 0.10 <= par["fator_purga"] <= 0.18  # :1971
 
 
+def test_sec_dry_soma_aquecedor_e_tambor():
+    assert subsistemas.sec_dry(1000.0, 0.0, 0.5) == pytest.approx(2000.0)
+    assert subsistemas.sec_dry(1000.0, 500.0, 0.5) == pytest.approx(3000.0)
+
+
+def test_hi_des_unitario_no_nominal():
+    # ΔP e PDP reais iguais ao nominal/alvo => leito saudável, HI_des = 1
+    assert subsistemas.hi_des(0.3e5, 0.3e5, -40.0, -40.0) == pytest.approx(1.0)
+
+
+def test_hi_des_cai_com_degradacao():
+    saudavel = subsistemas.hi_des(0.3e5, 0.3e5, -40.0, -40.0)
+    dp_alto = subsistemas.hi_des(0.3e5, 0.6e5, -40.0, -40.0)
+    pdp_pior = subsistemas.hi_des(0.3e5, 0.3e5, -40.0, -20.0)
+    assert dp_alto < saudavel
+    assert pdp_pior < saudavel  # PDP mais alto (pior) deve reduzir o índice, não aumentar
+
+
 def test_autonomia_positiva_e_infinita_sem_demanda():
     t = subsistemas.autonomia_vaso(2.0, 8e5, 6e5, 0.1, 1e5)
     assert t == pytest.approx(40.0)  # Eq. 16.5: 2·(8e5-6e5)/(0.1·1e5)

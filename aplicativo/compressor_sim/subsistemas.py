@@ -128,6 +128,33 @@ def potencia_aquecedor(m_dot_purge: float, delta_t: float, cp: float = CP_AR) ->
     return m_dot_purge * cp * delta_t
 
 
+def sec_dry(w_heater: float, w_drum: float, m_dot_dry: float) -> float:
+    """Consumo energético específico de secagem [J/kg de ar seco].
+
+    Eq. 15.6 — SEC_dry = (Ẇ_heater + Ẇ_drum)/ṁ_dry
+    Este app modela só o secador PSA a frio (não o HOC de tambor rotativo),
+    então w_drum é sempre 0 nas chamadas internas — o parâmetro fica
+    explícito para não esconder essa limitação de escopo.
+    """
+    return (w_heater + w_drum) / m_dot_dry
+
+
+def hi_des(dp_nom: float, dp_real: float, pdp_target_c: float, pdp_real_c: float) -> float:
+    """Índice de saúde do dessecante.
+
+    Eq. 15.7 — HI_des = (ΔP_nom/ΔP_real) · (PDP_target/PDP_real)
+
+    O PDP entra em **Kelvin**, não Celsius, nesta razão: usando °C com sinal
+    diretamente, um PDP_real mais alto (pior, secagem menos eficaz) geraria
+    HI_des > 1 — o oposto do que o índice pretende sinalizar. Mesma classe
+    de armadilha de unidade das Equações 9.8/11.6 do livro (fator de
+    conversão faltando); corrigida aqui na implementação, não no `.tex`.
+    """
+    pdp_target_k = pdp_target_c + 273.15
+    pdp_real_k = pdp_real_c + 273.15
+    return (dp_nom / dp_real) * (pdp_target_k / pdp_real_k)
+
+
 # ---------------------------------------------------------------------------
 # Vaso pulmão / rede (Caps. 2, 16)
 # ---------------------------------------------------------------------------
@@ -163,6 +190,8 @@ __all__ = [
     "purga_psa",
     "eta_purga",
     "potencia_aquecedor",
+    "sec_dry",
+    "hi_des",
     "dp_dt_vaso",
     "autonomia_vaso",
 ]

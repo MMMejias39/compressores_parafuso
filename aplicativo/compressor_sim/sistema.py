@@ -16,6 +16,7 @@ from .constantes import (
     CP_AR,
     DELTA_T_REGEN,
     DEMANDA_M3_MIN,
+    DP_NOM_PSA,
     ETA_MECANICA,
     ETA_SEPARADOR,
     FAD_DEFAULT_M3_MIN,
@@ -36,6 +37,7 @@ from .constantes import (
     UR_AMB_DEFAULT,
     VI_DEFAULT,
     V_VASO_DEFAULT,
+    W_DRUM_PADRAO,
     ZETA_FILTRO,
 )
 
@@ -66,6 +68,8 @@ def parametros_default() -> dict:
         "v_vaso": V_VASO_DEFAULT,
         "p_limite": P_LIMITE_REDE,
         "demanda_m3_min": DEMANDA_M3_MIN,
+        "dp_real_psa": DP_NOM_PSA,   # medido — default = nominal (leito limpo)
+        "pdp_real_c": PDP_ALVO_C,    # medido — default = alvo (secador saudável)
     }
 
 
@@ -142,6 +146,9 @@ def simular(par: dict | None = None) -> dict:
     p_aquecedor = subsistemas.potencia_aquecedor(                      # Eq. 3.3
         m_purge, p["delta_t_regen"])
     m_dot_util = m_dot - m_purge
+    sec_dry = subsistemas.sec_dry(p_aquecedor, W_DRUM_PADRAO, m_dot_util)  # Eq. 15.6
+    hi_des = subsistemas.hi_des(                                      # Eq. 15.7
+        DP_NOM_PSA, p["dp_real_psa"], PDP_ALVO_C, p["pdp_real_c"])
 
     # --- 7. Vaso pulmão / rede -------------------------------------------------
     # m_dot_util é de UMA unidade; o vaso/rede recebe a soma das n_comp
@@ -205,6 +212,8 @@ def simular(par: dict | None = None) -> dict:
             "autonomia_min": t_autonomia / 60.0,
             "p_intermediaria_bar": p_inter / 1e5,
             "pdp_alvo_c": PDP_ALVO_C,
+            "sec_dry_kj_kg": sec_dry / 1000.0,
+            "hi_des": hi_des,
             "fad_total_m3_min": p["fad_m3_min"] * n_comp,
             "condensado_total_planta_kg_h":
                 (cond_inter + cond_after) * 3600.0 * n_comp,

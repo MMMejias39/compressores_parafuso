@@ -45,6 +45,10 @@ T_RES_PSA_DEFAULT_MIN = 4.0  # tempo de residência de projeto do leito [min] �
 T_CICLO_PSA_DEFAULT_MIN = 8.0  # duração total do ciclo por torre [min] — ASSUMIDO
                                 # (com N_VASOS_PSA_DEFAULT=2, dá t_ads = t_res = 4 min)
 N_VASOS_PSA_DEFAULT = 2     # torres em rodízio — ASSUMIDO (mínimo do princípio PSA)
+DP_NOM_PSA = 0.30e5         # Pa, perda de carga nominal de projeto do leito (Eq. 15.7) — ASSUMIDO
+W_DRUM_PADRAO = 0.0         # W, potência do motor do tambor rotativo (Eq. 15.6) — este app
+                             # modela só o secador PSA a frio, não o HOC de tambor rotativo
+                             # do Cap. 15, logo essa parcela é sempre 0 aqui
 
 # --- Vaso pulmão / rede ---
 V_VASO_DEFAULT = 2.0       # m³ — ASSUMIDO

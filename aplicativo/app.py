@@ -140,6 +140,13 @@ with st.sidebar:
             "Tempo de residência de projeto do leito [min] (assumido)",
             1.0, 15.0, 4.0, 0.5)
         horizonte_psa = st.slider("Horizonte de simulação PSA [min]", 10, 120, 30)
+        st.caption("Saúde do dessecante (Eq. 15.7) — valores medidos/simulados:")
+        dp_real_psa_mbar = st.slider(
+            "ΔP real do leito [mbar] (medido)", 15.0, 90.0,
+            defaults["dp_real_psa"] / 100.0, 1.0)
+        pdp_real_psa_c = st.slider(
+            "PDP real [°C] (medido)", -45.0, 10.0,
+            float(defaults["pdp_real_c"]), 1.0)
 
 params = {
     **defaults,
@@ -161,6 +168,8 @@ params = {
     "v_vaso": v_vaso,
     "demanda_m3_min": demanda,
     "p_limite": p_limite_bar * 1e5,
+    "dp_real_psa": dp_real_psa_mbar * 100.0,
+    "pdp_real_c": pdp_real_psa_c,
 }
 
 res = simular(params)
@@ -449,6 +458,24 @@ with tab_psa:
              f"{kp['q_min'] * 100:.1f}% de q_eq")
     d3.metric("Purga de regeneração (Eq. 15.2)",
              f"{kp['purga_media_kg_s'] * 3600:.1f} kg/h")
+
+    st.subheader("Indicadores Globais de Performance (Cap. 15)")
+    e1, e2, e3 = st.columns(3)
+    e1.metric("SEC_dry (Eq. 15.6)", f"{k['sec_dry_kj_kg']:.1f} kJ/kg",
+             help="Só a parcela do aquecedor de regeneração — este app não "
+                  "modela o secador de tambor rotativo (HOC) do Cap. 15, "
+                  "então Ẇ_drum é sempre 0 aqui.")
+    e2.metric("HI_des (Eq. 15.7)", f"{k['hi_des']:.2f}",
+             help="1,0 = leito saudável (ΔP e PDP medidos, na barra lateral, "
+                  "iguais ao nominal/alvo). Cai conforme ΔP real e PDP real "
+                  "se afastam desses valores.")
+    e3.metric("η_purge (Eq. 15.9)", f"{k['purga_pct']:.1f} %")
+    if k["hi_des"] < 0.7:
+        st.warning(
+            f"HI_des = {k['hi_des']:.2f} — dessecante degradado (ΔP real "
+            "ou PDP real distantes do nominal/alvo definidos na barra "
+            "lateral). Ver Tabela 15.1 (Matriz de Diagnóstico de Falhas)."
+        )
 
     st.subheader("Capacidade de adsorção normalizada por torre (Eq. 15.1)")
     fig8, ax8 = plt.subplots(figsize=(9.0, 3.4))
