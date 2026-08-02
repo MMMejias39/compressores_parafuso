@@ -127,13 +127,16 @@ Código compila sem erro de sintaxe, 16/16 testes passam
 `localhost:8501`, reiniciado pela última vez após a feature de
 `n_compressores` (01/08/2026).
 
-**Todo o diretório `aplicativo/` está fora do git** (`git status` mostra
-`?? aplicativo/` — não rastreado, nunca commitado). O `.gitignore` do
-projeto não tem entrada para `aplicativo/venv/` nem
-`aplicativo/**/__pycache__/` nem `aplicativo/.pytest_cache/` — precisa
-disso antes de qualquer commit, para não versionar o ambiente virtual
-inteiro. Não commitar sem pedido explícito do autor (mesma regra do
-`CONTEXTO.md` principal).
+O diretório `aplicativo/` foi commitado em 01/08/2026 (commit `693a2c6`,
+junto com este arquivo e as linhas de `.gitignore` para
+`aplicativo/venv/`/`aplicativo/**/__pycache__/`, a pedido explícito do
+autor). O commit ficou escopado só ao aplicativo — outras mudanças
+pendentes na árvore de trabalho na mesma hora (correções de diagramação do
+`compressores.tex` via `dicas_kimi.md`, mais o trabalho não commitado de
+29-31/07 já descrito no `CONTEXTO.md` principal) foram deixadas de fora
+deliberadamente, incluindo as outras duas mudanças de `.gitignore`
+(`*.lof`/`*.lot` do livro e `.claude/settings.local.json`) que não tinham
+relação com o app.
 
 **Este arquivo é deliberadamente separado do `CONTEXTO.md` principal** — a
 pedido do autor, não é referenciado a partir de lá. Sessões futuras que só
@@ -143,15 +146,12 @@ contexto para ele.
 
 ## Pendências conhecidas
 
-1. `.gitignore` para `aplicativo/venv/`, `__pycache__/`, `.pytest_cache/`
-   antes de qualquer commit.
-2. Decidir se/quando commitar `aplicativo/` (nunca commitado até agora).
-3. O app usa apenas os Capítulos 5, 9, 10, 11, 12, 13, 14, 15, 16 do livro
+1. O app usa apenas os Capítulos 5, 9, 10, 11, 12, 13, 14, 15, 16 do livro
    (trem termodinâmico + psicrometria + rede). Motor elétrico (Cap. 4),
    rotordinâmica/mancais (Caps. 8, 9, 11) e a Parte II inteira (EKF, VAE,
    PIML, MPC, PSO — Caps. 19-27) não têm nenhuma representação no
    simulador — candidato natural de expansão futura, mas não pedido ainda.
-4. `n_compressores` assume unidades **idênticas** operando no **mesmo**
+2. `n_compressores` assume unidades **idênticas** operando no **mesmo**
    ponto de operação (mesma fração de carga cada uma) — não modela um
    cenário de carga desigual entre máquinas nem lógica de seleção de qual
    unidade liga/desliga (ex.: rodízio para igualar horas de operação,
