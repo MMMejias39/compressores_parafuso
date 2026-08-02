@@ -909,25 +909,145 @@ testes, é uma forma eficaz de auditoria — vale considerar isso
 deliberadamente para outras equações do documento, não só como
 subproduto de construir o app.
 
+## Sessão de 02/08/2026 — Verificação automática do PDF e reorganização de arquivos de apoio
+
+Rotina de verificação automática do PDF compilado via `pdftotext -layout` + busca de sinais de erro comum: referências não-resolvidas ("??"), caracteres de substituição U+FFFD (�), TODO/FIXME não finalizados. Resultado: **nenhum sinal tóxico detectado**. Cruzamento de contagem entre labels do `.tex` e ocorrências no PDF extraído mostrou diferença esperada (192 labels vs. 206 ocorrências de "Equação" — esta última inclui menções em prosa). Três equações recentemente corrigidas (9.8, 11.6, 15.7) verificadas como presentes no PDF; 11.6 teve layout fragmentado na extração (provável compressão/quebra de coluna ao exportar para texto), recomenda-se inspeção visual da página no PDF físico.
+
+Gerado arquivo `dicas_COPILOT.md` (relatório automático) com recomendações de inspeção visual prioritária: confirmar layout de (11.6), (9.8), (15.7); revisar tabelas de Nomenclatura e matrizes de falha (risco de truncamento em células). Nenhuma evidência de conteúdo cortado ou desaparecido no PDF compilado.
+
+Arquivos de análise externa da raiz (`recomenda compressores.txt`, `Manus_parecer_final_compressores.md`, `dicas_kimi.md`, `referências extras para as fórmulas.md`) movidos para subdiretório `arquivos_apoio/` a pedido do autor — continuam **não rastreados pelo git**, mesmo status, apenas mudou o caminho físico. Estrutura do repositório permanece idêntica em termos de conteúdo versionado.
+
+## Backlog Kimi implementado — 13 itens (02/08/2026)
+
+`Backlog_kimi_compress.md` (sessão Kimi de 02/08/2026, ver a lista de
+arquivos em `arquivos_apoio/` logo acima) propôs 13 lacunas de
+equacionamento/acessórios (BK-01 a BK-13),
+priorizadas alta/média/baixa, com o aviso explícito de "nada aqui foi
+implementado — implementar um item por sessão". O autor pediu o backlog
+completo de uma vez; os 13 itens foram implementados nesta sessão. Duas
+decisões do autor resolveram os pontos que o backlog deixava em aberto:
+
+- **BK-05 (MPV)**: o backlog suspeitava que a "Válvula de Pressão Mínima"
+  do Cap. 3 fosse resquício de um rascunho oil-flooded, incompatível com a
+  arquitetura oil-free do livro. Perguntado, o autor confirmou que **a
+  máquina real não tem essa válvula** — item removido da lista de
+  acessórios (mantidas retenção e blow-down).
+- **Escopo**: o autor escolheu o backlog completo (não só prioridade alta).
+
+**Estratégia usada para evitar cascata de renumeração** (o próprio backlog
+alertava para isso em vários itens): toda equação nova foi inserida ao
+**fim do capítulo** (ou subseção final), nunca no meio de uma sequência
+existente — `\numberwithin{equation}{section}` numera pela posição física
+no documento, não pelo texto do `\label`, então inserir no meio sempre
+desloca os números seguintes. Com essa estratégia, **nenhuma equação
+preexistente mudou de número** em nenhum dos 13 itens, incluindo BK-02 e
+BK-07, para os quais o próprio backlog havia avisado risco de cascata caso
+inseridos no meio do capítulo como sugerido literalmente no texto.
+
+Resumo por item (capítulo, o que foi adicionado):
+
+- **BK-01** (Cap. 11): FAD/ISO 1217 definido — nova eq. 11.12,
+  $\dot V_{\text{free\_air}} = \dot m/\rho_{\text{ref}}$. Condições de
+  referência ($P_{\text{ref}}=1\,\text{bar}$, $T_{\text{ref}}=20\,^\circ$C,
+  0% UR) **verificadas contra a norma real** (preview oficial ISO 1217:2009
+  + múltiplas fontes secundárias concordantes), não tiradas de memória.
+  Nomenclatura atualizada ($\dot V_{\text{free\_air}}$ não constava).
+- **BK-02** (Cap. 5): nova subseção 5.9 "Pressão Intermediária Ótima entre
+  Estágios", eq. 5.14, $P_{\text{int}}^* = \sqrt{P_1 \cdot P_2}$, ligada à
+  degradação do intercooler (eq. 10.4/10.5) já modelada no Cap. 10.
+- **BK-03** (Cap. 4.4): correntes de eixo por EDM (descarga eletrostática
+  em motor com VSD) — novo item na lista de mecanismos de falha, com
+  indicador (craterização/*fluting*) e mitigação (rolamento isolado, anel
+  de aterramento, filtro de modo comum). Referência Erdman/Kerkman/
+  Schlegel/Skibinski (IEEE Trans. Industry Applications, 32(2), 250–259,
+  1996, DOI 10.1109/28.491472) **verificada via busca** antes de citar.
+- **BK-04** (Tabela 18.1 + Cap. 11): linha "Posição Axial" ($\delta_{ax}$,
+  $\mu$m) adicionada ao ponto E; frase no Cap. 11 ligando eq. 11.5 ($F_a$)
+  → sonda de proximidade → eq. 11.6 (vida do rolamento de escora). Símbolo
+  novo checado contra a Nomenclatura para não colidir com $x$/$z$ do EKF.
+- **BK-06** (Cap. 8): nova subseção 8.8 "Análise Torcional do Trem
+  Completo", eq. 8.10, $\omega_{cr,t} = \sqrt{k_{t,\text{eq}}(1/I_1+1/I_2)}$
+  — modo torcional do conjunto motor–acoplamento–gearbox–rotores,
+  complementar (não substituto) à velocidade crítica lateral já existente.
+- **BK-07** (Cap. 9): nova subseção 9.7, eq. 9.11, relação
+  $\eta_p \leftrightarrow \eta_{is}$ — $\eta_p$ é a grandeza que se compara
+  contra a garantia de fábrica; $\eta_{is}$ varia com $\Pi$ mesmo sem
+  degradação.
+- **BK-08** (Cap. 7): nova subseção "Análise Físico-Química do Óleo" —
+  TAN, água (Karl Fischer) e contagem de partículas (ISO 4406) como canal
+  laboratorial *offline*, complementar ao $SOH_{\text{oil}}$ online (eq.
+  7.7). Três normas **verificadas antes de citar**: ISO 4406:2021, ASTM
+  D664-18e2, ASTM D6304-20.
+- **BK-09** (Caps. 2, 5, 16): três inserções — invólucro como barreira
+  acústica (ISO 2151:2004, **verificada**; a própria ISO 1217 já citada
+  no Cap. 1 exclui ruído do escopo e remete a ela — achado ao ler a norma
+  primária, não estava no backlog); silenciador de admissão somando perda
+  de carga à eq. 5.4; amortecedor de pulsação como mitigação de projeto no
+  Cap. 16.2 (API 618 já citada, sem referência nova).
+- **BK-10** (Cap. 9): nova subseção 9.8, eqs. 9.12/9.13, $u_{\text{tip}}$ e
+  $M_{\text{tip}}$ — liga a rotação à velocidade periférica e ao regime de
+  escoamento de fuga pela folga (compressível/sônico).
+- **BK-11** (Cap. 12): nova subseção, eq. 12.8 — soft-sensor de
+  $\dot m_w$ (vazão de água de resfriamento) por balanço de energia,
+  quando não há medidor de vazão de água dedicado.
+- **BK-12** (Cap. 4.4): aquecedores anticondensação (*space heaters*) do
+  motor, ligados à Equação de Arrhenius (eq. 4.7) e ao cenário de
+  *standby* de frota do Cap. 16.
+- **BK-13** (Cap. 3.6): nota de escopo junto ao item PSV — dimensionamento
+  do orifício de alívio é projeto (ASME VIII), não algo que o Gêmeo
+  Digital calcula/monitora.
+
+**5 `\bibitem` novos** usados de fato no Backlog, todos verificados contra
+fonte real antes de inserir (regra permanente de veracidade): `erdman`,
+`iso4406`, `astmd664`, `astmd6304`, `iso2151`. (`isa51` também foi
+adicionado nesta sessão, mas é o item órfão explicado acima — não conte
+como parte do Backlog.)
+
+**Verificação final** (fechando também as recomendações do
+`dicas_COPILOT.md`, que eram sobretudo de conferência, não de conteúdo):
+compilação de 3 passagens limpa; 199 labels `eq:s*-*` = 199 ocorrências
+"(N.N)" no PDF extraído, sem "??", sem caracteres de substituição, sem
+referência indefinida ou label duplicado no log; overfull hboxes foram de
+31 para 33 (mesma magnitude mínima de 2,01pt já documentada como
+insignificante, só mais duas linhas de Nomenclatura "adimensional");
+overfull vbox permanece em 0. Conferidas visualmente 4 páginas (subseção
+5.9, Tabela 18.1 com a nova linha, subseções 9.7 e 9.8) — todas renderizam
+limpas, sem corte ou sobreposição.
+
+**Nada foi commitado** — o próprio `Backlog_kimi_compress.md` pede
+explicitamente para não commitar sem pedido do autor, e a regra já é
+permanente neste projeto de qualquer forma. `compressores.tex` está
+~104 linhas maior (119 linhas de diff), `compressores.pdf` recompilado
+para 141 páginas (era 135), ambos modificados na árvore de trabalho, não
+staged, aguardando revisão do autor.
+
 ## Estado atual (última sessão)
 
-Documento compila limpo, **135 páginas**, sem erros/referências
+Documento compila limpo, **141 páginas** (era 135 antes desta sessão — ver
+"Backlog Kimi implementado" acima), sem erros/referências
 indefinidas/labels duplicados. Todos os 27 capítulos têm subseções e
-aparecem estruturados no sumário. Repositório git inicializado (ver "Visão
-de longo prazo" acima); histórico completo reescrito em 26/07/2026 para
-remover trailers de coautoria (ver seção acima) — os hashes de commit
-mudaram desde qualquer anotação anterior a essa reescrita, sempre confira
-com `git log` em vez de citar um hash de memória. Tag `v1.0` no commit
-inicial (recriada). Commits mais recentes, em ordem: `a1f8ffb` (correção do
-`cmap`, 26/07/2026) → `693a2c6` (fora do escopo deste documento — não é
-conteúdo do livro) → `27997b6` → `3417919` (os dois de dicas_kimi.md acima)
-→ `8657b5c` (consolidação do trabalho pendente de 29-31/07, ver acima) →
-`1d0ebc3` (correção deste próprio arquivo). Os commits seguintes
+aparecem estruturados no sumário. **Há trabalho do livro sem commit no
+momento**: os 13 itens do Backlog Kimi, na árvore de trabalho
+(`compressores.tex` modificado, `compressores.pdf` recompilado) —
+deliberadamente não commitado, ver regra na seção acima. Repositório git
+inicializado (ver "Visão de longo prazo" acima); histórico completo
+reescrito em 26/07/2026 para remover trailers de coautoria (ver seção
+acima) — os hashes de commit mudaram desde qualquer anotação anterior a
+essa reescrita, sempre confira com `git log` em vez de citar um hash de
+memória. Tag `v1.0` no commit inicial (recriada). A lista de commits
+abaixo (até `1d0ebc3`/`738cc1c`) é a mais recente que foi conferida
+manualmente; sessões seguintes já avançaram o `HEAD` (ex.: trabalho de
+secagem PSA/SEC\_dry-HI\_des e a correção da própria Equação 15.7 têm
+commits posteriores a `738cc1c`) — **use `git log --oneline -20` para o
+estado exato do HEAD antes de assumir que a lista abaixo é atual**.
+Commits conferidos, em ordem: `a1f8ffb` (correção do `cmap`, 26/07/2026) →
+`693a2c6` (fora do escopo deste documento — não é conteúdo do livro) →
+`27997b6` → `3417919` (os dois de dicas_kimi.md acima) → `8657b5c`
+(consolidação do trabalho pendente de 29-31/07, ver acima) → `1d0ebc3`
+(correção deste próprio arquivo). Os commits seguintes conferidos
 (`7a0d1cf`, `875e900`, `06ff51d`, `0b6534e`, `d637ae2`) são todos do
 `aplicativo/` — fora do escopo deste documento — exceto `738cc1c`
-(correção da Equação 15.7, ver seção acima), que é do livro. Sem trabalho
-pendente sem commit no livro no momento — use `git log` para o histórico
-exato.
+(correção da Equação 15.7, ver seção acima), que é do livro.
 
 O conteúdo das sessões de **29/07/2026 e 30/07/2026** (as duas seções
 acima), que ficou ~550 linhas sem commit por opção deliberada do autor, foi
@@ -956,13 +1076,17 @@ caminho. Conteúdo:
   extensão**: é um `.odt` (OpenDocument Text) renomeado, conteúdo
   binário, ainda não examinado
 - `Backlog_kimi_compress.md`, `compressores.txt`, `dicas_COPILOT.md` —
-  três arquivos que **apareceram na raiz durante a sessão de
-  02/08/2026, sem terem sido criados por mim nem pelo autor
-  explicitamente pedido**; ainda não lidos nem examinados. `dicas_COPILOT.md`
-  pelo nome parece um quarto relatório externo (Copilot, diferente do
-  `recomenda compressores.txt` que também é do Copilot CLI) — checar se
-  são a mesma análise duplicada ou relatórios distintos antes de tratar
-  como novo material.
+  os três apareceram na raiz durante a sessão de 02/08/2026 e foram
+  **lidos e resolvidos ainda na mesma sessão** (ver "Backlog Kimi
+  implementado" abaixo): `dicas_COPILOT.md` é de fato um quarto relatório
+  externo, distinto de `recomenda compressores.txt` — um relatório de
+  verificação automática (checagem de "??"/caracteres de substituição,
+  reconciliação de contagem de equações), não uma análise de conteúdo;
+  suas recomendações foram executadas como parte da checagem final do
+  Backlog. `compressores.txt` é só o artefato de extração
+  (`pdftotext -layout compressores.pdf`) que o próprio `dicas_COPILOT.md`
+  gerou para se verificar — não é conteúdo a preservar, pode ser
+  regenerado ou apagado a qualquer momento.
 
 Não mexer em nenhum arquivo de `arquivos_apoio/` nem incluí-los em commits
 sem o autor pedir explicitamente. Diferença de qualidade entre os três
@@ -972,13 +1096,18 @@ normativos, todos confirmados na fonte primária; o Kimi acertou o
 diagnóstico de diagramação mas subestimou a extensão de alguns itens
 (relatou 1 tabela com overfull grave, a varredura achou 5).
 
-**Também detectado nesta sessão, não investigado**: `compressores.tex` tem
-uma modificação não rastreada que não vim de mim — uma nova referência
-bibliográfica `\bibitem{isa51}` (ANSI/ISA-5.1-2024) — sinal de que o autor
-(ou outra ferramenta) andou editando o `.tex` fora desta sessão de
-acompanhamento. Não mexi nela; se for retomar o livro, confira com
-`git diff compressores.tex` antes de assumir que a árvore de trabalho só
-tem o que está documentado aqui.
+**Resolvido**: a referência bibliográfica `\bibitem{isa51}` (ANSI/ISA-5.1-2024)
+que aparecia como modificação não rastreada não era de outra ferramenta —
+era o início de uma tentativa (nesta mesma sessão, mesma conversa) de
+adicionar uma lista de instrumentos ISA à Tabela de Instrumentação do
+Capítulo 3, que o autor interrompeu antes de a tabela em si ser escrita.
+A referência ficou órfã (citada em lugar nenhum) até o Backlog Kimi ser
+implementado logo em seguida, que a reaproveitou de fato (ver "Backlog
+Kimi implementado" abaixo, BK-09 — silenciador/invólucro acústico cita
+`iso2151`, não `isa51`; a `isa51` permanece órfã, sem uso em nenhuma
+equação/tabela do texto no momento). **Pendência menor**: remover
+`\bibitem{isa51}` da bibliografia se a lista de instrumentos ISA não for
+retomada, ou usá-la de fato se for.
 
 Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Bibliografia (45 referências) verificada uma a uma contra fontes reais; 3 tinham

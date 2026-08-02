@@ -171,6 +171,7 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$v$ & Velocidade do escoamento & m\,s$^{-1}$ & Perda de carga, filtros \\
 	$\dot{m}$ & Vazão mássica & kg\,s$^{-1}$ & Todos \\
 	$\dot{V}$ & Vazão volumétrica & m$^3$\,s$^{-1}$ & Todos \\
+	$\dot{V}_{\text{free\_air}}$ & Vazão convertida às condições de referência de admissão (FAD, \textit{Free Air Delivery}), ISO 1217 & m$^3$\,s$^{-1}$ & Cap. 11, 16 \\
 	$\dot{W}$ & Potência (trabalho por unidade de tempo) & W, kW & Todos \\
 	$\dot{Q}$ & Taxa de transferência de calor & W & Trocadores \\
 	$n$ & Índice politrópico do processo de compressão & adimensional & Cap. 5, 9, 11 \\
@@ -178,6 +179,7 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$\gamma$ & Razão de calores específicos ($c_p/c_v$) do ar & adimensional ($\approx 1.4$) & Termofluídica \\
 	$c_p$ & Calor específico a pressão constante & J\,kg$^{-1}$\,K$^{-1}$ & Termofluídica \\
 	$\eta$ & Eficiência (com subscrito indicando qual: $\eta_{vol}$, $\eta_{is}$, $\eta_{mec}$, etc.) & adimensional & Todos \\
+	$\eta_p$ & Eficiência politrópica (aproximadamente constante ao longo do mapa de operação) & adimensional & Cap. 9 \\
 	$\Pi$ & Razão de pressão do estágio ($P_2/P_1$) & adimensional & Cap. 9, 11 \\
 	$\omega$ & Velocidade angular do rotor/eixo & rad\,s$^{-1}$ & Todos \\ \bottomrule
 \end{longtable}
@@ -194,7 +196,10 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$A_{\text{leak}}$ & Área de fuga total entre câmaras de pressões distintas & m$^2$ & Cap. 9 \\
 	$Z$ & Número de lóbulos/dentes (sempre com subscrito: $Z_{\text{bull}}$, $Z_{\text{macho}}$, etc.) & adimensional & Cap. 6, 8, 9 \\
 	$GMF$ & Frequência de engrenamento (\textit{Gear Mesh Frequency}) & Hz & Cap. 6, 8 \\
-	$f_{bp}$ & Frequência de passagem dos lóbulos & Hz & Cap. 9, header \\ \bottomrule
+	$f_{bp}$ & Frequência de passagem dos lóbulos & Hz & Cap. 9, header \\
+	$D_{\text{macho}}$ & Diâmetro externo do rotor macho & m & Cap. 9 \\
+	$u_{\text{tip}}$ & Velocidade periférica (tangencial) da ponta do rotor macho & m\,s$^{-1}$ & Cap. 9 \\
+	$M_{\text{tip}}$ & Número de Mach na ponta do rotor & adimensional & Cap. 9 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Controle, Modulação e Válvulas}
@@ -251,7 +256,8 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$N_{\text{rot}}$\dag & Rotação do eixo do rolamento — sempre em RPM nas equações de vida $L_{10h}$, onde o fator 60 do denominador faz a conversão para horas & RPM & Cap. 8, 11 \\
 	$\omega_{cr}$ & Velocidade crítica (rotordinâmica) & rad\,s$^{-1}$ & Cap. 8 \\
 	$v_{\text{rms}}$ & Severidade de vibração global (valor eficaz de velocidade, banda larga) & mm\,s$^{-1}$ & Cap. 18, 19 \\
-	$v_{\text{trip}}$ & Limiar de vibração para desligamento (ESD), específico da máquina — critério de API 619/OEM ou linha de base de comissionamento, não valor tabelado & mm\,s$^{-1}$ & Cap. 18 \\ \bottomrule
+	$v_{\text{trip}}$ & Limiar de vibração para desligamento (ESD), específico da máquina — critério de API 619/OEM ou linha de base de comissionamento, não valor tabelado & mm\,s$^{-1}$ & Cap. 18 \\
+	$\delta_{ax}$ & Posição axial do rotor HP, medida por sonda de proximidade no mancal de escora (deriva por desgaste do rolamento, precede a vibração) & $\mu$m & Cap. 11, 18 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Psicrometria e Trocadores de Calor}
@@ -513,6 +519,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		Em regime permanente, o invólucro só mantém temperatura interna estável se $\dot{Q}_{\text{hood}} \ge \dot{Q}_{\text{gerado}}$; a folga entre os dois lados dessa desigualdade é a margem de projeto da ventilação forçada.
 		\item \textbf{Mecanismo de Falha:} Obstrução do filtro de admissão do exaustor, pá do ventilador danificada, motor do exaustor em falha, ou obstrução das venezianas de exaustão por sujeira/sal — qualquer um reduz $\dot{m}_{\text{vent}}$ e desequilibra a Equação~\eqref{eq:s2-3}.
 		\item \textbf{Detecção:} Aumento progressivo de $T_{\text{exaustão}}$ para a mesma carga térmica interna estimada é o indicador primário; o Gêmeo Digital deve correlacionar esse aumento com o fator de desclassificação (\textit{derating}) do VSD (Capítulo de Subsistema Elétrico) e com a degradação acelerada do isolamento do motor pela Equação de Arrhenius (Equação~\eqref{eq:s4-7}) — ambos amplificados por uma falha silenciosa de ventilação do invólucro.
+		\item \textbf{Função Acústica do Invólucro:} O mesmo gabinete modelado termicamente acima cumpre, simultaneamente, o papel de barreira de ruído — daí o qualificativo \textit{canopy acústico} usado desde a abertura desta seção. O nível de pressão sonora garantido do pacote é medido e declarado segundo a ISO 2151 \cite{iso2151}, código de ensaio específico para compressores e bombas de vácuo (a própria ISO 1217, já citada no Capítulo 1 para o FAD, exclui explicitamente ensaios de ruído do seu escopo e remete a essa norma). O limite típico de exposição ocupacional a bordo é o que dimensiona a atenuação exigida do invólucro — um requisito independente da ventilação forçada, e por vezes conflitante com ela: mais área de abertura para vazão de ar de resfriamento tende a reduzir a atenuação acústica, de modo que o projeto do exaustor não pode ser otimizado isoladamente do requisito de ruído.
 	\end{itemize}
 
 	\subsection{\textbf{Tratamento de Ar (Secagem e Filtragem)}}
@@ -617,7 +624,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
  \frac{dP_{\text{res}}}{dt} = \frac{R T}{V} \Delta \dot{m}
 \end{equation}
 		Quando $\Delta \dot{m} = 0$ (produção e consumo equilibrados), a pressão do vaso permanece constante; um $\Delta \dot{m}$ persistentemente negativo (consumo maior que produção) é o sinal precoce de que a rede está prestes a atingir um nível de alarme de pressão baixa (Capítulo de Distribuição e Armazenamento).
-		\item \textbf{PSV (Válvula de Segurança):} \textit{Pressure Safety Valve} — dispositivo puramente mecânico, independente de qualquer lógica de controle ou instrumentação eletrônica, que abre automaticamente por ação de mola quando a pressão interna excede um limite pré-ajustado, aliviando o excesso para a atmosfera. É a última camada de proteção contra sobrepressão do vaso, exigida pela norma ASME VIII como redundância física ao controle de pressão normal do sistema — mesmo que toda a lógica de controle do Gêmeo Digital falhe, a PSV continua protegendo o equipamento.
+		\item \textbf{PSV (Válvula de Segurança):} \textit{Pressure Safety Valve} — dispositivo puramente mecânico, independente de qualquer lógica de controle ou instrumentação eletrônica, que abre automaticamente por ação de mola quando a pressão interna excede um limite pré-ajustado, aliviando o excesso para a atmosfera. É a última camada de proteção contra sobrepressão do vaso, exigida pela norma ASME VIII como redundância física ao controle de pressão normal do sistema — mesmo que toda a lógica de controle do Gêmeo Digital falhe, a PSV continua protegendo o equipamento. \textbf{Nota de escopo:} o dimensionamento do orifício de alívio (área mínima de passagem exigida pela ASME VIII Div. 1 \cite{asme8} para a condição de sobrepressão de projeto) é matéria de projeto do vaso, resolvida uma única vez na especificação do equipamento — não uma grandeza que o Gêmeo Digital calcula ou monitora em operação. O papel do modelo aqui se limita a detectar os dois modos de falha operacional da PSV já instrumentada (travada aberta ou fechada), não a substituir o cálculo de dimensionamento.
 	\end{itemize}
 	
 	\subsection{\textbf{Instrumentação}}
@@ -714,6 +721,12 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\end{aligned}
 		\end{equation}
 		Onde $\bar{V}_L$ e $\bar{I}$ são as médias das três tensões de linha e das três correntes de fase, respectivamente. Um $IU$ persistente acima de poucos pontos percentuais mesmo com $VU$ pequeno — sintoma que a corrente de linha agregada sozinha não capta — já justifica investigação de curto entre espiras ou conexão frouxa no painel.
+		\item \textbf{Correntes de Eixo por Descarga Eletrostática (EDM) em Motor Acionado por VSD:} O chaveamento PWM de alta frequência do VSD (Capítulo de Subsistema Elétrico) não é eletricamente simétrico entre as três fases em cada instante de comutação, o que induz uma tensão de modo comum residual no barramento — e, por acoplamento capacitivo entre estator e rotor, uma tensão parasita no próprio eixo do motor. Quando essa tensão de eixo excede a rigidez dielétrica do filme de óleo lubrificante que separa as esferas/roletes das pistas do rolamento, o filme rompe e a energia armazenada se descarrega como um pulso de corrente — a corrente de descarga eletromagnética (EDM, \textit{Electrical Discharge Machining}) — que erode a pista a cada evento. É o mecanismo de falha elétrica mais característico de motores de alta potência com acionamento por inversor \cite{erdman}, distinto e adicional à degradação térmica do isolamento já modelada pela Equação~\eqref{eq:s4-7}: enquanto a Equação~\eqref{eq:s4-7} governa a vida do enrolamento, a EDM governa a vida do rolamento — as duas vias dominantes de mortalidade prematura de motor com VSD.
+		\begin{itemize}
+			\item \textbf{Indicador:} Padrão de craterização (\textit{fluting}) visível em inspeção de pista de rolamento; em campo, pico recorrente de corrente de eixo medido por sonda de corrente dedicada (\textit{shaft grounding} instrumentado), cuja progressão acompanha o histórico de operação do VSD (tempo em carga, frequência de chaveamento).
+			\item \textbf{Mitigação (acessórios):} Rolamento isolado eletricamente no lado oposto ao acoplamento (\textit{Non-Drive End}), anel de aterramento de eixo (\textit{shaft grounding ring}) que oferece um caminho de descarga de baixa impedância alternativo ao rolamento, e filtro de modo comum na saída do VSD.
+		\end{itemize}
+		\item \textbf{Aquecedores Anticondensação (\textit{Space Heaters}):} Resistências de baixa potência instaladas no enrolamento do motor, energizadas somente com a máquina parada, cuja função é manter o enrolamento acima do ponto de orvalho do ar ambiente circundante — em atmosfera offshore salina e saturada, um motor parado e frio condensa umidade internamente a cada ciclo de resfriamento noturno, degradando o isolamento por via elétrica (trilhas de umidade, corrosão dos contatos) muito antes que a via térmica da Equação~\eqref{eq:s4-7} se torne relevante. É o acessório que protege especificamente a unidade em \textit{standby} da frota (Capítulo 16): quanto mais tempo uma máquina permanece parada aguardando comando de partida, maior a janela de exposição à condensação, e é exatamente nesse cenário — parada prolongada em atmosfera salina saturada — que o aquecedor anticondensação atua.
 	\end{enumerate}
 
 	\subsection{\textbf{Equação de Acoplamento Global}}
@@ -773,8 +786,9 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 		\item \textbf{Mecanismo de Falha:} Colmatagem por partículas ou saturação por umidade.
 		\item \textbf{Detecção:} Queda na pressão de sucção ($P_{\text{suc}}$) medida por transdutor de vácuo.
+		\item \textbf{Silenciador de Admissão:} Acessório acústico normalmente integrado ao duto de entrada, a montante ou combinado ao próprio filtro de admissão, atenuando o ruído de pulsação gerado pela abertura/fechamento cíclico das câmaras de compressão antes que ele se propague para o ambiente — parte do requisito de nível de pressão sonora do pacote (Capítulo de Arquitetura, ISO 2151). Fisicamente, é mais um elemento resistivo no caminho do escoamento de admissão: sua perda de carga soma-se à do filtro na mesma forma da Equação~\eqref{eq:s5-4}, com o coeficiente de perda $\zeta$ do silenciador em série com o do elemento filtrante.
 	\end{itemize}
-	
+
 	\subsection{\textbf{Compressão em Dois Estágios (LP e HP)}}
 	A compressão é dividida para reduzir o trabalho total e as temperaturas de descarga, aproximando o ciclo da isoterma. O modelo politrópico generaliza a compressão adiabática reversível ($PV^{\gamma} = \text{const.}$) permitindo um índice $n \neq \gamma$ que absorve as trocas de calor e irreversibilidades reais do processo — tratamento clássico consolidado nos textos modernos de termodinâmica aplicada \cite{cengel, moran}.
 	\begin{itemize}
@@ -833,7 +847,6 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	\subsection{\textbf{Válvulas de Controle e Segurança}}
 	\begin{itemize}
-		\item \textbf{Válvula de Pressão Mínima (MPV):} Mantém a pressão interna ($\approx 4\,\text{bar}$) para assegurar a lubrificação e vedação.
 		\item \textbf{Válvula de Retenção (Check Valve):} Impede o fluxo reverso do reservatório para o compressor na parada.
 		\item \textbf{Válvula de Alívio (Blow-down):} Despressuriza o sistema interno para permitir a partida em vazio (\textit{unloaded start}).
 	\end{itemize}
@@ -859,11 +872,20 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
  \eta_{\text{global}} = \frac{\dot{W}_{\text{isotérmico\_ideal}}}{\dot{W}_{\text{total}}}
 \end{equation}
 
+	\subsection{\textbf{Pressão Intermediária Ótima entre Estágios}}
+	A Equação~\eqref{eq:s5-5} modela o trabalho de cada estágio isoladamente, mas não responde a uma pergunta de projeto e de diagnóstico igualmente relevante: dada uma pressão de sucção $P_1$ fixa e uma pressão de descarga final $P_2$ fixa, em que pressão intermediária $P_{\text{int}}$ o trabalho total dos dois estágios é mínimo? A resposta é a formulação clássica de compressão multiestágio \cite{cengel, moran, hanlon}, obtida somando a Equação~\eqref{eq:s5-5} para os estágios LP e HP e minimizando o trabalho total em relação a $P_{\text{int}}$: com resfriamento intermediário \textbf{perfeito} (o intercooler devolve o ar à mesma temperatura de sucção do estágio LP, $T_{HP,\text{in}} = T_{LP,\text{in}}$) e mesmo índice politrópico $n$ nos dois estágios, o mínimo ocorre exatamente quando as duas razões de pressão são iguais — condição que se resolve na média geométrica das pressões extremas:
+	\begin{equation}\label{eq:s5-14}
+ P_{\text{int}}^{*} = \sqrt{P_1 \cdot P_2}
+\end{equation}
+	Nesse ponto ótimo, $P_{\text{int}}^{*}$ nada mais é do que a pressão interestágio já instrumentada na matriz do Capítulo 18 — a descarga do estágio LP e a sucção do estágio HP são o mesmo ponto físico, $P_{d,lp} = P_{s,hp}$ (ponto C/D da Tabela~\ref{tab:18-1}) — de modo que a Equação~\eqref{eq:s5-14} não introduz variável nova a instrumentar, apenas um valor de referência contra o qual comparar a leitura existente.
+
+	Na prática, o resfriamento intermediário nunca é perfeito: o intercooler degradado modelado pela Equação~\eqref{eq:s10-5} (queda de $U$ por incrustação) entrega o ar ao estágio HP mais quente do que o projeto original previa ($T_{HP,\text{in}} > T_{LP,\text{in}}$). Isso encarece relativamente o trabalho do estágio HP para qualquer razão de pressão fixada nele — a mesma física da penalidade térmica já quantificada na Equação~\eqref{eq:s10-4} — e desloca o ponto de mínimo para longe da média geométrica simples da Equação~\eqref{eq:s5-14}. O Gêmeo Digital ganha, com isso, um critério adicional e independente de desvio: comparar a pressão interestágio efetivamente operada contra $P_{\text{int}}^{*}$ não diagnostica apenas um estágio isoladamente, mas se a \textbf{alocação de carga} entre LP e HP ainda corresponde ao ponto de projeto de fábrica — um sintoma que nenhum dos dois estágios, olhado sozinho, revela.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s5-13} consolida todo o capítulo em um único KPI de eficiência global — mas seu valor só é confiável se cada termo de perda (folga interna via $V_i$, gearbox, bomba de óleo) estiver sendo medido ou estimado corretamente; um $\eta_{\text{global}}$ isolado sem essa rastreabilidade componente-a-componente é apenas um número, não um diagnóstico.
+	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s5-13} consolida todo o capítulo em um único KPI de eficiência global — mas seu valor só é confiável se cada termo de perda (folga interna via $V_i$, gearbox, bomba de óleo) estiver sendo medido ou estimado corretamente; um $\eta_{\text{global}}$ isolado sem essa rastreabilidade componente-a-componente é apenas um número, não um diagnóstico. A Equação~\eqref{eq:s5-14} acrescenta um segundo eixo de leitura, ortogonal ao primeiro: mesmo com $\eta_{\text{global}}$ nominal, uma pressão interestágio deslocada do ótimo indica que a carga entre os dois estágios está mal balanceada — tipicamente o primeiro sinal observável de um intercooler em degradação, antes mesmo que a Equação~\eqref{eq:s10-4} feche o diagnóstico.
 
 	% --- Fim do Capítulo 5 ---
 	
@@ -1062,11 +1084,20 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
  \boxed{SOH_{\text{oil}} = \min \left( \frac{\mu_{\text{real}}}{\mu_{\text{nom}}}, \frac{\Delta P_{\text{lim}}}{\Delta P_{\text{real}}}, \frac{\epsilon_{\text{real}}}{\epsilon_{\text{nom}}} \right)}
 \end{equation}
 
+	\subsection{\textbf{Análise Físico-Química do Óleo (Canal Laboratorial \textit{Offline})}}
+	As três entradas da Equação~\eqref{eq:s7-7} — viscosidade, perda de carga e efetividade térmica — têm em comum o fato de serem todas medidas \textbf{online}, em tempo real, por sensores permanentes de campo. Esse canal é rápido, mas cego a um tipo de degradação: a deterioração química do próprio óleo, que só se manifesta na viscosidade ou no $\Delta P$ depois de já ter avançado o suficiente para alterar as propriedades físicas do fluido. A prática consolidada de manutenção preditiva \cite{mobley} complementa o monitoramento online com uma tríade laboratorial \textbf{offline}, amostrada periodicamente:
+	\begin{itemize}
+		\item \textbf{Número de Acidez Total (TAN):} Medido por titulação potenciométrica \cite{astmd664}, quantifica os subprodutos ácidos da oxidação do óleo em serviço. Uma tendência de alta do TAN antecede a queda de viscosidade e a formação de vernizes/borras que eventualmente entopem o filtro — é o primeiro sinal químico de que o óleo está no fim da vida útil, ainda quando $SOH_{\text{oil}}$ da Equação~\eqref{eq:s7-7} continua em 1.
+		\item \textbf{Água no Óleo:} Medida por titulação coulométrica de Karl Fischer \cite{astmd6304}, quantifica a contaminação por umidade — relevante mesmo em circuito fechado, pois condensação interna (partida a frio, variação de temperatura ambiente offshore) introduz água sem qualquer falha de vedação externa. Água dissolvida acelera a própria oxidação que o TAN mede, tornando os dois ensaios complementares, não redundantes.
+		\item \textbf{Contagem de Partículas (Código ISO 4406):} Reporta a concentração de partículas sólidas em três faixas de tamanho ($\ge 4\,\mu\text{m}$, $\ge 6\,\mu\text{m}$, $\ge 14\,\mu\text{m}$) como um código de três números \cite{iso4406}. É o canal que detecta desgaste abrasivo incipiente de engrenagens e rolamentos — partículas metálicas no óleo — antes que esse desgaste produza qualquer assinatura vibracional detectável pelos acelerômetros já instrumentados no ponto B da Tabela~\ref{tab:18-1}.
+	\end{itemize}
+	Os três ensaios entram no Gêmeo Digital como tendências de baixa frequência (tipicamente uma amostra a cada troca programada ou intervalo fixo, não em tempo real), alimentando o mesmo princípio de variável \textit{real} versus \textit{virtual} já estabelecido na matriz do Capítulo 18 — mas como uma terceira categoria, intermediária entre as duas: medição real, porém de baixíssima taxa de amostragem, o que exige do modelo uma lógica de interpolação/extrapolação de tendência distinta da usada para os sensores contínuos.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} O uso do operador $\min(\cdot)$ na Equação~\eqref{eq:s7-7} é deliberado — o Estado de Saúde do sistema de óleo é sempre ditado pelo pior indicador entre viscosidade, perda de carga e efetividade térmica, nunca por uma média entre eles, refletindo que uma única falha isolada já compromete a lubrificação como um todo.
+	\textbf{Diretriz Técnica Final:} O uso do operador $\min(\cdot)$ na Equação~\eqref{eq:s7-7} é deliberado — o Estado de Saúde do sistema de óleo é sempre ditado pelo pior indicador entre viscosidade, perda de carga e efetividade térmica, nunca por uma média entre eles, refletindo que uma única falha isolada já compromete a lubrificação como um todo. A tríade laboratorial desta seção não substitui $SOH_{\text{oil}}$ — ela o antecede: TAN, água e contagem de partículas tipicamente sinalizam degradação química e desgaste abrasivo semanas ou meses antes que a Equação~\eqref{eq:s7-7} caia, porque medem a causa quando o canal online ainda só vê o efeito.
 
 	% --- Fim do Capítulo 7 ---
 	
@@ -1201,11 +1232,20 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
  \boxed{\sigma_{b, \text{real}} < \sigma_{b, \text{adm}} \quad \text{e} \quad \Delta \theta_{\text{sync}} < \theta_{\text{backlash}}}
 \end{equation}
 
+	\subsection{\textbf{Análise Torcional do Trem Completo}}
+	A velocidade crítica $\omega_{cr}$ da Equação~\eqref{eq:s8-5} e a margem de separação da Equação~\eqref{eq:s8-6} tratam apenas do modo \textbf{lateral} de vibração do eixo — o rotor de Jeffcott flexiona transversalmente. Mas o conjunto motor–acoplamento–gearbox–rotores forma também um sistema massa-mola \textbf{torcional}, com seus próprios modos de ressonância em torção pura, independentes da rigidez lateral. Máquinas de alta potência exigem essa análise separadamente \cite{api684}: a rigidez torcional do eixo já calculada na Equação~\eqref{eq:s6-5} entra aqui como um dos elementos de um sistema de múltiplas inércias, não mais como um cálculo isolado de torção estática.
+
+	Na aproximação de duas inércias — o rotor do motor ($I_1$) contra a inércia equivalente do trem de compressão referida ao eixo do motor ($I_2$, mesma referência já usada para $I_{\text{sys}}$ na Equação~\eqref{eq:s6-1}), conectadas pela rigidez torcional equivalente $k_{t,\text{eq}}$ (a associação em série da rigidez do eixo $k_t$ da Equação~\eqref{eq:s6-5} com a do acoplamento) — a frequência natural torcional fundamental é:
+	\begin{equation}\label{eq:s8-10}
+ \omega_{cr,t} = \sqrt{k_{t,\text{eq}} \left( \frac{1}{I_1} + \frac{1}{I_2} \right)}
+\end{equation}
+	O critério de projeto exige a mesma lógica de margem de separação da Equação~\eqref{eq:s8-6}, mas contra um conjunto de excitações distinto: enquanto a ressonância lateral responde a $1\times$ RPM e $2\times$ RPM, a ressonância torcional é excitada também pela frequência de passagem de lóbulos ($f_{bp}$), pela frequência de engrenamento ($GMF$) e pelos harmônicos de torque gerados pelo chaveamento PWM do VSD (mesma origem física da distorção harmônica de corrente $\text{THD}_i$ já discutida no Capítulo de Subsistema Elétrico, agora manifestada como oscilação de torque em vez de corrente). Diferente da vibração lateral — que se manifesta como deslocamento radial detectável por acelerômetro — uma ressonância torcional pode não aparecer na carcaça: sua assinatura mais confiável é a oscilação cíclica do torque calculado, $\tau_{\text{ref}}$ da Equação~\eqref{eq:s6-8}, na frequência de $\omega_{cr,t}$.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s8-9} reúne as duas condições independentes de integridade do trem de transmissão — estrutural (fadiga do dente) e cinemática (sincronismo) — que devem ser satisfeitas simultaneamente; a violação de qualquer uma delas isoladamente já justifica a parada preventiva da máquina, mesmo que a outra permaneça dentro do limite.
+	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s8-9} reúne as duas condições independentes de integridade do trem de transmissão — estrutural (fadiga do dente) e cinemática (sincronismo) — que devem ser satisfeitas simultaneamente; a violação de qualquer uma delas isoladamente já justifica a parada preventiva da máquina, mesmo que a outra permaneça dentro do limite. A Equação~\eqref{eq:s8-10} cobre um terceiro eixo de risco que nenhuma das duas anteriores captura: a ressonância torcional não quebra um dente nem desalinha o sincronismo diretamente, mas fadiga o próprio eixo e o acoplamento por ciclos de torque — e, ao contrário da vibração lateral já instrumentada no ponto B da Tabela~\ref{tab:18-1}, seu único sinal observável em campo costuma ser a oscilação do torque estimado, não uma leitura direta de sensor.
 
 	% --- Fim do Capítulo 8 ---
 	
@@ -1317,11 +1357,30 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
  \boxed{Health\_Index = f(\Delta \Pi, \Delta \eta_{is}, \Delta \text{Vib}, \delta_{\text{real}})}
 \end{equation}
 
+	\subsection{\textbf{Relação entre Eficiência Politrópica e Isentrópica}}
+	Este capítulo usa $\eta_{is}$ (Equação~\eqref{eq:s9-9}) como KPI de saúde do estágio, e o índice politrópico $n$ (mesmo índice da Equação~\eqref{eq:s5-5}) como parâmetro do processo real de compressão — mas nunca a relação entre os dois. A distinção importa porque folhas de dados de fabricante de máquinas de alta potência frequentemente especificam a eficiência \textbf{politrópica} ($\eta_p$), não a isentrópica, e sem a conversão o Gêmeo Digital não consegue confrontar o modelo diretamente contra a garantia contratual do equipamento. A eficiência politrópica é definida a partir do próprio índice $n$ e do $\gamma$ do ar \cite{moran, cengel, hanlon}:
+	\begin{equation}\label{eq:s9-11}
+ \eta_p = \frac{\gamma - 1}{\gamma} \cdot \frac{n}{n - 1}, \qquad
+ \eta_{is} = \frac{\Pi^{(\gamma-1)/\gamma} - 1}{\Pi^{(\gamma-1)/(\gamma\,\eta_p)} - 1}
+\end{equation}
+	A diferença física entre as duas eficiências é o que torna a Equação~\eqref{eq:s9-11} necessária, e não apenas uma curiosidade algébrica: $\eta_p$ é uma propriedade essencialmente \textbf{local} do processo de compressão (praticamente constante ao longo do mapa de operação da máquina, pois depende só de $n$ e $\gamma$), enquanto $\eta_{is}$ compara o processo real contra um caminho isentrópico fixo entre a mesma sucção e a mesma descarga — e por isso varia com a razão de pressão $\Pi$ mesmo que a máquina não tenha degradado nada. As duas eficiências não são intercambiáveis: um $\eta_{is}$ que cai ao operar em $\Pi$ mais alto não é, por si só, evidência de degradação — pode ser simplesmente a assinatura esperada de $\eta_p$ constante sob razão de pressão maior. O Gêmeo Digital deve monitorar $\eta_p$ (via Equação~\eqref{eq:s9-11}, invertida a partir de $n$ medido) como o indicador limpo de degradação real do estágio, e reservar $\eta_{is}$ para comparação direta com a garantia de fábrica na condição de projeto.
+
+	\subsection{\textbf{Velocidade Periférica e Número de Mach na Ponta do Rotor}}
+	As Equações~\eqref{eq:s9-2} e~\eqref{eq:s9-3} tratam a fuga através das folgas em função da geometria estática ($A_{\text{leak}}$) e da razão de pressão, mas nunca amarram esse escoamento à rotação do rotor — o parâmetro que efetivamente determina o regime do escoamento de fuga pela folga é a velocidade da própria superfície por onde o gás escapa. A velocidade periférica da ponta do rotor macho é:
+	\begin{equation}\label{eq:s9-12}
+ u_{\text{tip}} = \frac{\pi \cdot D_{\text{macho}} \cdot N_{\text{macho}}}{60}
+\end{equation}
+	Onde $N_{\text{macho}}$ é a mesma rotação (RPM) do rotor macho já usada na Equação~\eqref{eq:s9-8} para a frequência de passagem de lóbulos, e o fator $60$ cumpre a mesma função de conversão para segundos. Comparando $u_{\text{tip}}$ com a velocidade do som local $a = \sqrt{\gamma R T}$ obtém-se o número de Mach na ponta:
+	\begin{equation}\label{eq:s9-13}
+ M_{\text{tip}} = \frac{u_{\text{tip}}}{a}
+\end{equation}
+	O papel de $M_{\text{tip}}$ é duplo. No vazamento pela folga (Equações~\eqref{eq:s9-2}--\eqref{eq:s9-3}), ele indica se o escoamento de fuga se aproxima do regime compressível/sônico — condição em que a vazão de fuga deixa de crescer proporcionalmente com $\Delta P$ e satura, alterando a forma esperada da própria Equação~\eqref{eq:s9-3}. No projeto do rotor, $M_{\text{tip}}$ é o limite físico que a geometria assimétrica de perfil precisa respeitar para manter a operação isenta de óleo estável e silenciosa \cite{fleming, hanlon} — velocidades de ponta elevadas demais aumentam perdas aerodinâmicas e ruído independentemente de qualquer degradação, de modo que um $M_{\text{tip}}$ crescente ao longo do tempo para a mesma rotação nominal é, em si, um sintoma a investigar (deriva de $D_{\text{macho}}$ efetivo por desgaste, ou erro de calibração de $T$ na estimativa de $a$).
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} O Índice de Saúde da Equação~\eqref{eq:s9-10} só é interpretável se cada uma de suas quatro entradas ($\Pi$, $\eta_{is}$, vibração, $\delta_{\text{real}}$) for rastreada individualmente na Matriz de Falhas apresentada acima — reduzir tudo a um único número sem manter o detalhamento por causa raiz transforma um diagnóstico acionável em apenas mais um alarme genérico.
+	\textbf{Diretriz Técnica Final:} O Índice de Saúde da Equação~\eqref{eq:s9-10} só é interpretável se cada uma de suas quatro entradas ($\Pi$, $\eta_{is}$, vibração, $\delta_{\text{real}}$) for rastreada individualmente na Matriz de Falhas apresentada acima — reduzir tudo a um único número sem manter o detalhamento por causa raiz transforma um diagnóstico acionável em apenas mais um alarme genérico. A Equação~\eqref{eq:s9-11} adiciona a mesma cautela ao próprio $\Delta\eta_{is}$ que alimenta esse índice: antes de contar uma queda de $\eta_{is}$ como sintoma de falha, o Gêmeo Digital deve descontar a parcela que é apenas o efeito esperado de operar em razão de pressão distinta do ponto de garantia — só o resíduo depois desse desconto é degradação real.
 
 	% --- Fim do Capítulo 9 ---
 	
@@ -1501,9 +1560,10 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\item \textbf{Cargas nos Rolamentos de Escora (\textit{Thrust Bearings}):}
 		O estágio HP gera um empuxo axial ($F_a$) massivo que deve ser equilibrado para evitar a colisão do rotor com a placa de descarga:
 		\begin{equation}\label{eq:s11-5}
- F_a = (P_{HP,\text{out}} - P_{HP,\text{in}}) \cdot A_{\text{rotor}} 
+ F_a = (P_{HP,\text{out}} - P_{HP,\text{in}}) \cdot A_{\text{rotor}}
 \end{equation}
-		
+		A Equação~\eqref{eq:s11-5} é um modelo — o sensor que fecha a malha entre esse modelo e a realidade física do mancal de escora é a sonda de proximidade de \textbf{posição axial} ($\delta_{ax}$), instrumentação de proximidade cuja prática a própria API 619 \cite{api619} referencia para máquinas desta classe de potência. O motivo de instrumentar posição, e não apenas vibração, é temporal: o desgaste do rolamento de escora se manifesta primeiro como uma deriva lenta e progressiva de $\delta_{ax}$ (o rotor ``caminha'' axialmente à medida que as pistas desgastam), muito antes de qualquer excitação vibratória mensurável aparecer — por isso $\delta_{ax}$ funciona como indicador de condição precoce para o mesmo modo de falha que a Equação~\eqref{eq:s11-6} projeta em horas restantes de vida.
+
 		\item \textbf{Vida Útil Remanescente ($L_{10h}$):} Mesma formulação da vida nominal de rolamento apresentada na Equação~\eqref{eq:s8-4}, agora aplicada à carga axial equivalente do estágio HP ($P_{eq}$) e à rotação do eixo do estágio HP ($N_{\text{rot,HP}}$) — a Equação~\eqref{eq:s11-6} projeta as horas restantes de operação do rolamento de escora antes da falha por fadiga:
 		\begin{equation}\label{eq:s11-6}
  L_{10h} = \left( \frac{C}{P_{eq}} \right)^p \cdot \frac{10^6}{60 \cdot N_{\text{rot,HP}}}
@@ -1572,6 +1632,12 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
  \boxed{SPC = \frac{\dot{W}_{LP,\text{tot}} + \dot{W}_{HP,\text{tot}}}{\dot{V}_{\text{free\_air}}}} 
 \end{equation}
 	Unidade: $\text{kW} \cdotp \text{m}^{-3} \cdotp \text{min}$.
+
+	O denominador da Equação~\eqref{eq:s11-11}, $\dot{V}_{\text{free\_air}}$, não é a vazão volumétrica lida em qualquer condição de linha — é a vazão mássica medida $\dot{m}$, convertida às condições de referência de admissão padronizadas pela ISO 1217:2009/Amd 1:2016 \cite{iso1217} (a mesma norma já citada no Capítulo 1 para $\eta_{is}$): pressão absoluta $P_{\text{ref}} = 1\,\text{bar}$, temperatura $T_{\text{ref}} = 20\,^{\circ}\text{C}$ e umidade relativa nula. A Equação~\eqref{eq:s11-12} formaliza essa conversão:
+	\begin{equation}\label{eq:s11-12}
+ \dot{V}_{\text{free\_air}} = \frac{\dot{m}}{\rho_{\text{ref}}}, \qquad \rho_{\text{ref}} = \frac{P_{\text{ref}}}{R \cdot T_{\text{ref}}}
+\end{equation}
+	É essa normalização — não a vazão bruta de um instrumento de campo qualquer — que torna o $SPC$ comparável entre um dia quente e um frio, entre plataformas com pressão atmosférica local distinta, e contra a folha de dados do fabricante, que reporta o FAD nominal exatamente nessas mesmas condições de referência.
 
 	\vspace{1em}
 	\hrule
@@ -1664,6 +1730,15 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\caption[Matriz de diagnóstico térmico do circuito de óleo]{Matriz de diagnóstico térmico do sistema de lubrificação e resfriamento, com a grandeza que confirma cada causa raiz.}
 		\label{tab:12-1}
 	\end{table}
+
+	\subsection{\textbf{Balanço do Lado da Água: Soft-Sensor de Vazão}}
+	A Equação~\eqref{eq:s12-4} calcula a efetividade $\epsilon$ a partir de $C_{\min}$, que depende da vazão de \textbf{ambos} os lados do trocador — mas o lado do óleo é sempre conhecido (o mesmo $\dot{m}_{\text{óleo}}$ da Equação~\eqref{eq:s12-1}) enquanto a vazão de água de resfriamento ($\dot{m}_w$) frequentemente não tem medidor dedicado em campo, por ser um utilidade compartilhada entre vários consumidores da planta. Sem $\dot{m}_w$ medido, não é possível determinar sequer qual dos dois lados é $C_{\min}$ na Equação~\eqref{eq:s12-4} — a mesma lacuna de observabilidade discutida na Diretriz Técnica Final do Capítulo 18 para outras grandezas.
+
+	A saída, coerente com a filosofia de variáveis reais/virtuais já estabelecida na matriz do Capítulo 18, é tratar $\dot{m}_w$ como um \textbf{soft-sensor}: como $\dot{Q}_{\text{óleo}}$ já é conhecido pelo lado do óleo (Equação~\eqref{eq:s12-1}), e as duas temperaturas de água (entrada e saída do resfriador) são de instrumentação barata e comum, o próprio balanço de energia do lado da água pode ser invertido para inferir a vazão:
+	\begin{equation}\label{eq:s12-8}
+ \dot{m}_w = \frac{\dot{Q}_{\text{óleo}}}{c_{p,w} \cdot (T_{w,\text{out}} - T_{w,\text{in}})}
+\end{equation}
+	Esse $\dot{m}_w$ inferido não é redundante com um eventual medidor físico — é o substituto dele quando ele não existe, fechando a Equação~\eqref{eq:s12-4} e permitindo calcular $\eta_{UA}$ e distinguir incrustação interna de degradação da utilidade de água mesmo em pacotes sem instrumentação de vazão de água dedicada.
 
 	\vspace{1em}
 	\hrule
@@ -2026,6 +2101,7 @@ O balanço de massa da Equação~\eqref{eq:s16-1} descreve o nível médio de pr
 \end{equation}
 	seguindo a mesma lógica de margem de separação usada na análise rotordinâmica dos eixos (Equação~\eqref{eq:s8-6}, Capítulo de Dinâmica de Transmissão), mas aplicada ao domínio acústico da tubulação, conforme a prática de projeto da API 618 \cite{api618}.
 	\item \textbf{Consequência Operacional:} Ressonância sustentada amplifica a amplitude de pulsação na linha, acelerando fadiga em conexões soldadas e instrumentação de pressão, e pode ser confundida em campo com falha mecânica do próprio compressor — daí a necessidade de o modelo distinguir explicitamente pulsação acústica de vibração de origem mecânica.
+	\item \textbf{Mitigação de Projeto:} Quando o critério da Equação~\eqref{eq:s16-3} indica risco, a resposta não é apenas operacional — a mesma prática da API 618 \cite{api618} que fundamenta o critério de risco trata do acessório físico correspondente: um amortecedor de pulsação (\textit{volume bottle}), instalado o mais próximo possível da descarga do compressor, que desloca $f_H$ deliberadamente para fora da faixa de excitação ao alterar o volume efetivo $V_{\text{tank}}$ e o comprimento $L_{\text{eff}}$ da Equação~\eqref{eq:s16-2}. É uma decisão de projeto, não de operação — mas o Gêmeo Digital deve registrar sua presença (ou ausência) como parâmetro fixo do sistema ao avaliar a Equação~\eqref{eq:s16-3} para cada unidade da frota.
 \end{itemize}
 
 \subsection{Lógica Escalonada de Alarmes e Proteção}
@@ -2079,7 +2155,7 @@ A operação com múltiplos compressores em paralelo introduz riscos específico
 \begin{itemize}
 	\item \textbf{Índice de Confiabilidade de Pressão ($R_p$):} Porcentagem do tempo de operação em que $P_{tank} > P_{LL}$.
 	\item \textbf{Eficiência de Resposta de Carga ($E_{resp}$):} Tempo decorrido entre a detecção da queda de pressão e a efetivação do corte do ramal.
-	\item \textbf{Consumo Específico da Frota ($SPC_{fleet}$):}
+	\item \textbf{Consumo Específico da Frota ($SPC_{fleet}$):} Cada $\dot{V}_{free\_air,i}$ é a vazão da unidade $i$ já convertida às condições de referência da Equação~\eqref{eq:s11-12} — sem essa normalização por máquina, a soma da frota misturaria vazões medidas em condições de sucção potencialmente distintas entre unidades.
 	\begin{equation}\label{eq:s16-6}
 SPC_{fleet} = \frac{\sum_{i=1}^{N_{\text{frota}}} \dot{W}_{tot,i}}{\sum_{i=1}^{N_{\text{frota}}} \dot{V}_{free\_air,i}} \quad [\text{kW} \cdotp \text{s} \cdotp \text{m}^{-3}]
 \end{equation}
@@ -2236,9 +2312,10 @@ Duas leituras dessa tabela são úteis. Na horizontal, ela funciona como especif
 			\textbf{D} & \textbf{Intercooler} & Temp. Água In & $T_{w,in}$ & $^{\circ}\text{C}$ & Temperatura do fluido de resfriamento \\ \cline{3-6} 
 			& & Delta Pressão & $\Delta P_{ic}$ & $\text{bar}$ & Perda de carga no trocador \\ \cline{3-6} 
 			& & Vazão Condensado & $\dot{m}_{c}$ & $\text{kg}\,\cdotp\,\text{h}^{-1}$ & Taxa de remoção de umidade \\
-			\textbf{E} & \textbf{Estágio HP} & Pressão Descarga & $P_{d,hp}$ & $\text{bar}$ & Pressão final de compressão \\ \cline{3-6} 
-			& & Temp. Descarga & $T_{d,hp}$ & $^{\circ}\text{C}$ & Temperatura crítica do 2º estágio \\ \cline{3-6} 
-			& & Folga Interna & $\delta_{hp}$ & $\mu\text{m}$ & Desgaste/Dilatação térmica HP \\
+			\textbf{E} & \textbf{Estágio HP} & Pressão Descarga & $P_{d,hp}$ & $\text{bar}$ & Pressão final de compressão \\ \cline{3-6}
+			& & Temp. Descarga & $T_{d,hp}$ & $^{\circ}\text{C}$ & Temperatura crítica do 2º estágio \\ \cline{3-6}
+			& & Folga Interna & $\delta_{hp}$ & $\mu\text{m}$ & Desgaste/Dilatação térmica HP \\ \cline{3-6}
+			& & Posição Axial & $\delta_{ax}$ & $\mu\text{m}$ & Desgaste do mancal de escora, precede vibração \\
 			\textbf{F} & \textbf{Aftercooler} & Temp. Saída & $T_{ac,out}$ & $^{\circ}\text{C}$ & Temperatura pré-secagem \\
 			\textbf{G} & \textbf{Secador PSA} & Ponto de Orvalho & $T_{dp}$ & $^{\circ}\text{C}$ & Umidade residual (ISO 8573-1) \\ \cline{3-6} 
 			& & Vazão de Purga & $\dot{m}_{p}$ & $\text{kg}\,\cdotp\,\text{s}^{-1}$ & Ar perdido na regeneração \\
@@ -3246,6 +3323,18 @@ domain.add_constraint(PointwiseProbabilityConstraint(
 \bibitem{norsok} NORSOK Standard M-501. \textit{Surface preparation and protective coating}. 7ª ed. Standards Norway, 2022 (substitui a 6ª ed., de 2012).
 
 \bibitem{asme8} American Society of Mechanical Engineers. \textit{ASME Boiler and Pressure Vessel Code, Section VIII, Division 1 — Rules for Construction of Pressure Vessels}. Edição 2023 (BPVC.VIII.1-2023). New York, 2023.
+
+\bibitem{isa51} International Society of Automation. \textit{ANSI/ISA-5.1-2024 — Instrumentation and Control: Symbols and Identification}. Research Triangle Park, NC, 2024.
+
+\bibitem{erdman} Erdman, J.M.; Kerkman, R.J.; Schlegel, D.W.; Skibinski, G.L. \textit{Effect of PWM Inverters on AC Motor Bearing Currents and Shaft Voltages}. IEEE Transactions on Industry Applications, 32(2), 250–259, 1996. DOI: 10.1109/28.491472
+
+\bibitem{iso4406} International Organization for Standardization. \textit{ISO 4406:2021 — Hydraulic fluid power — Fluids — Method for coding the level of contamination by solid particles}. 3ª ed. Geneva, 2021.
+
+\bibitem{astmd664} ASTM International. \textit{ASTM D664-18e2 — Standard Test Method for Acid Number of Petroleum Products by Potentiometric Titration}. West Conshohocken, PA, 2018.
+
+\bibitem{astmd6304} ASTM International. \textit{ASTM D6304-20 — Standard Test Method for Determination of Water in Petroleum Products, Lubricating Oils, and Additives by Coulometric Karl Fischer Titration}. West Conshohocken, PA, 2020.
+
+\bibitem{iso2151} International Organization for Standardization. \textit{ISO 2151:2004 — Acoustics — Noise test code for compressors and vacuum pumps — Engineering method (Grade 2)}. Geneva, 2004.
 
 \bibitem{iec60079} International Electrotechnical Commission. \textit{IEC 60079 — Explosive atmospheres} (série). Parte de referência para os requisitos gerais de equipamento Ex: \textit{IEC 60079-0:2017 — Part 0: Equipment — General requirements}, Ed. 7.0. Geneva, 2017.
 
