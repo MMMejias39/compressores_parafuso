@@ -180,16 +180,15 @@ de Secagem PSA — faltavam `SEC_dry` (Eq. 15.6) e `HI_des` (Eq. 15.7);
   (valor assumido/medido, default = condição saudável, ajustável pelo
   usuário para simular degradação).
 
-**Achado durante a implementação, não corrigido no livro**: a Equação 15.7
-do livro, se avaliada literalmente com PDP em °C (com sinal), inverte o
-sentido do índice — um PDP real *pior* (mais alto/mais quente) geraria
-`HI_des` *maior*, o oposto do que o índice deveria sinalizar. É a mesma
-classe de erro de unidade das Equações 9.8/11.6, já corrigidas no
-`compressores.tex` (ver `CONTEXTO.md`). Aqui a correção ficou só na
-implementação: `hi_des()` converte PDP para Kelvin antes da razão,
-documentado no docstring da função. **O `.tex` não foi tocado** — o autor
-não pediu, mas vale revisar a Eq. 15.7 do livro numa sessão futura à luz
-desse achado.
+**Achado durante a implementação, e corrigido no livro logo em seguida**
+(02/08/2026, commit `738cc1c` do `compressores.tex`): a Equação 15.7,
+avaliada literalmente com PDP em °C (com sinal), invertia o sentido do
+índice — um PDP real *pior* (mais alto/mais quente) gerava `HI_des`
+*maior*, o oposto do que o índice deveria sinalizar. Mesma classe de erro
+de unidade das Equações 9.8/11.6 (ver `CONTEXTO.md`), corrigida da mesma
+forma: conversão `+273,15` explícita na fórmula do livro. A implementação
+aqui (`hi_des()` em `subsistemas.py`) já convertia para Kelvin desde a
+criação — o livro é que estava desalinhado, agora os dois concordam.
 
 4 testes novos, incluindo verificação direta de que degradar ΔP ou PDP
 reduz `HI_des` (não aumenta) — é esse teste que teria pego o erro de

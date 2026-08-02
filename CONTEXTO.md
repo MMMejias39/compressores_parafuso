@@ -884,6 +884,31 @@ staged — a árvore de trabalho completa (com o conteúdo pendente) foi restaur
 depois de cada `git add`. Nenhum commit sem pedido explícito do autor, como
 sempre.
 
+## Terceiro erro de unidade encontrado: Equação 15.7 (02/08/2026)
+
+Ao implementar o KPI $HI_{des}$ (Índice de Saúde do Dessecante) no
+`aplicativo/` (ver `CONTEXTO_app.md`), ficou evidente que a Equação 15.7
+tinha o mesmo tipo de erro de unidade das Equações 9.8/11.6 (ver "Dois
+erros de unidade reais" acima): a razão $PDP_{target}/PDP_{real}$,
+calculada diretamente em Celsius (convenção do documento, valores
+negativos como $-40\,^{\circ}$C), **inverte o sentido do índice** — um
+$PDP_{real}$ pior (mais alto/mais quente, secagem menos eficaz) produzia
+$HI_{des}$ **maior**, o oposto do que o próprio texto ao lado da equação
+já dizia que ela deveria fazer. Corrigido com a mesma técnica das duas
+correções anteriores: conversão `+273,15` explícita na fórmula (agora em
+Kelvin) e uma frase antes da equação explicando por que a conversão é
+obrigatória, para não regredir.
+
+**Nota de processo**: desta vez o erro não veio de um relatório externo —
+foi encontrado organicamente ao portar a equação para código Python
+(`hi_des()` em `aplicativo/compressor_sim/subsistemas.py`), onde a
+inversão de sinal teria sido óbvia num teste (`test_hi_des_cai_com_degradacao`
+verifica explicitamente que degradar o PDP real *reduz* o índice). Reforça
+o padrão já observado: reimplementar uma equação do livro em código, com
+testes, é uma forma eficaz de auditoria — vale considerar isso
+deliberadamente para outras equações do documento, não só como
+subproduto de construir o app.
+
 ## Estado atual (última sessão)
 
 Documento compila limpo, **135 páginas**, sem erros/referências
@@ -898,9 +923,10 @@ inicial (recriada). Commits mais recentes, em ordem: `a1f8ffb` (correção do
 conteúdo do livro) → `27997b6` → `3417919` (os dois de dicas_kimi.md acima)
 → `8657b5c` (consolidação do trabalho pendente de 29-31/07, ver acima) →
 `1d0ebc3` (correção deste próprio arquivo). Os commits seguintes
-(`7a0d1cf`, `875e900`, `06ff51d`) são todos do `aplicativo/` — fora do
-escopo deste documento. Sem trabalho pendente sem commit no livro no
-momento — use `git log` para o histórico
+(`7a0d1cf`, `875e900`, `06ff51d`, `0b6534e`, `d637ae2`) são todos do
+`aplicativo/` — fora do escopo deste documento — exceto `738cc1c`
+(correção da Equação 15.7, ver seção acima), que é do livro. Sem trabalho
+pendente sem commit no livro no momento — use `git log` para o histórico
 exato.
 
 O conteúdo das sessões de **29/07/2026 e 30/07/2026** (as duas seções
