@@ -886,31 +886,30 @@ sempre.
 
 ## Estado atual (última sessão)
 
-Documento compila limpo, **131 páginas de conteúdo** (mais os itens de
-diagramação do `dicas_kimi.md` acima, que alteram a paginação em detalhe mas
-não a estrutura), sem erros/referências indefinidas/labels duplicados. Todos
-os 27 capítulos têm subseções e aparecem estruturados no sumário. Repositório
-git inicializado (ver "Visão de longo prazo" acima); histórico completo
-reescrito em 26/07/2026 para remover trailers de coautoria (ver seção
-acima) — os hashes de commit mudaram desde qualquer anotação anterior a essa
-reescrita, sempre confira com `git log` em vez de citar um hash de memória.
-Tag `v1.0` no commit inicial (recriada). Commits mais recentes, em ordem:
-`a1f8ffb` (correção do `cmap`, 26/07/2026) → `693a2c6` (fora do escopo deste
-documento — não é conteúdo do livro) → `27997b6` → `3417919` (os dois de
-dicas_kimi.md acima). Use `git log` para o histórico exato.
+Documento compila limpo, **135 páginas**, sem erros/referências
+indefinidas/labels duplicados. Todos os 27 capítulos têm subseções e
+aparecem estruturados no sumário. Repositório git inicializado (ver "Visão
+de longo prazo" acima); histórico completo reescrito em 26/07/2026 para
+remover trailers de coautoria (ver seção acima) — os hashes de commit
+mudaram desde qualquer anotação anterior a essa reescrita, sempre confira
+com `git log` em vez de citar um hash de memória. Tag `v1.0` no commit
+inicial (recriada). Commits mais recentes, em ordem: `a1f8ffb` (correção do
+`cmap`, 26/07/2026) → `693a2c6` (fora do escopo deste documento — não é
+conteúdo do livro) → `27997b6` → `3417919` (os dois de dicas_kimi.md acima)
+→ `8657b5c` (consolidação do trabalho pendente de 29-31/07, ver acima). Sem
+trabalho pendente sem commit no momento — use `git log` para o histórico
+exato.
 
-> **ATENÇÃO — trabalho não commitado.** Todo o conteúdo das sessões de
-> **29/07/2026 e 30/07/2026** (as duas seções acima) está apenas na árvore de
-> trabalho: ~550 linhas alteradas em `compressores.tex`, mais `CONTEXTO.md`,
-> `compressores.pdf` e uma linha no `.gitignore` (`.claude/settings.local.json`).
-> O autor optou explicitamente por adiar os commits em 30/07 — não é
-> esquecimento. Se ele pedir para commitar, o fatiamento natural é temático:
-> (1) normas ISO 20816/8573/1217, (2) aprofundamento da Parte II, (3) tabelas
-> com `\label` e referência cruzada, (4) ano/edição das referências,
-> (5) Capítulos 12 e 13, (6) correção das aspas do babel, (7) correção de
-> unidades nas Equações 9.8 e 11.6, (8) listas de figuras/tabelas, legendas
-> curtas e hifenização, (9) subseções dos Caps. 26/27 e correção da indentação
-> dos blocos de código Python.
+O conteúdo das sessões de **29/07/2026 e 30/07/2026** (as duas seções
+acima), que ficou ~550 linhas sem commit por opção deliberada do autor, foi
+finalmente commitado em **01/08/2026** — commit `8657b5c`, um único commit
+(não fatiado por tema; o fatiamento em 9 partes cogitado nas notas acima não
+foi usado, o autor preferiu velocidade). Cobre: normas ISO 20816/8573/1217,
+aprofundamento da Parte II, tabelas com `\label` e referência cruzada,
+ano/edição das referências, Capítulos 12 e 13, correção das aspas do babel,
+correção de unidades nas Equações 9.8 e 11.6, listas de figuras/tabelas com
+legendas curtas e hifenização, e subseções dos Caps. 26/27 com a indentação
+dos blocos de código Python corrigida.
 
 Observação: há quatro arquivos soltos na raiz do projeto, não rastreados pelo
 git e não criados por mim — `recomenda compressores.txt` (análise externa via
