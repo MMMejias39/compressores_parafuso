@@ -9,11 +9,19 @@ import math
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from compressor_sim import dinamica, nucleo, parametros_default, simular, subsistemas
+from compressor_sim import (
+    dinamica,
+    nucleo,
+    parametros_default,
+    psa_ciclo,
+    simular,
+    subsistemas,
+)
 
 
 # --- Núcleo ----------------------------------------------------------------
@@ -125,6 +133,40 @@ def test_potencia_total_aumenta_com_pressao():
     assert w9 > w8
     # regra dos ~7 %/bar com n entre 1,3 e 1,4 (:1746) — faixa tolerante
     assert (w9 - w8) / w8 == pytest.approx(0.07, abs=0.03)
+
+
+# --- Ciclo de torres PSA ---------------------------------------------------
+
+@pytest.mark.parametrize("n_vasos", [2, 3, 4])
+def test_psa_exatamente_uma_torre_regenerando(n_vasos):
+    r = psa_ciclo.simular_ciclo_psa(
+        horizonte_min=30, m_dot_ar=0.5, t_ciclo_min=8.0, n_vasos=n_vasos,
+        k_ads=1.5, t_res_min=4.0, p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
+    n_regenerando = np.sum(r["estado"] == "Regenerando", axis=0)
+    assert (n_regenerando == 1).all()
+
+
+def test_psa_capacidade_decai_e_recupera():
+    r = psa_ciclo.simular_ciclo_psa(
+        horizonte_min=8, m_dot_ar=0.5, t_ciclo_min=8.0, n_vasos=2,
+        k_ads=1.5, t_res_min=4.0, p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
+    torre0 = r["q_norm"][0]
+    # torre 0 regenera em [0, 4): capacidade recupera monotonicamente até ~1
+    fase_regen = torre0[r["t_min"] < 4.0]
+    assert np.all(np.diff(fase_regen) >= -1e-9)
+    assert torre0[r["t_min"] < 4.0][-1] == pytest.approx(1.0, abs=0.03)
+    # torre 0 adsorve em [4, 8): capacidade cai monotonicamente
+    fase_ads = torre0[r["t_min"] >= 4.0]
+    assert np.all(np.diff(fase_ads) <= 1e-9)
+
+
+def test_psa_purga_positiva_e_zero_fora_de_regeneracao():
+    r = psa_ciclo.simular_ciclo_psa(
+        horizonte_min=8, m_dot_ar=0.5, t_ciclo_min=8.0, n_vasos=2,
+        k_ads=1.5, t_res_min=4.0, p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
+    assert (r["m_purge_kg_s"] > 0).all()  # com rodízio contínuo, purga nunca cessa
+    esperado = 0.5 * (1.05e5 / 8.4e5) * 0.15
+    assert r["m_purge_kg_s"][0] == pytest.approx(esperado)
 
 
 def test_umidade_nao_aumenta_ao_longo_do_tratamento():

@@ -39,6 +39,12 @@ ETA_SEPARADOR = 0.98       # Eq. 14.4 — ASSUMIDO (separador ciclone típico)
 # --- Secador PSA ---
 FATOR_PURGA = 0.15         # 10–18 % da produção, PSA a frio (:1971)
 DELTA_T_REGEN = 80.0       # K, aquecedor de regeneração (Eq. 3.3) — ASSUMIDO
+K_ADS_DEFAULT = 1.5        # constante de taxa de adsorção (Eq. 15.1) — meio da faixa
+                           # ilustrativa do livro (0,5 a 3,0, Figura 15.2) — ASSUMIDO
+T_RES_PSA_DEFAULT_MIN = 4.0  # tempo de residência de projeto do leito [min] — ASSUMIDO
+T_CICLO_PSA_DEFAULT_MIN = 8.0  # duração total do ciclo por torre [min] — ASSUMIDO
+                                # (com N_VASOS_PSA_DEFAULT=2, dá t_ads = t_res = 4 min)
+N_VASOS_PSA_DEFAULT = 2     # torres em rodízio — ASSUMIDO (mínimo do princípio PSA)
 
 # --- Vaso pulmão / rede ---
 V_VASO_DEFAULT = 2.0       # m³ — ASSUMIDO

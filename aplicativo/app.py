@@ -8,7 +8,10 @@ Offshore" (compressores.tex). Executar a partir do diretório `aplicativo/`:
 Abas:
 - "Operação estática": ponto de operação do trem completo (cascata steady-state);
 - "Dinâmica temporal": transiente de pressão da rede com controle VSD ou
-  carga/alívio (Eqs. 13.4, 13.7, 13.8, 16.4).
+  carga/alívio (Eqs. 13.4, 13.7, 13.8, 16.4);
+- "Secagem PSA": rodízio de N torres PSA (Eq. 15.1) com topologia
+  configurável (N vasos por compressor ou N vasos compartilhados pela
+  planta).
 """
 
 from __future__ import annotations
@@ -21,7 +24,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 
-from compressor_sim import dinamica, nucleo, parametros_default, simular
+from compressor_sim import dinamica, nucleo, parametros_default, psa_ciclo, simular
 
 # Paleta e estilo herdados de scripts/gen_figuras.py
 NAVY = "#1f3b57"
@@ -116,6 +119,28 @@ with st.sidebar:
         evento = st.checkbox("Evento de pico de demanda", value=True)
         fator_ev = st.slider("Fator do pico (×demanda)", 1.2, 3.0, 2.0, 0.1)
 
+    with st.expander("Secagem PSA — ciclo de torres (aba 3)"):
+        topologia_psa = st.radio(
+            "Topologia do secador PSA",
+            ["N vasos por compressor", "N vasos para o sistema"],
+            help="Por compressor: cada uma das unidades em paralelo tem seu "
+                 "próprio secador dedicado (rodízio idêntico em cada uma). "
+                 "Para o sistema: um único banco de N torres compartilhado, "
+                 "dimensionado para a vazão total da planta.")
+        n_vasos_psa = st.number_input(
+            "Torres em rodízio N (assumido — mínimo do princípio PSA)",
+            2, 6, 2, 1)
+        t_ciclo_psa = st.slider(
+            "Duração do ciclo por torre [min] (assumido)",
+            2.0, 30.0, 8.0, 0.5)
+        k_ads_psa = st.slider(
+            "Constante de taxa de adsorção k_ads (Eq. 15.1, Fig. 15.2)",
+            0.3, 4.0, 1.5, 0.1)
+        t_res_psa = st.slider(
+            "Tempo de residência de projeto do leito [min] (assumido)",
+            1.0, 15.0, 4.0, 0.5)
+        horizonte_psa = st.slider("Horizonte de simulação PSA [min]", 10, 120, 30)
+
 params = {
     **defaults,
     "t_amb": t_amb_c + 273.15,
@@ -145,7 +170,8 @@ pw = res["potencias"]
 for aviso in res["avisos"]:
     st.warning(aviso)
 
-tab_est, tab_din = st.tabs(["⚙️ Operação estática", "📈 Dinâmica temporal"])
+tab_est, tab_din, tab_psa = st.tabs(
+    ["⚙️ Operação estática", "📈 Dinâmica temporal", "🌀 Secagem PSA"])
 
 # ===========================================================================
 # Aba 1 — Operação estática
@@ -369,3 +395,98 @@ with tab_din:
             "Balanço de massa no vaso: Eq. 16.4; modulação de potência: "
             "Eq. 13.7; ciclagem teórica: Eq. 13.8."
         )
+
+# ===========================================================================
+# Aba 3 — Secagem PSA (ciclo de torres)
+# ===========================================================================
+with tab_psa:
+    m_dot_unidade = res["nos"][-1]["m_dot"]  # vazão pós-secador de UMA unidade
+    if topologia_psa == "N vasos por compressor":
+        m_dot_psa = m_dot_unidade
+        legenda_topologia = (
+            f"cada um dos {pw['n_compressores']} compressores tem seu próprio "
+            f"secador dedicado de {n_vasos_psa} torres — o gráfico abaixo é "
+            f"idêntico em todas as unidades (mesmo ponto de operação)."
+        )
+    else:
+        m_dot_psa = m_dot_unidade * pw["n_compressores"]
+        legenda_topologia = (
+            f"um único banco de {n_vasos_psa} torres compartilhado, "
+            f"dimensionado para a vazão total da planta "
+            f"({pw['n_compressores']} compressores somados)."
+        )
+
+    p_low_psa = params["p_amb"]
+    p_high_psa = params["p_amb"] * params["pi_total"]
+
+    r_psa = psa_ciclo.simular_ciclo_psa(
+        horizonte_min=horizonte_psa,
+        m_dot_ar=m_dot_psa,
+        t_ciclo_min=t_ciclo_psa,
+        n_vasos=n_vasos_psa,
+        k_ads=k_ads_psa,
+        t_res_min=t_res_psa,
+        p_low=p_low_psa,
+        p_high=p_high_psa,
+        fator_purga=params["fator_purga"],
+    )
+    kp = r_psa["kpis"]
+
+    st.subheader(f"Rodízio de {n_vasos_psa} torres — {topologia_psa.lower()}")
+    st.caption(f"Topologia escolhida: {legenda_topologia}")
+
+    if kp["q_min"] < 0.05:
+        st.warning(
+            f"Capacidade mínima do leito caiu para {kp['q_min']*100:.1f}% de "
+            "q_eq ao fim da adsorção — próximo do esgotamento (risco de "
+            "*breakthrough*, ver Tabela 15.1). Considere ciclo mais curto ou "
+            "mais torres em rodízio."
+        )
+
+    d1, d2, d3 = st.columns(3)
+    d1.metric("Trocas no horizonte", f"{kp['n_trocas']}")
+    d2.metric("Capacidade mín. do leito (fim da adsorção)",
+             f"{kp['q_min'] * 100:.1f}% de q_eq")
+    d3.metric("Purga de regeneração (Eq. 15.2)",
+             f"{kp['purga_media_kg_s'] * 3600:.1f} kg/h")
+
+    st.subheader("Capacidade de adsorção normalizada por torre (Eq. 15.1)")
+    fig8, ax8 = plt.subplots(figsize=(9.0, 3.4))
+    cores_torres = plt.cm.tab10(np.linspace(0, 1, n_vasos_psa))
+    for i in range(n_vasos_psa):
+        ax8.plot(r_psa["t_min"], r_psa["q_norm"][i], color=cores_torres[i],
+                 label=f"Torre {i + 1}", lw=1.6)
+    ax8.set_xlabel("Tempo [min]")
+    ax8.set_ylabel(r"$q_d \, / \, q_{eq}$")
+    ax8.set_ylim(-0.05, 1.05)
+    ax8.legend(fontsize=8, ncol=min(n_vasos_psa, 4))
+    fig8.tight_layout()
+    st.pyplot(fig8)
+
+    st.subheader("Chaveamento entre torres")
+    estado_num = (r_psa["estado"] == "Regenerando").astype(float)
+    fig9, ax9 = plt.subplots(figsize=(9.0, 0.9 + 0.5 * n_vasos_psa))
+    ax9.imshow(
+        estado_num, aspect="auto", cmap="RdYlBu_r", vmin=0, vmax=1,
+        extent=[r_psa["t_min"][0], r_psa["t_min"][-1], n_vasos_psa - 0.5, -0.5],
+    )
+    ax9.set_yticks(range(n_vasos_psa))
+    ax9.set_yticklabels([f"Torre {i + 1}" for i in range(n_vasos_psa)])
+    ax9.set_xlabel("Tempo [min]")
+    ax9.set_title("Vermelho = regenerando · Azul = adsorvendo", fontsize=9)
+    fig9.tight_layout()
+    st.pyplot(fig9)
+
+    st.subheader("Vazão de purga de regeneração (Eq. 15.2)")
+    fig10, ax10 = plt.subplots(figsize=(9.0, 2.6))
+    ax10.plot(r_psa["t_min"], r_psa["m_purge_kg_s"] * 3600.0, color=RED, lw=1.6)
+    ax10.set_xlabel("Tempo [min]")
+    ax10.set_ylabel("Purga [kg/h]")
+    fig10.tight_layout()
+    st.pyplot(fig10)
+    st.caption(
+        "Com rodízio contínuo (sempre exatamente 1 torre regenerando), a "
+        "purga é aproximadamente constante — uma queda para zero ou um pico "
+        "acima desse patamar sinalizaria falha de chaveamento (ver "
+        "Tabela 15.1)."
+    )
