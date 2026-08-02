@@ -896,8 +896,11 @@ com `git log` em vez de citar um hash de memória. Tag `v1.0` no commit
 inicial (recriada). Commits mais recentes, em ordem: `a1f8ffb` (correção do
 `cmap`, 26/07/2026) → `693a2c6` (fora do escopo deste documento — não é
 conteúdo do livro) → `27997b6` → `3417919` (os dois de dicas_kimi.md acima)
-→ `8657b5c` (consolidação do trabalho pendente de 29-31/07, ver acima). Sem
-trabalho pendente sem commit no momento — use `git log` para o histórico
+→ `8657b5c` (consolidação do trabalho pendente de 29-31/07, ver acima) →
+`1d0ebc3` (correção deste próprio arquivo). Os commits seguintes
+(`7a0d1cf`, `875e900`, `06ff51d`) são todos do `aplicativo/` — fora do
+escopo deste documento. Sem trabalho pendente sem commit no livro no
+momento — use `git log` para o histórico
 exato.
 
 O conteúdo das sessões de **29/07/2026 e 30/07/2026** (as duas seções
