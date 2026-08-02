@@ -32,7 +32,7 @@ aplicativo/
 │   ├── sistema.py          # cascata completa: simular(params) -> resultados (1 unidade + totais de planta)
 │   ├── dinamica.py         # simulação transiente do vaso/rede (VSD ou carga/alívio)
 │   └── psa_ciclo.py        # rodízio de N torres do secador PSA (Eq. 15.1/15.2)
-├── tests/test_simulador.py # testes de sanidade (pytest) — 21 testes, todos passando
+├── tests/test_simulador.py # testes de sanidade (pytest) — 24 testes, todos passando
 └── requirements.txt        # streamlit, numpy, matplotlib, pytest
 ```
 
@@ -162,12 +162,45 @@ Testado interativamente pelo autor via navegador (extensão Claude-in-Chrome
 não conectada nesta sessão, então a verificação visual foi só do autor, não
 minha) — confirmado "os gráficos aparecem certos".
 
+## KPIs do Cap. 15 — SEC_dry e HI_des (02/08/2026, commit `0b6534e`)
+
+Completado o trio "Indicadores Globais de Performance" do Cap. 15 na aba
+de Secagem PSA — faltavam `SEC_dry` (Eq. 15.6) e `HI_des` (Eq. 15.7);
+`η_purge` (Eq. 15.9) já existia desde a criação do app.
+
+- **`SEC_dry`**: soma potência do aquecedor + tambor rotativo, dividida
+  pela vazão de ar seco. Este app modela só o secador PSA a frio, **não**
+  o secador de tambor rotativo (HOC) que o Cap. 15 também descreve — a
+  parcela do tambor é sempre 0 (`W_DRUM_PADRAO` em `constantes.py`),
+  mantida como parâmetro explícito de `subsistemas.sec_dry()` em vez de
+  omitida, para não esconder essa limitação de escopo.
+- **`HI_des`**: índice de saúde do dessecante a partir de ΔP e PDP
+  "medidos" — dois sliders novos na barra lateral (`dp_real_psa`,
+  `pdp_real_c`), mesmo padrão já usado para o fouling do intercooler
+  (valor assumido/medido, default = condição saudável, ajustável pelo
+  usuário para simular degradação).
+
+**Achado durante a implementação, não corrigido no livro**: a Equação 15.7
+do livro, se avaliada literalmente com PDP em °C (com sinal), inverte o
+sentido do índice — um PDP real *pior* (mais alto/mais quente) geraria
+`HI_des` *maior*, o oposto do que o índice deveria sinalizar. É a mesma
+classe de erro de unidade das Equações 9.8/11.6, já corrigidas no
+`compressores.tex` (ver `CONTEXTO.md`). Aqui a correção ficou só na
+implementação: `hi_des()` converte PDP para Kelvin antes da razão,
+documentado no docstring da função. **O `.tex` não foi tocado** — o autor
+não pediu, mas vale revisar a Eq. 15.7 do livro numa sessão futura à luz
+desse achado.
+
+4 testes novos, incluindo verificação direta de que degradar ΔP ou PDP
+reduz `HI_des` (não aumenta) — é esse teste que teria pego o erro de
+sinal acima se a conversão para Kelvin não tivesse sido feita.
+
 ## Estado atual
 
-Código compila sem erro de sintaxe, 21/21 testes passam
+Código compila sem erro de sintaxe, 24/24 testes passam
 (`venv/bin/pytest tests/ -q`). Servidor Streamlit rodando em
-`localhost:8501`, reiniciado pela última vez após a aba de secagem PSA
-(01/08/2026).
+`localhost:8501`, reiniciado pela última vez após os KPIs do Cap. 15
+(02/08/2026).
 
 O diretório `aplicativo/` foi commitado em 01/08/2026 (commit `693a2c6`,
 junto com este arquivo e as linhas de `.gitignore` para
