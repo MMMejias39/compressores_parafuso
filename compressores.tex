@@ -21,6 +21,20 @@
 \usepackage{tabularx}
 \usepackage{longtable}
 
+% Termos técnicos em inglês e acrônimos: o babel-brazilian aplica padrões de
+% hifenização do português a eles, produzindo quebras erradas (ex.: "Offloa-ding",
+% "ASH-RAE"). A lista abaixo dá o padrão correto de cada termo recorrente; os
+% acrônimos entram sem nenhum ponto de quebra, para nunca serem partidos.
+\hyphenation{
+  off-shore Off-shore off-load-ing Off-load-ing
+  head-er blow-down blow-hole load shed-ding
+  sur-ro-gate foul-ing rub-bing tim-ing
+  Auto-en-coder auto-en-coder En-gi-neer-ing en-gi-neer-ing
+  Non-lin-ear non-lin-ear
+  ASHRAE NORSOK AGMA NEMA API ISO IEC ASME EKF VAE PIML PINN MPC PSO
+  PSA VSD VFD SPC LMTD NTU RUL SHAP GUM MHE FNO
+}
+
 \numberwithin{equation}{section}
 \numberwithin{table}{section}
 \numberwithin{figure}{section}
@@ -122,6 +136,19 @@ Este é, portanto, um livro para ser lido de duas formas. Como referência técn
 	\tableofcontents
 	\newpage
 
+	% --- LISTAS DE FIGURAS E TABELAS ---
+	% Obra de consulta: o leitor frequentemente procura uma figura ou matriz de
+	% falhas específica sem saber em que capítulo ela está. Ambas entram no
+	% sumário via \addcontentsline.
+	\phantomsection
+	\addcontentsline{toc}{section}{Lista de Figuras}
+	\listoffigures
+	\newpage
+	\phantomsection
+	\addcontentsline{toc}{section}{Lista de Tabelas}
+	\listoftables
+	\newpage
+
 % --- NOMENCLATURA ---
 \newpage
 \section*{Nomenclatura}
@@ -170,6 +197,27 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$f_{bp}$ & Frequência de passagem dos lóbulos & Hz & Cap. 9, header \\ \bottomrule
 \end{longtable}
 
+\subsection*{Controle, Modulação e Válvulas}
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{5.3cm} >{\raggedright\arraybackslash}p{2.1cm} >{\raggedright\arraybackslash}p{4.2cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
+	\endhead
+	$C_d$ & Coeficiente de descarga do orifício (razão entre a vazão real e a isentrópica ideal) & adimensional & Cap. 11, 13, 14 \\
+	$A_v$ & Área efetiva de passagem da válvula de admissão & m$^2$ & Cap. 13 \\
+	$\Phi(r)$ & Função de escoamento compressível em orifício, com os regimes subsônico e bloqueado & adimensional & Cap. 13, 14 \\
+	$r$, $r_{cr}$ & Razão de pressões através da válvula e seu valor crítico de bloqueio sônico ($\approx 0{,}528$ para o ar) & adimensional & Cap. 13 \\
+	$\tau_{bd}$\dag & Constante de tempo do \textit{blow-down} (o subscrito evita colisão com o torque $\tau$) & s & Cap. 13 \\
+	$\bar{f}$ & Frequência normalizada do inversor ($f/f_{\text{nom}}$) & adimensional & Cap. 13 \\
+	$x_c$\dag & Fração da capacidade nominal demandada pela planta (o subscrito distingue do vetor de estado $x$ do EKF) & adimensional & Cap. 13 \\
+	$k_{ul}$ & Fração da potência nominal ainda consumida em alívio (\textit{unload}) & adimensional & Cap. 13 \\
+	$\eta_{vsd}$ & Rendimento combinado de motor e inversor em carga parcial & adimensional & Cap. 13 \\
+	$\Delta P_{db}$ & Banda morta de pressão entre corte e religamento & bar & Cap. 13 \\
+	$f_{\text{ciclo}}$ & Frequência de ciclagem carga/alívio & h$^{-1}$ & Cap. 13 \\
+	$E_{\Pi}$ & Elasticidade da potência de compressão em relação à razão de pressão & adimensional & Cap. 13 \\
+	$\delta$ (contexto de controle)\dag & Estado binário da válvula de admissão (1 = carga, 0 = alívio) — distinto da folga $\delta$ dos capítulos de rotores & adimensional & Cap. 13 \\
+	$C_{op}$ & Custo operacional acumulado do ciclo carga/alívio & R\$, kWh & Cap. 13 \\ \bottomrule
+\end{longtable}
+
 \subsection*{Elétrica e Acionamento}
 \begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{5.3cm} >{\raggedright\arraybackslash}p{2.1cm} >{\raggedright\arraybackslash}p{4.2cm}}
 	\toprule
@@ -200,9 +248,10 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$b_f$\dag & Expoente da curva S-N de Basquin (Regra de Miner) & adimensional & Cap. 20 \\
 	$D$ & Dano acumulado por fadiga (Regra de Palmgren-Miner), $D=1$ na falha & adimensional & Cap. 20 \\
 	$L_{10h}$ & Vida nominal do rolamento com 90\% de confiabilidade & horas & Cap. 8, 11 \\
-	$N_{\text{rot}}$\dag & Rotação do eixo do rolamento (RPM) & RPM & Cap. 8 \\
+	$N_{\text{rot}}$\dag & Rotação do eixo do rolamento — sempre em RPM nas equações de vida $L_{10h}$, onde o fator 60 do denominador faz a conversão para horas & RPM & Cap. 8, 11 \\
 	$\omega_{cr}$ & Velocidade crítica (rotordinâmica) & rad\,s$^{-1}$ & Cap. 8 \\
-	$v_{\text{rms}}$ & Severidade de vibração global (ISO 10816 \cite{iso10816}) & mm\,s$^{-1}$ & Cap. 19 \\ \bottomrule
+	$v_{\text{rms}}$ & Severidade de vibração global (valor eficaz de velocidade, banda larga) & mm\,s$^{-1}$ & Cap. 18, 19 \\
+	$v_{\text{trip}}$ & Limiar de vibração para desligamento (ESD), específico da máquina — critério de API 619/OEM ou linha de base de comissionamento, não valor tabelado & mm\,s$^{-1}$ & Cap. 18 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Psicrometria e Trocadores de Calor}
@@ -212,9 +261,16 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	\endhead
 	$U$ & Coeficiente global de transferência de calor & W\,m$^{-2}$\,K$^{-1}$ & Cap. 5, 10, 12, 14 \\
 	$A$ & Área de troca térmica & m$^2$ & Cap. 5, 10, 14 \\
-	$\Delta T_{lm}$ (LMTD) & Diferença de temperatura média logarítmica & K & Cap. 10, 14 \\
-	$\epsilon$ & Efetividade do trocador de calor & adimensional & Cap. 7, 10, 14 \\
+	$\Delta T_{lm}$ (LMTD) & Diferença de temperatura média logarítmica & K & Cap. 10, 12, 14 \\
+	$\epsilon$ & Efetividade do trocador de calor & adimensional & Cap. 7, 10, 12, 14 \\
 	$R_f$ & Resistência térmica adicional por incrustação (\textit{fouling}) & m$^2$\,K\,W$^{-1}$ & Cap. 10 \\
+	$UA$ & Condutância térmica global do trocador (produto $U \cdot A$), invariante às temperaturas de entrada & W\,K$^{-1}$ & Cap. 12 \\
+	$NTU$ & Número de unidades de transferência, $UA/C_{\min}$ & adimensional & Cap. 12 \\
+	$C_{\min}, C_{\max}, C_r$ & Capacidades térmicas ($\dot{m}\,c_p$) menor e maior entre as duas correntes, e sua razão $C_{\min}/C_{\max}$ & W\,K$^{-1}$; adimensional & Cap. 12 \\
+	$\eta_{UA}$ & Fator de degradação do resfriador, $UA_{\text{real}}/UA_{\text{projeto}}$ & adimensional & Cap. 12 \\
+	$a_{tv}$\dag & Fração da vazão de óleo enviada ao resfriador pela válvula termostática de três vias (o subscrito evita colisão com a constante $a$ da curva de Vogel) & adimensional & Cap. 12 \\
+	$\tau_{th}$\dag & Constante de tempo térmica do circuito de óleo (o subscrito evita colisão com o torque $\tau$) & s & Cap. 12 \\
+	$M_{\text{óleo}}$ & Massa de óleo do circuito (reservatório e tubulação) & kg & Cap. 12 \\
 	$W$\dag & Razão de umidade (kg água / kg ar seco) — notação ASHRAE & adimensional & Cap. 10, 14 \\
 	$\phi$ & Umidade relativa & \%, adimensional & Cap. 10 \\
 	$P_{\text{sat}}(T)$ & Pressão de saturação do vapor d'água na temperatura $T$ & kPa & Cap. 10 \\
@@ -255,8 +311,32 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$Q$ & Matriz de covariância do ruído de processo (EKF) & --- & Cap. 20 \\
 	$\mathcal{R}$\dag & Matriz de covariância do ruído de \textbf{medição} (EKF) & --- & Cap. 20 \\
 	$F_k, G_k$ & Jacobianas de transição de estado e de observação (EKF) & --- & Cap. 20 \\
+	$u$ & Vetor de entradas conhecidas (comandos ao VSD, demanda) & --- & Cap. 21 \\
+	$n_x, n_z$\dag & Dimensões dos vetores de estado e de medição (subscritos evitam colisão com o índice politrópico $n$ e o módulo de engrenagem $m$) & --- & Cap. 21 \\
+	$\mathcal{O}$ & Matriz de observabilidade do sistema linearizado & --- & Cap. 21 \\
+	$\tilde{z}_k$ & Inovação: diferença entre medição e predição, $z_k - g(\hat{x}_{k|k-1})$ & --- & Cap. 21 \\
+	$S_k$\dag & Covariância da inovação (o subscrito e a ausência de ponto distinguem da taxa de geração de entropia $\dot{S}_{gen}$) & --- & Cap. 21 \\
+	$\text{NIS}_k$ & Inovação normalizada ao quadrado; estatística $\chi^2$ de validação do EKF & --- & Cap. 21 \\
 	$\ell$\dag & Vetor do espaço latente (VAE) & --- & Cap. 15, 20 \\
 	$E_{\text{rec}}$ & Erro de reconstrução (VAE), usado como resíduo de anomalia & --- & Cap. 15, 20 \\
+	$\beta$ & Peso da divergência KL na perda do VAE & --- & Cap. 22 \\
+	$d$ & Dimensão do espaço latente do VAE & --- & Cap. 22 \\
+	$\tau_{\text{limiar}}$\dag & Limiar de disparo do erro de reconstrução (o subscrito evita colisão com o torque $\tau$) & --- & Cap. 18, 22 \\
+	$\alpha$ & Taxa de falsos alarmes aceita no dimensionamento de $\tau_{\text{limiar}}$ & --- & Cap. 22 \\
+	$d_M$ & Distância de Mahalanobis no espaço latente & --- & Cap. 22 \\
+	$\mathcal{F}$ & Resíduo físico imposto à rede no PIML & --- & Cap. 20, 23 \\
+	$\lambda$ & Peso da consistência física na perda do PIML & --- & Cap. 23 \\
+	$N_f$ & Número de pontos de colocação (avaliação do resíduo físico) & --- & Cap. 23 \\
+	$\kappa$ & Fator de suavização do balanceamento adaptativo de $\lambda$ & --- & Cap. 23 \\
+	$\theta$\dag & Parâmetros treináveis da rede neural (distinto do ângulo de torção $\Delta\theta$ do Cap. 6) & --- & Cap. 23 \\
+	$\rho$\dag & Peso do esforço de controle $\Delta u$ no MPC (distinto da massa específica $\rho$ dos capítulos de termofluídica) & --- & Cap. 24 \\
+	$\varsigma$ & Variável de folga de restrição branda no MPC & --- & Cap. 24 \\
+	$\varrho_s$ & Penalidade aplicada à variável de folga $\varsigma$ & --- & Cap. 24 \\
+	$w$\dag & Peso de inércia do PSO (distinto do trabalho $W$ e do ruído de processo $w$ do EKF) & --- & Cap. 24 \\
+	$c_1, c_2$ & Coeficientes cognitivo e social do PSO & --- & Cap. 24 \\
+	$HI$ & \textit{Health Index}: índice agregado de saúde da máquina, de 0 a 1 & --- & Cap. 26 \\
+	$\Theta_j$\dag & $j$-ésimo indicador componente do $HI$ ($\zeta$ está ocupado pelo coeficiente de perda de filtro) & --- & Cap. 26 \\
+	$\varpi_j$\dag & Peso do indicador $j$ no $HI$ ($\omega$ está ocupado pela velocidade angular) & --- & Cap. 26 \\
 	$J$ & Função de custo/objetivo (MPC, PSO) & --- & Cap. 15, 20 \\
 	$H$ & Horizonte de predição (MPC) & passos & Cap. 15, 20 \\
 	$k$ & Índice de tempo discreto (sempre como subscrito: $x_k$, $z_k$) & --- & Cap. 15, 20 \\ \bottomrule
@@ -273,6 +353,10 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\item $k$ como índice de tempo discreto (sempre subscrito: $x_k$, $z_k$ — convenção padrão de EKF/MPC/PSO) permanece; a constante do relé passou a $k_{\text{relé}}$, a ordem do harmônico passou a $j$, e a constante de adsorção passou a $k_{ads}$.
 	\item $b$ (largura de face do dente, notação AGMA padrão) permanece; a exergia específica passou a $\psi$ (notação de Kotas) e o expoente de Basquin passou a $b_f$.
 	\item $\omega$ (velocidade angular, uso dominante) permanece; a razão de umidade psicrométrica passou a $W$ (notação ASHRAE).
+	\item $\tau$ (torque, uso dominante nos capítulos de transmissão) permanece; as constantes de tempo passaram a $\tau_{th}$ (térmica do circuito de óleo) e $\tau_{bd}$ (\textit{blow-down}), e o limiar de disparo do VAE a $\tau_{\text{limiar}}$.
+	\item $x$ (vetor de estado do EKF, convenção padrão da literatura de estimação) permanece; a fração de carga da máquina passou a $x_c$.
+	\item $a$ (constante empírica da curva de Vogel e dos polinômios de ajuste) permanece; a abertura da válvula termostática passou a $a_{tv}$.
+	\item $\delta$ (folga entre rotores, uso dominante) permanece nos capítulos de compressão; no Capítulo 13 o mesmo símbolo denota o estado binário da válvula de admissão, uso local e explicitado no ponto de emprego — a distinção é contextual, não notacional, por ser $\delta$ a convenção estabelecida nas duas literaturas.
 \end{itemize}
 
 \newpage
@@ -326,10 +410,13 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{itemize}
 		\item \textbf{API 619 \cite{api619}:} Padrão para compressores de deslocamento positivo para indústrias de petróleo e gás.
 		\item \textbf{ISO 10440-1 \cite{iso10440}:} Requisitos para compressores de parafuso rotativo para serviços de processo.
-		\item \textbf{ISO 1217 \cite{iso1217}:} Testes de aceitação para compressores de deslocamento positivo.
+		\item \textbf{ISO 1217:2009/Amd 1:2016 \cite{iso1217}:} Testes de aceitação para compressores de deslocamento positivo. A Emenda 1 é a parte relevante para este documento: é ela que padroniza o cálculo da \textbf{eficiência isentrópica} e sua relação com o consumo específico de energia — as duas grandezas que servem de KPI de saúde nos Capítulos 9, 11 e 17. Citar a norma sem a emenda deixa ambíguo qual definição de $\eta_{is}$ está em uso.
+		\item \textbf{ISO 8573-1 \cite{iso8573}:} Contaminantes e \textbf{classes de pureza} do ar comprimido. Define a qualidade exigida do ar entregue à rede em termos de classes (partículas, água, óleo), não de valores absolutos únicos — ver a discussão do ponto de orvalho no Capítulo 18.
 		\item \textbf{NORSOK M-501 \cite{norsok}:} Requisitos de preparação de superfície e revestimento protetor.
 		\item \textbf{ASME Seção VIII Div. 1 \cite{asme8}:} Regras para construção e inspeção de vasos de pressão (armazenamento até $10\,\text{bar}$).
 	\end{itemize}
+
+	Uma norma merece menção pela razão oposta — por \textbf{não} se aplicar. A família ISO 10816/20816 \cite{iso10816, iso20816}, de avaliação de vibração em máquinas rotativas, é rotineiramente invocada para justificar limiares de alarme em compressores. A ISO 20816-3 \cite{iso20816}, porém, exclui de seu escopo os compressores rotativos de deslocamento positivo, nomeando os compressores de parafuso como exemplo. Os critérios de vibração do equipamento em escopo devem, portanto, vir da API 619 \cite{api619}, dos requisitos do fabricante e da linha de base da própria máquina — a discussão completa está no Capítulo 18, junto à matriz de alarmes.
 	
 	\subsection{\textbf{Objetivos da Implementação}}
 	\begin{enumerate}
@@ -367,7 +454,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.75\textwidth]{figuras/fig_2_2_arquitetura.pdf}
-		\caption{Diagrama de blocos da arquitetura do sistema: os quatro pilares funcionais e a realimentação do Gêmeo Digital sobre a planta física.}
+		\caption[Diagrama de blocos da arquitetura do sistema]{Diagrama de blocos da arquitetura do sistema: os quatro pilares funcionais e a realimentação do Gêmeo Digital sobre a planta física.}
 		\label{fig:2-1}
 	\end{figure}
 
@@ -377,13 +464,13 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_2_1_rotores.pdf}
-		\caption{Perfil de engrenamento assimétrico de rotores helicoidais (relação 5:6), com centros dos eixos indicados. Adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0 (traços reforçados e marcadores de centro adicionados pelo autor).}
+		\caption[Perfil de engrenamento assimétrico de rotores helicoidais]{Perfil de engrenamento assimétrico de rotores helicoidais (relação 5:6), com centros dos eixos indicados. Adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0 (traços reforçados e marcadores de centro adicionados pelo autor).}
 		\label{fig:2-2}
 	\end{figure}
 
 	O ciclo de trabalho ocorre em três fases sequenciais, repetidas continuamente a cada engrenamento:
 	\begin{enumerate}
-		\item \textbf{Admissão:} À medida que os rotores giram e se desengrenam na extremidade de sucção, uma câmara em forma de "V" se abre entre os lóbulos e a carcaça, e o ar atmosférico preenche esse volume crescente.
+		\item \textbf{Admissão:} À medida que os rotores giram e se desengrenam na extremidade de sucção, uma câmara em forma de ``V'' se abre entre os lóbulos e a carcaça, e o ar atmosférico preenche esse volume crescente.
 		\item \textbf{Compressão:} Conforme a rotação avança, o ponto de engrenamento entre macho e fêmea se desloca ao longo do comprimento helicoidal dos rotores, fechando progressivamente a câmara e reduzindo seu volume — é essa redução puramente geométrica, sem válvulas de admissão ou descarga no sentido alternativo, que caracteriza a compressão como um processo de deslocamento positivo contínuo (ao contrário do compressor alternativo, que comprime em pulsos, ou do centrífugo, que comprime por troca de quantidade de movimento).
 		\item \textbf{Descarga:} Quando a câmara em compressão alcança a aresta da porta de descarga — posição fixada pela geometria da carcaça, não por uma válvula —, o volume comprimido é liberado para a linha de descarga. É exatamente essa posição fixa da aresta de descarga que define a razão volumétrica interna $V_i$, detalhada mais adiante neste documento.
 	\end{enumerate}
@@ -401,7 +488,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.80\textwidth]{figuras/fig_2_3_conjunto3d.pdf}
-		\caption{Trem de compressão completo em perspectiva 3D — do motor elétrico ao estágio HP e à saída para tratamento, passando pela gearbox e pelo intercooler. Esquema ilustrativo; motor, gearbox e tubulação são formas 3D simplificadas, e os pares de rotores reaproveitam a varredura helicoidal do perfil de engrenamento adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0.}
+		\caption[Trem de compressão completo em perspectiva 3D]{Trem de compressão completo em perspectiva 3D — do motor elétrico ao estágio HP e à saída para tratamento, passando pela gearbox e pelo intercooler. Esquema ilustrativo; motor, gearbox e tubulação são formas 3D simplificadas, e os pares de rotores reaproveitam a varredura helicoidal do perfil de engrenamento adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0.}
 		\label{fig:2-3}
 	\end{figure}
 
@@ -472,7 +559,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.80\textwidth]{figuras/fig_3_1_parafuso3d.pdf}
-		\caption{Par de rotores helicoidais do elemento compressor (airend) em perspectiva 3D, gerado por varredura helicoidal do perfil de engrenamento da Figura~\ref{fig:2-2} (torção de $300^\circ$ no rotor macho, relação $5{:}6$, hélices opostas). Elaboração 3D original do autor; perfil 2D adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0.}
+		\caption[Par de rotores helicoidais do elemento compressor (3D)]{Par de rotores helicoidais do elemento compressor (airend) em perspectiva 3D, gerado por varredura helicoidal do perfil de engrenamento da Figura~\ref{fig:2-2} (torção de $300^\circ$ no rotor macho, relação $5{:}6$, hélices opostas). Elaboração 3D original do autor; perfil 2D adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0.}
 		\label{fig:3-1}
 	\end{figure}
 
@@ -505,7 +592,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\subsection{\textbf{Purificação e Secagem (Sistema PSA)}}
 	\begin{itemize}
 		\item \textbf{Torres de Adsorção:} Duas colunas cilíndricas preenchidas com material dessecante (tipicamente \textbf{Alumina Ativada} ou peneira molecular) que retém fisicamente as moléculas de vapor d'água na superfície de seus grãos porosos à medida que o ar úmido passa por elas sob pressão. O princípio de adsorção por oscilação de pressão (\textit{Pressure Swing Adsorption}, PSA) alterna as duas torres entre dois papéis: enquanto uma seca o ar de processo, a outra é regenerada — o ciclo completo, a cinética de saturação do leito e o cálculo do ponto de orvalho resultante são detalhados no Capítulo de Sistema de Secagem.
-		\item \textbf{Resistências de Aquecimento:} Utilizadas nos ciclos de regeneração térmica dos secadores que precisam de calor externo para "expulsar" a umidade retida no dessecante saturado (ao contrário dos secadores PSA a frio, que regeneram apenas por expansão do ar de purga). A Equação~\eqref{eq:s3-3} calcula a potência elétrica necessária como a vazão mássica de ar de purga vezes o calor específico do ar vezes o salto de temperatura imposto a esse ar de regeneração:
+		\item \textbf{Resistências de Aquecimento:} Utilizadas nos ciclos de regeneração térmica dos secadores que precisam de calor externo para ``expulsar'' a umidade retida no dessecante saturado (ao contrário dos secadores PSA a frio, que regeneram apenas por expansão do ar de purga). A Equação~\eqref{eq:s3-3} calcula a potência elétrica necessária como a vazão mássica de ar de purga vezes o calor específico do ar vezes o salto de temperatura imposto a esse ar de regeneração:
 		\begin{equation}\label{eq:s3-3}
  P_{\text{term}} = \dot{m}_{\text{purge}} \cdot c_p \cdot \Delta T
 \end{equation}
@@ -719,12 +806,12 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
  \Delta \dot{W}_{\text{sobre}} = \dot{V}_2 \cdot (P_i - P_2) 
 \end{equation}
 	\end{itemize}
-	A Figura~\ref{fig:5-1} plota as Equações~\eqref{eq:s5-8} e \eqref{eq:s5-9} em função da razão $\pi/\pi_i$: a perda é sempre mínima (idealmente nula) exatamente no ponto de projeto $\pi=\pi_i$, e cresce em ambas as direções conforme a pressão de rede se afasta desse ponto — visualmente, é um "V" de perda com vértice no ponto de casamento perfeito entre a geometria do rotor e a demanda da planta.
+	A Figura~\ref{fig:5-1} plota as Equações~\eqref{eq:s5-8} e \eqref{eq:s5-9} em função da razão $\pi/\pi_i$: a perda é sempre mínima (idealmente nula) exatamente no ponto de projeto $\pi=\pi_i$, e cresce em ambas as direções conforme a pressão de rede se afasta desse ponto — visualmente, é um ``V'' de perda com vértice no ponto de casamento perfeito entre a geometria do rotor e a demanda da planta.
 
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_5_1_vi_perdas.pdf}
-		\caption{Perdas termodinâmicas por sub/sobrecompressão em função do descasamento entre a razão de pressão real e a razão interna ideal do rotor.}
+		\caption[Perdas termodinâmicas por sub e sobrecompressão]{Perdas termodinâmicas por sub/sobrecompressão em função do descasamento entre a razão de pressão real e a razão interna ideal do rotor.}
 		\label{fig:5-1}
 	\end{figure}
 
@@ -817,7 +904,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\end{itemize}
 	
 	\subsection{\textbf{Matriz de Mecanismos de Falha e Indicadores Digitais}}
-	A tabela abaixo correlaciona os componentes físicos aos seus modos de falha e respectivos indicadores no Gêmeo Digital.
+	A Tabela~\ref{tab:6-1} correlaciona cada componente físico da caixa multiplicadora ao seu modo de falha característico e ao indicador digital que permite detectá-lo. A leitura é por linha: o componente identifica \textit{onde} a falha ocorre; o mecanismo descreve \textit{como} ela progride fisicamente; e o indicador digital é a grandeza — medida ou inferida — cujo desvio denuncia a progressão antes que ela atinja o limite funcional. Essa estrutura de três colunas se repete nas matrizes de falha dos capítulos seguintes, e é o que permite ao Gêmeo Digital passar de um diagnóstico genérico (``vibração alta'') para uma hipótese de causa raiz específica.
 	
 	\begin{table}[h!]
 		\centering
@@ -833,7 +920,8 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 			Selos & Desgaste Labirinto & Vibração excessiva & $\downarrow \eta_{\text{vol}}$ e $\uparrow T_{\text{suc}}$ \\ \bottomrule
 		\end{tabular}
 		}
-		\caption{Mecanismos de falha do acoplamento, engrenagens, mancais e selos da caixa multiplicadora, com o respectivo indicador digital monitorado pelo Gêmeo Digital.}
+		\caption[Mecanismos de falha da caixa multiplicadora]{Mecanismos de falha do acoplamento, engrenagens, mancais e selos da caixa multiplicadora, com o respectivo indicador digital monitorado pelo Gêmeo Digital.}
+		\label{tab:6-1}
 	\end{table}
 	
 	\subsection{\textbf{Dinâmica de Eixos e Sincronismo (Timing)}}
@@ -905,7 +993,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\begin{figure}[h!]
 			\centering
 			\includegraphics[width=0.60\textwidth]{figuras/fig_7_1_vogel.pdf}
-			\caption{Curva de viscosidade de Vogel — queda não linear da viscosidade com a temperatura (valores ilustrativos).}
+			\caption[Curva de viscosidade de Vogel]{Curva de viscosidade de Vogel — queda não linear da viscosidade com a temperatura (valores ilustrativos).}
 			\label{fig:7-1}
 		\end{figure}
 
@@ -942,7 +1030,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\end{itemize}
 	
 	\subsection{\textbf{Matriz de Mecanismos de Falha do Sistema de Óleo}}
-	A tabela a seguir associa cada componente do circuito de lubrificação ao seu modo de falha típico e ao indicador digital correspondente, usado pelo Gêmeo Digital para diagnóstico automático.
+	A Tabela~\ref{tab:7-1} associa cada componente do circuito de lubrificação ao seu modo de falha típico e ao indicador digital correspondente, usado pelo Gêmeo Digital para diagnóstico automático.
 	\begin{table}[h!]
 		\centering
 		\small
@@ -956,7 +1044,8 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 			\textbf{Resfriador} & Incrustação (\textit{Fouling}) & $\downarrow \epsilon$ (Queda na Efetividade Térmica) \\
 			\textbf{Mancais} & Desgaste de Metal Patente & $\uparrow T_{\text{brg}}$ e $\uparrow$ Vibração de Alta Frequência \\ \bottomrule
 		\end{tabular}
-		\caption{Matriz de mecanismos de falha do sistema de lubrificação (bomba, filtro, resfriador e mancais).}
+		\caption[Mecanismos de falha do sistema de lubrificação]{Matriz de mecanismos de falha do sistema de lubrificação (bomba, filtro, resfriador e mancais).}
+		\label{tab:7-1}
 	\end{table}
 	
 	\subsection{\textbf{Equacionamento de Diagnóstico por Resíduos}}
@@ -994,7 +1083,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.75\textwidth]{figuras/fig_8_1_gearbox.pdf}
-		\caption{Esquema cinemático simplificado da caixa multiplicadora: coroa (\textit{bull gear}) acionando os pinhões LP e HP, com engrenagem de sincronismo (\textit{timing}).}
+		\caption[Esquema cinemático da caixa multiplicadora]{Esquema cinemático simplificado da caixa multiplicadora: coroa (\textit{bull gear}) acionando os pinhões LP e HP, com engrenagem de sincronismo (\textit{timing}).}
 		\label{fig:8-1}
 	\end{figure}
 
@@ -1036,7 +1125,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\begin{figure}[h!]
 			\centering
 			\includegraphics[width=0.60\textwidth]{figuras/fig_8_3_l10h.pdf}
-			\caption{Sensibilidade da vida nominal do rolamento ($L_{10h}$) à carga equivalente — note a escala logarítmica no eixo vertical.}
+			\caption[Sensibilidade da vida do rolamento à carga]{Sensibilidade da vida nominal do rolamento ($L_{10h}$) à carga equivalente — note a escala logarítmica no eixo vertical.}
 			\label{fig:8-3}
 		\end{figure}
 
@@ -1062,7 +1151,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.75\textwidth]{figuras/fig_8_2_campbell.pdf}
-		\caption{Diagrama de Campbell ilustrativo: cruzamento das linhas de excitação ($1\times$, $2\times$ RPM, GMF) com a velocidade crítica $\omega_{cr}$ e a faixa de operação do VSD.}
+		\caption[Diagrama de Campbell]{Diagrama de Campbell ilustrativo: cruzamento das linhas de excitação ($1\times$, $2\times$ RPM, GMF) com a velocidade crítica $\omega_{cr}$ e a faixa de operação do VSD.}
 		\label{fig:8-2}
 	\end{figure}
 
@@ -1073,7 +1162,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\begin{equation}\label{eq:s8-7}
  \sigma_b = \frac{W_t}{b \cdot m \cdot Y} \cdot K_v \cdot K_m
 \end{equation}
-		Onde $W_t$ é a força tangencial transmitida no dente, $b$ a largura de face da engrenagem, $m$ o módulo (geometria do dente), $Y$ é o fator de forma de Lewis, $K_v$ o fator dinâmico (velocidade de engrenamento) e $K_m$ o fator de distribuição de carga \cite{agma2001, shigley}. Uma trinca na raiz altera a rigidez, gerando impactos cíclicos no envelope de vibração.
+		Onde $W_t$ é a força tangencial transmitida no dente, $b$ a largura de face da engrenagem, $m$ o módulo (geometria do dente), $Y$ é o fator de forma de Lewis, $K_v$ o fator dinâmico (velocidade de engrenamento) e $K_m$ o fator de distribuição de carga. A forma é a equação de flexão de Lewis, desenvolvida no capítulo de engrenagens cilíndricas e helicoidais de Shigley \cite[Cap.~14]{shigley}, com os fatores de correção na definição normalizada pela AGMA \cite{agma2001}. Uma trinca na raiz altera a rigidez, gerando impactos cíclicos no envelope de vibração.
 		\item \textbf{Dano Adesivo (Scuffing):} O modelo calcula a Temperatura de Flash ($T_{\text{flash}}$) no contato instantâneo. Se $T_{\text{flash}} > T_{\text{crítica}}$, o sistema sinaliza falha iminente de lubrificação.
 	\end{itemize}
 	
@@ -1087,7 +1176,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\end{itemize}
 	
 	\subsection{\textbf{Matriz de Falhas de Transmissão}}
-	A tabela abaixo resume os principais modos de falha do trem de transmissão (rolamentos, dentes, sincronismo), suas causas raiz e o respectivo indicador digital de detecção.
+	A Tabela~\ref{tab:8-1} resume os principais modos de falha do trem de transmissão (rolamentos, dentes, sincronismo), suas causas raiz e o respectivo indicador digital de detecção.
 	\begin{table}[h!]
 		\centering
 		\small
@@ -1102,7 +1191,8 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 			\textit{Scuffing} & Falha de Lubrificação & $\uparrow T$ de Flash e Partículas no Óleo \\
 			Erro de Sincronismo & Desgaste \textit{Timing Gears} & Desvio de fase $\Delta \phi$ e oscilação de torque \\ \bottomrule
 		\end{tabular}
-		\caption{Matriz de falhas do trem de transmissão: rolamentos, dentes de engrenagem, alinhamento e sincronismo.}
+		\caption[Matriz de falhas do trem de transmissão]{Matriz de falhas do trem de transmissão: rolamentos, dentes de engrenagem, alinhamento e sincronismo.}
+		\label{tab:8-1}
 	\end{table}
 	
 	\vspace{1em}
@@ -1152,7 +1242,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\begin{figure}[h!]
 			\centering
 			\includegraphics[width=0.60\textwidth]{figuras/fig_9_1_etav.pdf}
-			\caption{Eficiência volumétrica em função da folga do rotor, para diferentes razões de pressão do estágio.}
+			\caption[Eficiência volumétrica em função da folga]{Eficiência volumétrica em função da folga do rotor, para diferentes razões de pressão do estágio.}
 			\label{fig:9-1}
 		\end{figure}
 		\item \textbf{Fluxo de Massa de Fuga ($\dot{m}_{\text{leak}}$):} Modelado como escoamento compressível através de orifícios. O ar que retorna das câmaras de alta pressão reaquece o ar de sucção (\textit{pre-heating}):
@@ -1182,9 +1272,9 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\subsection{\textbf{Acoplamento Fluido-Estrutural e Resposta Vibracional}}
 	A alteração nas folgas e na pressão interna gera forças de excitação mecânica detectáveis no espectro de frequência.
 	\begin{itemize}
-		\item \textbf{Frequência de Passagem dos Lóbulos ($f_{bp}$):} Assinatura principal do engrenamento — cada vez que um lóbulo do rotor macho passa por uma posição fixa da carcaça, ele gera um pulso de pressão; a Equação~\eqref{eq:s9-8} calcula a frequência desses pulsos multiplicando a rotação do rotor macho ($N_{\text{macho}}$) pelo seu número de lóbulos ($Z_{\text{macho}}$):
+		\item \textbf{Frequência de Passagem dos Lóbulos ($f_{bp}$):} Assinatura principal do engrenamento — cada vez que um lóbulo do rotor macho passa por uma posição fixa da carcaça, ele gera um pulso de pressão. A Equação~\eqref{eq:s9-8} calcula a frequência desses pulsos multiplicando a frequência de giro do rotor macho pelo seu número de lóbulos ($Z_{\text{macho}}$). Como a rotação $N_{\text{macho}}$ é medida em RPM e $f_{bp}$ é expressa em Hz, é obrigatória a divisão por 60 — a mesma conversão já formalizada na Equação~\eqref{eq:s6-7}, e a fonte de erro mais comum ao configurar a faixa de análise espectral do sistema de monitoramento:
 		\begin{equation}\label{eq:s9-8}
- f_{bp} = N_{\text{macho}} \cdot Z_{\text{macho}}
+ f_{bp} = \frac{N_{\text{macho}}}{60} \cdot Z_{\text{macho}} = f_{r,\text{macho}} \cdot Z_{\text{macho}}
 \end{equation}
 		\item \textbf{Diagnóstico Vibracional:}
 		\begin{itemize}
@@ -1201,7 +1291,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 	
 	\subsection{\textbf{Matriz de Falhas Integrada do Estágio LP}}
-	A tabela a seguir integra os modos de falha do estágio LP com seus indicadores digitais e a assinatura vibracional correspondente, permitindo diferenciar causas puramente térmicas de causas mecânicas.
+	A Tabela~\ref{tab:9-1} integra os modos de falha do estágio LP com seus indicadores digitais e a assinatura vibracional correspondente, permitindo diferenciar causas puramente térmicas de causas mecânicas.
 	\begin{table}[h!]
 		\centering
 		\renewcommand{\arraystretch}{1.5}
@@ -1217,7 +1307,8 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 			Desalinhamento & Falha Sincronismo & Oscilação de Torque & Picos em $1 \times$ e $2 \times$ RPM \\ \bottomrule
 		\end{tabular}
 		}
-		\caption{Matriz de falhas integrada do estágio LP: causa raiz, indicador digital e assinatura vibracional.}
+		\caption[Matriz de falhas integrada do estágio LP]{Matriz de falhas integrada do estágio LP: causa raiz, indicador digital e assinatura vibracional.}
+		\label{tab:9-1}
 	\end{table}
 	
 	\vspace{1em}
@@ -1257,12 +1348,12 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\Delta T_{lm} = \frac{(T_{LP,\text{out}} - T_{w,\text{out}}) - (T_{HP,\text{in}} - T_{w,\text{in}})}{\ln \left( \frac{T_{LP,\text{out}} - T_{w,\text{out}}}{T_{HP,\text{in}} - T_{w,\text{in}}} \right)}
 \end{equation}
 
-	A origem física dessa expressão logarítmica fica clara ao observar o perfil de temperatura ao longo do trocador (Figura~\ref{fig:10-1}): como a diferença de temperatura entre os dois fluidos ($\Delta T_1$ na entrada, $\Delta T_2$ na saída) varia continuamente ao longo do comprimento, a força motriz térmica "média" correta não é a média aritmética simples, e sim a média logarítmica dessas duas diferenças extremas.
+	A origem física dessa expressão logarítmica fica clara ao observar o perfil de temperatura ao longo do trocador (Figura~\ref{fig:10-1}): como a diferença de temperatura entre os dois fluidos ($\Delta T_1$ na entrada, $\Delta T_2$ na saída) varia continuamente ao longo do comprimento, a força motriz térmica ``média'' correta não é a média aritmética simples, e sim a média logarítmica dessas duas diferenças extremas.
 
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_10_1_lmtd.pdf}
-		\caption{Perfil de temperatura ao longo de um trocador em contracorrente — origem física da LMTD.}
+		\caption[Perfil de temperatura e origem física da LMTD]{Perfil de temperatura ao longo de um trocador em contracorrente — origem física da LMTD.}
 		\label{fig:10-1}
 	\end{figure}
 
@@ -1285,7 +1376,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\textbf{Diagnóstico:} Se $\epsilon$ permanece constante enquanto $T_{HP,\text{in}}$ e $\dot{W}_{HP}$ aumentam, o modelo classifica o evento como \textit{External Thermal Disturbance}.
 	
 	\subsection{\textbf{Mecanismo de Falha Interna: Incrustação (\textit{Fouling})}}
-	A degradação interna é modelada pelo acúmulo de resistência térmica adicional ($R_f$). O coeficiente global de transferência real ($U_{\text{real}}$) é comparado ao valor de projeto ($U_{\text{clean}}$):
+	A degradação interna é modelada pelo acúmulo de resistência térmica adicional ($R_f$). O coeficiente global de transferência real ($U_{\text{real}}$) é comparado ao valor de projeto ($U_{\text{clean}}$). A Equação~\eqref{eq:s10-5} nada mais é que a definição de resistência térmica global em série \cite[Cap.~11]{incropera}, escrita de modo que a incrustação apareça como uma resistência acrescentada ao caminho térmico limpo — e, na forma isolada à direita, como grandeza calculável a partir de medições de campo:
 	
 	\begin{equation}\label{eq:s10-5}
 	\frac{1}{U_{\text{real}}} = \frac{1}{U_{\text{clean}}} + R_f \implies R_f = \frac{A \cdot \Delta T_{lm}}{\dot{Q}} - \frac{1}{U_{\text{clean}}}
@@ -1312,7 +1403,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_10_2_psat.pdf}
-		\caption{Correlação de Arden Buck para a pressão de saturação do vapor d'água em função da temperatura.}
+		\caption[Correlação de Arden Buck]{Correlação de Arden Buck para a pressão de saturação do vapor d'água em função da temperatura.}
 		\label{fig:10-2}
 	\end{figure}
 
@@ -1330,7 +1421,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	\subsection{\textbf{Matriz de Falhas Integrada do Sistema Intermediário}}
 
-	A tabela abaixo diferencia os distúrbios externos (\textit{offloading}, baixo fluxo de água) das falhas internas do próprio intercooler (\textit{fouling}, drenagem), cada um com sua variável de controle e ação recomendada.
+	A Tabela~\ref{tab:10-1} diferencia os distúrbios externos (\textit{offloading}, baixo fluxo de água) das falhas internas do próprio intercooler (\textit{fouling}, drenagem), cada um com sua variável de controle e ação recomendada.
 	\begin{table}[h!]
 		\centering
 		\renewcommand{\arraystretch}{1.5}
@@ -1344,7 +1435,8 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 			Falha Drenagem & $\uparrow \Delta P_{\text{ar}}$ & $\text{Vib}_{\text{HF,HP}} > \text{limit}$ & Alerta de Arraste/Erosão \\ \bottomrule
 		\end{tabular}
 		}
-		\caption{Matriz de falhas do intercooler: distúrbios externos versus falhas internas do trocador.}
+		\caption[Matriz de falhas do intercooler]{Matriz de falhas do intercooler: distúrbios externos versus falhas internas do trocador.}
+		\label{tab:10-1}
 	\end{table}
 	
 	\subsection{\textbf{Lógica de Predição de Trip e Saúde do Ativo}}
@@ -1375,7 +1467,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	O estágio de Alta Pressão (HP) representa o maior desafio para o Gêmeo Digital, operando sob condições extremas de temperatura e pressão diferencial ($\Delta P$). Neste estágio, as folgas são reduzidas e qualquer desvio mecânico ou térmico pode resultar em falhas catastróficas.
 	
 	\subsection{\textbf{Termodinâmica e Performance do Estágio HP}}
-	A compressão no estágio HP é modelada como um processo politrópico real, onde o índice $n$ reflete as perdas internas e a eficiência do resfriamento da carcaça.
+	A compressão no estágio HP é modelada como um processo politrópico real, onde o índice $n$ reflete as perdas internas e a eficiência do resfriamento da carcaça. As duas equações que abrem esta seção não são correlações empíricas de fabricante: ambas descendem da expressão do trabalho de escoamento em processo internamente reversível, $w = \int v\,dP$, aplicada à relação politrópica $P v^{n} = \text{const.}$ — desenvolvimento clássico apresentado por Moran e colaboradores nos capítulos de entropia e de sistemas de potência a gás \cite[Cap.~6 e 9]{moran}.
 	
 	\begin{itemize}
 		\item \textbf{Temperatura de Descarga Final ($T_{HP,\text{out}}$):} Aplicando a relação politrópica de temperatura-pressão à razão de compressão do estágio HP, a Equação~\eqref{eq:s11-1} projeta a temperatura de descarga a partir da temperatura de sucção e da razão entre as pressões de saída e entrada, elevada ao expoente politrópico:
@@ -1390,7 +1482,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 		
 		\item \textbf{Eficiência Volumétrica ($\eta_{v,HP}$):}
-		É extremamente sensível às folgas internas ($\delta$) e à pressão diferencial:
+		É extremamente sensível às folgas internas ($\delta$) e à pressão diferencial. A forma da Equação~\eqref{eq:s11-3} vem de tratar cada folga como um \textbf{orifício de descarga}: o produto $C_d \cdot A_{\text{gap}}(\delta) \cdot \sqrt{2 \rho \Delta P}$ é a vazão mássica de Bernoulli através de uma restrição de área $A_{\text{gap}}$, corrigida pelo coeficiente de descarga $C_d$, que absorve a contração da veia fluida e o desvio em relação ao escoamento ideal. É daí que vem uma consequência prática pouco intuitiva: a fuga cresce com a \textit{raiz} da pressão diferencial, não linearmente — dobrar $\Delta P$ aumenta o vazamento em cerca de $41\%$, não em $100\%$. O tratamento de referência para desempenho de compressores de deslocamento positivo, com seção dedicada aos de parafuso, está no \textit{Compressor Handbook} \cite[Cap.~1 e 2]{hanlon}:
 		\begin{equation}\label{eq:s11-3}
  \eta_{v,HP} = 1 - \frac{\dot{m}_{\text{leak}}}{\dot{m}_{\text{th}}} = 1 - \frac{C_d \cdot A_{\text{gap}}(\delta) \cdot \sqrt{2 \rho \Delta P}}{\dot{m}_{\text{th}}} 
 \end{equation}
@@ -1401,7 +1493,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	\begin{itemize}
 		\item \textbf{Engrenagens de Sincronismo:}
-		O erro de transmissão e o \textit{backlash} ($\theta_b$) são monitorados para evitar o contato entre os lobos:
+		O erro de transmissão e o \textit{backlash} ($\theta_b$) são monitorados para evitar o contato entre os lobos. O \textit{backlash} é a folga angular deliberadamente deixada entre os flancos dos dentes para acomodar dilatação térmica e o filme de lubrificante; seu crescimento por desgaste é o que degrada o sincronismo. A Equação~\eqref{eq:s11-4} expressa a folga de flanco residual como função dessa folga angular e do desgaste acumulado, sobre a mesma base de projeto de engrenagens que fornece a tensão de Lewis da Equação~\eqref{eq:s8-7} \cite[Cap.~13 e 14]{shigley}:
 		\begin{equation}\label{eq:s11-4}
  \delta_{\text{flanco}} = f(\theta_b, \text{desgaste}) 
 \end{equation}
@@ -1412,10 +1504,11 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
  F_a = (P_{HP,\text{out}} - P_{HP,\text{in}}) \cdot A_{\text{rotor}} 
 \end{equation}
 		
-		\item \textbf{Vida Útil Remanescente ($L_{10h}$):} Mesma formulação da vida nominal de rolamento apresentada na Equação~\eqref{eq:s8-4}, agora aplicada à carga axial equivalente do estágio HP ($P_{eq}$) e à sua rotação ($\omega$) — a Equação~\eqref{eq:s11-6} projeta as horas restantes de operação do rolamento de escora antes da falha por fadiga:
+		\item \textbf{Vida Útil Remanescente ($L_{10h}$):} Mesma formulação da vida nominal de rolamento apresentada na Equação~\eqref{eq:s8-4}, agora aplicada à carga axial equivalente do estágio HP ($P_{eq}$) e à rotação do eixo do estágio HP ($N_{\text{rot,HP}}$) — a Equação~\eqref{eq:s11-6} projeta as horas restantes de operação do rolamento de escora antes da falha por fadiga:
 		\begin{equation}\label{eq:s11-6}
- L_{10h} = \left( \frac{C}{P_{eq}} \right)^p \cdot \frac{10^6}{60 \cdot \omega}
+ L_{10h} = \left( \frac{C}{P_{eq}} \right)^p \cdot \frac{10^6}{60 \cdot N_{\text{rot,HP}}}
 \end{equation}
+		A rotação entra aqui em RPM, como em toda a família de equações de vida de rolamento deste documento — o fator $60$ do denominador é justamente a conversão para horas, e substituí-la pela velocidade angular $\omega$ (rad\,s$^{-1}$) produziria um resultado sem significado dimensional.
 	\end{itemize}
 	
 	\subsection{\textbf{Mecanismos de Falha Detalhados}}
@@ -1450,7 +1543,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	\subsection{\textbf{Matriz de Diagnóstico do Estágio HP}}
 
-	A tabela abaixo resume os cinco modos de falha críticos do estágio HP e seu impacto relativo no Consumo de Potência Específica (SPC), permitindo priorizar a resposta do Gêmeo Digital.
+	A Tabela~\ref{tab:11-1} resume os cinco modos de falha críticos do estágio HP e seu impacto relativo no Consumo de Potência Específica (SPC), permitindo priorizar a resposta do Gêmeo Digital.
 	\begin{table}[h!]
 		\centering
 		\small
@@ -1464,7 +1557,8 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 			Vazamento Selos & $\uparrow P_{\text{cárter}}$ & $\downarrow \eta_{v,HP}$ & $\uparrow \uparrow$ \\
 			Arraste Líquido & $\uparrow$ Emissão Acústica & Picos de Torque $\Delta \tau$ & Crítico \\ \bottomrule
 		\end{tabular}
-		\caption{Matriz de diagnóstico do estágio HP e impacto relativo de cada falha no SPC.}
+		\caption[Matriz de diagnóstico do estágio HP]{Matriz de diagnóstico do estágio HP e impacto relativo de cada falha no SPC.}
+		\label{tab:11-1}
 	\end{table}
 	
 	\subsection{\textbf{Indicador de Saúde Global e KPI Final}}
@@ -1508,34 +1602,74 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 	Onde $\Delta P_{\text{sep}}$ é modelado em função da vazão volumétrica e da viscosidade cinemática do óleo $\nu(T)$. Uma queda de $P_{\text{sup,óleo}}$ abaixo do mínimo de projeto arrisca lubrificação insuficiente do engrenamento e dos mancais, mesmo que a vazão de óleo na saída da bomba esteja nominal.
 
+	\subsection{\textbf{Capacidade do Resfriador: por que a Efetividade Não Basta}}
+	O Capítulo 7 introduziu a efetividade $\epsilon$ (Equação~\eqref{eq:s7-6}) como indicador de saúde do resfriador de óleo, e ela cumpre bem esse papel enquanto as condições de contorno permanecem estáveis. Sob a carga do estágio HP em uma unidade offshore, porém, elas não permanecem estáveis: a temperatura de entrada da água de resfriamento acompanha a temperatura do mar e a carga dos demais consumidores do circuito de água, e a vazão disponível varia com a abertura de válvulas compartilhadas com outros equipamentos da planta. O problema é que $\epsilon$ responde a essas variações externas exatamente como responderia a uma incrustação interna — cai nos dois casos. Um alarme baseado apenas em $\epsilon$ é, portanto, ambíguo: ele não distingue ``o trocador sujou'' de ``a água de resfriamento chegou mais quente ou mais devagar''.
+
+	A saída é monitorar a grandeza que descreve o trocador \textbf{independentemente} das temperaturas de entrada: a condutância térmica global $UA$ (produto do coeficiente global de transferência pela área de troca). Ela é obtida diretamente do calor efetivamente removido — já conhecido pela Equação~\eqref{eq:s12-1} — dividido pela diferença de temperatura média logarítmica entre óleo e água:
+	\begin{equation}\label{eq:s12-3}
+	UA_{\text{real}} = \frac{\dot{Q}_{\text{óleo}}}{\Delta T_{lm}}
+	\end{equation}
+	Onde $\Delta T_{lm}$ é a mesma LMTD já definida no Capítulo 10 para o intercooler, aqui aplicada ao par óleo/água. O ponto prático é que a Equação~\eqref{eq:s12-3} não exige instrumentação nova: as quatro temperaturas (entrada e saída de óleo, entrada e saída de água) e a vazão de óleo já são necessárias para o balanço da Equação~\eqref{eq:s12-1}.
+
+	A relação entre as duas grandezas passa pelo número de unidades de transferência $NTU$ e pela razão de capacidades térmicas $C_r$, onde $C = \dot{m} \cdot c_p$ é a capacidade térmica de cada corrente. Para um trocador em contracorrente, a efetividade é uma função fechada dessas duas quantidades \cite{incropera}, conforme a Equação~\eqref{eq:s12-4}:
+	\begin{equation}\label{eq:s12-4}
+	\epsilon = \frac{1 - \exp\left[-NTU\,(1 - C_r)\right]}{1 - C_r \cdot \exp\left[-NTU\,(1 - C_r)\right]}, \qquad NTU = \frac{UA}{C_{\min}}, \qquad C_r = \frac{C_{\min}}{C_{\max}}
+	\end{equation}
+	A leitura diagnóstica da Equação~\eqref{eq:s12-4} é o que interessa ao Gêmeo Digital. A efetividade depende de $UA$, mas também de $C_{\min}$ — ou seja, das vazões. Uma redução na vazão de água de resfriamento derruba $\epsilon$ sem alterar em nada o estado físico do trocador. Já $UA$ só cai quando a superfície de troca de fato degrada: incrustação nos tubos, bolsão de ar retido no casco, tubos obstruídos ou vazamento interno. Normalizando pelo valor de projeto obtém-se um indicador adimensional de degradação, análogo à resistência de incrustação $R_f$ usada para o intercooler na Equação~\eqref{eq:s10-5}, mas expresso como fração da capacidade original:
+	\begin{equation}\label{eq:s12-5}
+	\eta_{UA} = \frac{UA_{\text{real}}}{UA_{\text{projeto}}}
+	\end{equation}
+	Um $\eta_{UA}$ estável com $\epsilon$ em queda aponta para fora da máquina — utilidade de água de resfriamento. Um $\eta_{UA}$ em queda sustentada aponta para dentro do trocador, e é ele, não $\epsilon$, que deve disparar a ordem de limpeza.
+
+	\subsection{\textbf{Válvula Termostática e Temperatura de Suprimento}}
+	A lógica da válvula termostática de três vias foi descrita qualitativamente no Capítulo 7; aqui ela é modelada, porque a mesma temperatura de suprimento pode resultar de posições de válvula muito diferentes, e essa distinção é diagnóstica. A válvula divide o óleo de retorno em dois ramos — um que atravessa o resfriador e outro que o desvia (\textit{bypass}) — e recombina os dois antes do suprimento aos mancais. Sendo $a_{tv}$ a fração da vazão enviada ao resfriador ($a_{tv}=1$: todo o óleo é resfriado; $a_{tv}=0$: todo o óleo desvia), a mistura resultante obedece à Equação~\eqref{eq:s12-6}:
+	\begin{equation}\label{eq:s12-6}
+	T_{\text{óleo,sup}} = a_{tv} \cdot T_{\text{óleo,fria}} + (1 - a_{tv}) \cdot T_{\text{óleo,ret}}
+	\end{equation}
+	Onde $T_{\text{óleo,fria}}$ é a temperatura na saída do resfriador e $T_{\text{óleo,ret}}$ a do óleo quente que retorna da gearbox. Como as três temperaturas são medidas, a equação pode ser invertida para \textbf{inferir} a posição efetiva da válvula, e o resíduo entre essa posição inferida e a posição comandada pelo controlador é o indicador direto de válvula travada — uma informação que a temperatura de suprimento sozinha não fornece, já que uma válvula presa pode, por coincidência de carga, entregar momentaneamente a temperatura correta.
+
+	As duas formas de travamento têm consequências opostas e igualmente indesejáveis. Presa no \textit{bypass}, a válvula deixa o óleo aquecer sem controle, e a viscosidade despenca pela curva de Vogel da Equação~\eqref{eq:s7-2}, afinando o filme lubrificante dos mancais. Presa no resfriador, ela mantém o óleo frio demais na partida: a viscosidade excessiva eleva a potência de atrito da Equação~\eqref{eq:s7-4} e retarda o estabelecimento do filme hidrodinâmico justamente no momento de maior risco de contato metal-metal. O Gêmeo Digital trata os dois casos como falhas distintas, não como um alarme genérico de temperatura.
+
+	\subsection{\textbf{Inércia Térmica e Tempo de Resposta do Circuito}}
+	O circuito de óleo não responde instantaneamente. A massa de óleo em circulação armazena calor, e a temperatura de suprimento persegue o equilíbrio entre o calor gerado por atrito e o calor rejeitado pelo resfriador segundo o balanço transiente da Equação~\eqref{eq:s12-7}, cuja constante de tempo $\tau_{th}$ é a razão entre a capacidade térmica armazenada e a condutância do resfriador:
+	\begin{equation}\label{eq:s12-7}
+	M_{\text{óleo}} \cdot c_{p,\text{óleo}} \cdot \frac{dT_{\text{óleo,sup}}}{dt} = \dot{Q}_{\text{óleo}} - UA_{\text{real}} \cdot \Delta T_{lm}, \qquad \tau_{th} = \frac{M_{\text{óleo}} \cdot c_{p,\text{óleo}}}{UA_{\text{real}}}
+	\end{equation}
+	Onde $M_{\text{óleo}}$ é a massa de óleo do circuito (reservatório mais tubulação). O subscrito em $\tau_{th}$ evita colisão com o torque $\tau$ dos capítulos de transmissão, seguindo a convenção de desambiguação já adotada no documento.
+
+	Essa constante de tempo tem duas consequências operacionais diretas. A primeira é de sintonia de alarme: após uma mudança de carga, a temperatura de óleo leva da ordem de $3\tau_{th}$ para acomodar no novo patamar, e um limiar de temperatura sem atraso mínimo dessa ordem transforma toda transição de carga em alarme falso. A segunda é diagnóstica e menos óbvia: $\tau_{th}$ é proporcional à massa de óleo do circuito. Se a resposta térmica observada fica sistematicamente \textbf{mais rápida} que a prevista, com $UA_{\text{real}}$ inalterado, a explicação física é que $M_{\text{óleo}}$ diminuiu — perda de carga de óleo por vazamento ou consumo. Esse é justamente o cenário ``Baixo Nível de Óleo'' da matriz a seguir, que por sintomas de regime permanente é ambíguo, mas pelo transiente é inequívoco.
+
 	\subsection{\textbf{Mecanismos de Falha Térmica}}
 	\begin{itemize}
-		\item \textbf{Obstrução do Trocador de Calor:} Detectada pelo aumento progressivo da diferença $(T_{\text{óleo,sup}} - T_{\text{amb}})$ — o resfriador não está mais rejeitando o calor esperado para a mesma carga térmica.
-		\item \textbf{Degradação do Óleo:} Monitorada via desvio na condutividade térmica e aumento da temperatura de retorno do óleo para a mesma potência de atrito dissipada.
+		\item \textbf{Obstrução do Trocador de Calor:} Detectada pela queda sustentada de $\eta_{UA}$ (Equação~\eqref{eq:s12-5}), e não pela simples elevação da temperatura de suprimento — o resfriador deixou de rejeitar o calor esperado para a mesma carga térmica, com as condições de água inalteradas.
+		\item \textbf{Degradação do Óleo:} Monitorada via desvio na condutividade térmica e aumento da temperatura de retorno do óleo para a mesma potência de atrito dissipada. Manifesta-se também como deriva dos coeficientes da curva de Vogel (Equação~\eqref{eq:s7-2}) ajustada aos dados de operação, já que o óleo oxidado não segue mais a curva $\mu \times T$ do lubrificante novo.
+		\item \textbf{Travamento da Válvula Termostática:} Isolada pelo resíduo entre a posição $a_{tv}$ inferida da Equação~\eqref{eq:s12-6} e a posição comandada, com as duas direções de travamento produzindo falhas de natureza diferente (óleo quente demais em regime, ou frio e viscoso demais na partida).
+		\item \textbf{Perda de Carga de Óleo:} Revelada pela redução da constante de tempo térmica $\tau_{th}$ (Equação~\eqref{eq:s12-7}) sem queda correspondente em $UA_{\text{real}}$ — um circuito com menos óleo aquece e esfria mais rápido do que o modelo prevê.
 	\end{itemize}
 
 	\subsection{\textbf{Matriz de Diagnóstico Térmico}}
-	A tabela abaixo cruza os sintomas de temperatura do óleo e perda de carga no deaerador para distinguir entre quatro causas raiz distintas de degradação térmica.
+	A Tabela~\ref{tab:12-1} cruza os sintomas de temperatura do óleo e perda de carga no deaerador para distinguir entre quatro causas raiz distintas de degradação térmica. A quarta coluna traz a grandeza modelada neste capítulo que confirma cada hipótese: as duas primeiras colunas levantam a suspeita, mas são as três últimas subseções que fecham o diagnóstico.
 	\begin{table}[H]
 		\centering
 		\resizebox{\textwidth}{!}{
-			\begin{tabular}{l c c l}
+			\begin{tabular}{l c c c l}
 				\toprule
-				\textbf{Falha} & \textbf{Sintoma $T_{\text{óleo,ret}}$} & \textbf{Sintoma $\Delta P_{\text{sep}}$} & \textbf{Diagnóstico Digital} \\ \midrule
-				Trocador Obstruído & $\uparrow \uparrow$ & Nominal & \textbf{Falha no Arrefecimento} \\
-				Deaerador Saturado & Nominal & $\uparrow \uparrow$ & \textbf{Troca de Elemento Filtrante} \\
-				Baixo Nível de Óleo & $\uparrow$ (Instável) & $\downarrow$ & \textbf{Risco de Cavitação / Desgaste} \\
-				Válvula Termostática Presa & $\uparrow$ ou $\downarrow$ & Nominal & \textbf{Falha de Controle Térmico} \\ \bottomrule
+				\textbf{Falha} & \textbf{Sintoma $T_{\text{óleo,ret}}$} & \textbf{Sintoma $\Delta P_{\text{sep}}$} & \textbf{Confirmação Quantitativa} & \textbf{Diagnóstico Digital} \\ \midrule
+				Trocador Obstruído & $\uparrow \uparrow$ & Nominal & $\eta_{UA} \downarrow$ sustentado & \textbf{Falha no Arrefecimento} \\
+				Deaerador Saturado & Nominal & $\uparrow \uparrow$ & $\eta_{UA}$ nominal & \textbf{Troca de Elemento Filtrante} \\
+				Baixo Nível de Óleo & $\uparrow$ (Instável) & $\downarrow$ & $\tau_{th} \downarrow$ com $UA_{\text{real}}$ nominal & \textbf{Risco de Cavitação / Desgaste} \\
+				Válvula Termostática Presa & $\uparrow$ ou $\downarrow$ & Nominal & Resíduo de $a_{tv}$ não nulo & \textbf{Falha de Controle Térmico} \\ \bottomrule
 			\end{tabular}
 		}
-		\caption{Matriz de diagnóstico térmico do sistema de lubrificação e resfriamento.}
+		\caption[Matriz de diagnóstico térmico do circuito de óleo]{Matriz de diagnóstico térmico do sistema de lubrificação e resfriamento, com a grandeza que confirma cada causa raiz.}
+		\label{tab:12-1}
 	\end{table}
 
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A distinção entre os quatro cenários da matriz acima depende de observar $T_{\text{óleo,ret}}$ e $\Delta P_{\text{sep}}$ \textbf{simultaneamente} — isoladamente, cada sintoma é compatível com mais de uma causa raiz, e é justamente o cruzamento das duas variáveis que o Gêmeo Digital usa para eliminar a ambiguidade diagnóstica.
+	\textbf{Diretriz Técnica Final:} A distinção entre os quatro cenários da matriz acima depende de observar $T_{\text{óleo,ret}}$ e $\Delta P_{\text{sep}}$ \textbf{simultaneamente} — isoladamente, cada sintoma é compatível com mais de uma causa raiz, e é justamente o cruzamento das variáveis que o Gêmeo Digital usa para eliminar a ambiguidade diagnóstica. O princípio que organiza este capítulo é mais geral e vale para qualquer subsistema térmico do compressor: sempre que um indicador de desempenho depender simultaneamente do equipamento e de suas condições de contorno — como $\epsilon$ depende de $UA$ e das vazões — ele serve para \textbf{detectar} o desvio, mas nunca para \textbf{atribuir} a causa. A atribuição exige uma grandeza invariante às condições externas ($UA$ para a superfície de troca, $a_{tv}$ para o atuador, $\tau_{th}$ para o inventário de óleo), e é por isso que o modelo do Gêmeo Digital precisa carregar a física do trocador, e não apenas seus limiares de alarme.
 
 	% --- Início do Capítulo 13: Sistema de Controle, Válvulas e Estratégias de Modulação ---
 	
@@ -1545,36 +1679,77 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	Este capítulo descreve a inteligência operacional do compressor, modelando a resposta dinâmica das válvulas e a lógica de controle para otimizar o consumo energético, operando com ou sem instrumentação de vazão.
 	
 	\subsection{\textbf{Dinâmica da Válvula de Admissão (\textit{Intake Valve})}}
-	A vazão mássica de entrada ($\dot{m}_{\text{in}}$) é modelada como um escoamento através de um orifício variável controlado pelo solenoide de carga:
+	A válvula de admissão é o elemento que decide quanto ar entra na máquina, e por isso é o atuador primário de qualquer estratégia de modulação. Fisicamente ela se comporta como um orifício de área variável, comandado pelo solenoide de carga: o ar atmosférico é acelerado ao atravessar a restrição, e a vazão mássica resultante ($\dot{m}_{\text{in}}$) depende da área efetiva aberta, das condições do ar a montante e — de forma não linear — da razão entre a pressão a jusante e a pressão atmosférica. A Equação~\eqref{eq:s13-1} organiza esses três grupos de fatores, separando o que é geometria ($C_d \cdot A_v$), o que é estado do ar admitido ($P_{\text{atm}}$, $T_{\text{atm}}$) e o que é efeito de compressibilidade (a função de escoamento $\Phi(r)$):
 	\begin{equation}\label{eq:s13-1}
- \dot{m}_{\text{in}} = C_d \cdotp A_v \cdotp P_{\text{atm}} \cdotp \sqrt{\frac{2}{R \cdotp T_{\text{atm}}}} \cdotp \Phi(r) 
+ \dot{m}_{\text{in}} = C_d \cdotp A_v \cdotp P_{\text{atm}} \cdotp \sqrt{\frac{2}{R \cdotp T_{\text{atm}}}} \cdotp \Phi(r)
 \end{equation}
-	
+	Onde $C_d$ é o coeficiente de descarga do orifício (perdas reais em relação ao escoamento isentrópico ideal, tipicamente obtido do ensaio da própria válvula), $A_v$ é a área efetiva de passagem comandada pelo atuador e $r = P_{\text{suc}}/P_{\text{atm}}$ é a razão de pressões através da válvula.
+
+	A função $\Phi(r)$ merece atenção porque é onde reside o comportamento que distingue esse escoamento de um simples orifício hidráulico. Enquanto a pressão a jusante não cai muito, o escoamento é subsônico e a vazão cresce à medida que a diferença de pressão aumenta. A partir de certo ponto, porém, a velocidade na garganta atinge a do som e o escoamento \textbf{bloqueia} (\textit{choked flow}): reduzir ainda mais a pressão a jusante não aumenta mais a vazão, porque a informação da queda de pressão não consegue se propagar contra um escoamento sônico. A Equação~\eqref{eq:s13-2} expressa esses dois regimes, com a transição na razão crítica $r_{cr}$:
+	\begin{equation}\label{eq:s13-2}
+	\Phi(r) = \begin{cases}
+	\sqrt{\dfrac{\gamma}{\gamma - 1}\left(r^{2/\gamma} - r^{(\gamma+1)/\gamma}\right)}, & r > r_{cr} \quad \text{(subsônico)} \\[1.4em]
+	\sqrt{\dfrac{\gamma}{2}}\left(\dfrac{2}{\gamma+1}\right)^{\frac{\gamma+1}{2(\gamma-1)}}, & r \leq r_{cr} \quad \text{(bloqueado)}
+	\end{cases}
+	\qquad r_{cr} = \left(\frac{2}{\gamma+1}\right)^{\frac{\gamma}{\gamma-1}}
+	\end{equation}
+	Para o ar ($\gamma = 1{,}4$), $r_{cr} \approx 0{,}528$. A consequência prática para o Gêmeo Digital é importante: na partida em vazio e nos primeiros instantes de carga, a válvula opera na região bloqueada, e nesse regime a vazão admitida é função apenas de $A_v$ e das condições atmosféricas — o modelo não pode usar a pressão de sucção para inferir vazão nessa faixa, porque ela deixou de carregar essa informação. Ignorar esse detalhe é uma das causas clássicas de o sensor virtual da subseção seguinte divergir justamente nos transientes.
+
 	\subsection{\textbf{Determinação da Vazão Mássica (\texorpdfstring{$\dot{m}$}{ṁ}): Sensor Virtual}}
 	O Gêmeo Digital resolve a ausência de medidores físicos através de dois métodos redundantes:
 	\begin{enumerate}
-		\item \textbf{Método 1 (Eficiência Volumétrica):} Baseado na cinemática e na razão de pressão ($\Pi$), a Equação~\eqref{eq:s13-2} estima a vazão sem sensor de vazão físico: parte do deslocamento teórico do rotor (densidade de sucção vezes volume deslocado vezes rotação) e corrige pelo termo entre chaves, que é a própria eficiência volumétrica $\eta_v$ — decrescente com a razão de pressão $\Pi$ através do fator de vazamento $\lambda$:
-		\begin{equation}\label{eq:s13-2}
+		\item \textbf{Método 1 (Eficiência Volumétrica):} Baseado na cinemática e na razão de pressão ($\Pi$), a Equação~\eqref{eq:s13-3} estima a vazão sem sensor de vazão físico: parte do deslocamento teórico do rotor (densidade de sucção vezes volume deslocado vezes rotação) e corrige pelo termo entre chaves, que é a própria eficiência volumétrica $\eta_v$ — decrescente com a razão de pressão $\Pi$ através do fator de vazamento $\lambda$:
+		\begin{equation}\label{eq:s13-3}
  \dot{m}_{\text{est}} = \rho_{\text{suc}} \cdotp V_{\text{disp}} \cdotp \left( \frac{\omega}{2\pi} \right) \cdotp \underbrace{[1 - \lambda (\Pi^{1/n} - 1)]}_{\eta_v}
 \end{equation}
 		\item \textbf{Método 2 (Diferencial de Pressão no Reservatório):} Mede a vazão de demanda da planta pela taxa de subida de pressão no reservatório ($V_{\text{net}}$) durante o ciclo de carga:
-		\begin{equation}\label{eq:s13-3}
+		\begin{equation}\label{eq:s13-4}
  \dot{m}_{\text{comp}} - \dot{m}_{\text{demanda}} = \frac{V_{\text{net}}}{R \cdotp T} \cdotp \frac{dP_{\text{net}}}{dt} 
 \end{equation}
 	\end{enumerate}
 	
 	\subsection{\textbf{Dinâmica de \textit{Blow-down} e Modulação VFD}}
-	O decaimento de pressão em alívio segue uma curva exponencial caracterizada pela constante de tempo $\tau$:
-	\begin{equation}\label{eq:s13-4}
- P(t) = P_{\text{alívio}} + (P_{\text{max}} - P_{\text{alívio}}) \cdotp e^{-t/\tau} 
-\end{equation}
-	Para sistemas com inversor de frequência, a potência é ajustada pela frequência normalizada $\bar{f}$:
+	Quando a máquina passa para alívio, a válvula de \textit{blow-down} despressuriza o volume interno entre o elemento compressor e a válvula de retenção. Esse esvaziamento não é instantâneo: o ar escoa por um orifício de área fixa, e a pressão decai de forma aproximadamente exponencial a partir do valor de operação até a pressão de alívio residual, conforme a Equação~\eqref{eq:s13-5}. A constante de tempo $\tau_{bd}$ agrega a geometria do orifício de descarga e o volume a despressurizar — quanto maior o volume interno ou menor o orifício, mais lento o alívio:
 	\begin{equation}\label{eq:s13-5}
- \dot{W}_{\text{vfd}} = \dot{W}_{\text{nominal}} \cdotp (a \cdotp \bar{f}^2 + b \cdotp \bar{f} + c) 
+ P(t) = P_{\text{alívio}} + (P_{\text{max}} - P_{\text{alívio}}) \cdotp e^{-t/\tau_{bd}}
 \end{equation}
-	
+	O subscrito em $\tau_{bd}$ evita colisão com o torque $\tau$ dos capítulos de transmissão. Essa constante de tempo é diagnóstica por si só: um $\tau_{bd}$ que cresce ao longo dos meses indica orifício de \textit{blow-down} parcialmente obstruído, e a máquina passa a consumir potência comprimindo contra uma pressão interna que deveria já ter sido aliviada — perda energética que não aparece em nenhum indicador de regime permanente, apenas na transição.
+
+	Para sistemas com inversor de frequência, a potência absorvida é descrita em função da frequência normalizada $\bar{f} = f/f_{\text{nom}}$ pela Equação~\eqref{eq:s13-6}:
+	\begin{equation}\label{eq:s13-6}
+ \dot{W}_{\text{vfd}} = \dot{W}_{\text{nominal}} \cdotp (a \cdotp \bar{f}^2 + b \cdotp \bar{f} + c)
+\end{equation}
+	Onde $a$, $b$ e $c$ são coeficientes ajustados aos dados da própria máquina. Cabe aqui uma advertência que é fonte recorrente de erro de modelagem: essa forma quadrática \textbf{não} é a lei de afinidade das turbomáquinas. Em um ventilador ou bomba centrífuga a potência varia com o cubo da rotação, e reduzir 20\% da velocidade economiza cerca de metade da energia. Um compressor de parafuso é uma máquina de deslocamento positivo: a vazão é proporcional à rotação e o trabalho específico de compressão praticamente não depende dela, de modo que a potência varia de forma \textbf{aproximadamente linear} com $\bar{f}$. O termo quadrático da Equação~\eqref{eq:s13-6} não representa a compressão em si — ele captura os desvios de segunda ordem: a variação de rendimento do motor e do inversor fora do ponto nominal, o aumento relativo das perdas por vazamento interno em baixa rotação (o tempo de contato por volta cresce, e a folga $\delta$ tem mais tempo para fugir ar) e as perdas mecânicas de atrito. Transportar a lei cúbica para este equipamento superestima grosseiramente a economia esperada de um VSD e leva a decisões de investimento erradas.
+
+	\subsection{\textbf{Estratégias de Modulação em Comparação}}
+	O título deste capítulo promete estratégias de modulação, e é aqui que elas se separam quantitativamente. A métrica correta para compará-las não é a potência absoluta, mas a \textbf{potência específica} — energia gasta por unidade de ar efetivamente entregue. Trata-se do mesmo $SPC$ definido como KPI global na Equação~\eqref{eq:s11-11}, aqui escrito como função da fração de carga para expor o que aquela forma agregada esconde. Sendo $x_c$ a fração da capacidade nominal realmente demandada pela planta ($x_c = \dot{V}_{\text{demanda}}/\dot{V}_{\text{nom}}$), a Equação~\eqref{eq:s13-7} define a potência específica e as duas leis de consumo que a alimentam:
+	\begin{equation}\label{eq:s13-7}
+	\text{SPC}(x_c) = \frac{\dot{W}(x_c)}{x_c \cdot \dot{V}_{\text{nom}}}, \qquad
+	\begin{aligned}
+	\dot{W}_{\text{c/a}}(x_c) &= \dot{W}_{\text{nom}} \left[ x_c + (1 - x_c) \, k_{ul} \right] \\
+	\dot{W}_{\text{vsd}}(x_c) &\approx \dot{W}_{\text{nom}} \, \frac{x_c}{\eta_{vsd}(x_c)}
+	\end{aligned}
+	\end{equation}
+	Onde $k_{ul} = \dot{W}_{\text{unload}}/\dot{W}_{\text{nom}}$ é a fração da potência nominal que a máquina continua consumindo em alívio, e $\eta_{vsd}(x_c)$ é o rendimento combinado de motor e inversor na carga parcial correspondente. Note que $k_{ul}$ não é um valor de tabela: ele é uma característica medida da máquina específica, e o Gêmeo Digital o extrai diretamente do histórico de operação, cruzando os períodos com $\delta = 0$ na Equação~\eqref{eq:s13-10} com a potência elétrica registrada no mesmo intervalo.
+
+	A leitura da Equação~\eqref{eq:s13-7} explica por que a escolha de estratégia importa tanto. Na operação em carga/alívio, o numerador tem um piso — a máquina em alívio nunca consome zero — enquanto o denominador vai a zero com a demanda. A potência específica, portanto, \textbf{diverge} em baixa carga: uma planta operando cronicamente a 30\% da capacidade paga por cada metro cúbico um múltiplo do que pagaria em plena carga. Já na modulação por velocidade, numerador e denominador caem juntos, e a potência específica permanece aproximadamente plana até o limite inferior de rotação da máquina — abaixo do qual a lubrificação dos mancais e o resfriamento deixam de ser adequados, e a máquina precisa alternar para carga/alívio de qualquer forma. Esse limite inferior, e não a curva teórica, é o que define o ganho real do VSD em uma instalação concreta.
+
+	\subsection{\textbf{Ciclagem, Banda Morta e Volume de Reservatório}}
+	Uma máquina em carga/alívio não escolhe livremente sua frequência de ciclagem: ela é imposta pela demanda, pelo volume de rede disponível e pela banda morta de pressão configurada. Durante a carga, a rede pressuriza com a diferença entre o que o compressor entrega e o que a planta consome; durante o alívio, despressuriza apenas com o consumo. Aplicando a Equação~\eqref{eq:s13-4} a cada um dos dois trechos e somando as durações, obtém-se a frequência de ciclagem da Equação~\eqref{eq:s13-8}:
+	\begin{equation}\label{eq:s13-8}
+	f_{\text{ciclo}} = \frac{1}{t_{\text{carga}} + t_{\text{alívio}}} = \frac{R \cdot T \cdot \dot{m}_{\text{demanda}} \left( \dot{m}_{\text{comp}} - \dot{m}_{\text{demanda}} \right)}{V_{\text{net}} \cdot \Delta P_{db} \cdot \dot{m}_{\text{comp}}}
+	\end{equation}
+	Onde $\Delta P_{db}$ é a banda morta entre as pressões de corte e de religamento. A expressão tem um máximo em $\dot{m}_{\text{demanda}} = \dot{m}_{\text{comp}}/2$, isto é, a ciclagem é mais severa exatamente na demanda igual à metade da capacidade — não nos extremos, como a intuição sugeriria. Esse resultado é o que amarra este capítulo ao dimensionamento dos vasos pulmão: como $f_{\text{ciclo}}$ é inversamente proporcional a $V_{\text{net}}$ e a $\Delta P_{db}$, respeitar o número máximo de partidas por hora admitido pelo motor e pelo atuador da válvula é uma restrição que se satisfaz aumentando o volume de rede ou alargando a banda morta — e alargar a banda morta custa energia, pela sensibilidade que a subseção seguinte quantifica.
+
+	\subsection{\textbf{Sensibilidade do Consumo ao \textit{Setpoint} de Pressão}}
+	Toda decisão de controle que eleve a pressão de descarga — uma banda morta mais larga, uma margem de segurança adicional sobre a pressão mínima do processo — se paga em energia, e o Gêmeo Digital precisa quantificar esse custo antes de propor o ajuste. Partindo da potência de compressão politrópica, o consumo é proporcional a $\left(\Pi^{(n-1)/n} - 1\right)$, e a sensibilidade relativa da potência a uma variação relativa da razão de pressão é a elasticidade da Equação~\eqref{eq:s13-9}:
+	\begin{equation}\label{eq:s13-9}
+	E_{\Pi} = \frac{\partial \dot{W}/\dot{W}}{\partial \Pi/\Pi} = \frac{\dfrac{n-1}{n} \cdot \Pi^{(n-1)/n}}{\Pi^{(n-1)/n} - 1}
+	\end{equation}
+	O comportamento dessa elasticidade é o que torna a Equação~\eqref{eq:s13-9} útil na prática. Para uma razão de pressão global $\Pi = 8$ e índice politrópico $n = 1{,}35$, ela vale aproximadamente $0{,}62$: cada 1\% de aumento na pressão de descarga custa $0{,}62\%$ de potência adicional. Traduzido para a unidade com que o operador raciocina, elevar a descarga de $8$ para $9$ bar absolutos — um aumento de $12{,}5\%$ — custa cerca de $7\%$ a mais de energia, valor que se mantém entre $7{,}2\%$ e $7{,}6\%$ para $n$ entre $1{,}3$ e $1{,}4$, e que reproduz a regra prática de campo de ``aproximadamente 7\% por bar''. A diferença é que aqui ela não é uma regra decorada: é uma consequência calculável da termodinâmica do estágio, válida na faixa em que foi avaliada e recalculável pelo Gêmeo Digital para a condição real da máquina. Note ainda que $E_{\Pi}$ \textbf{cresce} conforme $\Pi$ diminui — em uma rede operando em pressão mais baixa, cada bar excedente pesa proporcionalmente mais, o que reforça a busca pelo \textit{setpoint} mínimo compatível com o processo.
+
 	\subsection{\textbf{Matriz de Diagnóstico de Controle}}
-	A tabela abaixo cruza o comportamento da taxa de pressurização ($dP/dt$) com o consumo elétrico para localizar a origem de uma perda de eficiência pneumática — distinguindo vazamento interno, falha de válvula, filtro obstruído e vazamento externo à máquina.
+	A Tabela~\ref{tab:13-1} cruza o comportamento da taxa de pressurização ($dP/dt$) com o consumo elétrico para localizar a origem de uma perda de eficiência pneumática — distinguindo vazamento interno, falha de válvula, filtro obstruído e vazamento externo à máquina.
 	\begin{table}[H]
 		\centering
 		\resizebox{\textwidth}{!}{
@@ -1587,12 +1762,13 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 				Vazamento na Rede & Baixo (Carga/Alívio) & Constante & \textbf{Vazamento Externo à Máquina} \\ \bottomrule
 			\end{tabular}
 		}
-		\caption{Matriz de diagnóstico do sistema de controle e válvulas de modulação.}
+		\caption[Matriz de diagnóstico do sistema de controle]{Matriz de diagnóstico do sistema de controle e válvulas de modulação.}
+		\label{tab:13-1}
 	\end{table}
 	
 	\subsection{\textbf{KPI Energético: Custo de Ciclo}}
 	O custo operacional é integrado com base no estado binário da válvula de admissão $\delta$ (1 para Carga, 0 para Alívio):
-	\begin{equation}\label{eq:s13-6}
+	\begin{equation}\label{eq:s13-10}
  \boxed{C_{op} = \int_{t_1}^{t_2} (\dot{W}_{\text{load}} \cdotp \delta + \dot{W}_{\text{unload}} \cdotp (1 - \delta)) dt}
 \end{equation}
 
@@ -1600,7 +1776,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} O custo de ciclo da Equação~\eqref{eq:s13-6} é a métrica que conecta a estratégia de modulação (carga/alívio) diretamente ao custo energético — qualquer ajuste de \textit{setpoint} de pressão proposto pelo Gêmeo Digital deve ser avaliado por seu impacto em $C_{op}$, não apenas pela estabilidade de pressão que produz.
+	\textbf{Diretriz Técnica Final:} O custo de ciclo da Equação~\eqref{eq:s13-10} é a métrica que conecta a estratégia de modulação (carga/alívio) diretamente ao custo energético — qualquer ajuste de \textit{setpoint} de pressão proposto pelo Gêmeo Digital deve ser avaliado por seu impacto em $C_{op}$, não apenas pela estabilidade de pressão que produz. As três grandezas deste capítulo que tornam esse julgamento possível são a potência específica em carga parcial (Equação~\eqref{eq:s13-7}), a frequência de ciclagem imposta pelo par volume/banda morta (Equação~\eqref{eq:s13-8}) e a elasticidade do consumo à pressão de descarga (Equação~\eqref{eq:s13-9}) — e elas frequentemente puxam em direções opostas: alargar a banda morta protege o atuador da ciclagem excessiva, mas eleva a pressão média e o consumo. O papel do Gêmeo Digital não é otimizar uma delas isoladamente, e sim expor esse conflito quantificado ao MPC do Capítulo 24, que decide com todas as restrições à vista.
 
 	\clearpage
 	\section{Aftercooler, Filtragem Primária e Gestão de Condensado}
@@ -1608,7 +1784,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	Este capítulo detalha a modelagem do resfriamento posterior e da remoção de contaminantes líquidos. O Gêmeo Digital atua nesta etapa para garantir que o ar entregue à secadora PSA esteja dentro dos limites de temperatura e saturação, protegendo a integridade do material dessecante.
 	
 	\subsection{Termodinâmica do Aftercooler (Resfriador Posterior)}
-	O aftercooler é o trocador de calor final do processo de geração. Sua função é reduzir a temperatura de descarga do estágio HP ($T_{d,hp}$) para níveis compatíveis com os elementos de filtragem e secagem.
+	O aftercooler é o trocador de calor final do processo de geração. Sua função é reduzir a temperatura de descarga do estágio HP ($T_{d,hp}$) para níveis compatíveis com os elementos de filtragem e secagem. As duas grandezas que o descrevem — a efetividade e o coeficiente global de transferência — não são específicas deste equipamento: são as do método $\epsilon$--NTU e da definição de resistência térmica global, formulação-padrão de análise de trocadores de calor \cite[Cap.~11]{incropera}, aqui apenas particularizada para o par ar comprimido/água de resfriamento.
 	
 	\begin{itemize}
 		\item \textbf{Efetividade Térmica ($\epsilon_{ac}$):} Mesma lógica de efetividade já usada no intercooler e no resfriador de óleo: a Equação~\eqref{eq:s14-1} compara a queda de temperatura real do ar ($T_{d,hp} - T_{ac,out}$) com a máxima queda teoricamente possível, limitada pela temperatura de entrada da água de resfriamento ($T_{d,hp} - T_{w,in}$):
@@ -1653,12 +1829,12 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\begin{equation}\label{eq:s14-6}
  \dot{m}_{perda} = C_d \cdot A_{dreno} \cdot \sqrt{\gamma \rho P \left( \frac{2}{\gamma+1} \right)^{\frac{\gamma+1}{\gamma-1}}}
 \end{equation}
-		Onde $C_d$ é o coeficiente de descarga do orifício, $A_{dreno}$ sua área efetiva, e $\rho$, $P$ e $\gamma$ a densidade, pressão absoluta e razão de calores específicos do ar na rede a montante do dreno.
+		Onde $C_d$ é o coeficiente de descarga do orifício, $A_{dreno}$ sua área efetiva, e $\rho$, $P$ e $\gamma$ a densidade, pressão absoluta e razão de calores específicos do ar na rede a montante do dreno. A Equação~\eqref{eq:s14-6} é o ramo bloqueado da função de escoamento $\Phi(r)$ da Equação~\eqref{eq:s13-2}, particularizado para o caso do dreno, em que a razão de pressões está sempre muito abaixo da crítica ($r_{cr} \approx 0{,}528$ para o ar) porque a descarga se dá diretamente na atmosfera.
 		\item \textbf{Falha Travado Fechado (\textit{Stuck Closed}):} Causa o alagamento do separador e arraste de água líquida para a secadora PSA, degradando o dessecante instantaneamente.
 	\end{itemize}
 	
 	\subsection{Matriz de Diagnóstico de Tratamento Primário}
-	A tabela abaixo cruza os sintomas de temperatura, perda de carga nos filtros e umidade de saída para diferenciar incrustação do aftercooler, saturação de filtro e falha de dreno (aberto ou fechado).
+	A Tabela~\ref{tab:14-1} cruza os sintomas de temperatura, perda de carga nos filtros e umidade de saída para diferenciar incrustação do aftercooler, saturação de filtro e falha de dreno (aberto ou fechado).
 
 	\begin{table}[h!]
 		\centering
@@ -1675,6 +1851,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\end{tabular}
 		}
 		\caption{Matriz de diagnóstico de tratamento primário.}
+		\label{tab:14-1}
 	\end{table}
 
 	\subsection{KPI de Performance de Tratamento (\texorpdfstring{$KPI_{treat}$}{KPI treat})}
@@ -1697,7 +1874,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\begin{figure}[h!]
 			\centering
 			\includegraphics[width=0.75\textwidth]{figuras/fig_15_1_psa.pdf}
-			\caption{Princípio de operação das torres PSA em ciclos alternados de adsorção (A) e regeneração/dessorção (D). I = entrada de ar úmido, O = saída de ar seco, E = exaustão da purga. Fonte: \textit{Pressure swing adsorption principle}, Cmglee, Wikimedia Commons, licença CC BY-SA 4.0.}
+			\caption[Princípio de operação das torres PSA]{Princípio de operação das torres PSA em ciclos alternados de adsorção (A) e regeneração/dessorção (D). I = entrada de ar úmido, O = saída de ar seco, E = exaustão da purga. Fonte: \textit{Pressure swing adsorption principle}, Cmglee, Wikimedia Commons, licença CC BY-SA 4.0.}
 			\label{fig:15-1}
 		\end{figure}
 
@@ -1715,7 +1892,7 @@ q_d = q_{eq} \cdot \exp \left( -k_{ads} \cdot \frac{t_{ads}}{t_{res}} \right)
 			\begin{figure}[h!]
 				\centering
 				\includegraphics[width=0.60\textwidth]{figuras/fig_15_2_adsorcao.pdf}
-				\caption{Capacidade de adsorção dinâmica normalizada em função do tempo relativo de adsorção, para diferentes constantes de taxa $k_{ads}$.}
+				\caption[Capacidade de adsorção dinâmica normalizada]{Capacidade de adsorção dinâmica normalizada em função do tempo relativo de adsorção, para diferentes constantes de taxa $k_{ads}$.}
 				\label{fig:15-2}
 			\end{figure}
 
@@ -1767,10 +1944,11 @@ q_d = q_{eq} \cdot \exp \left( -k_{ads} \cdot \frac{t_{ads}}{t_{res}} \right)
 		\end{itemize}
 
 		\subsection{\textbf{Matriz de Diagnóstico de Falhas}}
-		A tabela abaixo relaciona as falhas típicas do secador PSA/tambor rotativo (saturação do leito, falha de chaveamento, degradação térmica e desgaste mecânico) aos seus indicadores primários e à ação prescrita pelo Gêmeo Digital.
+		A Tabela~\ref{tab:15-1} relaciona as falhas típicas do secador PSA/tambor rotativo (saturação do leito, falha de chaveamento, degradação térmica e desgaste mecânico) aos seus indicadores primários e à ação prescrita pelo Gêmeo Digital.
 		\begin{table}[h!]
 			\centering
 			\resizebox{\textwidth}{!}{
+			\renewcommand{\arraystretch}{1.5}
 			\begin{tabular}{llll}
 				\toprule
 				\textbf{Falha} & \textbf{Indicador Primário} & \textbf{Causa Provável} & \textbf{Ação Digital Twin} \\ \midrule
@@ -1780,7 +1958,8 @@ q_d = q_{eq} \cdot \exp \left( -k_{ads} \cdot \frac{t_{ads}}{t_{res}} \right)
 				Desgaste Tambor & $\uparrow$ Torque Motor & Atrito nos Selos & Manutenção Preditiva \\ \bottomrule
 			\end{tabular}
 			}
-			\caption{Matriz de diagnóstico de falhas do secador PSA e do tambor rotativo (HOC).}
+			\caption[Matriz de falhas do secador PSA e do tambor rotativo]{Matriz de diagnóstico de falhas do secador PSA e do tambor rotativo (HOC).}
+			\label{tab:15-1}
 		\end{table}
 		
 		\subsection{\textbf{Indicadores Globais de Performance (KPIs)}}
@@ -1877,7 +2056,7 @@ t_{to\_cut} = \frac{V_{tank} \cdotp (P_{actual} - P_{threshold})}{\dot{V}_{deman
 
 \subsection{Matriz de Diagnóstico de Falhas (Frota e Distribuição)}
 
-A operação com múltiplos compressores em paralelo introduz riscos específicos de frota (refluxo, sobrepressão por travamento de PSV, falha de sequenciamento) que a tabela abaixo resume junto ao indicador primário e à ação correspondente do Gêmeo Digital.
+A operação com múltiplos compressores em paralelo introduz riscos específicos de frota (refluxo, sobrepressão por travamento de PSV, falha de sequenciamento) que a Tabela~\ref{tab:16-1} resume junto ao indicador primário e à ação correspondente do Gêmeo Digital.
 \begin{table}[h!]
 \centering
 \noindent\resizebox{\textwidth}{!}{
@@ -1892,6 +2071,7 @@ A operação com múltiplos compressores em paralelo introduz riscos específico
 	\end{tabular}
 }
 \caption{Matriz de diagnóstico de falhas de frota e distribuição (header e vasos pulmão).}
+\label{tab:16-1}
 \end{table}
 
 \subsection{Indicadores Globais de Performance (KPIs)}
@@ -1931,7 +2111,7 @@ O Gêmeo Digital processa o vetor de estado $z(t)$ extraído continuamente da in
 	\item \textbf{Temperaturas ($T$):} Entrada e saída de compressores e trocadores de calor.
 	\item \textbf{Diferenciais de Pressão ($\Delta P$):} Queda de carga em filtros e secadores (indicadores de colmatação).
 	\item \textbf{Vazão ($\dot{m}$):} Medição direta ou estimada para balanço de massa e energia.
-	\item \textbf{Ponto de Orvalho ($T_{dp}$):} Variável crítica para conformidade com a norma ISO 8573-1 \cite{iso8573}, evitando condensação e corrosão nos equipamentos clientes.
+	\item \textbf{Ponto de Orvalho ($T_{dp}$):} Variável crítica para conformidade com a classe de umidade contratada da ISO 8573-1 \cite{iso8573}, evitando condensação e corrosão nos equipamentos clientes.
 	\item \textbf{Vetor de Entrada Global ($z$):}
 	\begin{equation}\label{eq:s17-1}
 z = [P, T, \Delta P, \dot{m}, T_{dp}, I, V]^T
@@ -1954,13 +2134,13 @@ E_{rec} = \sum_{j=1}^{M} (z_j - \hat{z}_j)^2
 
 \subsection{Otimização de Processos via Exergia}
 
-\textbf{Da entropia à exergia — uma explicação conceitual:} A Segunda Lei da Termodinâmica estabelece que a entropia de um sistema isolado nunca diminui: todo processo real — atrito, transferência de calor sob diferença finita de temperatura, ou um gás escoando livremente por um vazamento — gera entropia ($\dot{S}_{gen} \ge 0$), e esse aumento é irreversível, não há como "desfazê-lo" sem gastar ainda mais energia em outro lugar. A Primeira Lei garante que a energia total se conserva (nunca é destruída), mas a Segunda Lei revela algo que a Primeira não enxerga: a \textit{qualidade} dessa energia — sua capacidade de realizar trabalho útil — se degrada continuamente à medida que a entropia aumenta. É exatamente essa perda de qualidade, invisível para um balanço de energia comum, que a \textbf{exergia} foi criada para medir.
+\textbf{Da entropia à exergia — uma explicação conceitual:} A Segunda Lei da Termodinâmica estabelece que a entropia de um sistema isolado nunca diminui: todo processo real — atrito, transferência de calor sob diferença finita de temperatura, ou um gás escoando livremente por um vazamento — gera entropia ($\dot{S}_{gen} \ge 0$), e esse aumento é irreversível, não há como ``desfazê-lo'' sem gastar ainda mais energia em outro lugar. A Primeira Lei garante que a energia total se conserva (nunca é destruída), mas a Segunda Lei revela algo que a Primeira não enxerga: a \textit{qualidade} dessa energia — sua capacidade de realizar trabalho útil — se degrada continuamente à medida que a entropia aumenta. É exatamente essa perda de qualidade, invisível para um balanço de energia comum, que a \textbf{exergia} foi criada para medir.
 
-Formalmente, exergia é o trabalho útil máximo que poderia ser extraído de um fluxo de energia ou matéria, levando-o reversivelmente até o equilíbrio com o ambiente de referência (pressão e temperatura atmosféricas, $P_0$ e $T_0$). A energia nunca é destruída; a exergia, sim — e a quantidade destruída é diretamente proporcional à entropia gerada pelo processo, $\dot{I} = T_0 \cdot \dot{S}_{gen}$: essa é a mesma relação que abre a Equação~\eqref{eq:s17-3} logo abaixo, destruição de exergia é, literalmente, entropia gerada multiplicada pela temperatura ambiente — uma forma de converter a "desordem" termodinâmica (um conceito abstrato, medido em J/K) em uma grandeza concreta e comparável, medida em Watts.
+Formalmente, exergia é o trabalho útil máximo que poderia ser extraído de um fluxo de energia ou matéria, levando-o reversivelmente até o equilíbrio com o ambiente de referência (pressão e temperatura atmosféricas, $P_0$ e $T_0$). A energia nunca é destruída; a exergia, sim — e a quantidade destruída é diretamente proporcional à entropia gerada pelo processo, $\dot{I} = T_0 \cdot \dot{S}_{gen}$: essa é a mesma relação que abre a Equação~\eqref{eq:s17-3} logo abaixo, destruição de exergia é, literalmente, entropia gerada multiplicada pela temperatura ambiente — uma forma de converter a ``desordem'' termodinâmica (um conceito abstrato, medido em J/K) em uma grandeza concreta e comparável, medida em Watts.
 
 \textbf{Exemplo aplicado a este documento:} um vazamento interno entre os rotores do compressor (a folga $\delta$ discutida nos capítulos anteriores) deixa o ar de alta pressão escoar para uma câmara de baixa pressão sem produzir nenhum trabalho útil. A energia contida nesse ar não desaparece — ela permanece no sistema, agora dissipada como calor e turbulência —, então um balanço de energia convencional não acusaria perda alguma. A exergia é o que revela o prejuízo real: o \textit{potencial} daquele ar pressurizado de realizar trabalho foi destruído de forma permanente, e $\dot{I}$ quantifica exatamente quantos Watts esse potencial valia. É essa mesma unidade (Watts de exergia destruída) que permite comparar, lado a lado e na mesma régua, o vazamento por folga interna, a incrustação no trocador de calor e o atrito no mancal — e assim priorizar qual intervenção realmente devolve mais eficiência à máquina.
 
-O conceito estende a noção de "energia disponível" de Gibbs e Keenan, formalizada sob o termo \textit{exergia} por Zoran Rant em 1956 e consolidada como ferramenta de otimização de processos industriais nas décadas seguintes \cite{bejan}.
+O conceito estende a noção de ``energia disponível'' de Gibbs e Keenan, formalizada sob o termo \textit{exergia} por Zoran Rant em 1956 e consolidada como ferramenta de otimização de processos industriais nas décadas seguintes \cite{bejan}.
 
 \begin{itemize}
 	\item \textbf{Taxa de Destruição de Exergia ($\dot{I}$):}
@@ -1995,7 +2175,7 @@ J = w_1 \cdotp \dot{I} + w_2 \cdotp \dot{m}_{CO_2} + w_3 \cdotp (T_{dp} - T_{dp,
 
 \subsection{Matriz de Diagnóstico, Normas e Sustentabilidade}
 
-A tabela abaixo conecta cada variável crítica de automação ao indicador de IA correspondente, à norma ou risco associado e à ação que o Gêmeo Digital deve tomar automaticamente.
+A Tabela~\ref{tab:17-1} conecta cada variável crítica de automação ao indicador de IA correspondente, à norma ou risco associado e à ação que o Gêmeo Digital deve tomar automaticamente.
 \begin{table}[h!]
 \centering
 \noindent\resizebox{\textwidth}{!}{
@@ -2009,6 +2189,7 @@ A tabela abaixo conecta cada variável crítica de automação ao indicador de I
 	\end{tabular}
 }
 \caption{Matriz de diagnóstico, normas associadas e ações de sustentabilidade do Gêmeo Digital.}
+\label{tab:17-1}
 \end{table}
 
 \vspace{1em}
@@ -2031,7 +2212,9 @@ Este capítulo estabelece a síntese definitiva do Gêmeo Digital, integrando a 
 
 \subsection{Matriz Abrangente de Variáveis, Localização e Instrumentação}
 
-A observabilidade total do sistema é garantida pelo monitoramento de variáveis reais (sensores) e virtuais (soft-sensors), mapeadas nos pontos estratégicos de A a I:
+A observabilidade total do sistema — condição necessária para que o Filtro de Kalman Estendido do Capítulo 21 consiga estimar o estado interno da máquina — é garantida pelo monitoramento combinado de variáveis \textbf{reais}, lidas diretamente de um sensor físico, e \textbf{virtuais} (\textit{soft-sensors}), calculadas pelo modelo a partir das primeiras. A Tabela~\ref{tab:18-1} consolida esse mapeamento completo em seis colunas: o \textbf{ponto} de instalação (rotulado de A a I ao longo do trem de compressão, do MCC ao \textit{header} de distribuição), o \textbf{subsistema} correspondente, a \textbf{grandeza} monitorada, o \textbf{símbolo} usado no equacionamento deste documento, a \textbf{unidade} SI adotada e a \textbf{função} daquela medição no diagnóstico.
+
+Duas leituras dessa tabela são úteis. Na horizontal, ela funciona como especificação de instrumentação: cada linha corresponde a um requisito de projeto verificável na lista de instrumentos da planta. Na vertical, agrupada por ponto, ela revela a densidade de medição de cada subsistema — e é aí que se identificam as lacunas de observabilidade, isto é, os pontos onde o Gêmeo Digital depende inteiramente de inferência por modelo porque não há sensor físico disponível. Essas lacunas não são falhas de projeto: instrumentar diretamente a câmara de compressão de um rotor girando a milhares de RPM é impraticável, e é justamente por isso que o \textit{soft-sensor} existe. Mas elas precisam estar explícitas, porque determinam onde a incerteza do modelo (Capítulo 25) é maior e onde a validação física do PIML (Capítulo 23) é mais crítica.
 
 \begin{table}[h!]
 	\centering
@@ -2045,7 +2228,7 @@ A observabilidade total do sistema é garantida pelo monitoramento de variáveis
 			& & Fator de Potência & $\cos \phi$ & $-$ & Eficiência da conversão elétrica \\
 			\textbf{B} & \textbf{Transmissão} & Velocidade Angular & $\omega$ & $\text{rad}\,\cdotp\,\text{s}^{-1}$ & Rotação real do eixo primário \\ \cline{3-6} 
 			& & Torque no Eixo & $\tau$ & $\text{N}\,\cdotp\,\text{m}$ & Momento torsor transmitido \\ \cline{3-6} 
-			& & Vibração Global & $v_{\text{rms}}$ & $\text{mm}\,\cdotp\,\text{s}^{-1}$ & Severidade vibratória (ISO 10816) \\ \cline{3-6} 
+			& & Vibração Global & $v_{\text{rms}}$ & $\text{mm}\,\cdotp\,\text{s}^{-1}$ & Severidade vibratória (base API 619/OEM) \\ \cline{3-6}
 			& & Tensão no Dente & $\sigma_b$ & $\text{MPa}$ & Esforço na raiz da engrenagem \\
 			\textbf{C} & \textbf{Estágio LP} & Pressão Sucção & $P_{s,lp}$ & $\text{bar}$ & Pressão de entrada (atmosférica) \\ \cline{3-6} 
 			& & Temp. Descarga & $T_{d,lp}$ & $^{\circ}\text{C}$ & Calor de compressão do 1º estágio \\ \cline{3-6} 
@@ -2066,6 +2249,7 @@ A observabilidade total do sistema é garantida pelo monitoramento de variáveis
 		\end{tabular}
 	}
 	\caption{Matriz completa de variáveis e instrumentação do Gêmeo Digital.}
+	\label{tab:18-1}
 \end{table}
 
 \subsection{Consolidação do Motor de Cálculo Unificado}
@@ -2117,7 +2301,7 @@ O processamento matemático do Gêmeo Digital é executado através da integraç
 
 \subsection{Matriz Global de Alarmes e Lógica de Decisão}
 
-A lógica de proteção e otimização do Gêmeo Digital baseia-se na correlação de indicadores reais e virtuais:
+A lógica de proteção e otimização do Gêmeo Digital não se apoia em indicadores isolados, mas na correlação entre grandezas medidas diretamente por sensor e grandezas inferidas pelo modelo. A Tabela~\ref{tab:18-2} organiza essa lógica em cinco colunas: o \textbf{indicador crítico} monitorado; sua \textbf{tag} no sistema de automação; o \textbf{nível} de severidade na convenção ISA (H = alarme alto, que exige ação corretiva mas permite operação continuada; HH = desligamento por valor alto; LL = desligamento por valor baixo); a \textbf{condição de gatilho}, isto é, a inequação que o Gêmeo Digital avalia a cada ciclo de varredura; e a \textbf{ação automática} disparada. Note que os quatro primeiros indicadores são grandezas físicas medidas ou calculadas por primeiros princípios, enquanto os três últimos ($E_{\text{rec}}$, $\dot{I}$ e $\dot{m}_{\text{CO}_2}$) são indicadores virtuais que só existem porque há um modelo por trás — é essa combinação que distingue a matriz de um intertravamento convencional.
 
 \begin{table}[h!]
 	\centering
@@ -2125,17 +2309,26 @@ A lógica de proteção e otimização do Gêmeo Digital baseia-se na correlaç�
 		\begin{tabular}{l c c l l}
 			\toprule
 			\textbf{Indicador Crítico} & \textbf{Tag} & \textbf{Nível} & \textbf{Condição de Gatilho} & \textbf{Ação Automática} \\ \midrule
-			\textbf{Ponto de Orvalho} & $T_{dp}$ & \textbf{H} & $T_{dp} > -40^{\circ}\text{C}$ & Antecipar regeneração PSA / Alarme ISO 8573 \\
+			\textbf{Ponto de Orvalho} & $T_{dp}$ & \textbf{H} & $T_{dp} > -40^{\circ}\text{C}$ (Classe 2) & Antecipar regeneração PSA / Alarme de classe ISO 8573-1 \\
 			\textbf{Pressão do Vaso} & $P_{tk}$ & \textbf{LL} & $P < P_{\text{min}}$ & Corte de Linha de Serviços ($\delta_{\text{serv}}=0$) \\
 			\textbf{Tensão no Dente} & $\sigma_b$ & \textbf{H} & $\sigma_b > 0.85 \sigma_{\text{adm}}$ & Limitação de torque via VFD / Unload \\
-			\textbf{Vibração Global} & $v_{\text{rms}}$ & \textbf{HH} & $v > 7.1\,\text{mm}\,\cdotp\,\text{s}^{-1}$ & Trip Mecânico Imediato (ESD) \\
+			\textbf{Vibração Global} & $v_{\text{rms}}$ & \textbf{HH} & $v_{\text{rms}} > v_{\text{trip}}$ (base da máquina) & Trip Mecânico Imediato (ESD) \\
 			\textbf{Erro de Reconstrução} & $E_{\text{rec}}$ & \textbf{H} & $E > \tau_{\text{limiar}}$ & Diagnóstico de falha incipiente (Mancais) \\
 			\textbf{Destruição Exergética} & $\dot{I}$ & \textbf{H} & $\uparrow$ Tendência ($+15\%$) & Ajuste de setpoint de resfriamento e purga \\
 			\textbf{Emissões GEE} & $\dot{m}_{\text{CO}_2}$ & \textbf{H} & $\dot{m} > \dot{m}_{\text{target}}$ & Rebalanceamento de carga da frota \\ \bottomrule
 		\end{tabular}
 	}
 	\caption{Matriz de decisão, alarmes e ações de controle do Gêmeo Digital.}
+	\label{tab:18-2}
 \end{table}
+
+Dois gatilhos da Tabela~\ref{tab:18-2} merecem qualificação normativa explícita, porque são frequentemente citados como se fossem números universais — e não são.
+
+O primeiro é o \textbf{ponto de orvalho}. A ISO 8573-1 \cite{iso8573} não estabelece um valor único de $T_{dp}$ para ar comprimido: ela define \textit{classes de pureza}, e a classe de umidade é fixada por um ponto de orvalho sob pressão (PDP) máximo — Classe 1 para $T_{dp} \le -70\,^{\circ}$C, Classe 2 para $T_{dp} \le -40\,^{\circ}$C, Classe 3 para $T_{dp} \le -20\,^{\circ}$C, e assim por diante em direção a valores positivos. O limite de $-40\,^{\circ}$C adotado neste documento corresponde, portanto, à \textbf{Classe 2}, escolhida como requisito de projeto por ser a prática consolidada para ar de instrumentação em unidades offshore, onde a linha pode atravessar regiões não aquecidas e a margem entre o PDP e a menor temperatura de parede precisa ser generosa. Ao especificar essa restrição, o Gêmeo Digital deve registrar não só o valor, mas também o \textbf{ponto de medição} (saída do secador, a jusante do filtro de partículas) e a \textbf{pressão de referência} — um ponto de orvalho medido sob pressão de linha e outro medido após expansão à atmosfera não são a mesma grandeza, e confundi-los produz uma falsa conformidade.
+
+O segundo é o \textbf{limiar de vibração global}. É comum encontrar o valor de $7{,}1\,\text{mm}\cdot\text{s}^{-1}$ aplicado indistintamente a qualquer máquina rotativa, por extensão da família ISO 10816/20816 \cite{iso10816, iso20816}. Essa extensão é indevida no caso presente: a ISO 20816-3 \cite{iso20816}, que substituiu a ISO 10816-3 para máquinas industriais acima de $15\,\text{kW}$, \textbf{exclui explicitamente de seu escopo os compressores rotativos de deslocamento positivo}, citando os compressores de parafuso como exemplo. A razão é física, não burocrática: a assinatura vibratória de um compressor de parafuso é dominada pela frequência de passagem de lóbulos e por pulsação de gás na descarga — componentes que elevam a vibração global sem que isso represente, por si só, degradação mecânica. Um limiar calibrado para turbomáquinas rejeitaria máquinas saudáveis e, o que é pior, poderia mascarar uma degradação real que se manifeste abaixo dele.
+
+O critério correto para $v_{\text{trip}}$ vem de três fontes, nesta ordem de precedência: (i) o valor contratual de aceitação e alarme definido pela API 619 \cite{api619} e pelos requisitos do fabricante (OEM) para aquela carcaça específica; (ii) a \textbf{linha de base da própria máquina}, levantada no comissionamento sob condição de carga conhecida e usada como referência de tendência; e (iii) quando o componente e a montagem se enquadrarem no escopo (o motor elétrico de acionamento, por exemplo, é uma máquina industrial coberta pela ISO 20816-3), o critério da norma aplicado apenas àquele componente. Essa é, aliás, a filosofia do próprio Gêmeo Digital: o desvio relevante é o afastamento da assinatura individual da máquina, não a ultrapassagem de um número tabelado por uma norma que nunca a teve em vista.
 
 \vspace{1em}
 \hrule
@@ -2173,7 +2366,7 @@ Para integrar as equações de termodinâmica, exergia e fadiga em um único mod
 
 \begin{enumerate}
 	\item \textbf{Estrutura do Modelo:}
-	As equações diferenciais e algébricas (DAEs) desenvolvidas nos capítulos anteriores são incorporadas diretamente à função de perda ($Loss$) do modelo de inteligência artificial. A Equação~\eqref{eq:s19-1} soma dois termos ponderados: $L_{\text{data}}$, o erro convencional contra os dados medidos, e $L_{\text{physics}}$, a penalidade por violar as leis físicas — os pesos $\omega_1$ e $\omega_2$ controlam o equilíbrio entre "confiar nos dados" e "confiar na física":
+	As equações diferenciais e algébricas (DAEs) desenvolvidas nos capítulos anteriores são incorporadas diretamente à função de perda ($Loss$) do modelo de inteligência artificial. A Equação~\eqref{eq:s19-1} soma dois termos ponderados: $L_{\text{data}}$, o erro convencional contra os dados medidos, e $L_{\text{physics}}$, a penalidade por violar as leis físicas — os pesos $\omega_1$ e $\omega_2$ controlam o equilíbrio entre ``confiar nos dados'' e ``confiar na física'':
 	\begin{equation}\label{eq:s19-1}
  L_{\text{total}} = \omega_1 L_{\text{data}} + \omega_2 L_{\text{physics}}
 \end{equation}
@@ -2190,14 +2383,14 @@ Para integrar as equações de termodinâmica, exergia e fadiga em um único mod
 
 \subsection{Redução de Dimensionalidade: O Modelo de Espaço Latente}
 
-Monitorar 28 variáveis simultaneamente introduz a "maldição da dimensionalidade" e problemas de colinearidade. O modelo adotado para simplificar esta estrutura sem perda de informação crítica é o \textbf{Autoencoder Variacional (VAE)}.
+Monitorar 28 variáveis simultaneamente introduz a ``maldição da dimensionalidade'' e problemas de colinearidade. O modelo adotado para simplificar esta estrutura sem perda de informação crítica é o \textbf{Autoencoder Variacional (VAE)}.
 
 \begin{itemize}
 	\item \textbf{Limitação do PCA:} A Análise de Componentes Principais (PCA) é linear e falha ao capturar relações complexas, como a variação da viscosidade do óleo ou a dinâmica não linear da compressão politrópica.
 	\item \textbf{Arquitetura do Autoencoder:}
 	\begin{itemize}
 		\item \textbf{Encoder ($q_{\phi}$):} Comprime o vetor de 28 variáveis ($z$) em um vetor reduzido ($\ell$) de 3 ou 4 dimensões, denominado Espaço Latente.
-		\item \textbf{Bottleneck (Gargalo):} Força a rede a aprender apenas as características essenciais, ou a "assinatura de saúde" do compressor.
+		\item \textbf{Bottleneck (Gargalo):} Força a rede a aprender apenas as características essenciais, ou a ``assinatura de saúde'' do compressor.
 		\item \textbf{Decoder ($p_{\theta}$):} Reconstrói o vetor original ($\hat{z}$) a partir do espaço latente para validação.
 	\end{itemize}
 	\item \textbf{Diagnóstico por Resíduo:}
@@ -2251,7 +2444,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_20_1_basquin.pdf}
-		\caption{Curva S-N de Basquin (escala log-log) — base da contagem de ciclos da Regra de Palmgren-Miner.}
+		\caption[Curva S-N de Basquin]{Curva S-N de Basquin (escala log-log) — base da contagem de ciclos da Regra de Palmgren-Miner.}
 		\label{fig:19-1}
 	\end{figure}
 
@@ -2369,7 +2562,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 		\begin{equation}\label{eq:s20-7}
  \text{Min } J = \sum_{k=0}^{H} \left[ \dot{W}_{\text{elec}}(k) + \beta \cdotp \dot{I}(k) \right] 
 \end{equation}
-		Sujeito às duas restrições que o otimizador nunca pode violar, independentemente do quão vantajosa a solução pareça em termos de custo: a tensão real na raiz do dente abaixo do limite admissível (integridade mecânica) e o ponto de orvalho sob pressão abaixo de $-40^{\circ}$C (qualidade do ar conforme ISO 8573-1), formalizadas na Equação~\eqref{eq:s20-8}:
+		Sujeito às duas restrições que o otimizador nunca pode violar, independentemente do quão vantajosa a solução pareça em termos de custo: a tensão real na raiz do dente abaixo do limite admissível (integridade mecânica) e o ponto de orvalho sob pressão abaixo de $-40\,^{\circ}$C, que é o limite da \textbf{Classe 2 de umidade} da ISO 8573-1 \cite{iso8573} adotada como requisito de projeto neste documento (a norma define classes, não um valor único — ver a qualificação no Capítulo 18). Ambas são formalizadas na Equação~\eqref{eq:s20-8}:
 		\begin{equation}\label{eq:s20-8}
  \begin{cases} \sigma_{b,\text{real}} < \sigma_{b,\text{adm}} \\ T_{\text{dp}} \le -40\,^{\circ}\text{C} \end{cases}
 \end{equation}
@@ -2414,20 +2607,33 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\end{cases}
 \end{equation}
 	\begin{itemize}
-		\item $x$: Vetor de estados (ex: $\eta_{\text{is}}$, $\delta$, $R_f$).
-		\item $z$: Vetor de medições (ex: $P_{\text{out}}$, $T_{\text{out}}$).
+		\item $x$: Vetor de estados — as grandezas internas que se deseja conhecer mas não se pode medir diretamente.
+		\item $z$: Vetor de medições — o que os sensores de campo efetivamente entregam.
+		\item $u$: Vetor de entradas conhecidas (comandos ao VSD, posição de válvulas), que o modelo usa para prever a evolução do estado.
 		\item $w, v$: Ruídos de processo e medição com matrizes de covariância $Q$ e $\mathcal{R}$ (o $\mathcal{R}$ calligráfico distingue esta matriz da constante dos gases $R$, usada nos capítulos de termofluídica).
 	\end{itemize}
 
-	\subsection{Linearização por Jacobianos}
-	Dada a natureza não linear dos processos termoflutuídicos, o algoritmo realiza a linearização em cada passo de tempo:
+	\subsection{Definição Concreta dos Vetores para o Compressor}
+
+	A formulação da Equação~\eqref{eq:s21-1} é genérica; sua utilidade prática depende inteiramente de \textit{quais} grandezas entram em $x$ e em $z$. Essa escolha não é livre — ela é ditada pela Parte I deste documento. Os estados são exatamente as variáveis de degradação que os capítulos de mecanismos de falha identificaram como não instrumentáveis, e as medições são as grandezas que a matriz de instrumentação da Tabela~\ref{tab:18-1} confirma existirem em campo. A Equação~\eqref{eq:s21-2} formaliza essa escolha para o trem de compressão em estudo:
+
 	\begin{equation}\label{eq:s21-2}
+	x = \begin{bmatrix} \eta_{is,LP} \\ \eta_{is,HP} \\ \delta \\ R_f \\ \sigma_b \end{bmatrix}, \qquad
+	z = \begin{bmatrix} P_{\text{out}} \\ T_{\text{out}} \\ T_{w,\text{out}} \\ I \\ v_{\text{rms}} \end{bmatrix}, \qquad
+	u = \begin{bmatrix} f_{\text{VSD}} \\ \dot{V}_{\text{demand}} \end{bmatrix}
+\end{equation}
+
+	A leitura física dessa escolha é o ponto central do capítulo. Nenhum sensor mede a folga $\delta$ entre os rotores — instrumentar diretamente uma câmara de compressão em rotação é impraticável — mas a folga governa a fuga interna e, portanto, a eficiência volumétrica, que por sua vez altera a relação entre a pressão de saída medida e a corrente elétrica consumida. O EKF explora exatamente essa cadeia causal: ele não ``mede'' a folga, ele infere qual valor de $\delta$ torna as medições observadas mais prováveis, dado o modelo físico da Parte I. O mesmo raciocínio vale para a resistência de incrustação $R_f$, inferida do descasamento entre a troca térmica prevista pela LMTD e a temperatura de água efetivamente observada na saída do trocador.
+
+	\subsection{Linearização por Jacobianos}
+	Dada a natureza não linear dos processos termofluídicos, o algoritmo realiza a linearização em cada passo de tempo. É aqui que reside a aproximação que define o EKF e o distingue do filtro de Kalman original: as funções $f$ e $g$ são substituídas pelos dois primeiros termos de suas séries de Taylor em torno da estimativa corrente, de modo que a máquina linear ótima possa ser aplicada ao sistema linearizado resultante \cite[Cap.~13]{simon}. Os Jacobianos da Equação~\eqref{eq:s21-3} são exatamente os coeficientes desse truncamento de primeira ordem, e é o descarte dos termos de ordem superior que cobra o preço discutido ao fim deste capítulo:
+	\begin{equation}\label{eq:s21-3}
 	F_k = \left. \frac{\partial f}{\partial x} \right|_{\hat{x}_{k-1|k-1}} \quad \text{e} \quad G_k = \left. \frac{\partial g}{\partial x} \right|_{\hat{x}_{k|k-1}}
 \end{equation}
 
 	\subsection{Ciclo de Atualização Recursiva}
-	O processo de estimação segue o ciclo de predição e correção:
-	\begin{equation}\label{eq:s21-3}
+	Com os Jacobianos disponíveis, o processo de estimação segue o ciclo de predição e correção na forma consagrada para o caso não linear \cite[Cap.~13]{simon}: a etapa de predição propaga estado e covariância pelo modelo físico, e a de correção pondera essa predição contra a medição recém-chegada por meio do ganho $K_k$, que é justamente a razão entre a confiança no modelo e a confiança no sensor, conforme a Equação~\eqref{eq:s21-4}:
+	\begin{equation}\label{eq:s21-4}
 	\begin{aligned}
 		\text{Predição:} \quad \hat{x}_{k|k-1} &= f(\hat{x}_{k-1|k-1}, u_{k-1}) \\[4pt]
 		P_{k|k-1} &= F_k P_{k-1|k-1} F_k^T + Q \\[8pt]
@@ -2437,33 +2643,87 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\end{aligned}
 \end{equation}
 
-	A Figura~\ref{fig:21-1} ilustra esse ciclo ao longo de vários passos de tempo: a cada nova medição ruidosa $z_k$ (marcadores em X), a estimativa do EKF (linha azul) se aproxima do estado real não observado (linha verde), e a banda sombreada — a covariância $P_{k|k}$ da Equação~\eqref{eq:s21-3} — se estreita a cada correção, representando a redução da incerteza sobre o estado estimado.
+	A Figura~\ref{fig:21-1} ilustra esse ciclo ao longo de vários passos de tempo: a cada nova medição ruidosa $z_k$ (marcadores em X), a estimativa do EKF (linha azul) se aproxima do estado real não observado (linha verde), e a banda sombreada — a covariância $P_{k|k}$ da Equação~\eqref{eq:s21-4} — se estreita a cada correção, representando a redução da incerteza sobre o estado estimado.
 
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_21_1_ekf.pdf}
-		\caption{Ciclo de predição-correção do EKF: estimativa convergindo para o estado real a partir de medições ruidosas, com banda de incerteza $P_{k|k}$.}
+		\caption[Ciclo de predição-correção do EKF]{Ciclo de predição-correção do EKF: estimativa convergindo para o estado real a partir de medições ruidosas, com banda de incerteza $P_{k|k}$.}
 		\label{fig:21-1}
 	\end{figure}
+
+	\subsection{Condição de Observabilidade}
+
+	O ciclo da Equação~\eqref{eq:s21-4} pode ser executado indefinidamente sem produzir nada de útil se o estado que se pretende estimar não deixar assinatura nas medições. Um estado \textbf{não observável} é aquele cujas variações não produzem efeito distinguível sobre $z$ — nesse caso o EKF não estima coisa alguma: ele apenas propaga a condição inicial com incerteza crescente, dando aparência de funcionamento enquanto o valor exibido no painel é ficção. Essa é a falha mais perigosa de um Gêmeo Digital, porque é silenciosa. Para o sistema linearizado a cada passo, a condição é a de posto completo da matriz de observabilidade $\mathcal{O}$, construída empilhando o Jacobiano de observação aplicado sucessivamente à dinâmica, conforme a Equação~\eqref{eq:s21-5}:
+
+	\begin{equation}\label{eq:s21-5}
+	\mathcal{O} = \begin{bmatrix} G_k \\ G_k F_k \\ G_k F_k^2 \\ \vdots \\ G_k F_k^{n_x-1} \end{bmatrix}, \qquad \text{observável} \iff \text{posto}(\mathcal{O}) = n_x
+\end{equation}
+
+	Onde $n_x$ é a dimensão do vetor de estado (cinco, no caso da Equação~\eqref{eq:s21-2}). O subscrito é necessário para não colidir com o índice politrópico $n$ dos capítulos de termodinâmica. Como $F_k$ e $G_k$ são recalculados a cada passo, a observabilidade no caso não linear é uma propriedade \textbf{local}, válida apenas na vizinhança do ponto de operação atual: um estado perfeitamente observável em plena carga pode deixar de sê-lo em carga reduzida, quando o efeito da folga $\delta$ sobre a corrente elétrica se torna pequeno demais para emergir do ruído de medição. Na prática, o Gêmeo Digital deve avaliar o número de condição de $\mathcal{O}$ em tempo de execução — mais informativo que o posto, que é uma resposta binária sobre uma matriz numérica — e sinalizar quando a estimativa de um estado específico deixou de ser sustentada pelos dados, em vez de continuar exibindo um número sem suporte na medição.
+
+	\subsection{Inovação e Validação Estatística do Filtro}
+
+	Existe uma grandeza que permite auditar a saúde do EKF em tempo real sem conhecer o estado verdadeiro: a \textbf{inovação}, definida como a diferença entre o que o sensor mediu e o que o modelo previa que ele mediria. Ela aparece dentro da própria etapa de correção da Equação~\eqref{eq:s21-4}, mas seu valor diagnóstico justifica tratá-la como grandeza de primeira classe, com sua covariância associada $S_k$, conforme a Equação~\eqref{eq:s21-6}:
+
+	\begin{equation}\label{eq:s21-6}
+	\tilde{z}_k = z_k - g(\hat{x}_{k|k-1}), \qquad S_k = G_k P_{k|k-1} G_k^T + \mathcal{R}
+\end{equation}
+
+	A teoria faz uma previsão forte e verificável sobre essa grandeza: se o modelo físico, as covariâncias $Q$ e $\mathcal{R}$ e as hipóteses de ruído estiverem corretos, a sequência de inovações deve ser um \textbf{ruído branco de média zero} com covariância exatamente $S_k$. Qualquer desvio desse comportamento é evidência de que alguma dessas premissas falhou. O teste padrão é a estatística NIS (\textit{Normalized Innovation Squared}), que normaliza a inovação pela incerteza esperada e cujo valor segue uma distribuição $\chi^2$ com tantos graus de liberdade quanto medições, conforme a Equação~\eqref{eq:s21-7}:
+
+	\begin{equation}\label{eq:s21-7}
+	\text{NIS}_k = \tilde{z}_k^T S_k^{-1} \tilde{z}_k \;\sim\; \chi^2_{n_z}
+\end{equation}
+
+	Onde $n_z$ é a dimensão do vetor de medições (também cinco aqui), grafada com subscrito para não colidir com o módulo de engrenagem $m$ do Capítulo 8. A interpretação operacional é direta e vale a pena explicitar, porque é ela que transforma uma identidade estatística em ferramenta de manutenção. Um NIS \textbf{consistentemente acima} da faixa esperada significa que o filtro está mais confiante do que deveria: as inovações são maiores do que $S_k$ prevê, indicando ou modelo físico defasado (a máquina degradou de um jeito que o modelo não captura) ou $Q$ subestimada. Um NIS \textbf{consistentemente abaixo} indica o contrário — covariâncias infladas, filtro excessivamente conservador, respondendo devagar demais a mudanças reais. E uma inovação com \textbf{média não nula} denuncia viés: tipicamente um sensor descalibrado ou um erro sistemático no modelo.
+
+	Note que o NIS é calculável a cada passo sem qualquer conhecimento do estado verdadeiro. Isso o torna o único indicador realmente disponível em campo para responder à pergunta ``posso confiar nesta estimativa?'', e é a razão pela qual ele deve ser registrado e tendenciado junto com as próprias variáveis estimadas — um EKF sem monitoramento de inovação é um instrumento sem verificação de calibração.
+
+	\subsection{Condicionamento Numérico: a Forma de Joseph}
+
+	A atualização de covariância $P_{k|k} = (I - K_k G_k) P_{k|k-1}$, usada na Equação~\eqref{eq:s21-4} por ser a mais compacta, tem um defeito conhecido em implementações de precisão finita: ela não garante que $P$ permaneça simétrica e positiva definida. Erros de arredondamento acumulados ao longo de milhões de ciclos — e um Gêmeo Digital operando continuamente executa exatamente isso — podem tornar $P$ indefinida, momento em que o filtro diverge de forma abrupta e irrecuperável. A forma de Joseph, algebricamente equivalente mas numericamente estável por ser uma soma de dois termos estruturalmente positivos semidefinidos, é a implementação recomendada em produção, conforme a Equação~\eqref{eq:s21-8}:
+
+	\begin{equation}\label{eq:s21-8}
+	P_{k|k} = (I - K_k G_k) P_{k|k-1} (I - K_k G_k)^T + K_k \mathcal{R} K_k^T
+\end{equation}
+
+	O custo é um punhado de multiplicações matriciais adicionais por ciclo — irrelevante diante da taxa de amostragem de um compressor industrial, e barato demais para justificar o risco da forma simplificada.
+
+	\subsection{Limites da Linearização e Alternativas}
+
+	O EKF lineariza em torno da estimativa atual, o que embute uma hipótese: a de que a não linearidade do processo é suave o bastante para que o Jacobiano seja uma boa aproximação dentro da região de incerteza. Essa hipótese vale bem para os fenômenos térmicos e de eficiência tratados aqui, cujas curvas são monótonas e de curvatura moderada. Ela se degrada em dois cenários específicos deste equipamento: transientes rápidos de comutação das torres PSA, onde a dinâmica muda de regime em segundos, e a região próxima ao \textit{surge} ou ao travamento de válvula, onde o comportamento é fortemente não linear e a linearização local pode apontar na direção errada.
+
+	Quando esses regimes forem relevantes para a aplicação, duas alternativas se impõem. O \textbf{Filtro de Kalman \textit{Unscented}} (UKF) substitui a linearização analítica pela propagação determinística de um conjunto de pontos amostrais (\textit{sigma points}) através da função não linear, capturando a média e a covariância com precisão de segunda ordem sem calcular Jacobianos — o que também elimina a necessidade de derivar $F_k$ e $G_k$ analiticamente, tarefa trabalhosa e propensa a erro num modelo com dezenas de acoplamentos. A \textbf{Estimação de Horizonte Móvel} (MHE), por sua vez, abandona a recursão de passo único e resolve, a cada instante, um problema de otimização sobre uma janela de medições passadas, o que permite impor \textbf{restrições explícitas} ao estado estimado — por exemplo, que a folga $\delta$ não pode ser negativa nem diminuir com o tempo, uma informação física que o EKF não tem como incorporar. Essa é precisamente a capacidade oferecida pelo \textit{framework} do-mpc discutido no Capítulo 27, e é o caminho natural de evolução deste módulo.
 
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} O ciclo de predição-correção da Equação~\eqref{eq:s21-3} só produz estimativas confiáveis se as matrizes de covariância $Q$ e $\mathcal{R}$ refletirem a incerteza real do modelo físico e dos sensores de campo — valores de $Q$/$\mathcal{R}$ copiados de outra instalação sem recalibração são a causa mais comum de um EKF que diverge ou passa a ignorar as medições.
+	\textbf{Diretriz Técnica Final:} O ciclo de predição-correção da Equação~\eqref{eq:s21-4} só produz estimativas confiáveis se três condições forem verificadas e monitoradas, não assumidas: observabilidade local do estado no ponto de operação corrente (Equação~\eqref{eq:s21-5}), consistência estatística da sequência de inovações via NIS (Equação~\eqref{eq:s21-7}) e estabilidade numérica da covariância via forma de Joseph (Equação~\eqref{eq:s21-8}). Matrizes $Q$ e $\mathcal{R}$ copiadas de outra instalação sem recalibração são a causa mais comum de um EKF que diverge ou passa a ignorar as medições — e o NIS é o instrumento que detecta isso antes que a estimativa errada chegue à decisão de manutenção.
 
 	\clearpage
 	\section{Redução de Dimensionalidade via Autoencoder Variacional (VAE)}
 	
-	A redução de dimensionalidade via VAE permite a compressão de dados complexos em assinaturas de saúde simplificadas, facilitando a detecção precoce de anomalias.
+	A redução de dimensionalidade via VAE permite a compressão de dados complexos em assinaturas de saúde simplificadas, facilitando a detecção precoce de anomalias. A formulação usada aqui é a de Kingma e Welling \cite{vae}, que introduziu o autoencoder variacional como modelo generativo treinável por gradiente.
+
+	\subsection{Por que um VAE, e não PCA ou um Autoencoder Simples}
+
+	A pergunta antecede a matemática e merece resposta explícita, porque as três técnicas fazem redução de dimensionalidade e a escolha entre elas não é indiferente ao propósito de diagnóstico.
+
+	A \textbf{Análise de Componentes Principais} (PCA) encontra a projeção linear que preserva o máximo de variância. É rápida, determinística e interpretável — mas linear. O acoplamento entre folga de rotor, temperatura de descarga e corrente elétrica neste equipamento é governado por relações politrópicas e exponenciais, mapeadas em detalhe na Parte I; forçá-las num subespaço linear descarta exatamente a estrutura que carrega a informação de degradação incipiente.
+
+	O \textbf{autoencoder determinístico} resolve a não linearidade, mas produz um espaço latente sem estrutura garantida: nada impede que ele distribua os dados de treino arbitrariamente, com regiões vazias entre os aglomerados. Um ponto de operação novo, ainda saudável, pode cair numa dessas lacunas e gerar erro de reconstrução alto — um falso alarme.
+
+	O \textbf{VAE} resolve os dois problemas ao impor que o espaço latente siga uma distribuição conhecida. Isso força a continuidade: pontos próximos no espaço latente decodificam para estados físicos próximos, sem lacunas arbitrárias. Para o diagnóstico, essa propriedade é o que permite interpretar a \textit{posição} no espaço latente — e não apenas o erro de reconstrução — como assinatura de saúde da máquina.
 	
 	\subsection{Arquitetura Probabilística e Espaço Latente}
-	O VAE projeta o vetor de 28 variáveis em um espaço latente ($\ell$) modelado por distribuições gaussianas. A Figura~\ref{fig:22-1} ilustra essa arquitetura de "gargalo": o encoder comprime progressivamente a entrada $z$ até os poucos parâmetros do espaço latente, e o decoder expande esse gargalo de volta ao tamanho original, produzindo a reconstrução $\hat{z}$ — a diferença entre $z$ e $\hat{z}$ é justamente o erro de reconstrução usado como resíduo de diagnóstico mais adiante neste capítulo.
+	O VAE projeta o vetor de 28 variáveis em um espaço latente ($\ell$) modelado por distribuições gaussianas. A Figura~\ref{fig:22-1} ilustra essa arquitetura de ``gargalo'': o encoder comprime progressivamente a entrada $z$ até os poucos parâmetros do espaço latente, e o decoder expande esse gargalo de volta ao tamanho original, produzindo a reconstrução $\hat{z}$ — a diferença entre $z$ e $\hat{z}$ é justamente o erro de reconstrução usado como resíduo de diagnóstico mais adiante neste capítulo.
 
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.75\textwidth]{figuras/fig_22_1_vae.pdf}
-		\caption{Arquitetura do Autoencoder Variacional: o encoder comprime o vetor de entrada $z$ até o espaço latente $\ell$ (parametrizado por $\mu$ e $\sigma$), e o decoder reconstrói $\hat{z}$ a partir dele.}
+		\caption[Arquitetura do Autoencoder Variacional]{Arquitetura do Autoencoder Variacional: o encoder comprime o vetor de entrada $z$ até o espaço latente $\ell$ (parametrizado por $\mu$ e $\sigma$), e o decoder reconstrói $\hat{z}$ a partir dele.}
 		\label{fig:22-1}
 	\end{figure}
 
@@ -2475,23 +2735,69 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 \end{equation}
 	\end{itemize}
 
-	\subsection{Função de Perda e Regularização}
-	O treinamento busca o equilíbrio entre a fidelidade da reconstrução e a organização do espaço latente:
+	\subsection{Origem da Função de Perda: o Limite Inferior da Evidência}
+
+	A função de perda do VAE não é uma combinação heurística de dois termos convenientes — ela é consequência direta de um problema de inferência bem posto, e entender essa origem é o que permite ajustá-la com critério em vez de por tentativa e erro.
+
+	O objetivo ideal seria maximizar a verossimilhança dos dados observados, $\log p(z)$: encontrar os parâmetros de rede que tornam os dados de operação saudável os mais prováveis possíveis. O problema é que calcular $p(z)$ exige integrar sobre todas as configurações possíveis do espaço latente, uma integral intratável. A saída é introduzir uma distribuição aproximada $q(\ell|z)$ — justamente o que o encoder produz — e maximizar, em vez da verossimilhança, um limite inferior a ela. Esse limite é o ELBO (\textit{Evidence Lower Bound}), estabelecido por Kingma e Welling como objetivo diretamente treinável por gradiente \cite{vae} e formalizado na Equação~\eqref{eq:s22-2}:
+
 	\begin{equation}\label{eq:s22-2}
+	\log p(z) \;\ge\; \underbrace{\mathbb{E}_{q(\ell|z)}\left[ \log p(z|\ell) \right]}_{\text{verossimilhança da reconstrução}} \;-\; \underbrace{D_{KL}\left[ q(\ell|z) \parallel p(\ell) \right]}_{\text{afastamento da distribuição-alvo}}
+\end{equation}
+
+	Os dois termos do ELBO têm leitura direta. O primeiro pergunta: dado o código latente que o encoder gerou, quão provável é reconstruir a entrada original? Maximizá-lo é minimizar o erro de reconstrução. O segundo mede o quanto a distribuição produzida pelo encoder se afasta da distribuição-alvo $p(\ell) = \mathcal{N}(0,1)$; minimizá-lo é o que impõe a estrutura contínua no espaço latente discutida acima. Maximizar o ELBO é, portanto, exatamente equivalente a minimizar a perda da Equação~\eqref{eq:s22-3} — com o sinal trocado e com um peso $\beta$ acrescentado ao segundo termo.
+
+	\subsection{Função de Perda e Regularização}
+	Invertendo o sinal do ELBO e introduzindo o peso $\beta$, o treinamento busca o equilíbrio entre a fidelidade da reconstrução e a organização do espaço latente:
+	\begin{equation}\label{eq:s22-3}
 	L_{\text{VAE}} = \underbrace{\| z - \hat{z} \|^2}_{\text{Erro de Reconstrução}} + \beta \cdotp \underbrace{D_{KL} [ \mathcal{N}(\mu, \sigma) \parallel \mathcal{N}(0, 1) ]}_{\text{Divergência KL}}
 \end{equation}
-	
+
+	O termo de divergência KL, que na forma geral exigiria integração numérica, admite \textbf{forma fechada} quando ambas as distribuições são gaussianas — que é precisamente o caso construído aqui. Essa é a razão prática de se escolher gaussianas: o gradiente sai analítico e o treinamento fica barato. Para um espaço latente de $d$ dimensões, a Equação~\eqref{eq:s22-4} dá a expressão implementada em código:
+
+	\begin{equation}\label{eq:s22-4}
+	D_{KL} = -\frac{1}{2} \sum_{j=1}^{d} \left( 1 + \log \sigma_j^2 - \mu_j^2 - \sigma_j^2 \right)
+\end{equation}
+
+	Vale notar o comportamento dessa expressão: ela se anula quando $\mu_j = 0$ e $\sigma_j = 1$ para toda dimensão $j$, e cresce conforme o encoder se afasta desse alvo. O parâmetro $\beta$ controla o quanto esse afastamento custa. Com $\beta \to 0$ o VAE degenera no autoencoder determinístico, com todas as patologias de espaço latente descritas anteriormente; com $\beta$ grande demais ocorre o \textit{posterior collapse}, em que o encoder passa a ignorar a entrada e emitir sempre $\mathcal{N}(0,1)$, produzindo reconstruções que são apenas a média dos dados de treino. Ambos os extremos destroem a capacidade de diagnóstico, e o sintoma do segundo é característico: erro de reconstrução alto e uniforme, insensível ao estado real da máquina.
+
 	\subsection{Diagnóstico de Falhas por Resíduo}
 	A saúde do sistema é monitorada pelo erro de reconstrução. Desvios em relação ao padrão aprendido indicam degradação mecânica ou térmica:
-	\begin{equation}\label{eq:s22-3}
+	\begin{equation}\label{eq:s22-5}
  E_{\text{rec}} = \sum_{i=1}^{M} (z_i - \hat{z}_i)^2
 \end{equation}
+
+	\subsection{A Premissa Crítica: Pureza do Conjunto de Treinamento}
+
+	Toda a lógica de diagnóstico acima repousa numa premissa que raramente é enunciada e frequentemente é violada: o VAE deve ser treinado \textbf{exclusivamente com dados de operação saudável}. O erro de reconstrução só funciona como indicador de anomalia porque a rede nunca aprendeu a reconstruir estados degradados — confrontada com um, ela erra, e é esse erro que denuncia a falha.
+
+	A consequência prática é severa. Se o histórico usado no treinamento contiver períodos em que a máquina já operava com mancal degradado ou trocador incrustado, a rede aprenderá esses estados como normais e passará a reconstruí-los com erro baixo. O Gêmeo Digital ficará então estruturalmente cego justamente à falha que mais ocorreu na planta. Como raramente existe garantia de que um histórico longo seja inteiramente saudável, a curadoria do conjunto de treinamento não é etapa preliminar dispensável, e sim requisito de projeto: os períodos devem ser filtrados contra registros de manutenção, e é recomendável usar o \textit{Isolation Forest} do Capítulo 25 como triagem prévia para remover do conjunto de treino os trechos anômalos antes de treinar o VAE.
+
+	\subsection{Definição do Limiar de Disparo}
+
+	O erro de reconstrução da Equação~\eqref{eq:s22-5} é um número sem escala absoluta — não existe valor universal de $E_{\text{rec}}$ que signifique ``falha''. O limiar $\tau_{\text{limiar}}$ precisa ser derivado da distribuição empírica do próprio erro sobre dados saudáveis não usados no treinamento (conjunto de validação), tomando um quantil elevado como corte, conforme a Equação~\eqref{eq:s22-6}:
+
+	\begin{equation}\label{eq:s22-6}
+	\tau_{\text{limiar}} = \mathcal{Q}_{1-\alpha}\left( \{ E_{\text{rec}}^{(i)} \}_{i \in \text{validação}} \right)
+\end{equation}
+
+	Onde $\mathcal{Q}_{1-\alpha}$ é o quantil de ordem $1-\alpha$ e $\alpha$ é a taxa de falsos alarmes aceita por projeto. A escolha de $\alpha$ é uma decisão de engenharia, não estatística: $\alpha = 0{,}01$ significa aceitar que aproximadamente um a cada cem pontos saudáveis dispare alarme. Numa planta offshore com aquisição a cada segundo, isso equivale a centenas de falsos alarmes por dia — inaceitável. Por isso o disparo deve exigir \textbf{persistência}, isto é, ultrapassagem de $\tau_{\text{limiar}}$ sustentada por uma janela temporal mínima, e não um único ponto isolado.
+
+	\subsection{O Espaço Latente como Assinatura de Saúde}
+
+	O erro de reconstrução responde \textit{se} algo está errado, mas não \textit{o quê}. A posição no espaço latente responde à segunda pergunta, e é aqui que a estrutura contínua imposta pela divergência KL rende seu segundo dividendo. Como modos de falha distintos deslocam a máquina para regiões diferentes do espaço latente, a distância de Mahalanobis entre o código latente atual e a distribuição dos códigos saudáveis fornece um indicador direcional, conforme a Equação~\eqref{eq:s22-7}:
+
+	\begin{equation}\label{eq:s22-7}
+	d_M(\ell) = \sqrt{ (\ell - \bar{\ell}_{\text{sadio}})^T \Sigma_{\text{sadio}}^{-1} (\ell - \bar{\ell}_{\text{sadio}}) }
+\end{equation}
+
+	Onde $\bar{\ell}_{\text{sadio}}$ e $\Sigma_{\text{sadio}}$ são a média e a covariância dos códigos latentes do conjunto saudável. A utilidade operacional é que, acumulando histórico, as regiões do espaço latente podem ser \textbf{rotuladas} com os modos de falha efetivamente observados na planta — transformando o VAE de detector genérico de anomalia em classificador de causa raiz, alimentado pela mesma matriz de mecanismos de falha construída na Parte I.
 
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} O peso $\beta$ na Equação~\eqref{eq:s22-2} controla diretamente a sensibilidade do resíduo da Equação~\eqref{eq:s22-3}: um $\beta$ alto demais organiza o espaço latente às custas da fidelidade de reconstrução, mascarando desvios reais; o Gêmeo Digital deve validar $E_{\text{rec}}$ contra falhas históricas conhecidas antes de confiar no limiar $\tau$ de disparo do diagnóstico.
+	\textbf{Diretriz Técnica Final:} O peso $\beta$ na Equação~\eqref{eq:s22-3} controla diretamente a sensibilidade do resíduo da Equação~\eqref{eq:s22-5}: um $\beta$ alto demais organiza o espaço latente às custas da fidelidade de reconstrução, mascarando desvios reais, até o limite do \textit{posterior collapse}; um $\beta$ baixo demais devolve as patologias do autoencoder determinístico. Antes disso, porém, vale a premissa que nenhuma sintonia corrige: um VAE treinado sobre histórico contaminado com operação degradada aprende a falha como normal e fica cego a ela. Curadoria do conjunto de treinamento primeiro, sintonia de $\beta$ depois, e limiar $\tau_{\text{limiar}}$ derivado por quantil da Equação~\eqref{eq:s22-6} com exigência de persistência — nunca um valor absoluto herdado de outra instalação.
 
 	\clearpage
 	\section{Aprendizado Informado pela Física (PIML)}
@@ -2499,23 +2805,75 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	O aprendizado informado pela física garante que a inteligência artificial opere estritamente dentro dos limites impostos pelas leis termodinâmicas e mecânicas. A formulação de redes neurais informadas pela física (PINNs), que fundamenta o PIML aqui aplicado, foi sistematizada por Raissi, Perdikaris e Karniadakis em 2019 como forma de incorporar equações diferenciais diretamente na função de perda de redes neurais \cite{piml}, e consolidada como campo de pesquisa na revisão abrangente de Karniadakis e colaboradores \cite{piml2}.
 	
 	\subsection{Integração de Restrições Físicas}
-	A rede neural é treinada para minimizar o erro dos dados enquanto satisfaz o resíduo físico $\mathcal{F}$ (mesma notação usada no Capítulo de Fundamentos Teóricos; evita-se $\mathcal{R}$ aqui para não colidir com a covariância de ruído de medição do EKF) derivado de equações diferenciais:
+	A rede neural é treinada para minimizar o erro dos dados enquanto satisfaz o resíduo físico $\mathcal{F}$ (mesma notação usada no Capítulo de Fundamentos Teóricos; evita-se $\mathcal{R}$ aqui para não colidir com a covariância de ruído de medição do EKF) derivado de equações diferenciais. A construção é a proposta original de Raissi, Perdikaris e Karniadakis \cite{piml}: escrever a equação diferencial governante na forma de um resíduo que deve se anular e avaliá-lo sobre a própria saída da rede, transformando a lei física em uma parcela da função de perda. A Equação~\eqref{eq:s23-1} dá essa forma genérica:
 	\begin{equation}\label{eq:s23-1}
  \mathcal{F} = \frac{\partial \hat{y}}{\partial t} + \mathcal{N}_{\text{phys}}[\hat{y}] = 0
 \end{equation}
 
-	\subsection{Função de Perda Híbrida}
-	A função de custo penaliza predições que violam princípios como a conservação de massa ou a segunda lei da termodinâmica:
+	\subsection{O Operador Físico Concreto deste Compressor}
+
+	A Equação~\eqref{eq:s23-1} é um esqueleto: o operador $\mathcal{N}_{\text{phys}}$ é abstrato até que se diga quais leis, especificamente, a rede é obrigada a respeitar. Neste documento essa resposta já existe — ela é o conteúdo inteiro da Parte I. O PIML não introduz física nova; ele apenas transporta a física já equacionada componente a componente para dentro da função de perda da rede. A Equação~\eqref{eq:s23-2} explicita os três resíduos efetivamente impostos ao modelo do trem de compressão:
+
 	\begin{equation}\label{eq:s23-2}
+	\mathcal{F} = \begin{cases}
+		\mathcal{F}_1 = \dot{m}_{\text{in}} - \dot{m}_{\text{out}} - \dfrac{dm_{\text{cv}}}{dt} & \text{(conservação de massa)} \\[10pt]
+		\mathcal{F}_2 = \dot{W}_{\text{elec}}\,\eta_{\text{mot}} - \dot{m}\,\Delta h - \dot{Q}_{\text{rej}} - \dfrac{dU_{\text{cv}}}{dt} & \text{(conservação de energia)} \\[10pt]
+		\mathcal{F}_3 = \max\left(0,\; -\dot{S}_{gen}\right) & \text{(Segunda Lei)}
+	\end{cases}
+\end{equation}
+
+	Os dois primeiros resíduos são igualdades: a rede é penalizada proporcionalmente ao quanto sua predição desequilibra o balanço de massa ou de energia do volume de controle. O terceiro é de natureza diferente e merece atenção — é uma \textbf{desigualdade}, imposta pelo operador $\max$, que só penaliza quando a taxa de geração de entropia predita é negativa. Uma rede puramente orientada a dados pode perfeitamente prever, por interpolação entre pontos de treino, uma combinação de temperaturas e pressões que corresponderia a um processo de entropia decrescente — termodinamicamente impossível, mas numericamente plausível para um interpolador. O resíduo $\mathcal{F}_3$ é a barreira que impede essa predição de sobreviver ao treinamento, e é o exemplo mais nítido de por que a Parte I precisou vir antes da Parte II.
+
+	\subsection{Função de Perda Híbrida}
+	A função de custo soma o erro nos dados observados à violação dos resíduos da Equação~\eqref{eq:s23-2}, penalizando predições que contrariem a conservação de massa, a conservação de energia ou a Segunda Lei. Essa soma de duas parcelas ponderadas — um termo supervisionado sobre pontos medidos e um termo de resíduo sobre pontos de colocação — é a forma canônica da perda de uma PINN \cite{piml}, e é o que a distingue de uma rede convencional treinada apenas em dados:
+	\begin{equation}\label{eq:s23-3}
  L_{\text{PIML}} = \frac{1}{N} \sum (y - \hat{y})^2 + \lambda \cdotp \frac{1}{N_f} \sum \| \mathcal{F}(\hat{y}) \|^2
 \end{equation}
-	Onde $\lambda$ é o peso da consistência física no aprendizado.
+	Onde $\lambda$ é o peso da consistência física no aprendizado, $N$ o número de pontos de dados medidos e $N_f$ o número de pontos de colocação, definidos a seguir.
+
+	\subsection{Pontos de Colocação e Diferenciação Automática}
+
+	Dois detalhes de implementação distinguem uma PINN de uma rede convencional, e ambos costumam ser omitidos em descrições de alto nível — o que leva à impressão equivocada de que basta ``somar um termo físico'' à perda.
+
+	O primeiro é como as derivadas de $\mathcal{F}$ são obtidas. Elas não são calculadas por diferenças finitas sobre uma malha, como num solver numérico clássico; são obtidas por \textbf{diferenciação automática}, o mesmo mecanismo que a biblioteca já usa para propagar gradientes no treinamento. Como a rede é uma composição de funções analíticas, $\partial \hat{y} / \partial t$ é exata até precisão de máquina, sem erro de truncamento e sem necessidade de discretizar o domínio. É essa propriedade que torna a abordagem viável.
+
+	O segundo é onde o resíduo físico é avaliado. Os \textbf{pontos de colocação} — os $N_f$ pontos do segundo somatório da Equação~\eqref{eq:s23-3} — são posições no domínio de entrada onde se exige que a física seja satisfeita, e são \textbf{independentes dos dados medidos}. Eles não precisam de sensor algum, apenas de coordenadas. A consequência é o que dá ao PIML sua vantagem decisiva neste projeto: é possível impor conservação de energia em regiões do envelope operacional onde \textbf{nunca houve medição} — em razões de pressão que a máquina raramente atinge, em temperaturas ambientes extremas. Uma rede puramente orientada a dados extrapola nessas regiões sem qualquer garantia; a PINN ao menos extrapola sem violar as leis de conservação. Para um equipamento offshore, onde o custo de levar a máquina a condições extremas para coletar dados é proibitivo, essa é a diferença entre um modelo utilizável e um modelo restrito ao ponto de operação nominal.
+
+	\subsection{Balanceamento Adaptativo dos Termos de Perda}
+
+	O peso $\lambda$ fixo da Equação~\eqref{eq:s23-3} esconde um problema numérico real: os dois termos da perda têm escalas físicas completamente diferentes. Um resíduo de conservação de energia expresso em watts e um erro de temperatura expresso em kelvin diferem em ordens de grandeza, e o gradiente do termo maior domina o treinamento, tornando o outro efetivamente invisível ao otimizador. Sintonizar $\lambda$ manualmente contra esse desbalanço é trabalhoso e frágil.
+
+	A alternativa recomendada é ajustar o peso ao longo do treinamento, em função da magnitude relativa dos gradientes de cada termo, conforme a Equação~\eqref{eq:s23-4}:
+
+	\begin{equation}\label{eq:s23-4}
+	\lambda^{(t+1)} = (1-\kappa)\,\lambda^{(t)} + \kappa \cdot \frac{\overline{\left| \nabla_\theta L_{\text{dados}} \right|}}{\overline{\left| \nabla_\theta L_{\text{física}} \right|}}
+\end{equation}
+
+	Onde $\theta$ são os parâmetros da rede, as barras indicam a média das magnitudes dos gradientes na iteração corrente e $\kappa \in (0,1)$ é um fator de suavização que evita oscilação brusca do peso. O efeito é equalizar automaticamente a influência dos dois termos sobre o passo de otimização, independentemente das unidades em que cada um foi escrito. Além disso, quando os três resíduos da Equação~\eqref{eq:s23-2} têm escalas muito distintas entre si, a prática correta é atribuir um peso próprio a cada um, em vez de um $\lambda$ único para o bloco físico inteiro.
+
+	\subsection{Limitações e Cautelas}
+
+	A revisão de Karniadakis e colaboradores \cite{piml2} — a mesma que consolidou o campo — é explícita quanto às suas limitações, e reproduzi-las aqui é mais honesto do que apresentar o PIML como garantia automática de validade física.
+
+	Primeiro, e mais importante: a penalização é \textbf{fraca}, não uma restrição rígida. Minimizar $\| \mathcal{F} \|^2$ reduz a violação das leis físicas, mas não a zera. A rede treinada produz predições \textit{aproximadamente} conservativas, e a magnitude residual dessa violação precisa ser medida e reportada, não presumida desprezível. Onde a garantia precisar ser dura — numa restrição de segurança, por exemplo — a imposição deve ser feita na camada de otimização com restrições do MPC (Capítulo 24), não na perda da rede.
+
+	Segundo, o treinamento de PINNs é notoriamente mais difícil de convergir que o de redes convencionais. O panorama de otimização é mal condicionado, e patologias de gradiente entre os termos são frequentes — daí a necessidade do balanceamento adaptativo descrito acima.
+
+	Terceiro, o benchmarking do campo ainda é imaturo: comparações justas entre PINNs e solvers numéricos clássicos são escassas, e para problemas em que já existe um solver rápido e confiável, a PINN pode não oferecer vantagem alguma. Neste projeto a justificativa é específica e deve ser mantida à vista: substituir simulações CFD caras por um modelo substituto (\textit{surrogate}) que responde em milissegundos, viabilizando o uso em laço de controle — e não superar o CFD em acurácia.
+
+	\subsection{Divisão de Papéis entre PIML e EKF}
+
+	Uma dúvida legítima surge neste ponto: se o EKF do Capítulo 21 também usa o modelo físico, e o PIML também estima grandezas não medidas, os dois não estariam fazendo a mesma coisa? Não — e a distinção esclarece a arquitetura do Gêmeo Digital.
+
+	O EKF opera \textbf{online}, num único ponto no tempo, e responde: ``dado o modelo físico e a medição que acabou de chegar, qual o estado mais provável agora?''. Sua saída é uma estimativa com incerteza quantificada, atualizada a cada ciclo de varredura. O PIML opera \textbf{offline}, sobre todo o histórico, e responde: ``que função aproxima o comportamento desta máquina em todo o envelope operacional, inclusive onde não há dados, sem violar as leis de conservação?''. Sua saída é um modelo substituto rápido.
+
+	Os dois se compõem em vez de competir: o modelo substituto treinado por PIML pode ser usado \textit{como} a função de transição $f(\cdot)$ do EKF, substituindo um modelo físico analítico caro de avaliar por uma rede que roda em microssegundos — o que permite ao EKF operar em taxa de amostragem alta o suficiente para capturar transientes rápidos. E o mesmo substituto serve de modelo de predição para o MPC do Capítulo 24, onde o custo de avaliação é multiplicado por todo o horizonte de otimização.
 
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} O peso $\lambda$ na Equação~\eqref{eq:s23-2} deve ser calibrado por validação cruzada, não fixado arbitrariamente — $\lambda$ excessivo faz a rede ignorar os dados reais em favor da física idealizada, enquanto $\lambda$ insuficiente permite predições que violam conservação de massa/energia mesmo com baixo erro nos dados de treino.
+	\textbf{Diretriz Técnica Final:} O peso $\lambda$ na Equação~\eqref{eq:s23-3} deve ser balanceado pela magnitude relativa dos gradientes (Equação~\eqref{eq:s23-4}), não fixado arbitrariamente — $\lambda$ excessivo faz a rede ignorar os dados reais em favor da física idealizada, enquanto $\lambda$ insuficiente permite predições que violam conservação de massa/energia mesmo com baixo erro nos dados de treino. Igualmente importante: a penalização física é fraca, não uma garantia. O resíduo $\| \mathcal{F} \|$ da rede treinada deve ser medido e reportado como métrica de aceitação, e nenhuma restrição de segurança do equipamento deve depender exclusivamente dela — restrições duras pertencem à camada de otimização com restrições do Capítulo 24.
 
 	\clearpage
 	\section{Otimização e Controle: MPC e PSO}
@@ -2528,9 +2886,11 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_24_1_mpc.pdf}
-		\caption{Princípio de horizonte deslizante do MPC: a trajetória prevista (tracejada) é otimizada até o fim do horizonte $H$, mas só a primeira ação de controle é aplicada antes de reotimizar.}
+		\caption[Princípio de horizonte deslizante do MPC]{Princípio de horizonte deslizante do MPC: a trajetória prevista (tracejada) é otimizada até o fim do horizonte $H$, mas só a primeira ação de controle é aplicada antes de reotimizar.}
 		\label{fig:24-1}
 	\end{figure}
+
+	A Equação~\eqref{eq:s24-1} formaliza esse princípio na formulação quadrática padrão do MPC \cite[Cap.~2]{rawlings}: um primeiro somatório penalizando o desvio quadrático da saída em relação à referência ao longo de todo o horizonte, e um segundo penalizando o esforço de controle — ambos sujeitos ao modelo de predição do processo e às restrições de integridade mecânica. A escolha do quadrado não é estética: é ela que torna o problema convexo no caso linear e, portanto, resolúvel de forma confiável dentro do período de amostragem do controlador.
 
 	\begin{equation}\label{eq:s24-1}
 	\begin{aligned}
@@ -2541,21 +2901,68 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 \end{equation}
 	É essa reotimização a cada passo — e não um cálculo único offline — que permite ao MPC reagir a distúrbios reais (uma flutuação de demanda, um desvio de temperatura) sem violar a restrição estrutural $\sigma_b(k) \le \sigma_{\text{adm}}$ em nenhum ponto do horizonte projetado.
 
+	\subsubsection*{Sintonia do horizonte e do peso de esforço}
+
+	Os dois parâmetros livres da Equação~\eqref{eq:s24-1} governam o comportamento do controlador, e ambos têm interpretação física direta neste equipamento.
+
+	O horizonte $H$ deve cobrir a \textbf{dinâmica mais lenta} que o controlador precisa antecipar. Num sistema de ar comprimido, a constante de tempo dominante não é a do compressor, e sim a do vaso pulmão: a Equação~\eqref{eq:s3-5} descreve a dinâmica de pressão desse volume, e é ela que dita quanto tempo o sistema leva para responder a uma mudança de carga. Um horizonte curto demais faz o MPC agir como um PID míope, reagindo à pressão atual sem antecipar o esvaziamento do pulmão; um horizonte longo demais multiplica o custo computacional sem ganho, porque a incerteza da predição cresce e as ações do fim do horizonte são descartadas de qualquer modo. A regra prática é dimensionar $H$ para algo entre uma e duas constantes de tempo do vaso.
+
+	O peso $\rho$ penaliza a \textbf{variação} da ação de controle, $\Delta u$, e não seu valor absoluto — distinção essencial. É ele que impede o controlador de perseguir cada flutuação de pressão com mudanças bruscas de frequência do VSD. Um $\rho$ baixo demais produz ciclagem do inversor: o controlador tecnicamente minimiza o erro, mas ao custo de fadiga térmica no motor e desgaste acelerado, degradando exatamente os componentes cuja vida útil o Gêmeo Digital deveria preservar. Trata-se, portanto, de um parâmetro que acopla o desempenho de controle à integridade mecânica, e sua sintonia deve considerar as duas coisas.
+
+	\subsubsection*{Viabilidade e amolecimento de restrições}
+
+	Há uma falha de projeto que derruba controladores MPC em campo e raramente aparece na formulação teórica: a \textbf{inviabilidade}. Se um distúrbio levar a máquina a um estado a partir do qual nenhuma sequência de ações satisfaz todas as restrições dentro do horizonte, o otimizador não retorna uma solução ruim — ele não retorna solução alguma. O controlador fica sem saída a aplicar, exatamente no momento de maior estresse do sistema.
+
+	A proteção padrão é distinguir restrições \textbf{duras}, que jamais podem ser relaxadas, de restrições \textbf{brandas}, que podem ser violadas temporariamente a um custo alto. Isso se implementa com variáveis de folga $\varsigma \ge 0$ penalizadas na função objetivo, conforme a Equação~\eqref{eq:s24-2}:
+
+	\begin{equation}\label{eq:s24-2}
+	\begin{aligned}
+		\text{Minimizar } J' &= J + \varrho_s \sum_{k=1}^{H} \varsigma_k^2 \\[4pt]
+		\text{Sujeito a: } & \sigma_b(k) \le \sigma_{\text{adm}} && \text{(dura — integridade mecânica)} \\
+		& T_{\text{dp}}(k) \le T_{\text{dp,set}} + \varsigma_k && \text{(branda — qualidade do ar)} \\
+		& \varsigma_k \ge 0
+	\end{aligned}
+\end{equation}
+
+	Onde $\varrho_s$ é uma penalidade deliberadamente alta, escolhida de modo que o otimizador só recorra à folga quando não houver alternativa viável. A classificação de cada restrição é uma decisão de engenharia com consequência de segurança, e deve ser explícita: a tensão na raiz do dente é \textbf{dura} porque sua violação é ruptura mecânica, irreversível; o ponto de orvalho é \textbf{brando} porque uma excursão de alguns minutos acima do setpoint durante um transiente de demanda degrada a qualidade do ar temporariamente, sem dano permanente ao equipamento. Confundir as duas categorias — endurecendo tudo — é a receita para um controlador que trava justamente quando é mais necessário.
+
+	\subsubsection*{Modelo de predição e custo computacional}
+
+	A restrição $x_{k+1} = f(x_k, u_k)$ da Equação~\eqref{eq:s24-1} exige avaliar o modelo físico uma vez por passo do horizonte, a cada iteração do otimizador, a cada ciclo de controle — o produto desses três fatores é o que determina a viabilidade em tempo real. Avaliar diretamente o equacionamento completo da Parte I, com suas correlações de troca térmica e psicrometria, é caro demais para essa multiplicação. É precisamente aqui que o modelo substituto treinado por PIML (Capítulo 23) deixa de ser refinamento acadêmico e vira requisito de arquitetura: ele fornece o mesmo $f(\cdot)$ com custo de avaliação ordens de grandeza menor, mantendo consistência física garantida por construção. A alternativa clássica — linearizar o modelo em torno do ponto de operação e resolver um problema quadrático — é mais barata ainda, mas perde validade justamente nos transientes amplos em que o MPC seria mais útil.
+
 	\subsection{Otimização por Enxame de Partículas (PSO)}
 	Introduzido por Kennedy e Eberhart em 1995 como metaheurística inspirada no comportamento social de bandos e cardumes \cite{pso}, o PSO é usado aqui para a sintonização de setpoints globais em superfícies de custo não convexas, utilizando a dinâmica de partículas:
-	\begin{equation}\label{eq:s24-2}
+	\begin{equation}\label{eq:s24-3}
  v_{i}^{t+1} = w v_{i}^t + c_1 r_1 (p_{\text{best},i} - x_{i}^t) + c_2 r_2 (g_{\text{best}} - x_{i}^t)
 \end{equation}
+	A Equação~\eqref{eq:s24-3} atualiza apenas a \textbf{velocidade} de cada partícula; o deslocamento propriamente dito vem da Equação~\eqref{eq:s24-4}, que completa a iteração do algoritmo:
+
+	\begin{equation}\label{eq:s24-4}
+	x_i^{t+1} = x_i^t + v_i^{t+1}
+\end{equation}
+
+	Os termos das duas equações têm leitura direta:
 	\begin{itemize}
-		\item $p_{\text{best}}$: Melhor posição individual.
-		\item $g_{\text{best}}$: Melhor posição global do enxame.
+		\item $p_{\text{best},i}$: Melhor posição já visitada pela partícula $i$ (memória individual).
+		\item $g_{\text{best}}$: Melhor posição já encontrada por todo o enxame (memória coletiva).
+		\item $w$: Peso de inércia — controla quanto da velocidade anterior é conservado.
+		\item $c_1, c_2$: Coeficientes cognitivo e social, que ponderam a atração pela melhor posição própria e pela melhor do grupo.
+		\item $r_1, r_2 \sim \mathcal{U}(0,1)$: Números aleatórios sorteados a cada iteração, que introduzem a estocasticidade responsável pela exploração do espaço de busca.
 	\end{itemize}
+
+	\subsubsection*{Sintonia dos coeficientes e critério de parada}
+
+	O peso de inércia $w$ governa o compromisso entre exploração e refinamento, e a prática consolidada é não mantê-lo fixo: iniciar alto (tipicamente próximo de $0{,}9$), favorecendo a varredura ampla do espaço de busca, e decair linearmente até um valor baixo (próximo de $0{,}4$) ao longo das iterações, concentrando o enxame em torno da melhor região encontrada. Um $w$ alto demais em regime permanente impede a convergência — as partículas orbitam o ótimo sem se assentar; um $w$ baixo desde o início faz o enxame colapsar prematuramente no primeiro mínimo local que encontrar, anulando a própria razão de se usar uma metaheurística em lugar de um método de gradiente.
+
+	Os coeficientes $c_1$ e $c_2$ são comumente fixados em torno de $2{,}0$ cada. O desbalanço entre eles tem efeito previsível: $c_2 \gg c_1$ acelera a convergência ao custo de perda de diversidade, com o enxame inteiro perseguindo um único ponto e ficando vulnerável a mínimos locais; $c_1 \gg c_2$ produz o oposto, um enxame disperso que explora bem mas converge devagar.
+
+	O critério de parada não deve ser apenas um número máximo de iterações. Duas condições adicionais são mais informativas: \textbf{estagnação} de $g_{\text{best}}$, isto é, ausência de melhoria relativa significativa por um número consecutivo de iterações, e \textbf{colapso de diversidade}, medido pela dispersão das posições das partículas. Este segundo critério merece destaque porque distingue duas situações que o primeiro confunde: um enxame que parou de melhorar \textit{porque convergiu} e um que parou \textit{porque perdeu diversidade cedo demais} e ficou preso. Só o segundo caso justifica reiniciar a busca com nova semeadura.
 	A Figura~\ref{fig:24-2} mostra esse comportamento em duas iterações de um enxame sobre uma superfície de custo hipotética: inicialmente as partículas estão espalhadas e suas velocidades (setas) combinam o puxão em direção à melhor posição já visitada por cada uma ($p_{\text{best}}$) com o puxão em direção à melhor posição já vista por todo o enxame ($g_{\text{best}}$); depois de algumas iterações, o enxame converge e se concentra ao redor do mínimo global encontrado.
 
 	\begin{figure}[h!]
 		\centering
 		\includegraphics[width=0.75\textwidth]{figuras/fig_24_2_pso.pdf}
-		\caption{Convergência do enxame de partículas do PSO sobre uma superfície de custo hipotética: dispersão inicial (esquerda) e concentração em torno do mínimo global $g_{\text{best}}$ após convergência (direita).}
+		\caption[Convergência do enxame de partículas do PSO]{Convergência do enxame de partículas do PSO sobre uma superfície de custo hipotética: dispersão inicial (esquerda) e concentração em torno do mínimo global $g_{\text{best}}$ após convergência (direita).}
 		\label{fig:24-2}
 	\end{figure}
 
@@ -2563,7 +2970,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} MPC e PSO cumprem papéis complementares, não intercambiáveis: o MPC (Equação~\eqref{eq:s24-1}) resolve o controle em tempo real dentro das restrições de integridade, enquanto o PSO é reservado para sintonia de hiperparâmetros e busca de setpoints globais offline — usar PSO no laço de controle em tempo real introduz latência incompatível com a proteção mecânica do compressor.
+	\textbf{Diretriz Técnica Final:} MPC e PSO cumprem papéis complementares, não intercambiáveis: o MPC (Equação~\eqref{eq:s24-1}) resolve o controle em tempo real dentro das restrições de integridade, enquanto o PSO é reservado para sintonia de hiperparâmetros e busca de setpoints globais offline — usar PSO no laço de controle em tempo real introduz latência incompatível com a proteção mecânica do compressor. Dois requisitos de projeto decorrem disso e não podem ser omitidos na implementação: o MPC precisa de tratamento explícito de inviabilidade, separando restrições duras de brandas com variáveis de folga (Equação~\eqref{eq:s24-2}), sob pena de o controlador não retornar ação alguma justamente durante o distúrbio que o exigia; e o modelo de predição $f(\cdot)$ deve ser barato o bastante para ser avaliado $H$ vezes por iteração do otimizador, o que na prática torna o substituto treinado por PIML (Capítulo 23) parte da arquitetura de controle, e não um acessório.
 
 	\clearpage
 	\section{Diretrizes para o Desenvolvimento e Evolução do Gêmeo Digital}
@@ -2573,12 +2980,12 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\subsection{Governança de Dados e Pré-processamento Robusto}
 	O sucesso dos algoritmos de inferência, como o EKF e o VAE, depende criticamente da integridade dos sinais de entrada. Em ambientes offshore, a telemetria é frequentemente ruidosa.
 	\begin{itemize}
-		\item \textbf{Filtragem Adaptativa (Savitzky-Golay):} Diferente de uma média móvel simples — que suaviza o ruído mas também "arredonda" picos e mudanças bruscas reais do sinal —, o filtro de Savitzky-Golay \cite{savgol} ajusta um polinômio de grau $p_{\text{SG}}$ por mínimos quadrados dentro de uma janela móvel de $2m_{\text{SG}}+1$ amostras centrada em cada ponto, e usa o valor do polinômio ajustado no centro da janela como a amostra suavizada. Como esse ajuste é linear nos dados de entrada, o resultado se reduz a uma convolução com coeficientes fixos $c_i$ (pré-calculados uma única vez a partir de $p_{\text{SG}}$ e $m_{\text{SG}}$), Equação~\eqref{eq:s25-1}:
+		\item \textbf{Filtragem Adaptativa (Savitzky-Golay):} Diferente de uma média móvel simples — que suaviza o ruído mas também ``arredonda'' picos e mudanças bruscas reais do sinal —, o filtro de Savitzky-Golay \cite{savgol} ajusta um polinômio de grau $p_{\text{SG}}$ por mínimos quadrados dentro de uma janela móvel de $2m_{\text{SG}}+1$ amostras centrada em cada ponto, e usa o valor do polinômio ajustado no centro da janela como a amostra suavizada. Como esse ajuste é linear nos dados de entrada, o resultado se reduz a uma convolução com coeficientes fixos $c_i$ (pré-calculados uma única vez a partir de $p_{\text{SG}}$ e $m_{\text{SG}}$), Equação~\eqref{eq:s25-1}:
 		\begin{equation}\label{eq:s25-1}
  y_j^{\text{suav}} = \sum_{i=-m_{\text{SG}}}^{m_{\text{SG}}} c_i \cdotp y_{j+i}
 \end{equation}
 		É justamente o ajuste polinomial local — em vez de uma média constante — que preserva a amplitude e a largura de transientes reais (como o pico de um impacto mecânico incipiente), ao mesmo tempo em que atenua o ruído de alta frequência da instrumentação; por isso o filtro é preferido à média móvel para os sinais de vibração deste documento.
-		\item \textbf{Tratamento de Outliers (\textit{Isolation Forest}):} Ao contrário de métodos que primeiro modelam o que é "normal" para depois sinalizar desvios, o \textit{Isolation Forest} \cite{isoforest} explora diretamente a definição de anomalia — pontos raros e diferentes são mais fáceis de isolar. O algoritmo constrói um conjunto de árvores binárias aleatórias (\textit{isolation trees}), cada uma particionando os dados recursivamente por um atributo e um valor de corte escolhidos ao acaso; um ponto anômalo tende a ser isolado em poucas divisões (caminho curto até a raiz da árvore), enquanto um ponto normal exige muitas divisões (caminho longo). O escore de anomalia normaliza o comprimento médio do caminho de isolamento $E[L_{\text{iso}}(x)]$ sobre todas as árvores da floresta pelo comprimento médio esperado numa árvore de busca binária com $n_{\text{IF}}$ pontos, Equação~\eqref{eq:s25-2}:
+		\item \textbf{Tratamento de Outliers (\textit{Isolation Forest}):} Ao contrário de métodos que primeiro modelam o que é ``normal'' para depois sinalizar desvios, o \textit{Isolation Forest} \cite{isoforest} explora diretamente a definição de anomalia — pontos raros e diferentes são mais fáceis de isolar. O algoritmo constrói um conjunto de árvores binárias aleatórias (\textit{isolation trees}), cada uma particionando os dados recursivamente por um atributo e um valor de corte escolhidos ao acaso; um ponto anômalo tende a ser isolado em poucas divisões (caminho curto até a raiz da árvore), enquanto um ponto normal exige muitas divisões (caminho longo). O escore de anomalia normaliza o comprimento médio do caminho de isolamento $E[L_{\text{iso}}(x)]$ sobre todas as árvores da floresta pelo comprimento médio esperado numa árvore de busca binária com $n_{\text{IF}}$ pontos, Equação~\eqref{eq:s25-2}:
 		\begin{equation}\label{eq:s25-2}
  s_{\text{IF}}(x) = 2^{-\frac{E[L_{\text{iso}}(x)]}{c(n_{\text{IF}})}}, \quad c(n_{\text{IF}}) = 2\left[\ln(n_{\text{IF}}-1) + \gamma_{\text{EM}}\right] - \frac{2(n_{\text{IF}}-1)}{n_{\text{IF}}}
 \end{equation}
@@ -2587,7 +2994,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 		\begin{figure}[h!]
 			\centering
 			\includegraphics[width=0.60\textwidth]{figuras/fig_25_1_isoforest.pdf}
-			\caption{Princípio do \textit{Isolation Forest}: um ponto anômalo se isola do restante dos dados em poucos cortes aleatórios; um ponto no meio de um aglomerado normal exige muito mais cortes.}
+			\caption[Princípio do \textit{Isolation Forest}]{Princípio do \textit{Isolation Forest}: um ponto anômalo se isola do restante dos dados em poucos cortes aleatórios; um ponto no meio de um aglomerado normal exige muito mais cortes.}
 			\label{fig:25-1}
 		\end{figure}
 	\end{itemize}
@@ -2612,7 +3019,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\subsection{Explicabilidade e Interface Humano-Máquina (XAI)}
 	Para que o Gêmeo Digital seja aceito pelos operadores, suas decisões devem ser auditáveis e compreensíveis.
 	\begin{itemize}
-		\item \textbf{Valores de SHAP:} Utilização de \textit{SHapley Additive exPlanations} para quantificar a contribuição de cada sensor em um diagnóstico de falha. A Equação~\eqref{eq:s25-4}, originada da teoria de jogos cooperativos, calcula a contribuição média da variável $x_i$ ($\phi_i$) testando o modelo $f$ com e sem essa variável, em todas as combinações possíveis ($S$) das demais variáveis — o resultado é um "crédito" justo de quanto cada sensor pesou na decisão do modelo, permitindo ao operador ver, por exemplo, que um alarme foi disparado principalmente por $T_{dp}$ e não por vibração:
+		\item \textbf{Valores de SHAP:} Utilização de \textit{SHapley Additive exPlanations} para quantificar a contribuição de cada sensor em um diagnóstico de falha. A Equação~\eqref{eq:s25-4}, originada da teoria de jogos cooperativos, calcula a contribuição média da variável $x_i$ ($\phi_i$) testando o modelo $f$ com e sem essa variável, em todas as combinações possíveis ($S$) das demais variáveis — o resultado é um ``crédito'' justo de quanto cada sensor pesou na decisão do modelo, permitindo ao operador ver, por exemplo, que um alarme foi disparado principalmente por $T_{dp}$ e não por vibração:
 		\begin{equation}\label{eq:s25-4}
  \phi_i(f) = \sum_{S \subseteq \{x_1, \dots, x_n\} \setminus \{x_i\}} \frac{|S|! (n - |S| - 1)!}{n!} [f(S \cup \{x_i\}) - f(S)]
 \end{equation}
@@ -2639,7 +3046,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	Este capítulo descreve a infraestrutura fundamental e a lógica de programação para a execução do Gêmeo Digital em ambiente de produção, utilizando bibliotecas de código aberto consagradas e integração com sistemas legados.
 	
-	\textbf{1. Stack Tecnológica de Referência}
+	\subsection{Stack Tecnológica de Referência}
 	Para garantir a interoperabilidade entre os modelos físicos e de aprendizado de máquina, recomenda-se a seguinte configuração:
 	\begin{itemize}
 		\item \textbf{Linguagem Principal:} Python $3.9+$.
@@ -2650,7 +3057,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 		\item \textbf{Banco de Dados:} \text{InfluxDB} ou \text{TimescaleDB} para armazenamento de séries temporais.
 	\end{itemize}
 	
-	\textbf{2. Implementação do Filtro de Kalman Estendido (EKF)}
+	\subsection{Implementação do Filtro de Kalman Estendido (EKF)}
 	O EKF é o motor de fusão de dados que estima variáveis ocultas (como a folga residual $\delta$) a partir de medições ruidosas.
 	\begin{equation}\label{eq:s26-1}
 	\begin{aligned}
@@ -2661,59 +3068,94 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\end{aligned}
 \end{equation}
 	
+	A implementação abaixo segue as recomendações de robustez numérica do Capítulo 21: a covariância é atualizada pela forma de Joseph (Equação~\eqref{eq:s21-8}) em vez da forma simplificada, e a inovação e o NIS (Equação~\eqref{eq:s21-7}) são devolvidos junto com o estado, para que a camada superior possa auditar a consistência do filtro em tempo real.
+
 	\begin{verbatim}
-		import numpy as np
-		
-		def ekf_update(x_hat, P, z, u, Q, R_meas, dt):
-		# 1. Predição (Modelo Físico Politrópico)
-		x_pred = f_physics(x_hat, u, dt)
-		F = compute_jacobian_f(x_hat, u, dt)
-		P_pred = F @ P @ F.T + Q
-		
-		# 2. Correção (Medição de P, T e Vazão)
-		G = compute_jacobian_g(x_pred)
-		y_res = z - g_observation(x_pred)
-		S = G @ P_pred @ G.T + R_meas
-		K = P_pred @ G.T @ np.linalg.inv(S)
-		
-		x_new = x_pred + K @ y_res
-		P_new = (np.eye(len(x_hat)) - K @ G) @ P_pred
-		return x_new, P_new
-	\end{verbatim}
+import numpy as np
+
+def ekf_update(x_hat, P, z, u, Q, R_meas, dt):
+    # 1. Predição (modelo físico politrópico)
+    x_pred = f_physics(x_hat, u, dt)
+    F = compute_jacobian_f(x_hat, u, dt)
+    P_pred = F @ P @ F.T + Q
+
+    # 2. Correção (medição de P, T e vazão)
+    G = compute_jacobian_g(x_pred)
+    y_res = z - g_observation(x_pred)      # inovação
+    S = G @ P_pred @ G.T + R_meas          # covariância da inovação
+    K = P_pred @ np.linalg.solve(S, G).T   # evita inv(S) explícita
+
+    x_new = x_pred + K @ y_res
+
+    # 3. Covariância pela forma de Joseph (estável)
+    I_KG = np.eye(len(x_hat)) - K @ G
+    P_new = I_KG @ P_pred @ I_KG.T + K @ R_meas @ K.T
+    P_new = 0.5 * (P_new + P_new.T)        # força simetria
+
+    # 4. Auditoria: NIS ~ chi2(n_z) se o filtro estiver consistente
+    nis = float(y_res.T @ np.linalg.solve(S, y_res))
+    return x_new, P_new, y_res, nis
+\end{verbatim}
+
+	Três detalhes desse trecho merecem comentário, porque são justamente os que costumam ser omitidos em implementações de protótipo e cobrados em produção. O uso de \texttt{np.linalg.solve} em lugar de \texttt{np.linalg.inv} resolve o sistema linear sem formar a inversa explicitamente — numericamente mais estável e mais barato, e a diferença se acumula ao longo de milhões de ciclos. A simetrização forçada de \texttt{P\_new} corrige a assimetria residual introduzida por arredondamento, que de outro modo se amplifica a cada iteração. E o retorno do NIS é o que transforma o filtro de caixa-preta em instrumento auditável: sem ele, não há como distinguir em campo um EKF saudável de um que já divergiu silenciosamente.
 	
-	\textbf{3. Função de Perda Physics-Informed (PIML)}
+	\subsection{Função de Perda Physics-Informed (PIML)}
 	A rede neural é treinada para minimizar o erro dos dados enquanto satisfaz o balanço de energia:
 	\begin{equation}\label{eq:s26-2}
  L_{\text{total}} = \text{MSE}_{\text{data}} + \lambda \cdotp \text{MSE}_{\text{phys}} 
 \end{equation}
 	\begin{verbatim}
-		def piml_loss(y_pred, y_true, inputs, lambda_phys):
-		data_loss = torch.mean((y_pred - y_true)**2)
-		
-		# Resíduo Físico: W_dot - m_dot * cp * (T_out - T_in) = 0
-		m_dot = inputs[:, 0]
-		cp = 1005.0 # J * kg^-1 * K^-1
-		W_dot = compute_power(inputs) 
-		phys_residual = W_dot - m_dot * cp * (y_pred[:, 3] - y_pred[:, 1])
-		phys_loss = torch.mean(phys_residual**2)
-		
-		return data_loss + lambda_phys * phys_loss
-	\end{verbatim}
+import torch
+
+def piml_loss(y_pred, y_true, inputs, lambda_phys):
+    data_loss = torch.mean((y_pred - y_true)**2)
+
+    # Resíduo físico: W_dot - m_dot * cp * (T_out - T_in) = 0
+    m_dot = inputs[:, 0]
+    cp = 1005.0                            # J * kg^-1 * K^-1
+    W_dot = compute_power(inputs)
+    phys_residual = W_dot - m_dot * cp * (y_pred[:, 3] - y_pred[:, 1])
+    phys_loss = torch.mean(phys_residual**2)
+
+    return data_loss + lambda_phys * phys_loss
+\end{verbatim}
 	
-	\textbf{4. Indicadores Globais de Saúde (KPIs)}
+	\subsection{Indicadores Globais de Saúde (KPIs)}
 	\begin{itemize}
 		\item \textbf{Eficiência Exergética:} Razão entre a exergia efetivamente aproveitada e a exergia total de entrada, conforme a Equação~\eqref{eq:s26-3}:
 		\begin{equation}\label{eq:s26-3}
  \eta_{\text{ex}} = 1 - \frac{\dot{I}}{\dot{E}x_{\text{in}}}
 \end{equation}
-		\item \textbf{Health Index (HI):} Normalização ponderada dos resíduos do VAE e EKF.
+		\item \textbf{Health Index (HI):} Normalização ponderada dos resíduos do VAE e do EKF, definida a seguir.
+	\end{itemize}
+
+	O \textit{Health Index} merece definição explícita, por ser o número que efetivamente chega ao operador. Ele condensa indicadores de naturezas distintas — um resíduo estatístico de reconstrução, um estado físico estimado, um desvio de eficiência — numa escala única de $0$ a $1$, onde $1$ representa a máquina em condição de referência. A dificuldade é que esses indicadores têm unidades e faixas incomparáveis, o que exige normalizar cada um pelo seu próprio limiar antes de combinar, conforme a Equação~\eqref{eq:s26-4}:
+
+	\begin{equation}\label{eq:s26-4}
+	HI = 1 - \sum_{j} \varpi_j \cdot \min\left( 1,\; \frac{\max(0,\; \Theta_j - \Theta_{j,\text{ref}})}{\Theta_{j,\text{lim}} - \Theta_{j,\text{ref}}} \right), \qquad \sum_j \varpi_j = 1
+\end{equation}
+
+	Onde $\Theta_j$ é o $j$-ésimo indicador (erro de reconstrução do VAE, folga estimada pelo EKF, queda de eficiência isentrópica, destruição exergética), $\Theta_{j,\text{ref}}$ seu valor na condição de referência, $\Theta_{j,\text{lim}}$ o valor em que aquele indicador isoladamente caracteriza falha, e $\varpi_j$ o peso atribuído. Os símbolos $\Theta$ e $\varpi$ foram escolhidos por serem os únicos livres nesta faixa do alfabeto grego: $\zeta$ já designa o coeficiente de perda dos filtros e $\omega$ a velocidade angular. As duas saturações não são detalhe cosmético: o $\max(0,\cdot)$ impede que um indicador melhor que a referência compense artificialmente outro degradado — uma máquina com trocador limpo não fica ``saudável'' por isso apesar de um mancal em fim de vida — e o $\min(1,\cdot)$ impede que um único indicador em colapso arraste o índice para valores negativos sem significado.
+
+	Cabe um alerta sobre o uso desse número. O HI é uma ferramenta de \textbf{comunicação e priorização}, útil para ordenar máquinas de uma frota por urgência de intervenção. Ele não é, e não deve ser tratado como, base para decisão de proteção: a agregação ponderada é intrinsecamente uma perda de informação, e um HI de $0{,}8$ não distingue quatro indicadores levemente degradados de um único indicador em situação crítica. As decisões de trip e alarme pertencem à matriz da Tabela~\ref{tab:18-2}, que opera sobre os indicadores individuais.
+
+	\subsection{Requisitos de Passagem para Produção}
+
+	A distância entre o código acima e um Gêmeo Digital em operação contínua é maior do que a extensão dos trechos sugere, e essa distância é composta por itens de engenharia, não de modelagem.
+
+	\begin{itemize}
+		\item \textbf{Versionamento conjunto de modelo e dados:} um modelo treinado é a composição de pesos, hiperparâmetros e do conjunto exato que o originou. Reproduzir um diagnóstico emitido meses antes — exigência corriqueira numa investigação de falha — requer os três, versionados juntos.
+		\item \textbf{Testes de regressão contra falhas conhecidas:} todo evento de falha documentado na planta deve virar um caso de teste, com o critério de que o modelo o detecte com a antecedência registrada. Uma versão nova que melhora a métrica agregada mas deixa de detectar uma falha antes capturada é uma regressão, ainda que os números globais tenham melhorado.
+		\item \textbf{Monitoramento de deriva (\textit{model drift}):} a distribuição dos dados de entrada muda com trocas de peça, mudanças de regime operacional e envelhecimento. Deve haver detecção automática dessa deriva, disparando reavaliação — não retreinamento cego, que reintroduziria o problema de contaminação do conjunto de treino discutido no Capítulo 22.
+		\item \textbf{Degradação graciosa:} a perda de um sensor não pode derrubar o Gêmeo Digital. O sistema precisa reconhecer a indisponibilidade, reavaliar a observabilidade dos estados afetados (Equação~\eqref{eq:s21-5}) e sinalizar explicitamente quais estimativas deixaram de ter suporte, em vez de continuar publicando números.
+		\item \textbf{Rastreabilidade da decisão:} toda ação automática executada deve registrar as entradas, o estado estimado e a versão de modelo que a produziram. Sem isso não há auditoria de incidente possível — e, num ambiente offshore sujeito a requisitos de segurança de processo, não há como demonstrar a lógica que levou o sistema a agir.
 	\end{itemize}
 
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A implementação de referência deste capítulo (EKF em NumPy puro, PIML em PyTorch) é suficiente para prototipagem e validação offline; migrar para produção exige, no mínimo, versionamento de modelo, testes de regressão contra o histórico de falhas conhecidas e o pipeline de retreinamento descrito no Capítulo de Diretrizes de Desenvolvimento — implantar o protótipo diretamente em campo sem essa camada de engenharia de MLOps é o erro mais comum na transição de Digital Twins de piloto para operação contínua.
+	\textbf{Diretriz Técnica Final:} A implementação de referência deste capítulo (EKF em NumPy puro, PIML em PyTorch) é suficiente para prototipagem e validação offline; migrar para produção exige, no mínimo, os cinco requisitos listados acima — versionamento conjunto de modelo e dados, testes de regressão contra o histórico de falhas conhecidas, detecção de deriva, degradação graciosa na perda de sensor e rastreabilidade da decisão — mais o pipeline de retreinamento descrito no Capítulo de Diretrizes de Desenvolvimento. Implantar o protótipo diretamente em campo sem essa camada de engenharia de MLOps é o erro mais comum na transição de Gêmeos Digitais de piloto para operação contínua.
 
 	\newpage
 	
@@ -2722,52 +3164,58 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	
 	Este capítulo detalha o uso de frameworks de vanguarda para simulações de alta fidelidade, operadores neurais e visualização avançada em tempo real.
 	
-	\textbf{1. Frameworks de Physics-ML (NVIDIA Modulus)}
+	\subsection{Frameworks de Physics-ML (NVIDIA Modulus)}
 	O uso do \textbf{NVIDIA Modulus} \cite{modulus} permite a criação de \text{Surrogate Models} baseados em PINNs e Operadores Neurais de Fourier (FNO) que substituem solvers de CFD lentos.
 	\begin{itemize}
 		\item \textbf{Vantagem:} Redução do tempo de simulação de horas para milissegundos.
 		\item \textbf{Funcionalidade:} Integração direta de geometrias CAD e equações de Navier-Stokes.
 	\end{itemize}
 	
-	\textbf{2. Solvers de PDEs e Problemas Inversos (DeepXDE)}
+	\subsection{Solvers de PDEs e Problemas Inversos (DeepXDE)}
 	O \textbf{DeepXDE} \cite{deepxde} é utilizado para estimar parâmetros de degradação (como rugosidade interna) minimizando o resíduo das equações diferenciais:
 	\begin{equation}\label{eq:s27-1}
  \mathcal{R}(\mathbf{u}) = \rho (\mathbf{u} \cdotp \nabla) \mathbf{u} + \nabla p - \mu \nabla^2 \mathbf{u} = 0 
 \end{equation}
 	
-	\textbf{3. Controle Preditivo e MHE (do-mpc)}
+	\subsection{Controle Preditivo e MHE (do-mpc)}
 	O pacote \textbf{do-mpc} \cite{dompc} oferece suporte para \text{Moving Horizon Estimation} (MHE), superior ao EKF em lidar com restrições severas e incertezas de modelo, integrando-se nativamente ao CasADi.
 	
-	\textbf{4. Exemplo de Implementação: Modulus (PINN)}
+	\subsection{Exemplo de Implementação: Modulus (PINN)}
 	\begin{verbatim}
-		import modulus
-		from modulus.models.fourier_net import FourierNetArch
-		
-		# 1. Definição das Equações de Navier-Stokes e Energia
-		ns = NavierStokes(nu=0.01, rho=1.2, dim=3, time=False)
-		energy = EnergyEquation(cp=1.005, rho=1.2, dim=3, time=False)
-		
-		# 2. Arquitetura da Rede (Neural Operator)
-		flow_net = FourierNetArch(input_keys=["x", "y", "z"], output_keys=["u", "p", "temp"])
-		
-		# 3. Restrição de Domínio
-		domain.add_constraint(PointwiseProbabilityConstraint(
-		nodes=[ns.make_nodes(), energy.make_nodes(), flow_net.make_nodes()],
-		geometry=compressor_volute_geo,
-		out_map={"continuity": 0, "momentum_x": 0, "energy": 0}
-		))
-	\end{verbatim}
+import modulus
+from modulus.models.fourier_net import FourierNetArch
+
+# 1. Equações de Navier-Stokes e da energia
+ns = NavierStokes(nu=0.01, rho=1.2, dim=3, time=False)
+energy = EnergyEquation(cp=1.005, rho=1.2, dim=3, time=False)
+
+# 2. Arquitetura da rede (neural operator)
+flow_net = FourierNetArch(
+    input_keys=["x", "y", "z"],
+    output_keys=["u", "p", "temp"],
+)
+
+# 3. Restrição de domínio
+domain.add_constraint(PointwiseProbabilityConstraint(
+    nodes=[ns.make_nodes(), energy.make_nodes(), flow_net.make_nodes()],
+    geometry=compressor_volute_geo,
+    out_map={"continuity": 0, "momentum_x": 0, "energy": 0},
+))
+\end{verbatim}
 	
-	\textbf{5. Orquestração, Cloud e Visualização}
+	\subsection{Orquestração, Cloud e Visualização}
 	\begin{itemize}
 		\item \textbf{Digital Thread:} Uso de \text{Azure Digital Twins} ou \text{AWS IoT TwinMaker} para gerenciar a topologia do sistema.
 		\item \textbf{NVIDIA Omniverse:} Renderização 3D fotorrealista sincronizada via conectores \text{USD} (\text{Universal Scene Description}).
 		\item \textbf{Data Streaming:} \text{Apache Kafka} para transporte de dados de alta frequência entre o Edge e a Cloud.
 	\end{itemize}
 	
-	\textbf{6. Resumo da Stack de Vanguarda}
+	\subsection{Resumo da Stack de Vanguarda}
 
-	\begin{center}
+	As ferramentas discutidas nas subseções anteriores não competem entre si — cada uma ocupa uma camada distinta da arquitetura de execução, e é a composição das quatro que entrega o desempenho pretendido. A Tabela~\ref{tab:27-1} organiza essa divisão de responsabilidades: a coluna \textbf{camada} indica o nível arquitetural, a coluna \textbf{ferramenta} nomeia a implementação de referência adotada neste documento e a coluna \textbf{função} descreve o papel específico daquela camada no Gêmeo Digital. A leitura de cima para baixo acompanha o caminho do dado: o núcleo Physics-ML substitui a simulação CFD cara por um modelo substituto treinado; o solver de EDP resolve os problemas inversos de identificação de parâmetros; a camada de controle consome o estado estimado e produz a ação; e a camada de visualização devolve o resultado ao operador em forma inteligível.
+
+	\begin{table}[h!]
+	\centering
 	\begin{tabular}{lll}
 		\toprule
 		\textbf{Camada} & \textbf{Ferramenta} & \textbf{Função} \\ \midrule
@@ -2776,48 +3224,52 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 		Controle/MPC & do-mpc & MHE e Otimização com restrições \\
 		Visualização 3D & NVIDIA Omniverse & Interface operacional fotorrealista \\ \bottomrule
 	\end{tabular}
-	\end{center}
-	
+	\caption[Camadas da stack de alta performance]{Divisão de responsabilidades entre as quatro camadas da stack de alta performance do Gêmeo Digital.}
+	\label{tab:27-1}
+	\end{table}
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A transição para frameworks como o \textbf{Modulus} e \textbf{do-mpc} permite que o Gêmeo Digital realize simulações "What-If" complexas com precisão física e velocidade de resposta instantânea.
+	\textbf{Diretriz Técnica Final:} A transição para frameworks como o \textbf{Modulus} e \textbf{do-mpc} permite que o Gêmeo Digital realize simulações ``What-If'' complexas com precisão física e velocidade de resposta instantânea.
 
 \newpage
 \begin{thebibliography}{99}
 
-\bibitem{api619} American Petroleum Institute. \textit{API Standard 619 — Rotary-Type Positive Displacement Compressors for Petroleum, Petrochemical, and Natural Gas Industries}. Washington, DC.
+\bibitem{api619} American Petroleum Institute. \textit{API Standard 619 — Rotary-Type Positive-Displacement Compressors for Petroleum, Petrochemical, and Natural Gas Industries}. 5ª ed. Washington, DC, dezembro de 2010 (reafirmada em 2024).
 
-\bibitem{iso10440} International Organization for Standardization. \textit{ISO 10440-1 — Petroleum, petrochemical and natural gas industries — Rotary-type positive-displacement compressors — Part 1: Process compressors}. Geneva.
+\bibitem{iso10440} International Organization for Standardization. \textit{ISO 10440-1:2007 — Petroleum, petrochemical and natural gas industries — Rotary-type positive-displacement compressors — Part 1: Process compressors}. Geneva, 2007.
 
-\bibitem{iso1217} International Organization for Standardization. \textit{ISO 1217 — Displacement compressors — Acceptance tests}. Geneva.
+\bibitem{iso1217} International Organization for Standardization. \textit{ISO 1217:2009 — Displacement compressors — Acceptance tests}, 4ª ed., com \textit{Amendment 1:2016 — Calculation of isentropic efficiency and relationship with specific energy}. Geneva, 2009/2016.
 
-\bibitem{norsok} NORSOK Standard M-501. \textit{Surface preparation and protective coating}. Standards Norway.
+\bibitem{norsok} NORSOK Standard M-501. \textit{Surface preparation and protective coating}. 7ª ed. Standards Norway, 2022 (substitui a 6ª ed., de 2012).
 
-\bibitem{asme8} American Society of Mechanical Engineers. \textit{ASME Boiler and Pressure Vessel Code, Section VIII, Division 1 — Rules for Construction of Pressure Vessels}. New York.
+\bibitem{asme8} American Society of Mechanical Engineers. \textit{ASME Boiler and Pressure Vessel Code, Section VIII, Division 1 — Rules for Construction of Pressure Vessels}. Edição 2023 (BPVC.VIII.1-2023). New York, 2023.
 
-\bibitem{iec60079} International Electrotechnical Commission. \textit{IEC 60079 — Explosive atmospheres (series)}. Geneva.
+\bibitem{iec60079} International Electrotechnical Commission. \textit{IEC 60079 — Explosive atmospheres} (série). Parte de referência para os requisitos gerais de equipamento Ex: \textit{IEC 60079-0:2017 — Part 0: Equipment — General requirements}, Ed. 7.0. Geneva, 2017.
 
-\bibitem{iec60255} International Electrotechnical Commission. \textit{IEC 60255 — Measuring relays and protection equipment}. Geneva.
+\bibitem{iec60255} International Electrotechnical Commission. \textit{IEC 60255 — Measuring relays and protection equipment} (série). Parte de referência para os requisitos comuns: \textit{IEC 60255-1:2022 — Part 1: Common requirements}, Ed. 2.0. Geneva, 2022.
 
-\bibitem{iec60034} International Electrotechnical Commission. \textit{IEC 60034-2-1 — Rotating electrical machines — Part 2-1: Standard methods for determining losses and efficiency from tests (excluding machines for traction vehicles)}. Geneva.
+\bibitem{iec60034} International Electrotechnical Commission. \textit{IEC 60034-2-1:2024 — Rotating electrical machines — Part 2-1: Standard methods for determining losses and efficiency from tests (excluding machines for traction vehicles)}, Ed. 3.0. Geneva, 2024 (cancela e substitui a Ed. 2.0, de 2014).
 
-\bibitem{nemamg1} National Electrical Manufacturers Association. \textit{NEMA MG 1 — Motors and Generators} (Parte 14, Application Data — Voltage and current unbalance). Rosslyn, VA.
+\bibitem{nemamg1} National Electrical Manufacturers Association. \textit{ANSI/NEMA MG 1-2021 — Motors and Generators}. Rosslyn, VA, 2021. A Parte 14 (Application Data) define o desbalanço de tensão como o maior desvio absoluto em relação à média das três fases, dividido pela média, e recomenda o limite de 1\% nos terminais do motor em carga nominal, com curva de \textit{derating} acima desse valor.
 
-\bibitem{iso8573} International Organization for Standardization. \textit{ISO 8573-1 — Compressed air — Part 1: Contaminants and purity classes}. Geneva.
+\bibitem{iso8573} International Organization for Standardization. \textit{ISO 8573-1:2010 — Compressed air — Part 1: Contaminants and purity classes}. Geneva, 2010. As classes de umidade são definidas por ponto de orvalho sob pressão máximo (Classe 1: $\le -70\,^{\circ}$C; Classe 2: $\le -40\,^{\circ}$C; Classe 3: $\le -20\,^{\circ}$C).
 
-\bibitem{iso10816} International Organization for Standardization. \textit{ISO 10816 — Mechanical vibration — Evaluation of machine vibration by measurements on non-rotating parts} (substituída por ISO 20816). Geneva.
+\bibitem{iso10816} International Organization for Standardization. \textit{ISO 10816 — Mechanical vibration — Evaluation of machine vibration by measurements on non-rotating parts} (série substituída pela ISO 20816). Geneva.
 
-\bibitem{api684} American Petroleum Institute. \textit{API Standard Paragraphs Rotordynamic Tutorial: Lateral Critical Speeds, Unbalance Response, Stability, Train Torsionals, and Rotor Balancing} (API RP 684 / API TR 684-1). Washington, DC.
+\bibitem{iso20816} International Organization for Standardization. \textit{ISO 20816-3:2022 — Mechanical vibration — Measurement and evaluation of machine vibration — Part 3: Industrial machinery with a power rating above 15 kW and operating speeds between 120 r/min and 30 000 r/min}. Geneva, 2022. A cláusula de escopo exclui explicitamente os compressores rotativos de deslocamento positivo (por exemplo, compressores de parafuso).
 
-\bibitem{api618} American Petroleum Institute. \textit{API Standard 618 — Reciprocating Compressors for Petroleum, Chemical, and Gas Industry Services} (metodologia de estudo de pulsação e acústica de tubulação, referência de prática mesmo para outras máquinas de deslocamento positivo). Washington, DC.
+\bibitem{api684} American Petroleum Institute. \textit{API Standard Paragraphs Rotordynamic Tutorial: Lateral Critical Speeds, Unbalance Response, Stability, Train Torsionals, and Rotor Balancing} (API RP 684). 2ª ed. Washington, DC, agosto de 2005 (reafirmada em 2010).
 
-\bibitem{agma2001} American Gear Manufacturers Association. \textit{AGMA 2001-D04 — Fundamental Rating Factors and Calculation Methods for Involute Spur and Helical Gear Teeth}. Alexandria, VA.
+\bibitem{api618} American Petroleum Institute. \textit{API Standard 618 — Reciprocating Compressors for Petroleum, Chemical, and Gas Industry Services} (metodologia de estudo de pulsação e acústica de tubulação, referência de prática mesmo para outras máquinas de deslocamento positivo). 5ª ed. Washington, DC, 2007.
+
+\bibitem{agma2001} American Gear Manufacturers Association. \textit{ANSI/AGMA 2001-D04 (R2016) — Fundamental Rating Factors and Calculation Methods for Involute Spur and Helical Gear Teeth}. Alexandria, VA, aprovada em 2004, reafirmada em 2016. A edição métrica equivalente, usada neste documento por trabalhar com o módulo $m$ em milímetros, é a ANSI/AGMA 2101-D04 (R2016).
 
 \bibitem{lysholm} Lysholm, A.; Boestad, G.K.W. \textit{Rotary Compressor}. US Patent 2,111,568, depositada em 10/02/1936, concedida em 22/03/1938. Perfil assimétrico de rotores helicoidais que originou o compressor de parafuso moderno.
 
-\bibitem{fleming} Fleming, J.S.; Tang, Y. \textit{The Analysis of Leakage in a Twin Screw Compressor and its Application to Performance Improvement}. Proceedings of the Institution of Mechanical Engineers, Part E: Journal of Process Mechanical Engineering, 209(2), 125-136, 1995.
+\bibitem{fleming} Fleming, J.S.; Tang, Y. \textit{The Analysis of Leakage in a Twin Screw Compressor and its Application to Performance Improvement}. Proceedings of the Institution of Mechanical Engineers, Part E: Journal of Process Mechanical Engineering, 209(2), 125–136, 1995. DOI: 10.1243/PIME\_PROC\_1995\_209\_239\_02
 
 \bibitem{bloch} Bloch, H.P. \textit{A Practical Guide to Compressor Technology}. 2ª ed. John Wiley \& Sons, 2006.
 
@@ -2827,67 +3279,67 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 \bibitem{atlascopco} Atlas Copco. \textit{Compressed Air Manual}. 8ª ed. Atlas Copco Airpower NV, 2015.
 
-\bibitem{cengel} Çengel, Y.A.; Boles, M.A. \textit{Thermodynamics: An Engineering Approach}. McGraw-Hill.
+\bibitem{cengel} Çengel, Y.A.; Boles, M.A.; Kano\u{g}lu, M. \textit{Thermodynamics: An Engineering Approach}. 9ª ed. McGraw-Hill Education, 2019.
 
-\bibitem{bejan} Bejan, A. \textit{Advanced Engineering Thermodynamics}. John Wiley \& Sons.
+\bibitem{bejan} Bejan, A. \textit{Advanced Engineering Thermodynamics}. 4ª ed. John Wiley \& Sons, 2016.
 
 \bibitem{moran} Moran, M.J.; Shapiro, H.N.; Boettner, D.D.; Bailey, M.B. \textit{Fundamentals of Engineering Thermodynamics}. 9ª ed. John Wiley \& Sons, 2018.
 
-\bibitem{incropera} Incropera, F.P.; DeWitt, D.P.; Bergman, T.L.; Lavine, A.S. \textit{Fundamentals of Heat and Mass Transfer}. John Wiley \& Sons.
+\bibitem{incropera} Bergman, T.L.; Lavine, A.S.; Incropera, F.P.; DeWitt, D.P. \textit{Fundamentals of Heat and Mass Transfer}. 8ª ed. John Wiley \& Sons, 2017.
 
 \bibitem{ashrae} American Society of Heating, Refrigerating and Air-Conditioning Engineers. \textit{ASHRAE Handbook — Fundamentals}. Atlanta, 2021.
 
-\bibitem{white} White, F.M. \textit{Fluid Mechanics}. McGraw-Hill.
+\bibitem{white} White, F.M. \textit{Fluid Mechanics}. 8ª ed. McGraw-Hill Education, 2016.
 
-\bibitem{shigley} Shigley, J.E.; Mischke, C.R. \textit{Mechanical Engineering Design}. McGraw-Hill.
+\bibitem{shigley} Budynas, R.G.; Nisbett, J.K. \textit{Shigley's Mechanical Engineering Design}. 11ª ed. McGraw-Hill Education, 2020. Obra originalmente de J.E. Shigley, mantida sob seu nome nas edições atuais.
 
-\bibitem{hamrock} Hamrock, B.J. \textit{Fundamentals of Fluid Film Lubrication}. Marcel Dekker.
+\bibitem{hamrock} Hamrock, B.J.; Schmid, S.R.; Jacobson, B.O. \textit{Fundamentals of Fluid Film Lubrication}. 2ª ed. Marcel Dekker, 2004.
 
 \bibitem{bently} Bently, D.E.; Hatch, C.T.; Grissom, B. \textit{Fundamentals of Rotating Machinery Diagnostics}. Bently Pressurized Bearing Press, 2002.
 
 \bibitem{mobley} Mobley, R.K. \textit{An Introduction to Predictive Maintenance}. 2ª ed. Elsevier, 2002.
 
-\bibitem{vogel} Vogel, H. \textit{Das Temperaturabhängigkeitsgesetz der Viskosität von Flüssigkeiten}. Physikalische Zeitschrift, 1921.
+\bibitem{vogel} Vogel, H. \textit{Das Temperaturabhängigkeitsgesetz der Viskosität von Flüssigkeiten}. Physikalische Zeitschrift, 22, 645, 1921.
 
-\bibitem{buck} Buck, A.L. \textit{New Equations for Computing Vapor Pressure and Enhancement Factor}. Journal of Applied Meteorology, 1981.
+\bibitem{buck} Buck, A.L. \textit{New Equations for Computing Vapor Pressure and Enhancement Factor}. Journal of Applied Meteorology, 20(12), 1527–1532, 1981. DOI: 10.1175/1520-0450(1981)020\textless 1527:NEFCVP\textgreater 2.0.CO;2
 
-\bibitem{basquin} Basquin, O.H. \textit{The Exponential Law of Endurance Tests}. Proceedings of the American Society for Testing and Materials (ASTM), 1910.
+\bibitem{basquin} Basquin, O.H. \textit{The Exponential Law of Endurance Tests}. Proceedings of the American Society for Testing and Materials (ASTM), 10, 625–630, 1910.
 
-\bibitem{palmgren} Palmgren, A. \textit{Die Lebensdauer von Kugellagern}. Zeitschrift des Vereins Deutscher Ingenieure, 1924.
+\bibitem{palmgren} Palmgren, A. \textit{Die Lebensdauer von Kugellagern}. Zeitschrift des Vereines Deutscher Ingenieure, 68(14), 339–341, 1924.
 
-\bibitem{miner} Miner, M.A. \textit{Cumulative Damage in Fatigue}. Journal of Applied Mechanics, 1945.
+\bibitem{miner} Miner, M.A. \textit{Cumulative Damage in Fatigue}. Journal of Applied Mechanics, 12(3), A159–A164, 1945. DOI: 10.1115/1.4009458
 
-\bibitem{kalman} Kalman, R.E. \textit{A New Approach to Linear Filtering and Prediction Problems}. Journal of Basic Engineering, Transactions of the ASME, Series D, 1960.
+\bibitem{kalman} Kalman, R.E. \textit{A New Approach to Linear Filtering and Prediction Problems}. Journal of Basic Engineering, Transactions of the ASME, Series D, 82(1), 35–45, 1960. DOI: 10.1115/1.3662552
 
 \bibitem{simon} Simon, D. \textit{Optimal State Estimation: Kalman, $H_\infty$, and Nonlinear Approaches}. John Wiley \& Sons, 2006.
 
 \bibitem{gpml} Rasmussen, C.E.; Williams, C.K.I. \textit{Gaussian Processes for Machine Learning}. MIT Press, 2006.
 
-\bibitem{savgol} Savitzky, A.; Golay, M.J.E. \textit{Smoothing and Differentiation of Data by Simplified Least Squares Procedures}. Analytical Chemistry, 36(8), 1627–1639, 1964.
+\bibitem{savgol} Savitzky, A.; Golay, M.J.E. \textit{Smoothing and Differentiation of Data by Simplified Least Squares Procedures}. Analytical Chemistry, 36(8), 1627–1639, 1964. DOI: 10.1021/ac60214a047
 
-\bibitem{isoforest} Liu, F.T.; Ting, K.M.; Zhou, Z.-H. \textit{Isolation Forest}. Proceedings of the 8th IEEE International Conference on Data Mining (ICDM), 2008.
+\bibitem{isoforest} Liu, F.T.; Ting, K.M.; Zhou, Z.-H. \textit{Isolation Forest}. Proceedings of the 8th IEEE International Conference on Data Mining (ICDM), Pisa, 413–422, 2008. DOI: 10.1109/ICDM.2008.17
 
 \bibitem{vae} Kingma, D.P.; Welling, M. \textit{Auto-Encoding Variational Bayes}. arXiv:1312.6114, 2013.
 
-\bibitem{piml} Raissi, M.; Perdikaris, P.; Karniadakis, G.E. \textit{Physics-Informed Neural Networks: A Deep Learning Framework for Solving Forward and Inverse Problems Involving Nonlinear Partial Differential Equations}. Journal of Computational Physics, 2019.
+\bibitem{piml} Raissi, M.; Perdikaris, P.; Karniadakis, G.E. \textit{Physics-Informed Neural Networks: A Deep Learning Framework for Solving Forward and Inverse Problems Involving Nonlinear Partial Differential Equations}. Journal of Computational Physics, 378, 686–707, 2019. DOI: 10.1016/j.jcp.2018.10.045
 
-\bibitem{piml2} Karniadakis, G.E.; Kevrekidis, I.G.; Lu, L.; Perdikaris, P.; Wang, S.; Yang, L. \textit{Physics-Informed Machine Learning}. Nature Reviews Physics, 2021.
+\bibitem{piml2} Karniadakis, G.E.; Kevrekidis, I.G.; Lu, L.; Perdikaris, P.; Wang, S.; Yang, L. \textit{Physics-Informed Machine Learning}. Nature Reviews Physics, 3, 422–440, 2021. DOI: 10.1038/s42254-021-00314-5
 
 \bibitem{mpc} Camacho, E.F.; Bordons, C. \textit{Model Predictive Control}. 2ª ed. Springer, 2007.
 
 \bibitem{rawlings} Rawlings, J.B.; Mayne, D.Q.; Diehl, M. \textit{Model Predictive Control: Theory, Computation, and Design}. 2ª ed. Nob Hill Publishing, 2017.
 
-\bibitem{pso} Kennedy, J.; Eberhart, R. \textit{Particle Swarm Optimization}. Proceedings of the IEEE International Conference on Neural Networks, 1995.
+\bibitem{pso} Kennedy, J.; Eberhart, R. \textit{Particle Swarm Optimization}. Proceedings of the IEEE International Conference on Neural Networks (ICNN'95), Perth, vol. 4, 1942–1948, 1995. DOI: 10.1109/ICNN.1995.488968
 
 \bibitem{grieves} Grieves, M. \textit{Digital Twin: Manufacturing Excellence through Virtual Factory Replication}. White Paper, 2014 (conceito originalmente apresentado em curso de PLM na University of Michigan, 2002).
 
-\bibitem{glaessgen} Glaessgen, E.; Stargel, D. \textit{The Digital Twin Paradigm for Future NASA and U.S. Air Force Vehicles}. AIAA/ASME/ASCE/AHS/ASC Structures, Structural Dynamics and Materials Conference, 2012.
+\bibitem{glaessgen} Glaessgen, E.; Stargel, D. \textit{The Digital Twin Paradigm for Future NASA and U.S. Air Force Vehicles}. 53º AIAA/ASME/ASCE/AHS/ASC Structures, Structural Dynamics and Materials Conference, Honolulu, 23–26 de abril de 2012, artigo AIAA 2012-1818. DOI: 10.2514/6.2012-1818
 
-\bibitem{tao} Tao, F.; Cheng, J.; Qi, Q.; Zhang, M.; Zhang, H.; Sui, F. \textit{Digital Twin-Driven Product Design, Manufacturing and Service with Big Data}. The International Journal of Advanced Manufacturing Technology, 2018.
+\bibitem{tao} Tao, F.; Cheng, J.; Qi, Q.; Zhang, M.; Zhang, H.; Sui, F. \textit{Digital Twin-Driven Product Design, Manufacturing and Service with Big Data}. The International Journal of Advanced Manufacturing Technology, 94, 3563–3576, 2018. DOI: 10.1007/s00170-017-0233-1
 
 \bibitem{modulus} NVIDIA Corporation. \textit{NVIDIA Modulus Documentation}. Documentação técnica oficial, 2023.
 
-\bibitem{deepxde} Lu, L.; Meng, X.; Mao, Z.; Karniadakis, G.E. \textit{DeepXDE: A Deep Learning Library for Solving Differential Equations}. SIAM Review, 2021.
+\bibitem{deepxde} Lu, L.; Meng, X.; Mao, Z.; Karniadakis, G.E. \textit{DeepXDE: A Deep Learning Library for Solving Differential Equations}. SIAM Review, 63(1), 208–228, 2021. DOI: 10.1137/19M1274067
 
 \bibitem{dompc} Fiedler, F.; Karg, B.; Lüken, L.; Brandner, D.; Heinlein, M.; Brabender, F.; Lucia, S. \textit{do-mpc: Towards FAIR Nonlinear and Robust Model Predictive Control}. Control Engineering Practice, 140:105676, 2023.
 

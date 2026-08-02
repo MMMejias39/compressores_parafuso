@@ -89,6 +89,13 @@ commits sem pedido explícito do autor.
 - **Figuras**: cada figura tem `\label{fig:C-N}` (C = capítulo, N = sequencial) e é
   antecedida por um parágrafo que a referencia via `Figura~\ref{fig:C-N}` antes de
   aparecer.
+- **Tabelas**: mesma regra das figuras — `\label{tab:C-N}` e um parágrafo que a
+  referencia por `Tabela~\ref{tab:C-N}` antes de ela aparecer, nunca "a tabela
+  abaixo" (padronizado em 29/07/2026 nas 15 tabelas do livro).
+- **Aspas**: sempre `` `` `` e `''`, **nunca** `"` reto — o babel-portuguese
+  torna `"` um caractere ativo que engole o espaço seguinte (ver "Aspas retas
+  quebram o espaçamento" mais abaixo). Exceção: dentro de `verbatim`, onde as
+  aspas do código Python devem continuar literais.
 - **Estrutura em duas Partes**: o livro é dividido em **Parte I — O Compressor e
   Seus Elementos** (Capítulos 2 a 18: física, engenharia e mecanismos de falha de
   cada componente) e **Parte II — Metodologia do Gêmeo Digital e Equacionamento
@@ -176,6 +183,12 @@ diagramação em aberto.
   `>{\raggedright\arraybackslash}p{Xcm}` em vez de `p{Xcm}` justificado.
 - Figura nova: escolher uma das 3 larguras-padrão do item 8 acima conforme o tipo de conteúdo, não um
   valor ad-hoc.
+- Toda figura e tabela nova precisa de **legenda curta e longa**:
+  `\caption[curta para a Lista]{longa para o corpo}` — o documento tem Lista de
+  Figuras e Lista de Tabelas desde 30/07/2026, e sem a forma curta a legenda
+  inteira vaza para a lista e a torna ilegível.
+- Termo técnico novo em inglês ou acrônimo novo que apareça com frequência: acrescentar ao
+  `\hyphenation{}` do preâmbulo (acrônimos entram sem nenhum hífen, para nunca serem partidos).
 
 ## Figuras — como regenerar sem quebrar nada
 
@@ -425,6 +438,11 @@ pedido do autor:
 ele existe só para lubrificar/resfriar a gearbox e os mancais. Não reintroduza
 linguagem de "injeção de óleo" ou "separador ar/óleo" no caminho do ar.
 
+O Capítulo 12 foi depois **expandido em 30/07/2026** (de 656 para 1.959
+palavras, com $UA$/$NTU$, válvula termostática modelada e constante de tempo
+térmica) — ver "Referências completadas e Capítulos 12/13 expandidos" abaixo
+antes de mexer nele.
+
 ## Convenção de commits: sem trailer de coautoria (26/07/2026)
 
 O autor pediu explicitamente para remover a linha `Co-Authored-By: Claude
@@ -511,22 +529,404 @@ e Golay, Analytical Chemistry 1964), `isoforest` (Liu, Ting e Zhou, ICDM
 cascata: `eq:s19-10`→`eq:s19-11`; `eq:s25-1`/`eq:s25-2` (antigas, propagação
 de incerteza e SHAP) →`eq:s25-3`/`eq:s25-4`.
 
+## Correção de extração de texto: ligaduras fi/ff (26/07/2026)
+
+O autor trouxe uma análise externa (Copilot CLI, salva em `recomenda
+compressores.txt` na raiz — não tocar/commitar esse arquivo sem pedido
+explícito) apontando "problemas de codificação": palavras com ligaduras
+tipográficas "ff"/"fi" (offshore, eficiência, buffer, Jeffcott,
+confiabilidade, definição, significativo...) extraíam do PDF com bytes de
+controle literais (0x1B para "ff", 0x1C para "fi") no lugar das letras —
+confirmado por inspeção direta dos bytes via `pdftotext | xxd`, 31
+ocorrências antes da correção. **A aparência visual/impressa nunca foi
+afetada** (conferido renderizando páginas) — o defeito era só na extração
+de texto (busca, cópia, indexação, acessibilidade).
+
+O diagnóstico de causa do Copilot estava **errado**: ele recomendou
+reforçar `\usepackage[T1]{fontenc}`/`\usepackage[utf8]{inputenc}`, mas
+ambos (e `microtype`) já estavam no preâmbulo desde o início. A causa real
+era a ausência do pacote `cmap`, que corrige o mapeamento Unicode das
+ligaduras do Computer Modern na tabela ToUnicode do PDF — problema
+conhecido do pdflatex, sem relação com fontenc/inputenc. Corrigido
+adicionando `\usepackage{cmap}` **antes** de `fontenc` no preâmbulo (linha
+~4). Verificado: 0 bytes de controle após a correção; PDF idêntico
+visualmente (105 páginas, mesmo layout).
+
+**Regra permanente**: `cmap` deve continuar sendo o primeiro pacote
+carregado, antes de `fontenc`. Se o preâmbulo for reordenado no futuro, não
+mova `cmap` para depois de `fontenc`.
+
+O resto do relatório do Copilot (referências normativas/livros-texto sem
+ano, e 27 sugestões de conteúdo por capítulo — estudo de caso numérico,
+tabela FMEA, roadmap de maturidade, notebook reproduzível etc.) **não foi
+implementado nesta sessão**: são adições de conteúdo genéricas, tipo
+checklist, não correções de algo quebrado, e o autor não pediu para
+persegui-las. Se uma sessão futura for revisitar esse relatório, comece
+relendo-o com ceticismo — o diagnóstico de causa já errou uma vez.
+(**Atualização de 30/07/2026**: o item das referências sem ano/edição foi
+resolvido — ver "Referências completadas e Capítulos 12/13 expandidos"
+abaixo. As 27 sugestões de conteúdo continuam sem implementação.)
+
+## Parecer do Manus e aprofundamento da Parte II (29/07/2026)
+
+O autor trouxe uma segunda análise externa, `Manus_parecer_final_compressores.md`
+(Manus AI, 26/07/2026, na raiz do projeto — mesmo status do `recomenda
+compressores.txt`: não rastreado, não commitar sem pedido). Diferente do relatório
+do Copilot, este acertou o diagnóstico: fragilidades editoriais reais (capítulos
+curtos demais na Parte II, com 253 a 511 palavras, "com caráter de notas técnicas")
+e três problemas normativos concretos, todos verificados e corrigidos:
+
+- **ISO 20816-3 não se aplica a este equipamento.** A norma exclui explicitamente
+  de seu escopo os compressores rotativos de deslocamento positivo, citando os de
+  parafuso como exemplo — o que invalida o limiar genérico de $7{,}1\,$mm/s
+  usado por extensão da família ISO 10816/20816. O documento agora trata isso
+  explicitamente em dois lugares: no Capítulo 1 (uma norma citada *por não se
+  aplicar*) e no Capítulo 18, junto à matriz de alarmes, com a justificativa
+  física (a assinatura vibratória do parafuso é dominada por passagem de lóbulos
+  e pulsação de gás, que elevam a vibração global sem significar degradação). Os
+  critérios passam a vir da API 619, do OEM e da linha de base da própria
+  máquina. Símbolo novo $v_{trip}$ na Nomenclatura, e `iso20816` é a única
+  referência bibliográfica nova da sessão (`iso8573` já existia).
+- **ISO 8573-1 define classes, não um valor universal de $-40\,^{\circ}$C.** O
+  limite adotado no livro passou a ser identificado como **Classe 2**, escolhida
+  como requisito de projeto, com registro obrigatório do ponto de medição e da
+  pressão de referência (PDP sob pressão de linha $\neq$ PDP após expansão).
+- **ISO 1217 precisa da Emenda 1:2016** — é ela que padroniza o cálculo da
+  eficiência isentrópica usada como KPI nos Capítulos 9, 11 e 17.
+
+Aprofundamento dos capítulos curtos da Parte II (14 equações novas: `eq:s21-2`
+a `eq:s21-8`, `eq:s22-3` a `eq:s22-7`, `eq:s23-3/4`, `eq:s24-2/3/4`, `eq:s26-4`):
+
+- **Cap. 21 (EKF)**: definição concreta dos vetores para este compressor,
+  condição de observabilidade, inovação e validação estatística por NIS
+  ($\chi^2$), forma de Joseph para condicionamento numérico, limites da
+  linearização.
+- **Cap. 22 (VAE)**: por que VAE e não PCA/autoencoder simples, origem da perda
+  no ELBO, premissa crítica de pureza do conjunto de treinamento, definição do
+  limiar de disparo, espaço latente como assinatura de saúde (Mahalanobis).
+- **Cap. 23 (PIML)**: operador físico concreto, perda híbrida, pontos de
+  colocação e diferenciação automática, balanceamento adaptativo, **limitações e
+  cautelas** (o próprio Karniadakis 2021 alerta para a imaturidade dos
+  benchmarks), e a **divisão de papéis entre PIML e EKF** — o EKF é online e
+  pontual no tempo, o PIML é offline e cobre o envelope; o substituto treinado
+  por PIML pode virar a função de transição $f(\cdot)$ do EKF e o modelo de
+  predição do MPC.
+- **Caps. 24, 26 e 27** também expandidos (MPC/PSO, $HI$, stack de alta
+  performance).
+
+Além disso: as **15 tabelas do livro ganharam `\label{tab:C-N}`** e um parágrafo
+que as referencia por `Tabela~\ref{}` antes de aparecerem (antes eram todas
+"a tabela abaixo"), cerca de 25 símbolos novos entraram na Nomenclatura, e as
+referências científicas ganharam volume/páginas/DOI. Documento foi de 105 para
+123 páginas.
+
+**Esta sessão não gerou commits** — todo o trabalho ficou na árvore de trabalho
+e continuou assim na sessão seguinte (ver "Estado atual" abaixo).
+
+## Referências completadas e Capítulos 12/13 expandidos (30/07/2026)
+
+Continuação direta da sessão anterior, atacando dois itens que restavam do
+parecer do Manus. (Os outros dois — glossário bilíngue de anglicismos e a
+crítica ao termo "Enciclopédia" no título — foram deliberadamente **não**
+perseguidos: o segundo contraria a visão de longo prazo do autor registrada no
+topo deste arquivo.)
+
+**Ano/edição de todas as referências que não tinham**, cada uma conferida contra
+fonte real antes de entrar (regra permanente da seção "Veracidade de
+referências"): API 619 (5ª ed., 2010, R2024), API 618 (5ª, 2007), API RP 684
+(2ª, 2005, R2010), NORSOK M-501 (7ª, 2022), ASME BPVC VIII-1 (2023), IEC 60079-0
+(Ed. 7.0, 2017), IEC 60255-1 (Ed. 2.0, 2022), NEMA MG 1-2021, AGMA 2001-D04
+(2004, R2016), Çengel (9ª, 2019), Bejan (4ª, 2016), Incropera (8ª, 2017), White
+(8ª, 2016), Shigley (11ª, 2020), Hamrock (2ª, 2004), mais volume/páginas/DOI em
+Basquin, Palmgren, Miner, Vogel, Fleming e Glaessgen. Três achados que a
+verificação produziu, e que valem como alerta para o futuro:
+
+- **IEC 60034-2-1** estava sendo citada sem ano, mas o conteúdo pressupunha a
+  Ed. 2.0 (2014), **já substituída** pela Ed. 3.0 (2024).
+- **API RP 684**: a menção a "API TR 684-1" não se confirmou em nenhuma fonte e
+  foi removida (resquício provável do rascunho com GPAI).
+- **Incropera e Shigley** trocaram de ordem de autoria nas edições atuais
+  (Bergman/Lavine/Incropera/DeWitt e Budynas/Nisbett) — as chaves `\cite{}`
+  foram mantidas, e nenhuma prosa citava esses autores pelo nome.
+
+**Capítulo 12** (656 → 1.959 palavras, `eq:s12-3` a `eq:s12-7`): o eixo do
+capítulo passou a ser que a efetividade $\epsilon$ do Cap. 7 é **ambígua** em
+aplicação offshore — cai igual por incrustação interna ou por água de
+resfriamento mais quente/mais lenta. Entram $UA$ como grandeza invariante às
+temperaturas de entrada, a relação $\epsilon$–$NTU$–$C_r$ (contracorrente,
+citando Incropera), o fator de degradação $\eta_{UA}$, a válvula termostática
+modelada (permite **inferir** a posição efetiva das três temperaturas medidas e
+comparar com a comandada) e a constante de tempo térmica $\tau_{th}$, que
+sintoniza o atraso de alarme e — por ser proporcional à massa de óleo — resolve
+o cenário "Baixo Nível de Óleo", ambíguo em regime permanente. A matriz de
+diagnóstico ganhou uma coluna de confirmação quantitativa ligando cada linha a
+uma dessas grandezas.
+
+**Capítulo 13** (513 → 2.158 palavras, 4 equações novas): a Equação 13.1 não
+tinha **nenhum** parágrafo explicativo e usava $\Phi(r)$ sem jamais definir a
+função — violação direta da convenção "explicação antes da equação". Corrigido,
+com $\Phi(r)$ agora explícita nos regimes subsônico e bloqueado (`eq:s13-2`, à
+qual o Cap. 14 passou a se referir como caso particular do dreno). Novas:
+potência específica por estratégia de modulação, frequência de ciclagem em
+função de volume de rede e banda morta (com o resultado de que a ciclagem é
+mais severa a 50% de demanda, não nos extremos) e a elasticidade do consumo à
+pressão de descarga — que **deriva** os "~7% por bar" da regra de campo em vez
+de citá-la (7,4% para 8→9 bar com $n=1{,}35$; 7,2% a 7,6% para $n$ entre 1,3 e
+1,4). Registrada também a advertência de que a forma quadrática do VFD **não** é
+lei de afinidade: máquina de deslocamento positivo tem potência aproximadamente
+linear com a rotação, e transportar a lei cúbica de turbomáquinas superestima
+grosseiramente a economia do VSD. Renumeração em cascata: `eq:s13-2`..`6` →
+`eq:s13-3`..`6` e `10`.
+
+### Aspas retas quebram o espaçamento (armadilha do babel)
+
+Ao conferir o render do Cap. 12, `"o trocador sujou" de` saía como
+`"o trocador sujou"de`. Causa: `\usepackage[brazilian]{babel}` torna `"` um
+**caractere ativo** (*shorthand* do babel-portuguese), que engole o espaço
+seguinte. Eram 28 ocorrências em prosa espalhadas pelo livro inteiro, todas
+anteriores a esta sessão. Convertidas para `` ``...'' ``; as aspas dentro dos
+blocos `verbatim` de código dos Capítulos 26/27 foram preservadas intactas
+(ali `"` tem catcode 12 e precisa continuar literal). Extração do PDF agora
+devolve “ ” Unicode corretas.
+
+**Regra permanente**: nunca usar `"` reto em texto corrido neste documento —
+sempre `` `` `` e `''`. Vale para qualquer conteúdo novo. É a mesma família de
+defeito da correção do `cmap` (aparência impressa correta, extração de texto
+quebrada), e igualmente invisível sem inspecionar o PDF gerado.
+
+A Nomenclatura ganhou uma tabela nova (**Controle, Modulação e Válvulas**, 14
+símbolos) mais 7 símbolos térmicos, e cinco convenções novas de desambiguação
+foram registradas na subseção "Convenções de Desambiguação Adotadas":
+$\tau$ (torque) permanece e as constantes de tempo viraram $\tau_{th}$/$\tau_{bd}$;
+$x$ (estado do EKF) permanece e a fração de carga virou $x_c$; $a$ (constante de
+Vogel) permanece e a abertura da válvula termostática virou $a_{tv}$; e $\delta$
+tem uso duplo **contextual** (folga nos capítulos de rotores, estado binário da
+válvula no Cap. 13) — mantido assim por ser a convenção estabelecida nas duas
+literaturas, mas agora explicitado.
+
+## Fechamento dos dois relatórios externos (30/07/2026)
+
+O autor pediu para "atender" os dois arquivos de análise externa da raiz. Ambos
+foram reexaminados contra o documento **atual** (não o de 26/07, 24 páginas
+menor), e o resultado se divide em três partes.
+
+**1. `relatorio_diagramacao.md` — nada a fazer, mas a regressão foi conferida.**
+Os 8 itens continuam implementados depois de todo o conteúdo novo: `hypersetup`
+com metadados preenchidos, 28 `\clearpage` para 27 capítulos, `fancyhdr`,
+**zero** `\hline`/`tabular{|`/`array{|` no arquivo inteiro, `microtype`,
+`\chapterword` do `titlesec`, e as larguras de figura ainda nas 3 categorias
+(12× `0.60`, 6× `0.75`, 2× `0.80`, mais o `0.42` da capa). Vale repetir essa
+varredura sempre que muito conteúdo novo entrar — é barata e detecta
+regressão de convenção.
+
+**2. Dois erros de unidade reais, encontrados a partir do relatório do Copilot.**
+Ele alegava "unidades inconsistentes em algumas equações" no Capítulo 9 sem
+apontar qual. A alegação **procedia**, e uma varredura pela classe do erro
+(mistura de RPM com Hz/rad·s⁻¹) achou dois casos:
+- **Equação 9.8** calculava a frequência de passagem dos lóbulos como
+  $f_{bp} = N_{\text{macho}} \cdot Z_{\text{macho}}$ — **faltava dividir por 60**.
+  $N$ é RPM em todo o documento e $f_{bp}$ é Hz na Nomenclatura; o próprio
+  Capítulo 6 já fazia a conversão certa na Equação 6.7. Erro de fator 60.
+- **Equação 11.6** (vida do rolamento de escora) usava $\omega$ — definida como
+  rad·s⁻¹ na Nomenclatura — dentro de $10^6/(60\,\omega)$, fórmula que só fecha
+  com rotação em RPM. Trocado por $N_{\text{rot,HP}}$, alinhando com a Equação
+  8.4, que já estava correta.
+
+Ambas as correções vieram com uma frase explicando **por que** a conversão é
+obrigatória, para não voltarem. Lição para sessões futuras: alegação vaga de
+revisor externo pode estar certa — vale converter em varredura sistemática por
+classe de erro antes de descartar.
+
+**3. Melhorias de navegação implementadas.**
+- **Lista de Figuras e Lista de Tabelas** após o sumário (item 4 das "correções
+  de produção" do Copilot, o único ainda pendente e coerente com a visão de obra
+  de consulta): 20 figuras e 15 tabelas, ambas entrando no sumário e nos
+  bookmarks via `\phantomsection` + `\addcontentsline`.
+- **Legendas curtas** (`\caption[curta]{longa}`) em 30 das 35 legendas — sem
+  elas as listas ocupavam 3 páginas de texto corrido ilegível; agora a Lista de
+  Figuras cabe em uma página escaneável. **Toda figura ou tabela nova deve trazer
+  as duas formas**: a curta para a lista, a longa para o corpo.
+- **`\hyphenation{}` no preâmbulo** para termos em inglês e acrônimos. O
+  babel-brazilian aplicava padrões do português a eles e produzia quebras
+  erradas — confirmadas no PDF: `Offloa-ding` e, pior, `ASH-RAE` (acrônimo
+  partido). A lista dá o padrão correto dos termos recorrentes e registra os
+  acrônimos sem ponto de quebra nenhum.
+
+**Deliberadamente recusado do relatório do Copilot** (registrar para não
+reabrir): (a) `\usepackage[none]{hyphenat}` — desligar hifenização em texto
+justificado destrói o espaçamento, o problema real era de padrões, não de
+hifenização em si; (b) `utf8x` e compilar com lualatex/xelatex — desnecessário,
+o `cmap` já resolveu a extração e a mudança de motor quebraria o setup de fontes
+pk atual; (c) "recomendação de manufaturador" nas tabelas de instrumentação —
+o livro é deliberadamente neutro quanto a fabricante; (d) tabelas de OPEX/CAPEX,
+hiperparâmetros iniciais, versões de dependências e tempos de ciclo "típicos" —
+exigiriam números inventados, o que colide frontalmente com a regra de
+veracidade deste projeto. Se uma sessão futura for implementar qualquer um
+desses, os números têm de vir de fonte real e citada, ou não entram.
+
+Com isso, **os dois relatórios externos estão encerrados**: tudo que era defeito
+verificável foi corrigido, e o que sobrou está registrado acima como recusado
+(com motivo) ou nas "Pendências conhecidas" abaixo como melhoria opcional.
+
+## Estrutura dos Capítulos 26/27 e código Python inválido (31/07/2026)
+
+Ao conferir o sumário depois de inserir a Lista de Figuras, notou-se que os
+**Capítulos 26 e 27 eram os únicos do livro sem nenhuma `\subsection`** — usavam
+`\textbf{1. Título}`, `\textbf{2. Título}` como pseudo-títulos. O efeito era que
+dois capítulos de 4 páginas cada não tinham nenhuma entrada de subseção no
+sumário nem nos bookmarks do PDF, o que contraria diretamente a ideia de obra
+consultável por seção. As 11 ocorrências (5 no Cap. 26, 6 no Cap. 27) foram
+convertidas em `\subsection{}` reais, com a numeração manual removida (agora é
+automática: 26.1 a 26.5, 27.1 a 27.6).
+
+Essa conversão expôs um defeito bem mais sério nos três blocos `verbatim` de
+código: **a indentação Python estava achatada**. Todas as linhas carregavam o
+mesmo prefixo de dois tabs — usado para indentar o fonte LaTeX — de modo que o
+corpo das funções ficava no mesmo nível do `def`. O código impresso no livro,
+num capítulo chamado "Implementação Base e Ferramentas Padrão", **não era Python
+válido**: copiá-lo do PDF produzia `IndentationError`. Os três blocos (EKF em
+NumPy, perda PIML em PyTorch, exemplo Modulus) foram reescritos com indentação
+correta, começando na coluna 0 do fonte, e validados por `ast.parse()` — os três
+passam. A extração via `pdftotext` foi conferida e preserva os 4 espaços de
+indentação, ou seja, copiar do PDF agora entrega código executável.
+
+**Regra permanente**: conteúdo dentro de `verbatim` começa na **coluna 0** do
+`.tex`, nunca indentado junto com o LaTeX ao redor — o `verbatim` é literal, e a
+indentação do fonte vira indentação do código impresso. Ao acrescentar ou editar
+qualquer bloco de código, validar a sintaxe fora do LaTeX antes (para Python,
+`ast.parse()` no conteúdo extraído do bloco). Acentos em comentários funcionam
+normalmente em `verbatim` com `T1`+`inputenc` — não há motivo para escrevê-los
+sem acento.
+
+## Ponto de parada — fim da sessão de 31/07/2026
+
+**Onde o trabalho parou:** em estado limpo e fechado, sem nada pela metade. O
+`.tex` compila em 3 passagens sem erro, aviso, referência indefinida ou label
+duplicado; o `.pdf` está em dia com o `.tex`; nenhuma edição ficou aberta e
+nenhum experimento ficou pendurado no arquivo. Qualquer sessão futura pode
+começar do zero pela lista de "Pendências conhecidas" no fim deste arquivo, sem
+precisar desfazer ou terminar nada da sessão anterior.
+
+**O que muda quando alguém retomar:**
+- Tudo das três sessões (29, 30 e 31/07/2026) continua **sem commit** — ver o
+  bloco de atenção em "Estado atual", logo abaixo, com o fatiamento sugerido em
+  9 commits temáticos. Essa é a primeira decisão a tomar ao retomar.
+- Os artefatos `compressores.lof` e `.lot` passaram a ser gerados (pelas listas
+  de figuras/tabelas) e já entraram no `.gitignore` junto com `.aux/.log/.out/.toc`.
+- Os dois relatórios de análise externa da raiz estão **encerrados** — o que era
+  defeito verificável foi corrigido, o que foi recusado está registrado com o
+  motivo. Não reabrir sem contexto novo.
+
+**Resumo do que estas três sessões entregaram**, para quem só ler esta seção:
+o livro saiu de 105 para 131 páginas; ganhou o parecer normativo do Manus
+implementado (ISO 20816/8573/1217), a Parte II aprofundada em 6 capítulos, os
+Capítulos 12 e 13 triplicados, todas as referências com ano/edição verificados
+contra fonte real, Lista de Figuras e Lista de Tabelas, e quatro correções de
+defeito que ninguém tinha visto: duas equações com erro de unidade (9.8 e 11.6),
+as aspas retas engolidas pelo babel, a hifenização errada de termos em inglês e
+acrônimos, e os três blocos de código Python que não eram executáveis.
+
+## Terceiro relatório externo (dicas_kimi.md) implementado (01/08/2026)
+
+O autor trouxe uma terceira análise externa, `dicas_kimi.md` (Kimi, compilação
+de 31/07/2026, 133 páginas, na raiz do projeto — mesmo status de não
+rastreado/não commitar sem pedido dos outros dois relatórios). Diferente do
+Manus (achados normativos) e do Copilot (extração de texto), este é puramente
+de diagramação/produção do PDF: overfull hboxes, colisão de célula em tabela,
+warnings de bookmark do hyperref e metadados vazios. Todos os itens acionáveis
+foram implementados nesta sessão, em dois commits:
+
+- **`27997b6`**: metadados do PDF (`pdfsubject`/`pdfkeywords` no
+  `hypersetup`), warning de `headheight` do fancyhdr (14,5pt → 15pt, com
+  `\addtolength{\topmargin}{-0.5pt}`) e o overfull grave do título da
+  subseção 5.5 — "Sub/Sobrecompressão" sem hífen impedia quebra de linha;
+  virou "Sub- e Sobrecompressão". Também `\emergencystretch=1em` no
+  preâmbulo, que sozinho já eliminou a maior parte dos overfulls menores do
+  relatório.
+- **`3417919`**: os itens que sobraram, todos maiores do que o relatório
+  registrou — a varredura completa achou **5** tabelas "Matriz de falhas"
+  com overfull grave (o relatório citava 1, de 37,4pt; a pior aqui chegou a
+  56,7pt), não resolvidas por `\small` sozinho, convertidas para
+  `\resizebox{\textwidth}{!}{...}` (mesmo padrão já usado em outras tabelas
+  do documento). A colisão na Nomenclatura (célula
+  `$C_{\min}, C_{\max}, C_r$` invadindo a coluna Significado) foi corrigida
+  alargando a coluna Símbolo de 2,0cm para 2,8cm nas 8 tabelas de
+  Nomenclatura (compensado encolhendo Significado). Os 4 títulos com
+  matemática (`$V_i$`, `$\Pi$`, `$\dot{m}$`, `$KPI_{treat}$`) ganharam
+  `\texorpdfstring{}{}`, zerando as 11 warnings de bookmark do hyperref.
+  Achado bônus fora da lista original: o título do Capítulo 23 (PIML) tinha
+  overfull de 6,9pt por estar forçado a uma linha só — corrigido com
+  `\raggedright` no `\titleformat{\section}`, permitindo quebra em duas
+  linhas quando necessário (sem afetar os demais títulos, todos curtos o
+  bastante para continuar em uma linha).
+
+**Deliberadamente não perseguido**: ~30 overfulls residuais de ~2pt (a
+palavra "adimensional" sozinha em algumas linhas de Nomenclatura, não
+hifenizável de forma útil) e a duplicata de destino `page.1` (mistura
+numeração romana/arábica) — o próprio relatório já classificava ambos como
+cosmeticamente insignificantes, e a inspeção visual confirmou.
+
+**Armadilha de ferramental encontrada**: `compressores.log` é gerado em
+ISO-8859 (Latin-1), não UTF-8. `grep` sem a flag `-a` falha silenciosamente
+nesse arquivo neste ambiente (retorna vazio em vez de erro) — isso já
+aconteceu antes e vai acontecer de novo se não for lembrado. **Sempre use
+`grep -a` ao inspecionar `compressores.log`** (overfulls, warnings, nomes de
+pacote); sem isso, buscas por "Overfull", "Warning" ou até "hyperref"
+retornam zero resultados mesmo quando o conteúdo está lá, levando a
+conclusões erradas de que não há problema.
+
+Como nas sessões anteriores, ambos os commits foram isolados do restante do
+trabalho pendente (~550 linhas de 29-31/07, ver abaixo): reconstruídos a
+partir do conteúdo do commit anterior (`git show HEAD:compressores.tex`) com
+apenas as edições desta sessão aplicadas por cima, compilados isoladamente
+para gerar um `.pdf` consistente com esse `.tex` parcial, e só então
+staged — a árvore de trabalho completa (com o conteúdo pendente) foi restaurada
+depois de cada `git add`. Nenhum commit sem pedido explícito do autor, como
+sempre.
+
 ## Estado atual (última sessão)
 
-Documento compila limpo, 105 páginas (170 equações numeradas, 20 figuras ao
-todo), sem erros/referências indefinidas/labels duplicados. Repositório git
-inicializado (ver "Visão de longo prazo" acima); histórico completo
+Documento compila limpo, **131 páginas de conteúdo** (mais os itens de
+diagramação do `dicas_kimi.md` acima, que alteram a paginação em detalhe mas
+não a estrutura), sem erros/referências indefinidas/labels duplicados. Todos
+os 27 capítulos têm subseções e aparecem estruturados no sumário. Repositório
+git inicializado (ver "Visão de longo prazo" acima); histórico completo
 reescrito em 26/07/2026 para remover trailers de coautoria (ver seção
 acima) — os hashes de commit mudaram desde qualquer anotação anterior a essa
 reescrita, sempre confira com `git log` em vez de citar um hash de memória.
-Tag `v1.0` no commit inicial (recriada). Catorze commits nesta sessão (os
-doze já registrados mais dois depois: atualização deste arquivo e as 4
-figuras didáticas da Parte II) — use `git log` para o histórico exato.
+Tag `v1.0` no commit inicial (recriada). Commits mais recentes, em ordem:
+`a1f8ffb` (correção do `cmap`, 26/07/2026) → `693a2c6` (fora do escopo deste
+documento — não é conteúdo do livro) → `27997b6` → `3417919` (os dois de
+dicas_kimi.md acima). Use `git log` para o histórico exato.
 
-Observação: há um arquivo `recomenda compressores.txt` solto na raiz do
-projeto, não rastreado pelo git e não criado por mim — provavelmente notas
-do autor. Não mexer nele nem incluí-lo em commits sem o autor pedir
-explicitamente.
+> **ATENÇÃO — trabalho não commitado.** Todo o conteúdo das sessões de
+> **29/07/2026 e 30/07/2026** (as duas seções acima) está apenas na árvore de
+> trabalho: ~550 linhas alteradas em `compressores.tex`, mais `CONTEXTO.md`,
+> `compressores.pdf` e uma linha no `.gitignore` (`.claude/settings.local.json`).
+> O autor optou explicitamente por adiar os commits em 30/07 — não é
+> esquecimento. Se ele pedir para commitar, o fatiamento natural é temático:
+> (1) normas ISO 20816/8573/1217, (2) aprofundamento da Parte II, (3) tabelas
+> com `\label` e referência cruzada, (4) ano/edição das referências,
+> (5) Capítulos 12 e 13, (6) correção das aspas do babel, (7) correção de
+> unidades nas Equações 9.8 e 11.6, (8) listas de figuras/tabelas, legendas
+> curtas e hifenização, (9) subseções dos Caps. 26/27 e correção da indentação
+> dos blocos de código Python.
+
+Observação: há quatro arquivos soltos na raiz do projeto, não rastreados pelo
+git e não criados por mim — `recomenda compressores.txt` (análise externa via
+Copilot CLI, ver "Correção de extração de texto" acima),
+`Manus_parecer_final_compressores.md` (análise externa da Manus AI, **lida e
+implementada em 29-30/07/2026**, ver as duas seções acima), `dicas_kimi.md`
+(análise externa da Kimi, **lida e implementada em 01/08/2026**, ver seção
+acima) e `referências extras para as fórmulas.md` — este último **não é
+markdown apesar da extensão**: é um `.odt` (OpenDocument Text) renomeado,
+conteúdo binário, ainda não examinado. Não mexer em nenhum deles nem
+incluí-los em commits sem o autor pedir explicitamente. Diferença de
+qualidade entre os três relatórios já lidos, útil para calibrar ceticismo no
+futuro: o Copilot acertou o sintoma e errou a causa; o Manus acertou os três
+problemas normativos, todos confirmados na fonte primária; o Kimi acertou o
+diagnóstico de diagramação mas subestimou a extensão de alguns itens (relatou
+1 tabela com overfull grave, a varredura achou 5).
 
 Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Bibliografia (45 referências) verificada uma a uma contra fontes reais; 3 tinham
@@ -571,8 +971,41 @@ Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - 4 figuras didáticas novas na Parte II (VAE, MPC, PSO, Isolation Forest),
   corrigindo o déficit de ilustração identificado pelo autor — ver
   "Déficit de figuras identificado e corrigido" acima.
+- Corrigida extração de texto do PDF: ligaduras "fi"/"ff" viravam bytes de
+  controle (`\usepackage{cmap}` adicionado) — ver "Correção de extração de
+  texto" acima.
 
-Não há tarefas pendentes conhecidas.
+## Pendências conhecidas (candidatos para a próxima sessão)
+
+Nada está quebrado — o documento compila limpo e não há dívida técnica em
+aberto. O que segue são melhorias identificadas e ainda não feitas, em ordem
+aproximada de valor:
+
+1. **Glossário bilíngue de anglicismos** — recomendação do Manus, também
+   levantada pelo Copilot, e a única do parecer que não foi nem implementada
+   nem descartada. O livro usa *offloading*, *fouling*, *header*, *load
+   shedding*, *surrogate model*, *model drift*, *blow-down*, *timing gears*,
+   *trip* etc. sem tradução sistemática. A forma sugerida é: seção de glossário
+   ao final, mais a primeira ocorrência de cada termo no texto ajustada para
+   "termo em português (original)".
+2. **Capítulos 11 (864 palavras), 14 (923), 20 (974) e 6 (976)** são os mais
+   curtos do livro depois da expansão dos Capítulos 12 e 13 — se o critério de
+   "capítulo desenvolvido, não nota técnica" for aplicado adiante, começar por
+   eles. (Contagem por `awk` sobre o `.tex`, incluindo marcação; serve para
+   ranquear, não como número absoluto.)
+3. **Redes Bayesianas (Cap. 25)** e os detalhes de MHE do `do-mpc` (Cap. 27)
+   continuam citados só por nome, sem equação — pendência herdada do
+   "Inventário de algoritmos da Parte II" acima.
+4. **Estudo de caso numérico de ponta a ponta** (sugestão comum aos dois
+   pareceres externos): um exemplo resolvido com números reais atravessando
+   Parte I e Parte II. É a maior adição possível em esforço, e nunca foi pedida
+   pelo autor — não perseguir sem pedido explícito.
+
+**Deliberadamente descartado**: a recomendação do Manus de abandonar o termo
+"Enciclopédia" no título por ser ambicioso demais para 105 páginas. Contraria a
+visão de longo prazo do autor registrada no topo deste arquivo — a obra é o
+primeiro volume de uma coleção modular, e o título descreve o projeto, não o
+volume isolado. Não reabrir sem o autor levantar o assunto.
 
 Observação: há 4 JPEGs soltos em `figuras/` baixados pelo autor como referência
 visual (thumbnails de baixa resolução, licença não verificada) — **não** usá-los no
