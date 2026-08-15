@@ -70,6 +70,64 @@ def eficiencia_volumetrica(k: float, folga_rel: float, pi: float) -> float:
     return 1.0 - k * folga_rel * math.sqrt(pi)
 
 
+def potencia_entreferro(p_eixo: float, s: float) -> float:
+    """Potência de entreferro do motor [W] — Eq. 4.12 invertida.
+
+    P_ag = P_eixo/(1-s). Simplificação: em vez do circuito equivalente
+    completo (Eqs. 4.4/4.5, que exigiriam parâmetros de placa não
+    disponíveis neste app), P_ag é obtido diretamente da potência mecânica
+    de eixo já calculada pelo restante da cascata.
+    """
+    return p_eixo / (1.0 - s)
+
+
+def perdas_motor(s: float, p_ag: float, p_fixas: float) -> float:
+    """Perdas totais do motor [W].
+
+    Eq. 4.11 — P_perdas,mot = s·P_ag + P_fixas (Joule do rotor variável
+    com a carga via s; estator+núcleo+atrito/ventilação+suplementares
+    agregados em P_fixas, de ensaio — método segregado IEC 60034-2-1).
+    """
+    return s * p_ag + p_fixas
+
+
+def eficiencia_motor(p_eixo: float, p_ag: float, p_fixas: float) -> float:
+    """Eficiência do motor [adimensional] — Eq. 4.12."""
+    p_eletrica = p_ag + p_fixas
+    return p_eixo / p_eletrica if p_eletrica > 0.0 else 0.0
+
+
+def calor_gerado_hood(p_perdas_mot: float, p_loss_outros: float, q_casco: float) -> float:
+    """Calor total gerado dentro do invólucro (hood) [W] — Eq. 2.1.
+
+    Q_gerado = perdas do motor + perdas de VSD/gearbox (não decompostas
+    neste app, ver P_LOSS_HOOD_OUTROS_DEFAULT) + Q_casco (convecção da
+    carcaça do estágio LP).
+    """
+    return p_perdas_mot + p_loss_outros + q_casco
+
+
+def temperatura_hood_regime(q_gerado: float, m_dot_vent: float, cp: float,
+                            t_amb: float) -> float:
+    """Temperatura de regime permanente do ar interno do invólucro [K].
+
+    Eq. 2.4 — T_hood = T_amb + Q_gerado/(m_vent·cp), sob mistura completa
+    do ar confinado (T_hood ≡ T_exaustão, a leitura de saída do exaustor).
+    """
+    if m_dot_vent <= 0.0:
+        return t_amb
+    return t_amb + q_gerado / (m_dot_vent * cp)
+
+
+def delta_p_linha(f_d: float, l_linha: float, d_linha: float, rho: float,
+                  v: float) -> float:
+    """Perda de carga distribuída na tubulação interestágios [Pa].
+
+    Eq. 5.15 — Darcy-Weisbach: ΔP_linha = f_D·(L/D)·ρv²/2.
+    """
+    return f_d * (l_linha / d_linha) * rho * v**2 / 2.0
+
+
 def potencia_isotermica(p1: float, v_dot1: float, pi: float) -> float:
     """Potência isotérmica ideal de referência [W].
 
@@ -242,6 +300,12 @@ __all__ = [
     "temperatura_carcaca_regime",
     "constante_tempo_carcaca",
     "temperatura_carcaca",
+    "potencia_entreferro",
+    "perdas_motor",
+    "eficiencia_motor",
+    "calor_gerado_hood",
+    "temperatura_hood_regime",
+    "delta_p_linha",
     "potencia_isotermica",
     "spc",
     "p_sat",

@@ -20,21 +20,29 @@ from .constantes import (
     DELTA_T_REGEN,
     DEMANDA_M3_MIN,
     DP_NOM_PSA,
+    D_LINHA_DEFAULT,
     ETA_MECANICA,
     ETA_SEPARADOR,
     FAD_DEFAULT_M3_MIN,
     FATOR_PURGA,
     FOLGA_REL_DEFAULT,
+    F_D_LINHA_DEFAULT,
+    HOOD_ENCLAUSURADO_DEFAULT,
     K_FOLGA,
+    L_LINHA_DEFAULT,
     M_CARCACA_LP,
+    M_DOT_VENT_DEFAULT,
     N_COMPRESSORES_DEFAULT,
     N_POLITROPICO,
     P_ATM,
     PDP_ALVO_C,
     PI_REDE_DEFAULT,
+    P_FIXAS_MOTOR_DEFAULT,
     P_LIMITE_REDE,
+    P_LOSS_HOOD_OUTROS_DEFAULT,
     R_AR,
     RF_FOULING_DEFAULT,
+    S_MOTOR_DEFAULT,
     T_AGUA_DEFAULT,
     T_AMB_DEFAULT,
     UA_PROJETO,
@@ -66,6 +74,14 @@ def parametros_default() -> dict:
         "c_carcaca": C_CARCACA_LP,
         "cond_ext_carcaca": COND_EXT_CARCACA_LP,
         "cond_arref_carcaca": COND_ARREF_CARCACA_LP,
+        "s_motor": S_MOTOR_DEFAULT,
+        "p_fixas_motor": P_FIXAS_MOTOR_DEFAULT,
+        "m_dot_vent": M_DOT_VENT_DEFAULT,
+        "p_loss_hood_outros": P_LOSS_HOOD_OUTROS_DEFAULT,
+        "hood_enclausurado": HOOD_ENCLAUSURADO_DEFAULT,
+        "f_d_linha": F_D_LINHA_DEFAULT,
+        "l_linha": L_LINHA_DEFAULT,
+        "d_linha": D_LINHA_DEFAULT,
         "zeta_filtro": ZETA_FILTRO,
         "t_agua": T_AGUA_DEFAULT,
         "ua_projeto": UA_PROJETO,
@@ -134,12 +150,11 @@ def simular(par: dict | None = None) -> dict:
         p0, v_dot_lp * (p0 / p_inter), pi_lp, p["v_i"], p["n"])
     t_lp_out = nucleo.temperatura_descarga(p["t_amb"], pi_lp, p["n"])  # Eq. 11.1
 
-    # --- 2b. Balanço térmico da carcaça do estágio LP (Eq. 9.6) --------------
+    # --- 2b. Calor interno da carcaça do estágio LP (Eq. 9.14) ---------------
+    # T_c em si só é calculado mais adiante (passo 8b), depois que a
+    # temperatura de referência (T_amb a céu aberto, ou T_hood se
+    # enclausurado) estiver definida.
     q_int_lp = nucleo.q_int_carcaca(w_lp, p["eta_mec"])
-    t_carcaca = nucleo.temperatura_carcaca_regime(
-        q_int_lp, p["cond_ext_carcaca"], p["cond_arref_carcaca"], p["t_amb"])
-    tau_carcaca = nucleo.constante_tempo_carcaca(
-        p["m_carcaca"], p["c_carcaca"], p["cond_ext_carcaca"], p["cond_arref_carcaca"])
 
     # --- 3. Intercooler -------------------------------------------------------
     ua = subsistemas.ua_com_fouling(p["ua_projeto"], p["r_f_equiv"])   # Eq. 10.5
@@ -159,6 +174,19 @@ def simular(par: dict | None = None) -> dict:
     perda_vi_hp = nucleo.perda_vi(                  # Eqs. 5.8/5.9
         p_inter, v_dot_hp * (p_inter / p_rede), pi_hp, p["v_i"], p["n"])
     t_hp_out = nucleo.temperatura_descarga(t_hp_in, pi_hp, p["n"])     # Eq. 11.1
+
+    # --- 4b. Perda de carga na tubulação interestágios (Eq. 5.15) ------------
+    # Diagnóstico: reporta a correção de pressão que o restante da cascata
+    # (que trata p_inter como um único valor comum a LP/intercooler/HP,
+    # simplificação já registrada no livro) ainda não aplica. Um trecho
+    # representativo (LP→HP), não os 3 trechos separados do livro.
+    v_dot_lp_out = m_dot * R_AR * t_lp_out / p_inter
+    area_linha = math.pi * p["d_linha"]**2 / 4.0
+    v_linha = v_dot_lp_out / area_linha
+    rho_linha = nucleo.densidade_ar(p_inter, t_lp_out)
+    dp_linha = nucleo.delta_p_linha(                                   # Eq. 5.15
+        p["f_d_linha"], p["l_linha"], p["d_linha"], rho_linha, v_linha)
+    p_hp_suc_efetiva = p_inter - dp_linha
 
     # --- 5. Aftercooler + separador -------------------------------------------
     t_pos_after = subsistemas.saida_trocador(t_hp_out, p["t_agua"], ua, c_ar)
@@ -200,6 +228,29 @@ def simular(par: dict | None = None) -> dict:
     w_total = w_lp + w_hp + perda_vi_lp + perda_vi_hp + p_aquecedor
     eta_global = w_iso / w_total if w_total > 0 else 0.0
     spc_valor = nucleo.spc(w_total, p["fad_m3_min"])                   # Eq. 11.11
+
+    # --- 8b. Motor (Eqs. 4.10-4.12), invólucro/Hood (Eqs. 2.1/2.4) e -----------
+    #         fechamento da carcaça do estágio LP (Eq. 9.6/9.16) ---------------
+    # p_eixo_mot é a potência mecânica de eixo (compressão + perdas V_i),
+    # sem o aquecedor de regeneração — que é carga elétrica resistiva, não
+    # potência mecânica entregue pelo motor.
+    p_eixo_mot = w_lp + w_hp + perda_vi_lp + perda_vi_hp
+    p_ag = nucleo.potencia_entreferro(p_eixo_mot, p["s_motor"])        # Eq. 4.12 invertida
+    p_perdas_mot = nucleo.perdas_motor(p["s_motor"], p_ag, p["p_fixas_motor"])  # Eq. 4.11
+    eta_mot = nucleo.eficiencia_motor(p_eixo_mot, p_ag, p["p_fixas_motor"])     # Eq. 4.12
+
+    # Q_casco = Q_int em regime permanente (identidade que fecha a
+    # circularidade entre Eq. 2.1 e Eq. 9.6 — ver CONTEXTO.md).
+    q_gerado_hood = nucleo.calor_gerado_hood(                          # Eq. 2.1
+        p_perdas_mot, p["p_loss_hood_outros"], q_int_lp)
+    t_hood = nucleo.temperatura_hood_regime(                           # Eq. 2.4
+        q_gerado_hood, p["m_dot_vent"], CP_AR, p["t_amb"])
+
+    t_ref_carcaca = t_hood if p["hood_enclausurado"] else p["t_amb"]
+    t_carcaca = nucleo.temperatura_carcaca_regime(                     # Eq. 9.16
+        q_int_lp, p["cond_ext_carcaca"], p["cond_arref_carcaca"], t_ref_carcaca)
+    tau_carcaca = nucleo.constante_tempo_carcaca(
+        p["m_carcaca"], p["c_carcaca"], p["cond_ext_carcaca"], p["cond_arref_carcaca"])
 
     if t_hp_out - 273.15 < 100.0:
         avisos.append("Descarga HP abaixo de 100 °C — atípico (:584).")
@@ -268,8 +319,16 @@ def simular(par: dict | None = None) -> dict:
             "t_descarga_hp_c": t_hp_out - 273.15,
             "q_int_carcaca_w": q_int_lp,
             "t_carcaca_c": t_carcaca - 273.15,
-            "delta_t_carcaca_c": t_carcaca - p["t_amb"],
+            "delta_t_carcaca_c": t_carcaca - t_ref_carcaca,
             "tau_carcaca_min": tau_carcaca / 60.0,
+            "t_ref_carcaca_c": t_ref_carcaca - 273.15,
+            "eta_mot": eta_mot,
+            "p_ag_w": p_ag,
+            "p_perdas_mot_w": p_perdas_mot,
+            "q_gerado_hood_w": q_gerado_hood,
+            "t_hood_c": t_hood - 273.15,
+            "dp_linha_mbar": dp_linha / 100.0,
+            "p_hp_suc_efetiva_bar": p_hp_suc_efetiva / 1e5,
             "efetividade_intercooler": eps_inter,
             "condensado_total_kg_h": (cond_inter + cond_after) * 3600.0,
             "purga_pct": (1.0 - eta_pur) * 100.0,

@@ -88,6 +88,39 @@ def test_temperatura_carcaca_transiente_converge_para_regime():
     assert t_longo == pytest.approx(t_ss, abs=1e-3)
 
 
+def test_potencia_entreferro_e_perdas_motor():
+    # Eq. 4.12 invertida: P_ag = P_eixo/(1-s)
+    p_ag = nucleo.potencia_entreferro(1000.0, 0.02)
+    assert p_ag == pytest.approx(1000.0 / 0.98)
+    # Eq. 4.11: perdas = s·P_ag + P_fixas
+    perdas = nucleo.perdas_motor(0.02, p_ag, 100.0)
+    assert perdas == pytest.approx(0.02 * p_ag + 100.0)
+    # Eq. 4.12: eta_mot = P_eixo/(P_ag+P_fixas); consistência: perdas = P_eletrica - P_eixo
+    eta = nucleo.eficiencia_motor(1000.0, p_ag, 100.0)
+    p_eletrica = p_ag + 100.0
+    assert eta == pytest.approx(1000.0 / p_eletrica)
+    assert perdas == pytest.approx(p_eletrica - 1000.0, abs=1e-6)
+
+
+def test_temperatura_hood_regime_sem_ventilacao_fica_no_ambiente():
+    assert nucleo.temperatura_hood_regime(1000.0, 0.0, 1005.0, 303.15) == pytest.approx(303.15)
+
+
+def test_temperatura_hood_regime_cresce_com_calor_gerado():
+    t_amb = 303.15
+    t_baixo = nucleo.temperatura_hood_regime(2000.0, 0.5, 1005.0, t_amb)
+    t_alto = nucleo.temperatura_hood_regime(6000.0, 0.5, 1005.0, t_amb)
+    assert t_alto > t_baixo > t_amb
+
+
+def test_delta_p_linha_cresce_com_atrito_e_comprimento():
+    dp1 = nucleo.delta_p_linha(0.02, 3.0, 0.10, 2.5, 10.0)
+    dp2 = nucleo.delta_p_linha(0.04, 3.0, 0.10, 2.5, 10.0)  # mais atrito
+    dp3 = nucleo.delta_p_linha(0.02, 6.0, 0.10, 2.5, 10.0)  # linha mais longa
+    assert dp2 > dp1 > 0.0
+    assert dp3 > dp1
+
+
 def test_psicrometria():
     # P_sat a 25 °C ≈ 3,17 kPa (Buck, Eq. 10.7)
     assert nucleo.p_sat(298.15) == pytest.approx(3169, rel=0.02)
@@ -215,6 +248,35 @@ def test_simular_expoe_carcaca_lp_eq_9_6():
     # menos eficiência mecânica -> mais calor gerado -> carcaça mais quente
     res_pior = simular({"eta_mec": 0.90})
     assert res_pior["kpis"]["t_carcaca_c"] > k["t_carcaca_c"]
+
+
+def test_simular_hood_enclausurado_eleva_temperatura_da_carcaca():
+    # Com hood, T_hood > T_amb (Eq. 2.4) e a carcaça referencia T_hood
+    # (Eq. 9.16 emendada) — logo T_c enclausurado > T_c a céu aberto.
+    res_hood = simular({"hood_enclausurado": True})
+    res_aberto = simular({"hood_enclausurado": False})
+    assert res_hood["kpis"]["t_ref_carcaca_c"] > res_aberto["kpis"]["t_ref_carcaca_c"]
+    assert res_hood["kpis"]["t_carcaca_c"] > res_aberto["kpis"]["t_carcaca_c"]
+    # a céu aberto, a referência é exatamente T_amb
+    t_amb_c = parametros_default()["t_amb"] - 273.15
+    assert res_aberto["kpis"]["t_ref_carcaca_c"] == pytest.approx(t_amb_c)
+
+
+def test_simular_expoe_motor_e_hood():
+    res = simular()
+    k = res["kpis"]
+    assert 0.0 < k["eta_mot"] < 1.0
+    assert k["p_ag_w"] > 0.0
+    assert k["p_perdas_mot_w"] > 0.0
+    assert k["q_gerado_hood_w"] > k["q_int_carcaca_w"]  # inclui motor+outros, não só a carcaça
+    assert k["t_hood_c"] > parametros_default()["t_amb"] - 273.15
+
+
+def test_simular_dp_linha_reduz_pressao_efetiva_de_sucao_hp():
+    res = simular()
+    k = res["kpis"]
+    assert k["dp_linha_mbar"] > 0.0
+    assert k["p_hp_suc_efetiva_bar"] < k["p_intermediaria_bar"]
 
 
 def test_pdp_secador_bate_com_pdp_real_medido():

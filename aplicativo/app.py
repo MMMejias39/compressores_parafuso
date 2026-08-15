@@ -101,6 +101,40 @@ with st.sidebar:
             "Condutância do arrefecimento ativo/ventilação forçada [W/K] (assumido)",
             1.0, 500.0, defaults["cond_arref_carcaca"], 1.0)
 
+    with st.expander("Motor e invólucro (Hood) — Eqs. 4.10-4.12, 2.1, 2.4"):
+        hood_enclausurado = st.checkbox(
+            "Compressor dentro de invólucro acústico (Hood)?",
+            value=defaults["hood_enclausurado"],
+            help="Se marcado, a carcaça do estágio LP (Eq. 9.6) referencia "
+                 "T_hood (Eq. 2.4) em vez da temperatura ambiente externa — "
+                 "arranjo comum offshore, às vezes com o trem inteiro (motor "
+                 "a saída do 2º estágio) no mesmo invólucro por restrição "
+                 "de ruído.")
+        s_motor = st.slider("Escorregamento do motor s (assumido)",
+                            0.005, 0.05, defaults["s_motor"], 0.005,
+                            format="%.3f")
+        p_fixas_motor = st.number_input(
+            "Perdas fixas do motor P_fixas [W] (assumido — ensaio a vazio)",
+            200.0, 10000.0, defaults["p_fixas_motor"], 100.0)
+        m_dot_vent = st.number_input(
+            "Vazão de ventilação forçada do exaustor [kg/s] (assumido)",
+            0.05, 5.0, defaults["m_dot_vent"], 0.05)
+        p_loss_hood_outros = st.number_input(
+            "Perdas de VSD+gearbox no invólucro [W] (assumido — Eqs. 4.3/5.2 "
+            "não decompostas neste app)",
+            0.0, 10000.0, defaults["p_loss_hood_outros"], 100.0)
+
+    with st.expander("Tubulação interestágios (Eq. 5.15)"):
+        f_d_linha = st.number_input(
+            "Fator de atrito de Darcy f_D (assumido)",
+            0.005, 0.08, defaults["f_d_linha"], 0.005, format="%.3f")
+        l_linha = st.number_input(
+            "Comprimento do trecho LP→HP [m] (assumido)",
+            0.5, 30.0, defaults["l_linha"], 0.5)
+        d_linha = st.number_input(
+            "Diâmetro interno da linha [m] (assumido)",
+            0.02, 0.30, defaults["d_linha"], 0.01)
+
     with st.expander("Resfriamento e tratamento"):
         t_agua_c = st.slider("Água de resfriamento [°C]", 5.0, 40.0,
                              defaults["t_agua"] - 273.15, 0.5)
@@ -189,6 +223,14 @@ params = {
     "c_carcaca": c_carcaca,
     "cond_ext_carcaca": cond_ext_carcaca,
     "cond_arref_carcaca": cond_arref_carcaca,
+    "hood_enclausurado": hood_enclausurado,
+    "s_motor": s_motor,
+    "p_fixas_motor": p_fixas_motor,
+    "m_dot_vent": m_dot_vent,
+    "p_loss_hood_outros": p_loss_hood_outros,
+    "f_d_linha": f_d_linha,
+    "l_linha": l_linha,
+    "d_linha": d_linha,
     "t_agua": t_agua_c + 273.15,
     "ua_projeto": ua,
     "r_f_equiv": r_f,
@@ -348,22 +390,58 @@ with tab_est:
         f"dos 7 %/bar” (:1746)."
     )
 
+    st.subheader("Motor (Eqs. 4.10-4.12) e invólucro/Hood (Eqs. 2.1, 2.4)")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric("η_mot", f"{k['eta_mot'] * 100:.1f} %")
+    m2.metric("Perdas do motor", f"{k['p_perdas_mot_w']:.0f} W")
+    m3.metric("Q̇_gerado no invólucro", f"{k['q_gerado_hood_w']:.0f} W")
+    m4.metric("T_hood (regime permanente)", f"{k['t_hood_c']:.1f} °C")
+    st.caption(
+        "η_mot fecha via Eq. 4.12, com P_ag (Eq. 4.10) obtido da potência "
+        "de eixo já calculada pela cascata — simplificação que evita "
+        "reconstruir o circuito equivalente completo (Eqs. 4.4/4.5), sem "
+        "parâmetros de placa neste app. Q̇_gerado (Eq. 2.1) soma as perdas "
+        "do motor, do VSD+gearbox (não decompostas aqui — ver ASSUMIDO na "
+        "barra lateral) e da própria carcaça; T_hood (Eq. 2.4) fecha a "
+        "temperatura de regime do ar confinado a partir da vazão de "
+        "ventilação forçada."
+    )
+
     st.subheader("Carcaça do estágio LP — balanço térmico (Eq. 9.6)")
     h1, h2, h3, h4 = st.columns(4)
     h1.metric("Q̇_int conduzido à carcaça", f"{k['q_int_carcaca_w']:.0f} W")
-    h2.metric("T_carcaça (regime permanente)", f"{k['t_carcaca_c']:.1f} °C")
-    h3.metric("ΔT_carcaça acima do ambiente", f"{k['delta_t_carcaca_c']:.1f} °C")
+    h2.metric("T_referência (Eq. 9.16)",
+             f"{k['t_ref_carcaca_c']:.1f} °C",
+             help="T_hood se enclausurado (Eq. 2.4), T_amb se a céu aberto — "
+                  "ver caixa de seleção na barra lateral.")
+    h3.metric("T_carcaça (regime permanente)", f"{k['t_carcaca_c']:.1f} °C")
     h4.metric("Constante de tempo τ_c", f"{k['tau_carcaca_min']:.0f} min")
     st.caption(
         "Regime permanente da Eq. 9.6 (dT_c/dt = 0): Q_int (proxy — perda "
         "mecânica do estágio LP, W_LP·(1−η_mec)) se equilibra com Q_ext + "
-        "Q_arref, modelados como condutâncias lineares (Newton) para o "
-        "ambiente. τ_c indica quão rápido a carcaça responde a uma mudança "
-        "de carga — não é um transiente calculado ao longo do tempo nesta "
-        "aba (só o valor de regime), diferente da rampa do VSD na aba "
-        "\"Dinâmica temporal\". A Eq. 9.7 (folga residual por dilatação "
-        "térmica) não está implementada — exigiria um modelo à parte para "
-        "a temperatura do rotor, não fechado pelo livro."
+        "Q_arref, modelados como condutâncias lineares (Newton) para a "
+        "temperatura de referência acima. τ_c indica quão rápido a "
+        "carcaça responde a uma mudança de carga — não é um transiente "
+        "calculado ao longo do tempo nesta aba (só o valor de regime), "
+        "diferente da rampa do VSD na aba \"Dinâmica temporal\". A Eq. 9.7 "
+        "(folga residual por dilatação térmica) não está implementada — "
+        "exigiria um modelo à parte para a temperatura do rotor, não "
+        "fechado pelo livro."
+    )
+
+    st.subheader("Tubulação interestágios (Eq. 5.15)")
+    l1, l2 = st.columns(2)
+    l1.metric("ΔP_linha (LP→HP)", f"{k['dp_linha_mbar']:.2f} mbar")
+    l2.metric("P sucção HP efetiva", f"{k['p_hp_suc_efetiva_bar']:.3f} bar abs",
+             help="P_intermediária menos ΔP_linha — diagnóstico; o restante "
+                  "da cascata ainda usa P_intermediária como sucção do "
+                  "estágio HP (simplificação já registrada no livro).")
+    st.caption(
+        "Correção de pressão por atrito distribuído na linha (Darcy-"
+        "Weisbach), separada da perda localizada do filtro/silenciador "
+        "(Eq. 5.4). Pequena em linha nova e bem dimensionada — tende a "
+        "crescer com corrosão/incrustação interna ao longo da vida da "
+        "instalação (f_D sobe), e vale acompanhar como sintoma."
     )
 
     with st.expander("Balanço de potência e calor"):

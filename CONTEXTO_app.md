@@ -332,6 +332,83 @@ tempo — um candidato natural seria acoplá-la à aba "Dinâmica temporal"
 durante um evento de pico de demanda. Não implementado por não ter sido
 pedido; só o valor de regime permanente está na aba 1 hoje.
 
+## Motor, invólucro/Hood e tubulação interestágios (Eqs. 4.10-4.12, 2.1, 2.4, 5.15 — 15/08/2026)
+
+Continuação direta da mesma sessão: uma auditoria pedida pelo autor sobre
+cobertura de perdas termodinâmicas/fluidas no livro achou três lacunas
+reais (motor tratado como caixa-preta, tubulação interestágios sem ΔP, e
+uma inconsistência real — a Eq. 9.6 usando $T_{amb}$ mesmo quando a
+carcaça está dentro do mesmo invólucro do motor/gearbox, achado a partir
+de uma observação do autor sobre Hoods acústicos offshore). As três foram
+fechadas no livro primeiro (ver `CONTEXTO.md`, "Auditoria de perdas
+termodinâmicas/fluidas e acoplamento com o Hood") e depois replicadas
+aqui, incluindo a construção de um **subsistema de motor elétrico do zero**
+— o app não tinha nenhuma representação do Capítulo 4 até esta sessão.
+
+**Motor (Eqs. 4.10-4.12), 3 funções novas em `nucleo.py`**:
+`potencia_entreferro()`, `perdas_motor()`, `eficiencia_motor()`.
+Simplificação deliberada: em vez de reconstruir o circuito equivalente
+completo do motor (Eqs. 4.4/4.5, que exigiriam parâmetros de placa como
+$V_{th}$, $R_{th}$, $X_{th}$, $R_r$, $X_r$ — não disponíveis neste app),
+$P_{ag}$ é obtido invertendo a Eq. 4.12 a partir da potência de eixo já
+calculada pelo resto da cascata ($P_{eixo,mot} = W_{LP}+W_{HP}+$perdas
+$V_i$, **sem** o aquecedor de regeneração PSA, que é carga elétrica
+resistiva, não potência mecânica de eixo). Dois parâmetros novos ASSUMIDO:
+`s_motor` (escorregamento, 0,02) e `p_fixas_motor` (perdas fixas de
+ensaio, 1500 W).
+
+**Invólucro/Hood (Eqs. 2.1/2.4), 2 funções novas**: `calor_gerado_hood()`
+e `temperatura_hood_regime()`. $\dot Q_{\text{casco}}$ (Eq. 2.1) é
+identificado com $\dot Q_{\text{int}}$ da carcaça (Eq. 9.14) — a mesma
+identidade de regime permanente derivada no livro, que evita precisar de
+$T_c$ para calcular $T_{\text{hood}}$. As perdas de VSD+gearbox (Eqs.
+4.3/5.2) não são decompostas neste app — agregadas num único parâmetro
+ASSUMIDO `p_loss_hood_outros` (2000 W), documentado como simplificação
+explícita (o livro tem os três termos separados; o app não implementa
+VSD nem decomposição de gearbox). Novo parâmetro `m_dot_vent` (vazão de
+ventilação forçada, 0,5 kg/s).
+
+**Acoplamento com a carcaça (Eq. 9.16 emendada)**: novo toggle
+`hood_enclausurado` (bool, default `True`) — quando ligado, a Eq. 9.16 usa
+$T_{\text{hood}}$ como referência de convecção em vez de $T_{amb}$; quando
+desligado (instalação a céu aberto), volta ao comportamento original desta
+mesma sessão. **O default mudou de comportamento em relação à primeira
+implementação da Eq. 9.6** (mais cedo nesta sessão): antes, $T_c$ sempre
+usava $T_{amb}$ diretamente; agora, por padrão (`hood_enclausurado=True`),
+usa $T_{\text{hood}}$ — com os defaults do livro/app, $T_c$ default subiu
+de ≈58°C para ≈68°C, porque $T_{\text{hood}}$ (≈40°C) já é mais quente que
+o ambiente puro (30°C). Isso é uma correção física, não uma regressão —
+documentado aqui para não confundir quem comparar números com a sessão
+anterior.
+
+**Tubulação interestágios (Eq. 5.15)**: função `delta_p_linha()`
+(Darcy-Weisbach). Calculada como diagnóstico entre a descarga do estágio
+LP e a sucção do HP (**um trecho representativo**, não os três segmentos
+separados do livro — LP→intercooler, intercooler→HP, HP→aftercooler —,
+simplificação para não reestruturar toda a cascata de pressão existente).
+**Não realimenta** a cascata principal (`p_inter` segue sendo usado como
+antes em todo o resto do cálculo) — reportada como KPI (`dp_linha_mbar`,
+`p_hp_suc_efetiva_bar`), mesma lógica que o PDP já usa no app (grandeza
+informativa por ponto, sem alterar o balanço de massa). Três parâmetros
+novos ASSUMIDO: `f_d_linha` (0,02), `l_linha` (3 m), `d_linha` (0,10 m —
+ajustado de um primeiro valor de 0,05 m depois de notar velocidade de
+escoamento fisicamente alta demais, ~39 m/s, no valor original; 0,10 m dá
+~10 m/s, dentro da faixa de projeto típica).
+
+7 testes novos (funções puras + 3 testes de integração via `simular()`,
+incluindo o que verifica que `hood_enclausurado=True` produz $T_c$ maior
+que `False`) — 48 no total, todos passando. App testado subindo sem erro
+em runtime (servidor iniciado, `curl` 200, log sem traceback, encerrado —
+não ficou rodando ao fim da sessão).
+
+**Pendências abertas por este trabalho**: VSD (Eq. 4.3) e decomposição de
+perdas da gearbox (Eq. 5.2) continuam sem representação própria no app —
+`p_loss_hood_outros` é um placeholder agregado, não um modelo. Os três
+segmentos de tubulação do livro (Eq. 5.15) foram reduzidos a um só. Se uma
+sessão futura quiser fechar esses pontos, o padrão já está estabelecido
+(funções puras em `nucleo.py`, parâmetros ASSUMIDO em `constantes.py`,
+threading em `sistema.py`).
+
 ## Estado atual
 
 Código compila sem erro de sintaxe, 41/41 testes passam

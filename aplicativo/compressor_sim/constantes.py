@@ -32,6 +32,23 @@ C_CARCACA_LP = 460.0        # J/(kg·K), calor específico típico do ferro fund
 COND_EXT_CARCACA_LP = 10.0  # W/K, condutância de convecção natural carcaça-ambiente (h_ext·A_ext) — ASSUMIDO
 COND_ARREF_CARCACA_LP = 20.0  # W/K, condutância do arrefecimento ativo/ventilação forçada do invólucro — ASSUMIDO
 
+# --- Motor elétrico (Eqs. 4.10-4.12) — fechamento simplificado das perdas ---
+S_MOTOR_DEFAULT = 0.02          # escorregamento nominal — ASSUMIDO (motor de indução típico)
+P_FIXAS_MOTOR_DEFAULT = 1500.0  # W, perdas fixas de ensaio (estator+núcleo+atrito/vent.+suplementares,
+                                 # método segregado IEC 60034-2-1) — ASSUMIDO
+
+# --- Invólucro/Hood (Eqs. 2.1/2.4) — balanço térmico do gabinete ---
+M_DOT_VENT_DEFAULT = 0.5             # kg/s, vazão de ventilação forçada do exaustor do hood — ASSUMIDO
+P_LOSS_HOOD_OUTROS_DEFAULT = 2000.0  # W, perdas de VSD+gearbox não decompostas neste app (Eqs. 4.3/5.2
+                                      # não implementadas) — lumped, ASSUMIDO
+HOOD_ENCLAUSURADO_DEFAULT = True     # motor+gearbox+estágios dentro do mesmo invólucro acústico — ASSUMIDO
+
+# --- Tubulação interestágios (Eq. 5.15) ---
+F_D_LINHA_DEFAULT = 0.02  # fator de atrito de Darcy — ASSUMIDO (turbulento, tubo comercial)
+L_LINHA_DEFAULT = 3.0     # m, comprimento do trecho LP→intercooler→HP — ASSUMIDO
+D_LINHA_DEFAULT = 0.10    # m, diâmetro interno do trecho (mesma ordem de grandeza do
+                           # duto de admissão D_DUTO_ADMISSAO) — ASSUMIDO
+
 # --- Vazão (não consta no livro — ASSUMIDO) ---
 FAD_DEFAULT_M3_MIN = 10.0  # m³/min de ar livre (FAD) por unidade
 N_COMPRESSORES_DEFAULT = 1  # unidades idênticas operando em paralelo — ASSUMIDO
