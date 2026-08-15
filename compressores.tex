@@ -173,7 +173,7 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$\dot{V}$ & Vazão volumétrica & m$^3$\,s$^{-1}$ & Todos \\
 	$\dot{V}_{\text{free\_air}}$ & Vazão convertida às condições de referência de admissão (FAD, \textit{Free Air Delivery}), ISO 1217 & m$^3$\,s$^{-1}$ & Cap. 11, 16 \\
 	$\dot{W}$ & Potência (trabalho por unidade de tempo) & W, kW & Todos \\
-	$\dot{Q}$ & Taxa de transferência de calor & W & Trocadores \\
+	$\dot{Q}$ & Taxa de transferência de calor & W & Trocadores, Cap. 9 \\
 	$n$ & Índice politrópico do processo de compressão & adimensional & Cap. 5, 9, 11 \\
 	$R$ & Constante do gás (ar) & J\,kg$^{-1}$\,K$^{-1}$ & Todos \\
 	$\gamma$ & Razão de calores específicos ($c_p/c_v$) do ar & adimensional ($\approx 1.4$) & Termofluídica \\
@@ -199,7 +199,12 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$f_{bp}$ & Frequência de passagem dos lóbulos & Hz & Cap. 9, header \\
 	$D_{\text{macho}}$ & Diâmetro externo do rotor macho & m & Cap. 9 \\
 	$u_{\text{tip}}$ & Velocidade periférica (tangencial) da ponta do rotor macho & m\,s$^{-1}$ & Cap. 9 \\
-	$M_{\text{tip}}$ & Número de Mach na ponta do rotor & adimensional & Cap. 9 \\ \bottomrule
+	$M_{\text{tip}}$ & Número de Mach na ponta do rotor & adimensional & Cap. 9 \\
+	$M_c$ & Massa térmica (capacidade calorífica) da carcaça do elemento LP & kg & Cap. 9 \\
+	$c_c$ & Calor específico do material da carcaça & J\,kg$^{-1}$\,K$^{-1}$ & Cap. 9 \\
+	$G_{\text{ext}}$\dag & Condutância térmica de convecção natural da carcaça para o ambiente & W\,K$^{-1}$ & Cap. 9 \\
+	$G_{\text{arref}}$\dag & Condutância térmica do arrefecimento ativo/ventilação forçada do invólucro & W\,K$^{-1}$ & Cap. 9 \\
+	$\tau_c$\dag & Constante de tempo térmica da carcaça (mesma família de $\tau_{th}$/$\tau_{bd}$, distinta do torque $\tau$) & s & Cap. 9 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Controle, Modulação e Válvulas}
@@ -359,7 +364,8 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\item $k$ como índice de tempo discreto (sempre subscrito: $x_k$, $z_k$ — convenção padrão de EKF/MPC/PSO) permanece; a constante do relé passou a $k_{\text{relé}}$, a ordem do harmônico passou a $j$, e a constante de adsorção passou a $k_{ads}$.
 	\item $b$ (largura de face do dente, notação AGMA padrão) permanece; a exergia específica passou a $\psi$ (notação de Kotas) e o expoente de Basquin passou a $b_f$.
 	\item $\omega$ (velocidade angular, uso dominante) permanece; a razão de umidade psicrométrica passou a $W$ (notação ASHRAE).
-	\item $\tau$ (torque, uso dominante nos capítulos de transmissão) permanece; as constantes de tempo passaram a $\tau_{th}$ (térmica do circuito de óleo) e $\tau_{bd}$ (\textit{blow-down}), e o limiar de disparo do VAE a $\tau_{\text{limiar}}$.
+	\item $\tau$ (torque, uso dominante nos capítulos de transmissão) permanece; as constantes de tempo passaram a $\tau_{th}$ (térmica do circuito de óleo), $\tau_{bd}$ (\textit{blow-down}) e $\tau_c$ (térmica da carcaça do estágio LP), e o limiar de disparo do VAE a $\tau_{\text{limiar}}$.
+	\item $G_k$ (Jacobiana de observação do EKF, Cap. 20) e $G$ como condutância térmica (Cap. 9, sempre subscrita: $G_{\text{ext}}$, $G_{\text{arref}}$) coexistem sem colisão real de leitura — nenhum dos dois capítulos usa $G$ desacompanhada de subscrito, e os dois contextos (estimação de estado vs. balanço térmico) nunca aparecem lado a lado.
 	\item $x$ (vetor de estado do EKF, convenção padrão da literatura de estimação) permanece; a fração de carga da máquina passou a $x_c$.
 	\item $a$ (constante empírica da curva de Vogel e dos polinômios de ajuste) permanece; a abertura da válvula termostática passou a $a_{tv}$.
 	\item $\delta$ (folga entre rotores, uso dominante) permanece nos capítulos de compressão; no Capítulo 13 o mesmo símbolo denota o estado binário da válvula de admissão, uso local e explicitado no ponto de emprego — a distinção é contextual, não notacional, por ser $\delta$ a convenção estabelecida nas duas literaturas.
@@ -1376,11 +1382,35 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 	O papel de $M_{\text{tip}}$ é duplo. No vazamento pela folga (Equações~\eqref{eq:s9-2}--\eqref{eq:s9-3}), ele indica se o escoamento de fuga se aproxima do regime compressível/sônico — condição em que a vazão de fuga deixa de crescer proporcionalmente com $\Delta P$ e satura, alterando a forma esperada da própria Equação~\eqref{eq:s9-3}. No projeto do rotor, $M_{\text{tip}}$ é o limite físico que a geometria assimétrica de perfil precisa respeitar para manter a operação isenta de óleo estável e silenciosa \cite{fleming, hanlon} — velocidades de ponta elevadas demais aumentam perdas aerodinâmicas e ruído independentemente de qualquer degradação, de modo que um $M_{\text{tip}}$ crescente ao longo do tempo para a mesma rotação nominal é, em si, um sintoma a investigar (deriva de $D_{\text{macho}}$ efetivo por desgaste, ou erro de calibração de $T$ na estimativa de $a$).
 
+	\subsection{\textbf{Fechamento do Balanço Térmico da Carcaça}}
+	A Equação~\eqref{eq:s9-6} descreve como $T_c$ evolui no tempo, mas nenhum de seus três termos ($\dot{Q}_{\text{int}}$, $\dot{Q}_{\text{ext}}$, $\dot{Q}_{\text{arref}}$) foi, até aqui, expresso em função de grandezas já medidas ou já calculadas pelo Gêmeo Digital — a mesma lacuna que a Equação~\eqref{eq:s10-7} fechou para $P_{\text{sat}}(T)$ no capítulo seguinte. Fechar essa lacuna é o que permite estimar $T_c$ (e, por extensão, avaliar o risco de contato da Equação~\eqref{eq:s9-7}) mesmo em plantas offshore sem instrumentação dedicada de temperatura de carcaça.
+
+	O calor gerado internamente é dominado pela mesma perda mecânica já contabilizada no denominador $\eta_{\text{mec}}$ da Equação~\eqref{eq:s5-5} — atrito de rotores e mancais que não se converte em trabalho de compressão e permanece na máquina como calor:
+	\begin{equation}\label{eq:s9-14}
+ \dot{Q}_{\text{int}} = \dot{W}_{\text{LP}} \cdot (1 - \eta_{\text{mec}})
+\end{equation}
+	O calor que escapa da carcaça segue dois caminhos independentes, ambos regidos pela lei de Newton do resfriamento — proporcionais à diferença entre a temperatura da carcaça e a do ambiente ($T_c - T_{amb}$) — cada um com sua própria condutância térmica agregada: convecção natural pela superfície exposta da carcaça ($G_{\text{ext}}$) e o sistema de arrefecimento ativo do invólucro, tipicamente a ventilação forçada do \textit{hood} já descrita no Capítulo 2 ($G_{\text{arref}}$):
+	\begin{equation}\label{eq:s9-15}
+ \dot{Q}_{\text{ext}} = G_{\text{ext}} \cdot (T_c - T_{amb}), \qquad
+ \dot{Q}_{\text{arref}} = G_{\text{arref}} \cdot (T_c - T_{amb})
+\end{equation}
+	Substituindo as Equações~\eqref{eq:s9-14} e~\eqref{eq:s9-15} na Equação~\eqref{eq:s9-6} e resolvendo em regime permanente ($dT_c/dt=0$, a condição típica de operação estabilizada, sem evento transiente recente de carga), a temperatura de carcaça se torna uma função direta de grandezas já calculadas neste capítulo:
+	\begin{equation}\label{eq:s9-16}
+ T_{c} = T_{amb} + \frac{\dot{Q}_{\text{int}}}{G_{\text{ext}} + G_{\text{arref}}}
+\end{equation}
+	A rapidez com que a carcaça reage a uma mudança de carga (partida, alívio, evento de pico de demanda) é dada pela constante de tempo do sistema de primeira ordem definido pela linearização acima — razão entre a capacidade térmica da carcaça ($M_c$, $c_c$, já introduzidos na Equação~\eqref{eq:s9-6}) e a condutância total de dissipação:
+	\begin{equation}\label{eq:s9-17}
+ \tau_c = \frac{M_c \, c_c}{G_{\text{ext}} + G_{\text{arref}}}
+\end{equation}
+	Fora do regime permanente, a mesma linearização dá a solução transiente de primeira ordem $T_c(t) = T_{c} + (T_{c,0} - T_{c}) \cdot e^{-t/\tau_c}$, com $T_c$ da Equação~\eqref{eq:s9-16} e $T_{c,0}$ a condição inicial — a aproximação exponencial ao regime permanente após um degrau de $\dot{Q}_{\text{int}}$, forma idêntica à já usada para a resposta em rampa do inversor de frequência (Capítulo 13).
+
+	Esse fechamento não substitui a Equação~\eqref{eq:s9-7}: mesmo com $T_c$ calculável, a folga residual $\delta_{\text{real}}$ segue dependendo da temperatura do próprio rotor ($T_r$), que este documento não modela por um balanço térmico equivalente — permanece, por ora, uma grandeza a ser medida ou estimada por um modelo à parte, fora do escopo fechado por esta seção.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} O Índice de Saúde da Equação~\eqref{eq:s9-10} só é interpretável se cada uma de suas quatro entradas ($\Pi$, $\eta_{is}$, vibração, $\delta_{\text{real}}$) for rastreada individualmente na Matriz de Falhas apresentada acima — reduzir tudo a um único número sem manter o detalhamento por causa raiz transforma um diagnóstico acionável em apenas mais um alarme genérico. A Equação~\eqref{eq:s9-11} adiciona a mesma cautela ao próprio $\Delta\eta_{is}$ que alimenta esse índice: antes de contar uma queda de $\eta_{is}$ como sintoma de falha, o Gêmeo Digital deve descontar a parcela que é apenas o efeito esperado de operar em razão de pressão distinta do ponto de garantia — só o resíduo depois desse desconto é degradação real.
+	\textbf{Diretriz Técnica Final:} O Índice de Saúde da Equação~\eqref{eq:s9-10} só é interpretável se cada uma de suas quatro entradas ($\Pi$, $\eta_{is}$, vibração, $\delta_{\text{real}}$) for rastreada individualmente na Matriz de Falhas apresentada acima — reduzir tudo a um único número sem manter o detalhamento por causa raiz transforma um diagnóstico acionável em apenas mais um alarme genérico. A Equação~\eqref{eq:s9-11} adiciona a mesma cautela ao próprio $\Delta\eta_{is}$ que alimenta esse índice: antes de contar uma queda de $\eta_{is}$ como sintoma de falha, o Gêmeo Digital deve descontar a parcela que é apenas o efeito esperado de operar em razão de pressão distinta do ponto de garantia — só o resíduo depois desse desconto é degradação real. As Equações~\eqref{eq:s9-14}--\eqref{eq:s9-17} fecham o último elo puramente conceitual do capítulo: com elas, $T_c$ deixa de ser uma grandeza que só um sensor de carcaça poderia fornecer e passa a ser calculável a partir do próprio ponto de operação — mas a Equação~\eqref{eq:s9-17} também é um lembrete de escala: $\tau_c$ tipicamente responde em minutos a dezenas de minutos, ordem de grandeza muito maior que a dinâmica de pressão da rede (Capítulo 13) — um alarme de superaquecimento de carcaça nunca deve ser dimensionado com a mesma constante de tempo usada para a resposta do VSD.
 
 	% --- Fim do Capítulo 9 ---
 	

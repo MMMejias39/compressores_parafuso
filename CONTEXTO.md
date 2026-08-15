@@ -1021,15 +1021,76 @@ permanente neste projeto de qualquer forma. `compressores.tex` está
 para 141 páginas (era 135), ambos modificados na árvore de trabalho, não
 staged, aguardando revisão do autor.
 
+## Fechamento do balanço térmico da carcaça — Eq. 9.6 (15/08/2026)
+
+Continuação direta da verificação feita no `aplicativo/` (ver `CONTEXTO_app.md`,
+"Balanço térmico da carcaça do estágio LP"): lá ficou explícito que a Eq. 9.6 do
+livro descreve $M_c c_c\,dT_c/dt = \dot Q_{\text{int}} - \dot Q_{\text{ext}} -
+\dot Q_{\text{arref}}$ mas nenhum dos três termos do lado direito tinha forma
+fechada no texto — mesma classe de lacuna já identificada e corrigida para
+$P_{\text{sat}}(T)$ antes da Eq. 10.7. Fechada a pedido do autor, com 4 equações
+novas ao **fim do Capítulo 9** (nova subseção "Fechamento do Balanço Térmico da
+Carcaça", após a subseção do número de Mach, antes da Diretriz Técnica Final —
+mesma estratégia de posicionamento de sempre para não deslocar nenhuma equação
+existente):
+
+- **Eq. 9.14** — $\dot Q_{\text{int}} = \dot W_{\text{LP}}\cdot(1-\eta_{\text{mec}})$:
+  a mesma perda mecânica já embutida em $\eta_{\text{mec}}$ na Eq. 5.5, tratada
+  como a parcela de calor que fica na máquina em vez de virar trabalho de
+  compressão.
+- **Eq. 9.15** — $\dot Q_{\text{ext}}$ e $\dot Q_{\text{arref}}$ como lei de
+  Newton do resfriamento, lineares em $(T_c-T_{amb})$, com condutâncias
+  agregadas distintas: $G_{\text{ext}}$ (convecção natural da carcaça) e
+  $G_{\text{arref}}$ (arrefecimento ativo/ventilação forçada do invólucro,
+  já descrito no Cap. 2).
+- **Eq. 9.16** — $T_c$ em regime permanente ($dT_c/dt=0$), substituindo 9.14/9.15
+  na própria Eq. 9.6.
+- **Eq. 9.17** — $\tau_c = M_c c_c/(G_{\text{ext}}+G_{\text{arref}})$, constante
+  de tempo do sistema de 1ª ordem linearizado; o texto registra explicitamente
+  que $\tau_c$ (minutos a dezenas de minutos) é muito maior que a dinâmica de
+  pressão da rede do Cap. 13 — um alarme de superaquecimento de carcaça não deve
+  usar a mesma constante de tempo da resposta do VSD.
+
+As quatro equações são exatamente o mesmo modelo já implementado no app
+(`nucleo.q_int_carcaca`/`temperatura_carcaca_regime`/`constante_tempo_carcaca`) —
+o app foi implementado primeiro, o livro fechado depois, para manter os dois
+sincronizados desde o início em vez de o código divergir silenciosamente do
+texto (como quase aconteceu com a Eq. 15.7 antes da correção de 02/08/2026).
+
+**Símbolos novos verificados contra a Nomenclatura antes de inserir** (regra
+permanente da seção "Convenções"): $M_c$, $c_c$ (já apareciam soltos na prosa
+da Eq. 9.6 desde antes, mas nunca tinham entrado na tabela — corrigido agora),
+$G_{\text{ext}}$, $G_{\text{arref}}$ (marcados \dag — nova nota na lista de
+Desambiguação explicando a coexistência com $G_k$, Jacobiana do EKF no Cap. 20,
+sem colisão real porque nenhum dos dois usa $G$ sem subscrito) e $\tau_c$
+(entra na mesma família já existente de $\tau_{th}$/$\tau_{bd}$, nota de
+desambiguação estendida). $T_c$ não precisou de entrada nova — é só um
+subscrito do $T$ genérico já listado. A linha de $\dot Q$ na Nomenclatura teve
+a coluna Capítulos estendida de "Trocadores" para "Trocadores, Cap. 9".
+
+**Verificação de não regressão**: compilação limpa em 3 passagens (141→143
+páginas), 203 labels `eq:s*-*` (era 199) = 203 ocorrências "(N.N)" no PDF
+extraído, 0 "??", 0 referência indefinida, 0 label duplicado — a numeração do
+Capítulo 10 em diante permanece intacta (conferido: primeira equação do
+Cap. 10 continua "(10.1)"). Overfull hboxes seguem em 33, mesma magnitude
+mínima de 2,01pt já documentada como insignificante — nenhuma tabela de
+Nomenclatura ficou mais larga o suficiente para regredir.
+
+**Nada foi commitado** — junto com o trabalho ainda pendente do app
+(`CONTEXTO_app.md`), aguardando revisão do autor.
+
 ## Estado atual (última sessão)
 
-Documento compila limpo, **141 páginas** (era 135 antes desta sessão — ver
-"Backlog Kimi implementado" acima), sem erros/referências
-indefinidas/labels duplicados. Todos os 27 capítulos têm subseções e
-aparecem estruturados no sumário. **Há trabalho do livro sem commit no
-momento**: os 13 itens do Backlog Kimi, na árvore de trabalho
-(`compressores.tex` modificado, `compressores.pdf` recompilado) —
-deliberadamente não commitado, ver regra na seção acima. Repositório git
+Documento compilava em 141 páginas ao fim da sessão do Backlog Kimi (era 135
+antes dela — ver "Backlog Kimi implementado" acima); **atualização de
+15/08/2026**: os 13 itens do Backlog Kimi descritos como "sem commit" no
+parágrafo abaixo já foram commitados desde então (`2876885`, conferir sempre
+`git log` em vez desta nota — ver aviso mais abaixo), e o documento está em
+**143 páginas** após o fechamento da Eq. 9.6 (seção acima). Sem erros/
+referências indefinidas/labels duplicados nas duas sessões. Todos os 27
+capítulos têm subseções e aparecem estruturados no sumário. O parágrafo
+original desta seção segue abaixo, para contexto histórico do que a sessão do
+Backlog Kimi deixou pendente **antes** de ser commitado. Repositório git
 inicializado (ver "Visão de longo prazo" acima); histórico completo
 reescrito em 26/07/2026 para remover trailers de coautoria (ver seção
 acima) — os hashes de commit mudaram desde qualquer anotação anterior a
