@@ -1076,8 +1076,10 @@ Cap. 10 continua "(10.1)"). Overfull hboxes seguem em 33, mesma magnitude
 mínima de 2,01pt já documentada como insignificante — nenhuma tabela de
 Nomenclatura ficou mais larga o suficiente para regredir.
 
-**Nada foi commitado** — junto com o trabalho ainda pendente do app
-(`CONTEXTO_app.md`), aguardando revisão do autor.
+**Commitado em 15/08/2026**, em dois commits — `3b9e376` (implementação no
+app, ver `CONTEXTO_app.md`) e `13826b9` (Eqs. 9.14-9.17 + Nomenclatura, este
+arquivo), o app sempre antes do livro para o código nunca divergir
+silenciosamente do texto. Nenhum trailer de coautoria de IA, como sempre.
 
 ## Estado atual (última sessão)
 

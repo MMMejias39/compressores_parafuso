@@ -318,6 +318,13 @@ lugar nenhum hoje.
 Verificado também que o app sobe sem erro em runtime (servidor iniciado e
 testado com `curl`, depois encerrado — não ficou rodando ao fim da sessão).
 
+**Fechamento no livro, mesma sessão**: as fórmulas de $\dot Q_{\text{int}}$,
+$\dot Q_{\text{ext}}$/$\dot Q_{\text{arref}}$, $T_c$ regime e $\tau_c$ acima
+não ficaram só no app — foram formalizadas como Eqs. 9.14-9.17 no
+`compressores.tex` logo em seguida (commit `13826b9`), ver "Fechamento do
+balanço térmico da carcaça — Eq. 9.6" no `CONTEXTO.md` principal. As duas
+implementações usam exatamente o mesmo modelo, de propósito.
+
 **Pendência aberta por este trabalho**: a função `temperatura_carcaca()`
 (transiente completo) existe mas não está conectada a nenhuma simulação no
 tempo — um candidato natural seria acoplá-la à aba "Dinâmica temporal"
@@ -342,7 +349,9 @@ pendentes na árvore de trabalho na mesma hora (correções de diagramação do
 29-31/07 já descrito no `CONTEXTO.md` principal) foram deixadas de fora
 deliberadamente, incluindo as outras duas mudanças de `.gitignore`
 (`*.lof`/`*.lot` do livro e `.claude/settings.local.json`) que não tinham
-relação com o app.
+relação com o app. **Commit mais recente do app**: `3b9e376` (15/08/2026,
+balanço térmico da carcaça — ver seção acima); use `git log -- aplicativo/`
+em vez desta nota para o histórico completo e atualizado.
 
 **Este arquivo é deliberadamente separado do `CONTEXTO.md` principal** — a
 pedido do autor, não é referenciado a partir de lá. Sessões futuras que só
