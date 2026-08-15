@@ -26,6 +26,12 @@ K_FOLGA = 0.05         # coeficiente K da Eq. 9.3 — ASSUMIDO
 FOLGA_REL_DEFAULT = 0.002  # δ/L — ASSUMIDO (máquina nova)
 ZETA_FILTRO = 2.5      # ζ do filtro de admissão (Eq. 5.4) — ASSUMIDO
 
+# --- Carcaça do estágio LP — balanço térmico (Eq. 9.6) ---
+M_CARCACA_LP = 300.0        # kg, massa térmica da carcaça do elemento LP — ASSUMIDO
+C_CARCACA_LP = 460.0        # J/(kg·K), calor específico típico do ferro fundido — ASSUMIDO (material)
+COND_EXT_CARCACA_LP = 10.0  # W/K, condutância de convecção natural carcaça-ambiente (h_ext·A_ext) — ASSUMIDO
+COND_ARREF_CARCACA_LP = 20.0  # W/K, condutância do arrefecimento ativo/ventilação forçada do invólucro — ASSUMIDO
+
 # --- Vazão (não consta no livro — ASSUMIDO) ---
 FAD_DEFAULT_M3_MIN = 10.0  # m³/min de ar livre (FAD) por unidade
 N_COMPRESSORES_DEFAULT = 1  # unidades idênticas operando em paralelo — ASSUMIDO

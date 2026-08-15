@@ -87,6 +87,20 @@ with st.sidebar:
                                     defaults["folga_rel"], 0.001,
                                     format="%.3f")
 
+    with st.expander("Carcaça do estágio LP — balanço térmico (Eq. 9.6)"):
+        m_carcaca = st.number_input(
+            "Massa térmica da carcaça M_c [kg] (assumido)",
+            50.0, 2000.0, defaults["m_carcaca"], 10.0)
+        c_carcaca = st.number_input(
+            "Calor específico c_c [J/(kg·K)] (assumido — ferro fundido típico)",
+            300.0, 900.0, defaults["c_carcaca"], 10.0)
+        cond_ext_carcaca = st.number_input(
+            "Condutância de convecção externa carcaça-ambiente [W/K] (assumido)",
+            1.0, 200.0, defaults["cond_ext_carcaca"], 1.0)
+        cond_arref_carcaca = st.number_input(
+            "Condutância do arrefecimento ativo/ventilação forçada [W/K] (assumido)",
+            1.0, 500.0, defaults["cond_arref_carcaca"], 1.0)
+
     with st.expander("Resfriamento e tratamento"):
         t_agua_c = st.slider("Água de resfriamento [°C]", 5.0, 40.0,
                              defaults["t_agua"] - 273.15, 0.5)
@@ -171,6 +185,10 @@ params = {
     "v_i": v_i,
     "eta_mec": eta_mec,
     "folga_rel": folga_rel,
+    "m_carcaca": m_carcaca,
+    "c_carcaca": c_carcaca,
+    "cond_ext_carcaca": cond_ext_carcaca,
+    "cond_arref_carcaca": cond_arref_carcaca,
     "t_agua": t_agua_c + 273.15,
     "ua_projeto": ua,
     "r_f_equiv": r_f,
@@ -328,6 +346,24 @@ with tab_est:
         f"Reduzir o setpoint em 1 bar economiza ≈ {delta_1bar:.1f} kW "
         f"({delta_1bar / w_ref * 100:.1f} % da potência atual) — cf. “regra "
         f"dos 7 %/bar” (:1746)."
+    )
+
+    st.subheader("Carcaça do estágio LP — balanço térmico (Eq. 9.6)")
+    h1, h2, h3, h4 = st.columns(4)
+    h1.metric("Q̇_int conduzido à carcaça", f"{k['q_int_carcaca_w']:.0f} W")
+    h2.metric("T_carcaça (regime permanente)", f"{k['t_carcaca_c']:.1f} °C")
+    h3.metric("ΔT_carcaça acima do ambiente", f"{k['delta_t_carcaca_c']:.1f} °C")
+    h4.metric("Constante de tempo τ_c", f"{k['tau_carcaca_min']:.0f} min")
+    st.caption(
+        "Regime permanente da Eq. 9.6 (dT_c/dt = 0): Q_int (proxy — perda "
+        "mecânica do estágio LP, W_LP·(1−η_mec)) se equilibra com Q_ext + "
+        "Q_arref, modelados como condutâncias lineares (Newton) para o "
+        "ambiente. τ_c indica quão rápido a carcaça responde a uma mudança "
+        "de carga — não é um transiente calculado ao longo do tempo nesta "
+        "aba (só o valor de regime), diferente da rampa do VSD na aba "
+        "\"Dinâmica temporal\". A Eq. 9.7 (folga residual por dilatação "
+        "térmica) não está implementada — exigiria um modelo à parte para "
+        "a temperatura do rotor, não fechado pelo livro."
     )
 
     with st.expander("Balanço de potência e calor"):

@@ -255,12 +255,83 @@ Isso levou a duas melhorias adicionais, feitas na mesma varredura:
 varia menos de 1% entre UR 10% e 95% (mas o ar seco entregue cai ~4% e o
 condensado sobe de 0,1 para 16 kg/h no mesmo intervalo) — 36 no total.
 
+## Balanço térmico da carcaça do estágio LP — Eq. 9.6 (15/08/2026)
+
+O autor perguntou se as equações do estágio LP já cobriam transferência de
+calor nos equipamentos. Verificação (não só no app — no livro): a Eq. 5.5
+(trabalho do estágio) trata calor só implicitamente via índice politrópico
+$n$; o Capítulo 9 (Termodinâmica do Estágio LP) tem uma equação explícita
+para o próprio equipamento — o balanço térmico da carcaça (Eq. 9.6,
+$M_c c_c \, dT_c/dt = \dot Q_{\text{int}} - \dot Q_{\text{ext}} -
+\dot Q_{\text{arref}}$) — que não estava implementada no app. Implementada
+nesta sessão.
+
+**Novas funções em `nucleo.py`** (seção "Carcaça e balanço térmico do
+estágio LP"):
+- `q_int_carcaca(w_estagio, eta_mec)`: proxy de $\dot Q_{\text{int}}$. O
+  livro não fecha como calcular esse termo a partir de outras grandezas do
+  capítulo — a simplificação adotada é a própria perda mecânica já embutida
+  na Eq. 5.5 via $\eta_{\text{mec}}$ (potência que não realiza trabalho de
+  compressão e fica como calor dentro da máquina): $\dot Q_{\text{int}} =
+  \dot W \cdot (1-\eta_{\text{mec}})$.
+- `temperatura_carcaca_regime(q_int, cond_ext, cond_arref, t_amb)`: $T_c$ em
+  regime permanente ($dT_c/dt=0$), com $\dot Q_{\text{ext}}$ e $\dot
+  Q_{\text{arref}}$ modelados como condutâncias lineares em $(T_c-T_{amb})$
+  (lei de Newton do resfriamento) — convecção natural da carcaça vs.
+  arrefecimento ativo/ventilação forçada do invólucro, dois termos
+  separados como no livro.
+- `constante_tempo_carcaca(m_c, c_c, cond_ext, cond_arref)`: $\tau_c =
+  M_c c_c/(\text{cond}_{ext}+\text{cond}_{arref})$.
+- `temperatura_carcaca(...)`: solução analítica de 1ª ordem $T_c(t) =
+  T_{c,ss} + (T_{c0}-T_{c,ss})\cdot e^{-t/\tau_c}$ — mesma forma já usada
+  para a rampa do VSD em `dinamica.py`, mas **não está fiada a nenhuma aba
+  de tempo do app ainda** (só o valor de regime permanente é exibido na
+  aba 1; a função existe pronta para uma futura integração temporal, ver
+  "Pendências" abaixo).
+
+**4 novos parâmetros ASSUMIDO** em `constantes.py`/sidebar (expander
+"Carcaça do estágio LP — balanço térmico (Eq. 9.6)"): `m_carcaca` (300 kg),
+`c_carcaca` (460 J/kg·K, calor específico típico do ferro fundido —
+propriedade de material, não uma citação bibliográfica), `cond_ext_carcaca`
+(10 W/K) e `cond_arref_carcaca` (20 W/K). Com os defaults do livro/app,
+$\dot Q_{\text{int}} \approx 843\,$W, $T_c \approx 58\,^\circ$C
+($\Delta T \approx 28\,^\circ$C acima dos 30 °C de ambiente), $\tau_c
+\approx 77\,$min — ordens de grandeza fisicamente plausíveis para a carcaça
+de um elemento compressor (conferido manualmente antes de fixar os
+defaults, não são números de fábrica).
+
+**Integração em `sistema.py`**: o cálculo entra logo após o estágio LP
+(`w_lp`), antes do intercooler — 4 novos KPIs: `q_int_carcaca_w`,
+`t_carcaca_c`, `delta_t_carcaca_c`, `tau_carcaca_min`. Exibidos na aba
+"Operação estática" como um novo bloco de métricas, com legenda explicando
+a simplificação (regime permanente, não transiente) e registrando
+explicitamente que a **Eq. 9.7 (folga residual por dilatação térmica) não
+foi implementada** — exigiria um modelo à parte para a temperatura do
+rotor ($\Delta T_r$), que o livro não fecha e que o app não modela em
+lugar nenhum hoje.
+
+5 testes novos (`test_q_int_carcaca_proporcional_a_perda_mecanica`,
+`test_temperatura_carcaca_regime_sem_calor_fica_no_ambiente`,
+`test_temperatura_carcaca_regime_cresce_com_q_int_e_cai_com_condutancia`,
+`test_temperatura_carcaca_transiente_converge_para_regime`,
+`test_simular_expoe_carcaca_lp_eq_9_6`) — 41 no total, todos passando.
+Verificado também que o app sobe sem erro em runtime (servidor iniciado e
+testado com `curl`, depois encerrado — não ficou rodando ao fim da sessão).
+
+**Pendência aberta por este trabalho**: a função `temperatura_carcaca()`
+(transiente completo) existe mas não está conectada a nenhuma simulação no
+tempo — um candidato natural seria acoplá-la à aba "Dinâmica temporal"
+(`dinamica.py`), mostrando $T_c(t)$ evoluindo junto com a pressão da rede
+durante um evento de pico de demanda. Não implementado por não ter sido
+pedido; só o valor de regime permanente está na aba 1 hoje.
+
 ## Estado atual
 
-Código compila sem erro de sintaxe, 36/36 testes passam
-(`venv/bin/pytest tests/ -q`). Servidor Streamlit rodando em
-`localhost:8501`, reiniciado pela última vez após a correção de umidade
-(02/08/2026).
+Código compila sem erro de sintaxe, 41/41 testes passam
+(`venv/bin/pytest tests/ -q`). Servidor Streamlit **não está rodando** no
+momento — testado e encerrado ao fim da sessão de 15/08/2026 (ver "Balanço
+térmico da carcaça" acima); a última vez que ficou de pé continuamente foi
+após a correção de umidade (02/08/2026), sessão anterior.
 
 O diretório `aplicativo/` foi commitado em 01/08/2026 (commit `693a2c6`,
 junto com este arquivo e as linhas de `.gitignore` para
@@ -282,10 +353,17 @@ contexto para ele.
 ## Pendências conhecidas
 
 1. O app usa apenas os Capítulos 5, 9, 10, 11, 12, 13, 14, 15, 16 do livro
-   (trem termodinâmico + psicrometria + rede). Motor elétrico (Cap. 4),
-   rotordinâmica/mancais (Caps. 8, 9, 11) e a Parte II inteira (EKF, VAE,
-   PIML, MPC, PSO — Caps. 19-27) não têm nenhuma representação no
-   simulador — candidato natural de expansão futura, mas não pedido ainda.
+   (trem termodinâmico + psicrometria + rede). Motor elétrico (Cap. 4) e a
+   Parte II inteira (EKF, VAE, PIML, MPC, PSO — Caps. 19-27) não têm
+   nenhuma representação no simulador — candidato natural de expansão
+   futura, mas não pedido ainda. Rotordinâmica/mancais (Caps. 8, 9, 11)
+   agora tem cobertura **parcial**: Eq. 9.3 (eficiência volumétrica por
+   folga) desde antes, e Eq. 9.6 (balanço térmico da carcaça, regime
+   permanente) desde 15/08/2026 — ver seção acima. Seguem sem
+   representação: velocidade crítica/torcional (Cap. 8), vibração
+   espectral (Eq. 9.8), vida de rolamento (Cap. 11) e Eq. 9.7 (folga
+   residual por dilatação térmica, que dependeria de um modelo de
+   temperatura do rotor não fechado pelo livro).
 2. `n_compressores` assume unidades **idênticas** operando no **mesmo**
    ponto de operação (mesma fração de carga cada uma) — não modela um
    cenário de carga desigual entre máquinas nem lógica de seleção de qual

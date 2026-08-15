@@ -79,6 +79,60 @@ def potencia_isotermica(p1: float, v_dot1: float, pi: float) -> float:
     return p1 * v_dot1 * math.log(pi)
 
 
+def q_int_carcaca(w_estagio: float, eta_mec: float) -> float:
+    """Calor gerado internamente e conduzido à carcaça [W] — proxy de Q_int (Eq. 9.6).
+
+    Simplificação de modelagem: o livro não fecha como calcular Q_int a partir
+    de outras grandezas do capítulo. Adota-se a própria perda mecânica já
+    embutida na Eq. 5.5 via η_mec — potência que não realiza trabalho de
+    compressão e fica como calor dentro da máquina — como a parcela
+    conduzida à carcaça: Q_int = W·(1 − η_mec).
+    """
+    return w_estagio * (1.0 - eta_mec)
+
+
+def temperatura_carcaca_regime(q_int: float, cond_ext: float, cond_arref: float,
+                               t_amb: float) -> float:
+    """Temperatura de carcaça em regime permanente (dT_c/dt = 0) [K].
+
+    Eq. 9.6 — M_c·c_c·dT_c/dt = Q_int − Q_ext − Q_arref. Q_ext e Q_arref são
+    modelados pela lei de Newton do resfriamento, lineares em (T_c − T_amb):
+    Q_ext = cond_ext·(T_c−T_amb) [convecção natural carcaça-ambiente],
+    Q_arref = cond_arref·(T_c−T_amb) [arrefecimento ativo/ventilação forçada
+    do invólucro]. Em regime permanente, Q_int = (cond_ext+cond_arref)·(T_c−T_amb).
+    """
+    cond_total = cond_ext + cond_arref
+    if cond_total <= 0.0:
+        return t_amb
+    return t_amb + q_int / cond_total
+
+
+def constante_tempo_carcaca(m_c: float, c_c: float, cond_ext: float,
+                            cond_arref: float) -> float:
+    """Constante de tempo térmica da carcaça [s].
+
+    τ_c = M_c·c_c / (cond_ext + cond_arref) — decorre de linearizar a
+    Eq. 9.6 (Q_ext/Q_arref lineares em T_c) como sistema de 1ª ordem.
+    """
+    cond_total = cond_ext + cond_arref
+    return (m_c * c_c) / cond_total if cond_total > 0.0 else float("inf")
+
+
+def temperatura_carcaca(t_c0: float, t_amb: float, q_int: float, cond_ext: float,
+                        cond_arref: float, m_c: float, c_c: float, t: float) -> float:
+    """Evolução temporal T_c(t) [K] — solução analítica da Eq. 9.6 linearizada.
+
+    Com Q_ext/Q_arref lineares em (T_c−T_amb), a Eq. 9.6 vira um sistema de
+    1ª ordem com solução fechada: T_c(t) = T_c,ss + (T_c0−T_c,ss)·exp(−t/τ_c),
+    mesma forma já usada para a rampa do VSD em `dinamica.py`.
+    """
+    t_ss = temperatura_carcaca_regime(q_int, cond_ext, cond_arref, t_amb)
+    tau_c = constante_tempo_carcaca(m_c, c_c, cond_ext, cond_arref)
+    if not math.isfinite(tau_c):
+        return t_amb
+    return t_ss + (t_c0 - t_ss) * math.exp(-t / tau_c)
+
+
 def spc(w_total: float, fad_m3_min: float) -> float:
     """Consumo específico de energia [kW·min/m³].
 
@@ -184,6 +238,10 @@ __all__ = [
     "perda_vi",
     "temperatura_descarga",
     "eficiencia_volumetrica",
+    "q_int_carcaca",
+    "temperatura_carcaca_regime",
+    "constante_tempo_carcaca",
+    "temperatura_carcaca",
     "potencia_isotermica",
     "spc",
     "p_sat",

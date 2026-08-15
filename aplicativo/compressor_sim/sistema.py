@@ -13,7 +13,10 @@ import math
 
 from . import nucleo, subsistemas
 from .constantes import (
+    COND_ARREF_CARCACA_LP,
+    COND_EXT_CARCACA_LP,
     CP_AR,
+    C_CARCACA_LP,
     DELTA_T_REGEN,
     DEMANDA_M3_MIN,
     DP_NOM_PSA,
@@ -23,6 +26,7 @@ from .constantes import (
     FATOR_PURGA,
     FOLGA_REL_DEFAULT,
     K_FOLGA,
+    M_CARCACA_LP,
     N_COMPRESSORES_DEFAULT,
     N_POLITROPICO,
     P_ATM,
@@ -58,6 +62,10 @@ def parametros_default() -> dict:
         "eta_mec": ETA_MECANICA,
         "k_folga": K_FOLGA,
         "folga_rel": FOLGA_REL_DEFAULT,
+        "m_carcaca": M_CARCACA_LP,
+        "c_carcaca": C_CARCACA_LP,
+        "cond_ext_carcaca": COND_EXT_CARCACA_LP,
+        "cond_arref_carcaca": COND_ARREF_CARCACA_LP,
         "zeta_filtro": ZETA_FILTRO,
         "t_agua": T_AGUA_DEFAULT,
         "ua_projeto": UA_PROJETO,
@@ -125,6 +133,13 @@ def simular(par: dict | None = None) -> dict:
     perda_vi_lp = nucleo.perda_vi(                  # Eqs. 5.8/5.9
         p0, v_dot_lp * (p0 / p_inter), pi_lp, p["v_i"], p["n"])
     t_lp_out = nucleo.temperatura_descarga(p["t_amb"], pi_lp, p["n"])  # Eq. 11.1
+
+    # --- 2b. Balanço térmico da carcaça do estágio LP (Eq. 9.6) --------------
+    q_int_lp = nucleo.q_int_carcaca(w_lp, p["eta_mec"])
+    t_carcaca = nucleo.temperatura_carcaca_regime(
+        q_int_lp, p["cond_ext_carcaca"], p["cond_arref_carcaca"], p["t_amb"])
+    tau_carcaca = nucleo.constante_tempo_carcaca(
+        p["m_carcaca"], p["c_carcaca"], p["cond_ext_carcaca"], p["cond_arref_carcaca"])
 
     # --- 3. Intercooler -------------------------------------------------------
     ua = subsistemas.ua_com_fouling(p["ua_projeto"], p["r_f_equiv"])   # Eq. 10.5
@@ -251,6 +266,10 @@ def simular(par: dict | None = None) -> dict:
             "eta_global": eta_global,
             "eta_v_lp": eta_v_lp,
             "t_descarga_hp_c": t_hp_out - 273.15,
+            "q_int_carcaca_w": q_int_lp,
+            "t_carcaca_c": t_carcaca - 273.15,
+            "delta_t_carcaca_c": t_carcaca - p["t_amb"],
+            "tau_carcaca_min": tau_carcaca / 60.0,
             "efetividade_intercooler": eps_inter,
             "condensado_total_kg_h": (cond_inter + cond_after) * 3600.0,
             "purga_pct": (1.0 - eta_pur) * 100.0,

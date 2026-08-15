@@ -53,6 +53,41 @@ def test_temperatura_descarga_coerente():
         300.0 * 2.83 ** (0.35 / 1.35))
 
 
+def test_q_int_carcaca_proporcional_a_perda_mecanica():
+    # Q_int = W·(1 − η_mec) — proxy da perda mecânica conduzida à carcaça (Eq. 9.6)
+    assert nucleo.q_int_carcaca(1000.0, 0.96) == pytest.approx(40.0)
+    assert nucleo.q_int_carcaca(1000.0, 1.0) == pytest.approx(0.0)
+
+
+def test_temperatura_carcaca_regime_sem_calor_fica_no_ambiente():
+    t_amb = 303.15
+    assert nucleo.temperatura_carcaca_regime(0.0, 10.0, 20.0, t_amb) == pytest.approx(t_amb)
+
+
+def test_temperatura_carcaca_regime_cresce_com_q_int_e_cai_com_condutancia():
+    t_amb = 303.15
+    t_baixo = nucleo.temperatura_carcaca_regime(500.0, 10.0, 20.0, t_amb)
+    t_alto = nucleo.temperatura_carcaca_regime(1500.0, 10.0, 20.0, t_amb)
+    assert t_alto > t_baixo > t_amb
+    # mais condutância (melhor arrefecimento) -> carcaça mais fria para o mesmo Q_int
+    t_mais_arrefecida = nucleo.temperatura_carcaca_regime(500.0, 10.0, 60.0, t_amb)
+    assert t_mais_arrefecida < t_baixo
+
+
+def test_temperatura_carcaca_transiente_converge_para_regime():
+    t_amb, q_int, cond_ext, cond_arref = 303.15, 800.0, 10.0, 20.0
+    t_ss = nucleo.temperatura_carcaca_regime(q_int, cond_ext, cond_arref, t_amb)
+    tau = nucleo.constante_tempo_carcaca(300.0, 460.0, cond_ext, cond_arref)
+    # em t=0, T_c(t) = T_c0 (condição inicial), não o regime
+    t0 = nucleo.temperatura_carcaca(t_amb, t_amb, q_int, cond_ext, cond_arref,
+                                    300.0, 460.0, 0.0)
+    assert t0 == pytest.approx(t_amb)
+    # em t >> τ, converge para o regime permanente
+    t_longo = nucleo.temperatura_carcaca(t_amb, t_amb, q_int, cond_ext, cond_arref,
+                                         300.0, 460.0, 20.0 * tau)
+    assert t_longo == pytest.approx(t_ss, abs=1e-3)
+
+
 def test_psicrometria():
     # P_sat a 25 °C ≈ 3,17 kPa (Buck, Eq. 10.7)
     assert nucleo.p_sat(298.15) == pytest.approx(3169, rel=0.02)
@@ -167,6 +202,19 @@ def test_simular_defaults_plausivel():
     assert len(res["nos"]) == 6
     for no in res["nos"]:
         assert "pdp_c" in no and "m_dot_total" in no
+
+
+def test_simular_expoe_carcaca_lp_eq_9_6():
+    res = simular()
+    k = res["kpis"]
+    t_amb_c = parametros_default()["t_amb"] - 273.15
+    assert k["q_int_carcaca_w"] > 0.0
+    assert k["t_carcaca_c"] > t_amb_c        # carcaça mais quente que o ambiente
+    assert k["delta_t_carcaca_c"] > 0.0
+    assert k["tau_carcaca_min"] > 0.0
+    # menos eficiência mecânica -> mais calor gerado -> carcaça mais quente
+    res_pior = simular({"eta_mec": 0.90})
+    assert res_pior["kpis"]["t_carcaca_c"] > k["t_carcaca_c"]
 
 
 def test_pdp_secador_bate_com_pdp_real_medido():
