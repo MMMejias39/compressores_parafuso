@@ -173,7 +173,7 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$\dot{V}$ & Vazão volumétrica & m$^3$\,s$^{-1}$ & Todos \\
 	$\dot{V}_{\text{free\_air}}$ & Vazão convertida às condições de referência de admissão (FAD, \textit{Free Air Delivery}), ISO 1217 & m$^3$\,s$^{-1}$ & Cap. 11, 16 \\
 	$\dot{W}$ & Potência (trabalho por unidade de tempo) & W, kW & Todos \\
-	$\dot{Q}$ & Taxa de transferência de calor & W & Trocadores, Cap. 9 \\
+	$\dot{Q}$ & Taxa de transferência de calor & W & Trocadores, Cap. 2, 9 \\
 	$n$ & Índice politrópico do processo de compressão & adimensional & Cap. 5, 9, 11 \\
 	$R$ & Constante do gás (ar) & J\,kg$^{-1}$\,K$^{-1}$ & Todos \\
 	$\gamma$ & Razão de calores específicos ($c_p/c_v$) do ar & adimensional ($\approx 1.4$) & Termofluídica \\
@@ -181,6 +181,9 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$\eta$ & Eficiência (com subscrito indicando qual: $\eta_{vol}$, $\eta_{is}$, $\eta_{mec}$, etc.) & adimensional & Todos \\
 	$\eta_p$ & Eficiência politrópica (aproximadamente constante ao longo do mapa de operação) & adimensional & Cap. 9 \\
 	$\Pi$ & Razão de pressão do estágio ($P_2/P_1$) & adimensional & Cap. 9, 11 \\
+	$f_D$\dag & Fator de atrito de Darcy (perda de carga distribuída em tubulação) & adimensional & Cap. 5 \\
+	$L_{\text{linha}}$ & Comprimento do trecho de tubulação interestágios & m & Cap. 5 \\
+	$D_{\text{linha}}$ & Diâmetro interno do trecho de tubulação interestágios & m & Cap. 5 \\
 	$\omega$ & Velocidade angular do rotor/eixo & rad\,s$^{-1}$ & Todos \\ \bottomrule
 \end{longtable}
 
@@ -245,7 +248,9 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$k_{\text{relé}}$\dag & Constante da curva de disparo do relé (IEC 60255) & adimensional & Cap. 4 \\
 	$VU$ & Desbalanço de tensão entre fases (NEMA MG1) & \% & Cap. 4 \\
 	$IU$ & Desbalanço de corrente entre fases (NEMA MG1) & \% & Cap. 4 \\
-	$\Delta T_{\text{fases}}$ & Espalhamento entre as três temperaturas de enrolamento por fase & K, $^{\circ}$C & Cap. 4 \\ \bottomrule
+	$\Delta T_{\text{fases}}$ & Espalhamento entre as três temperaturas de enrolamento por fase & K, $^{\circ}$C & Cap. 4 \\
+	$P_{ag}$ & Potência elétrica que atravessa o entreferro do motor ($\tau_{em}\cdot\omega_s$) & W & Cap. 4 \\
+	$P_{\text{fixas}}$ & Perdas do motor pouco sensíveis à carga (estator, núcleo, atrito/ventilação, suplementares), de ensaio & W & Cap. 4 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Vibração, Fadiga e Rotordinâmica}
@@ -366,6 +371,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\item $\omega$ (velocidade angular, uso dominante) permanece; a razão de umidade psicrométrica passou a $W$ (notação ASHRAE).
 	\item $\tau$ (torque, uso dominante nos capítulos de transmissão) permanece; as constantes de tempo passaram a $\tau_{th}$ (térmica do circuito de óleo), $\tau_{bd}$ (\textit{blow-down}) e $\tau_c$ (térmica da carcaça do estágio LP), e o limiar de disparo do VAE a $\tau_{\text{limiar}}$.
 	\item $G_k$ (Jacobiana de observação do EKF, Cap. 20) e $G$ como condutância térmica (Cap. 9, sempre subscrita: $G_{\text{ext}}$, $G_{\text{arref}}$) coexistem sem colisão real de leitura — nenhum dos dois capítulos usa $G$ desacompanhada de subscrito, e os dois contextos (estimação de estado vs. balanço térmico) nunca aparecem lado a lado.
+	\item $f$ (frequência elétrica de alimentação/VSD, uso dominante no Cap. 4) permanece; o fator de atrito de Darcy da tubulação interestágios passou a $f_D$ (Cap. 5).
 	\item $x$ (vetor de estado do EKF, convenção padrão da literatura de estimação) permanece; a fração de carga da máquina passou a $x_c$.
 	\item $a$ (constante empírica da curva de Vogel e dos polinômios de ajuste) permanece; a abertura da válvula termostática passou a $a_{tv}$.
 	\item $\delta$ (folga entre rotores, uso dominante) permanece nos capítulos de compressão; no Capítulo 13 o mesmo símbolo denota o estado binário da válvula de admissão, uso local e explicitado no ponto de emprego — a distinção é contextual, não notacional, por ser $\delta$ a convenção estabelecida nas duas literaturas.
@@ -515,15 +521,15 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	Além do calor rejeitado pelo próprio ar comprimido nos trocadores de processo, o pacote compressor dissipa uma quantidade significativa de calor \textbf{para dentro do seu próprio invólucro} (\textit{hood}/\textit{canopy} acústico): perdas do motor elétrico, do VSD, da caixa multiplicadora e a própria superfície quente do elemento compressor e da tubulação interna aquecem o ar confinado dentro do gabinete. Um exaustor força a saída desse ar quente e a entrada de ar ambiente renovado, evitando que a temperatura interna do invólucro comprometa a eletrônica de potência e o isolamento do motor.
 	\begin{itemize}
 		\item \textbf{Fontes de Calor Internas ao Invólucro ($\dot{Q}_{\text{gerado}}$):} A soma das perdas térmicas de todos os componentes que dissipam calor para dentro do gabinete, já modeladas individualmente nos capítulos anteriores — perdas do motor, do VSD (Equação~\eqref{eq:s4-3}), da gearbox (Equação~\eqref{eq:s5-2}) e a convecção/radiação da carcaça quente do elemento compressor ($\dot{Q}_{\text{casco}}$):
-		\begin{equation}\label{eq:s2-2}
+		\begin{equation}\label{eq:s2-1}
 \dot{Q}_{\text{gerado}} = \dot{W}_{\text{mot}}(1 - \eta_{\text{mot}}) + P_{\text{loss,VSD}} + P_{\text{loss,gb}} + \dot{Q}_{\text{casco}}
 \end{equation}
-		\item \textbf{Capacidade de Remoção do Exaustor ($\dot{Q}_{\text{hood}}$):} A Equação~\eqref{eq:s2-3} calcula quanto calor o exaustor efetivamente remove, em função da vazão mássica de ar de ventilação forçada pelo exaustor ($\dot{m}_{\text{vent}}$) e do aumento de temperatura entre a admissão de ar renovado e a exaustão do ar quente:
-		\begin{equation}\label{eq:s2-3}
+		\item \textbf{Capacidade de Remoção do Exaustor ($\dot{Q}_{\text{hood}}$):} A Equação~\eqref{eq:s2-2} calcula quanto calor o exaustor efetivamente remove, em função da vazão mássica de ar de ventilação forçada pelo exaustor ($\dot{m}_{\text{vent}}$) e do aumento de temperatura entre a admissão de ar renovado e a exaustão do ar quente:
+		\begin{equation}\label{eq:s2-2}
 \dot{Q}_{\text{hood}} = \dot{m}_{\text{vent}} \cdot c_p \cdot (T_{\text{exaustão}} - T_{\text{amb}})
 \end{equation}
 		Em regime permanente, o invólucro só mantém temperatura interna estável se $\dot{Q}_{\text{hood}} \ge \dot{Q}_{\text{gerado}}$; a folga entre os dois lados dessa desigualdade é a margem de projeto da ventilação forçada.
-		\item \textbf{Mecanismo de Falha:} Obstrução do filtro de admissão do exaustor, pá do ventilador danificada, motor do exaustor em falha, ou obstrução das venezianas de exaustão por sujeira/sal — qualquer um reduz $\dot{m}_{\text{vent}}$ e desequilibra a Equação~\eqref{eq:s2-3}.
+		\item \textbf{Mecanismo de Falha:} Obstrução do filtro de admissão do exaustor, pá do ventilador danificada, motor do exaustor em falha, ou obstrução das venezianas de exaustão por sujeira/sal — qualquer um reduz $\dot{m}_{\text{vent}}$ e desequilibra a Equação~\eqref{eq:s2-2}.
 		\item \textbf{Detecção:} Aumento progressivo de $T_{\text{exaustão}}$ para a mesma carga térmica interna estimada é o indicador primário; o Gêmeo Digital deve correlacionar esse aumento com o fator de desclassificação (\textit{derating}) do VSD (Capítulo de Subsistema Elétrico) e com a degradação acelerada do isolamento do motor pela Equação de Arrhenius (Equação~\eqref{eq:s4-7}) — ambos amplificados por uma falha silenciosa de ventilação do invólucro.
 		\item \textbf{Função Acústica do Invólucro:} O mesmo gabinete modelado termicamente acima cumpre, simultaneamente, o papel de barreira de ruído — daí o qualificativo \textit{canopy acústico} usado desde a abertura desta seção. O nível de pressão sonora garantido do pacote é medido e declarado segundo a ISO 2151 \cite{iso2151}, código de ensaio específico para compressores e bombas de vácuo (a própria ISO 1217, já citada no Capítulo 1 para o FAD, exclui explicitamente ensaios de ruído do seu escopo e remete a essa norma). O limite típico de exposição ocupacional a bordo é o que dimensiona a atenuação exigida do invólucro — um requisito independente da ventilação forçada, e por vezes conflitante com ela: mais área de abertura para vazão de ar de resfriamento tende a reduzir a atenuação acústica, de modo que o projeto do exaustor não pode ser otimizado isoladamente do requisito de ruído.
 	\end{itemize}
@@ -540,7 +546,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{itemize}
 		\item \textbf{Função Estabilizadora:} Compensa picos de demanda sem causar quedas bruscas na pressão de linha.
 		\item \textbf{Cálculo de Capacidade:} O volume do vaso $V_{\text{res}}$ é dimensionado com base na variação de pressão permitida $\Delta P$:
-		\begin{equation}\label{eq:s2-1}
+		\begin{equation}\label{eq:s2-3}
  V_{\text{res}} = \frac{t \cdot (\dot{V}_{\text{consumo}} - \dot{V}_{\text{comp}}) \cdot P_{\text{atm}}}{\Delta P} 
 \end{equation}
 		Onde $t$ é o tempo de autonomia desejado (intervalo em que o vaso deve sustentar sozinho o déficit entre consumo e produção antes que $\Delta P$ seja excedido).
@@ -554,11 +560,20 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\item \textbf{Lógica de Controle:} Mantém a pressão de rede em um \textit{setpoint} ajustando a rampa do VSD.
 	\end{itemize}
 
+	\subsection{\textbf{Fechamento Térmico do Invólucro}}
+	As Equações~\eqref{eq:s2-1} e~\eqref{eq:s2-2} definem, respectivamente, a carga térmica gerada dentro do invólucro e a capacidade do exaustor de removê-la, mas nenhuma das duas fecha qual temperatura de regime permanente o ar confinado atinge — a mesma lacuna que o Capítulo 9 tinha para a carcaça do estágio LP antes de ser fechada. O caminho de ventilação forçada tem uma \textbf{entrada}, de ar externo renovado admitido pelo exaustor à temperatura ambiente $T_{amb}$, e uma \textbf{saída}, do mesmo ar já aquecido pela carga térmica interna e descarregado à temperatura $T_{\text{exaustão}}$ — as duas pontas já presentes na própria Equação~\eqref{eq:s2-2}. Assumindo mistura completa do ar confinado (o ar de exaustão representa a própria temperatura interna do invólucro, $T_{\text{hood}} \equiv T_{\text{exaustão}}$) e substituindo a Equação~\eqref{eq:s2-1} na~\eqref{eq:s2-2} em regime permanente ($\dot Q_{\text{hood}} = \dot Q_{\text{gerado}}$, a condição de estabilidade já discutida ali):
+	\begin{equation}\label{eq:s2-4}
+ T_{\text{hood}} = T_{amb} + \frac{\dot{Q}_{\text{gerado}}}{\dot{m}_{\text{vent}} \cdot c_p}
+\end{equation}
+	Essa é a temperatura que efetivamente banha todo equipamento confinado no mesmo invólucro — motor, VSD, gearbox e a carcaça do elemento compressor —, não $T_{amb}$ externo. Isso importa diretamente para o fechamento do balanço térmico da carcaça feito no Capítulo 9 (Equações~\eqref{eq:s9-14}--\eqref{eq:s9-17}): aquelas equações usam $T_{amb}$ como referência de convecção, o que é correto apenas para uma instalação a céu aberto, sem invólucro. No arranjo mais comum em plantas offshore por restrição de ruído — motor, gearbox e os dois estágios de compressão dentro do mesmo \textit{canopy} acústico, como descrito na abertura desta seção —, a referência correta nas Equações~\eqref{eq:s9-15}--\eqref{eq:s9-17} é $T_{\text{hood}}$ da Equação~\eqref{eq:s2-4}, não a temperatura ambiente externa.
+
+	Isso também resolve uma aparente circularidade entre os dois capítulos: o termo $\dot{Q}_{\text{casco}}$ da Equação~\eqref{eq:s2-1} é a mesma grandeza física que o Capítulo 9 soma como $\dot{Q}_{\text{ext}} + \dot{Q}_{\text{arref}}$ — o calor que a carcaça entrega ao ar do invólucro por convecção (natural mais forçada). Em regime permanente esse total iguala $\dot{Q}_{\text{int}}$ (Equação~\eqref{eq:s9-14}, pela própria Equação~\eqref{eq:s9-6}), de modo que $\dot{Q}_{\text{casco}} = \dot{Q}_{\text{int}}$ pode ser calculado diretamente a partir da perda mecânica do estágio LP, sem exigir $T_c$ como entrada. A ordem de cálculo correta é, portanto, sequencial e não simultânea: (1) $\dot{Q}_{\text{int}}$ pela Equação~\eqref{eq:s9-14}, a partir do ponto de operação; (2) $\dot{Q}_{\text{gerado}}$ (Equação~\eqref{eq:s2-1}, usando $\dot{Q}_{\text{casco}}=\dot{Q}_{\text{int}}$) e $T_{\text{hood}}$ (Equação~\eqref{eq:s2-4}); (3) $T_c$ (Equação~\eqref{eq:s9-16}, agora referenciada a $T_{\text{hood}}$). Para instalações sem invólucro — compressor a céu aberto —, esta subseção inteira não se aplica: a carcaça convecciona diretamente para $T_{amb}$, como nas Equações~\eqref{eq:s9-15}--\eqref{eq:s9-17} originais.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A arquitetura descrita aqui — geração por parafuso isento de óleo, tratamento por resfriamento/secagem e armazenamento em vaso pulmão — define os quatro blocos físicos que o Gêmeo Digital deve modelar de forma acoplada; tratar qualquer um isoladamente (por exemplo, otimizar o compressor sem considerar o impacto na secadora a jusante) produz um modelo incompleto e recomendações potencialmente contraditórias.
+	\textbf{Diretriz Técnica Final:} A arquitetura descrita aqui — geração por parafuso isento de óleo, tratamento por resfriamento/secagem e armazenamento em vaso pulmão — define os quatro blocos físicos que o Gêmeo Digital deve modelar de forma acoplada; tratar qualquer um isoladamente (por exemplo, otimizar o compressor sem considerar o impacto na secadora a jusante) produz um modelo incompleto e recomendações potencialmente contraditórias. A Equação~\eqref{eq:s2-4} acrescenta uma consequência prática direta para instalações com invólucro acústico: qualquer equação térmica de um componente interno (Equação~\eqref{eq:s9-6} da carcaça, entre outras) só está correta se referenciada a $T_{\text{hood}}$, não à ambiente externa — usar $T_{amb}$ nesse contexto subestima sistematicamente a temperatura real de operação.
 
 	% --- Fim do Capítulo 2 ---
 	
@@ -742,11 +757,26 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 	Esta equação correlaciona a pressão de armazenamento (até $10\,\text{bar}$) com a corrente consumida no painel, permitindo identificar se um aumento de consumo é devido a uma falha elétrica ou a um aumento de demanda/fuga no sistema pneumático.
 
+	\subsection{\textbf{Fechamento das Perdas do Motor}}
+	A Equação~\eqref{eq:s4-9} usa $\eta_{\text{mot}}(s,T)$ como um número — diferente do VSD (Equação~\eqref{eq:s4-3}) e da gearbox (Equação~\eqref{eq:s5-2}, Capítulo de Trem de Potência), cujas perdas já entram decompostas por mecanismo físico. Fechar essa decomposição para o motor segue o mesmo método de perdas segregadas da IEC 60034-2-1, já citada na abertura desta seção como referência normativa de ensaio. A potência que atravessa o entreferro liga diretamente duas grandezas já definidas neste capítulo — o torque eletromagnético (Equação~\eqref{eq:s4-5}) e a velocidade síncrona (Equação~\eqref{eq:s4-4}):
+	\begin{equation}\label{eq:s4-10}
+ P_{ag} = \tau_{em} \cdot \omega_s
+\end{equation}
+	Da potência de entreferro, a fração $s$ é dissipada como perda Joule no rotor — relação clássica de máquina de indução, e a única componente de perda cuja dependência da carga o modelo já captura explicitamente via $s$. As demais quatro categorias do método segregado (Joule no estator, núcleo/ferro, atrito e ventilação do próprio motor, e perdas suplementares) variam pouco com a carga e são obtidas por ensaio a vazio/rotor bloqueado — agregadas aqui numa única constante de projeto $P_{\text{fixas}}$:
+	\begin{equation}\label{eq:s4-11}
+ P_{\text{perdas,mot}} = \underbrace{s \cdot P_{ag}}_{\text{Joule rotor (varia com a carga)}} + \underbrace{P_{\text{fixas}}}_{\text{estator + núcleo + atrito/ventilação + suplementares}}
+\end{equation}
+	A eficiência que a Equação~\eqref{eq:s4-9} usa como $\eta_{\text{mot}}(s,T)$ fecha, então, como a potência mecânica de eixo — o que sobra da potência de entreferro depois da fração perdida no rotor — dividida pela potência elétrica de entrada, aproximada pela soma da própria potência de entreferro com as perdas fixas:
+	\begin{equation}\label{eq:s4-12}
+ \eta_{\text{mot}}(s,T) = \frac{P_{ag} \cdot (1-s)}{P_{ag} + P_{\text{fixas}}}
+\end{equation}
+	A dependência de $T$ já registrada na notação $\eta_{\text{mot}}(s,T)$ não aparece como um termo à parte nesta equação — ela entra pela mesma via já modelada na Equação~\eqref{eq:s4-5}: a resistência do rotor $R_r$ cresce com a temperatura de operação, alterando o torque eletromagnético $\tau_{em}$ (e, por extensão, $P_{ag}$) para o mesmo escorregamento medido. $P_{\text{fixas}}$ é um valor de placa/ensaio do fabricante, não uma grandeza calculada pelo Gêmeo Digital — mas, uma vez conhecida, a Equação~\eqref{eq:s4-11} isola a única parcela de perda que realmente se desloca com o ponto de operação, permitindo distinguir um motor operando normalmente em carga mais alta (mais perda de rotor, esperada) de um motor com perdas fixas degradadas (núcleo ou mancais do próprio motor, por exemplo) para a mesma carga.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s4-9} é o elo que impede diagnósticos ambíguos entre falha elétrica e falha pneumática — sem ela, um aumento de corrente no painel seria indistinguível de um aumento real de demanda de ar, levando a decisões erradas de manutenção. O desbalanço de fase da Equação~\eqref{eq:s4-8} cobre a lacuna complementar: uma falha que se manifesta \textbf{entre} fases pode não alterar a corrente de linha agregada nem a potência total consumida, permanecendo invisível para a Equação~\eqref{eq:s4-9} até se agravar.
+	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s4-9} é o elo que impede diagnósticos ambíguos entre falha elétrica e falha pneumática — sem ela, um aumento de corrente no painel seria indistinguível de um aumento real de demanda de ar, levando a decisões erradas de manutenção. O desbalanço de fase da Equação~\eqref{eq:s4-8} cobre a lacuna complementar: uma falha que se manifesta \textbf{entre} fases pode não alterar a corrente de linha agregada nem a potência total consumida, permanecendo invisível para a Equação~\eqref{eq:s4-9} até se agravar. A Equação~\eqref{eq:s4-12} fecha $\eta_{\text{mot}}(s,T)$ no mesmo nível de detalhe já disponível para VSD e gearbox: um $\eta_{\text{mot}}$ medido abaixo do esperado só é sintoma de degradação depois de descontada a parcela de perda de rotor que a própria carga ($s$) já explica — o resíduo depois desse desconto é que aponta para $P_{\text{fixas}}$ fora da faixa de ensaio original.
 
 	% --- Fim do Capítulo 4 ---
 	
@@ -887,11 +917,18 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	Na prática, o resfriamento intermediário nunca é perfeito: o intercooler degradado modelado pela Equação~\eqref{eq:s10-5} (queda de $U$ por incrustação) entrega o ar ao estágio HP mais quente do que o projeto original previa ($T_{HP,\text{in}} > T_{LP,\text{in}}$). Isso encarece relativamente o trabalho do estágio HP para qualquer razão de pressão fixada nele — a mesma física da penalidade térmica já quantificada na Equação~\eqref{eq:s10-4} — e desloca o ponto de mínimo para longe da média geométrica simples da Equação~\eqref{eq:s5-14}. O Gêmeo Digital ganha, com isso, um critério adicional e independente de desvio: comparar a pressão interestágio efetivamente operada contra $P_{\text{int}}^{*}$ não diagnostica apenas um estágio isoladamente, mas se a \textbf{alocação de carga} entre LP e HP ainda corresponde ao ponto de projeto de fábrica — um sintoma que nenhum dos dois estágios, olhado sozinho, revela.
 
+	\subsection{\textbf{Perda de Carga na Tubulação Interestágios}}
+	Todo o equacionamento deste capítulo até aqui trata $P_{\text{int}}$ como um único valor, comum à descarga do estágio LP, à entrada e à saída do intercooler e à sucção do estágio HP — como se os trechos de tubulação que interligam esses pontos não impusessem queda de pressão própria. Essa simplificação ignora o atrito distribuído do escoamento contra a parede do tubo, mecanismo distinto da perda localizada já modelada para filtro e silenciador (Equação~\eqref{eq:s5-4}): ali a perda vem de uma restrição concentrada num único elemento; aqui vem do comprimento inteiro da linha. A forma clássica de Darcy-Weisbach isola essa diferença mantendo a mesma pressão dinâmica $\rho v^2/2$ já usada na Equação~\eqref{eq:s5-4}, agora multiplicada pela razão comprimento/diâmetro da linha em vez de um coeficiente de perda localizada \cite{white}:
+	\begin{equation}\label{eq:s5-15}
+ \Delta P_{\text{linha}} = f_D \cdot \frac{L_{\text{linha}}}{D_{\text{linha}}} \cdot \frac{\rho \, v^2}{2}
+\end{equation}
+	Onde $f_D$ é o fator de atrito de Darcy (função do número de Reynolds e da rugosidade relativa da tubulação \cite{white}), $L_{\text{linha}}$ o comprimento do trecho e $D_{\text{linha}}$ seu diâmetro interno. Cada trecho interestágios (descarga LP$\to$intercooler, intercooler$\to$sucção HP, descarga HP$\to$aftercooler) tem sua própria Equação~\eqref{eq:s5-15}, com $f_D$, $L_{\text{linha}}$ e $D_{\text{linha}}$ específicos daquele trecho. O efeito prático é uma pequena correção à pressão usada nas Equações~\eqref{eq:s5-5}, \eqref{eq:s5-8}/\eqref{eq:s5-9} e~\eqref{eq:s5-14}: a pressão de sucção do estágio seguinte é a pressão de descarga do estágio anterior \textbf{menos} a Equação~\eqref{eq:s5-15} do trecho que os liga, não o mesmo valor de $P_{\text{int}}$ usado até aqui por simplificação. Em linhas curtas e bem dimensionadas dentro do próprio pacote (\textit{skid}), essa correção costuma ser pequena frente às demais perdas do capítulo — mas cresce com o desgaste (rugosidade interna por corrosão/incrustação, que eleva $f_D$ ao longo da vida da instalação) e deve ser tratada como mais um sintoma rastreável pelo Gêmeo Digital, não descartada por ser pequena no comissionamento.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s5-13} consolida todo o capítulo em um único KPI de eficiência global — mas seu valor só é confiável se cada termo de perda (folga interna via $V_i$, gearbox, bomba de óleo) estiver sendo medido ou estimado corretamente; um $\eta_{\text{global}}$ isolado sem essa rastreabilidade componente-a-componente é apenas um número, não um diagnóstico. A Equação~\eqref{eq:s5-14} acrescenta um segundo eixo de leitura, ortogonal ao primeiro: mesmo com $\eta_{\text{global}}$ nominal, uma pressão interestágio deslocada do ótimo indica que a carga entre os dois estágios está mal balanceada — tipicamente o primeiro sinal observável de um intercooler em degradação, antes mesmo que a Equação~\eqref{eq:s10-4} feche o diagnóstico.
+	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s5-13} consolida todo o capítulo em um único KPI de eficiência global — mas seu valor só é confiável se cada termo de perda (folga interna via $V_i$, gearbox, bomba de óleo) estiver sendo medido ou estimado corretamente; um $\eta_{\text{global}}$ isolado sem essa rastreabilidade componente-a-componente é apenas um número, não um diagnóstico. A Equação~\eqref{eq:s5-14} acrescenta um segundo eixo de leitura, ortogonal ao primeiro: mesmo com $\eta_{\text{global}}$ nominal, uma pressão interestágio deslocada do ótimo indica que a carga entre os dois estágios está mal balanceada — tipicamente o primeiro sinal observável de um intercooler em degradação, antes mesmo que a Equação~\eqref{eq:s10-4} feche o diagnóstico. A Equação~\eqref{eq:s5-15} fecha a última lacuna de perda de carga do trem primário: uma tendência de alta em $f_D$ para o mesmo ponto de operação, isolada da leitura de $P_{\text{int}}$, é sintoma de degradação da própria tubulação (corrosão, incrustação interna), independente de qualquer coisa que esteja acontecendo no intercooler ou nos estágios.
 
 	% --- Fim do Capítulo 5 ---
 	
@@ -1405,6 +1442,8 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	Fora do regime permanente, a mesma linearização dá a solução transiente de primeira ordem $T_c(t) = T_{c} + (T_{c,0} - T_{c}) \cdot e^{-t/\tau_c}$, com $T_c$ da Equação~\eqref{eq:s9-16} e $T_{c,0}$ a condição inicial — a aproximação exponencial ao regime permanente após um degrau de $\dot{Q}_{\text{int}}$, forma idêntica à já usada para a resposta em rampa do inversor de frequência (Capítulo 13).
 
 	Esse fechamento não substitui a Equação~\eqref{eq:s9-7}: mesmo com $T_c$ calculável, a folga residual $\delta_{\text{real}}$ segue dependendo da temperatura do próprio rotor ($T_r$), que este documento não modela por um balanço térmico equivalente — permanece, por ora, uma grandeza a ser medida ou estimada por um modelo à parte, fora do escopo fechado por esta seção.
+
+	\textbf{Ressalva sobre $T_{amb}$ em instalações com invólucro:} as Equações~\eqref{eq:s9-15}--\eqref{eq:s9-17} usam $T_{amb}$ como referência de convecção da carcaça, o que só é fisicamente correto para um compressor a céu aberto. Quando o elemento compressor está confinado no mesmo invólucro acústico que o motor, o VSD e a gearbox — arranjo comum em pacotes offshore por restrição de ruído, cobrindo às vezes o trem inteiro até a saída do 2º estágio (Capítulo 2) —, o ar que efetivamente banha a carcaça não é o ambiente externo, e sim o ar interno do invólucro, já aquecido pelas demais fontes de calor confinadas. Nesse caso, $T_{amb}$ nas três equações acima deve ser lido como $T_{\text{hood}}$, fechado pela Equação~\eqref{eq:s2-4} do Capítulo 2 — não como reescrita das equações (a forma matemática é idêntica), mas como reinterpretação do termo de referência. A ordem de cálculo correta está detalhada naquela seção.
 
 	\vspace{1em}
 	\hrule
@@ -2035,7 +2074,7 @@ q_d = q_{eq} \cdot \exp \left( -k_{ads} \cdot \frac{t_{ads}}{t_{res}} \right)
 		\end{itemize}
 
 		\subsection{\textbf{Aproveitamento de Calor Rejeitado na Regeneração}}
-		O ciclo HOC já aproveita o calor residual do próprio ar de descarga do estágio HP para aquecer o dessecante, mas esse não é o único calor rejeitado disponível na planta: o aftercooler (Equação~\eqref{eq:s14-2}), o resfriador de óleo (Capítulo de Sistema de Lubrificação e Gestão Térmica) e agora a exaustão forçada do invólucro do pacote (Equação~\eqref{eq:s2-3}) rejeitam calor de baixa/média qualidade que hoje é simplesmente descartado para o ambiente ou para a água de resfriamento. Recuperar parte desse calor para pré-aquecer o ar de regeneração reduz diretamente a potência elétrica que o aquecedor resistivo precisa fornecer.
+		O ciclo HOC já aproveita o calor residual do próprio ar de descarga do estágio HP para aquecer o dessecante, mas esse não é o único calor rejeitado disponível na planta: o aftercooler (Equação~\eqref{eq:s14-2}), o resfriador de óleo (Capítulo de Sistema de Lubrificação e Gestão Térmica) e agora a exaustão forçada do invólucro do pacote (Equação~\eqref{eq:s2-2}) rejeitam calor de baixa/média qualidade que hoje é simplesmente descartado para o ambiente ou para a água de resfriamento. Recuperar parte desse calor para pré-aquecer o ar de regeneração reduz diretamente a potência elétrica que o aquecedor resistivo precisa fornecer.
 		\begin{itemize}
 			\item \textbf{Calor Residual Disponível para Recuperação ($\dot{Q}_{\text{disp}}$):} A soma das rejeições térmicas das correntes candidatas a um trocador de recuperação de calor:
 			\begin{equation}\label{eq:s15-10}

@@ -1021,6 +1021,137 @@ permanente neste projeto de qualquer forma. `compressores.tex` está
 para 141 páginas (era 135), ambos modificados na árvore de trabalho, não
 staged, aguardando revisão do autor.
 
+## Auditoria de perdas termodinâmicas/fluidas e acoplamento com o Hood (15/08/2026)
+
+Continuação da mesma sessão: o autor pediu uma varredura de todo o livro
+para verificar se perdas termodinâmicas e de fluidos estavam cobertas em
+cada capítulo (levantamento por palavra-chave + inspeção das equações
+cujo parágrafo introdutório menciona perda/atrito/fuga/ΔP/irreversibilidade/
+entropia/exergia — metodologia registrada para reuso futuro: script Python
+com regex sobre `\begin{equation}\label{...}` e os 500 caracteres
+anteriores). Cobertura confirmada como ampla em cinco categorias
+(termodinâmica pura, mecânica/atrito, perda de carga ΔP, fugas internas,
+transferência de calor) em praticamente todo componente físico da Parte I,
+consolidada via exergia/entropia na Parte II — capítulos sem essas
+equações (8, 19, 21, 24, 27) são metodológicos/algorítmicos por natureza,
+não uma lacuna.
+
+A varredura achou três lacunas reais, e o autor pediu para fechar as três
+na mesma sessão:
+
+**1. Motor elétrico tratado como caixa-preta (Cap. 4).** Diferente do VSD
+(Eq. 4.3, decomposto em switching+conduction) e da gearbox (Eq. 5.2,
+mesh+windage+bearing), o motor entrava na Eq. 4.9 só como $\eta_{mot}(s,T)$
+sem decomposição. Fechado com 3 equações novas ao fim do capítulo (nova
+subseção "Fechamento das Perdas do Motor"), método de perdas segregadas da
+IEC 60034-2-1 (já citada no capítulo para a metodologia de ensaio, nunca
+usada para fechar uma fórmula): Eq. 4.10 ($P_{ag}=\tau_{em}\cdot\omega_s$,
+ligando Eqs. 4.4/4.5 já existentes), Eq. 4.11 ($P_{perdas,mot}=s\cdot
+P_{ag}+P_{fixas}$ — só a perda Joule do rotor varia com a carga via $s$; as
+demais quatro categorias do método segregado ficam agregadas numa constante
+de ensaio $P_{fixas}$) e Eq. 4.12 (fecha $\eta_{mot}(s,T)$; a dependência de
+$T$ entra pela própria Eq. 4.5, via $R_r(T)$, não como termo à parte).
+Símbolos novos $P_{ag}$, $P_{fixas}$ na Nomenclatura (Cap. 4).
+
+**2. Perda de carga na tubulação interestágios não modelada (Cap. 5).** LP→
+intercooler, intercooler→HP, HP→aftercooler: só a ressonância acústica
+(Cap. 16, Helmholtz) e as perdas em filtro/válvula eram cobertas — o
+atrito distribuído na própria linha, nunca. Fechado com a Eq. 5.15
+(Darcy-Weisbach, $\Delta P_{\text{linha}}=f_D\cdot(L_{\text{linha}}/
+D_{\text{linha}})\cdot\rho v^2/2$ — mesma pressão dinâmica $\rho v^2/2$ já
+usada na Eq. 5.4 do filtro, agora para atrito distribuído em vez de perda
+localizada), ao fim do Capítulo 5, nova subseção. Nota registrada: hoje
+nem o livro nem o app tratam $P_{\text{int}}$ como afetado por essa perda —
+é uma pequena correção normalmente, mas cresce com corrosão/incrustação
+interna da tubulação ao longo da vida da instalação. Símbolos novos $f_D$
+(\dag, desambiguado contra $f$=frequência elétrica do Cap. 4), $L_{\text{linha}}$,
+$D_{\text{linha}}$ na Nomenclatura (Cap. 5).
+
+**3. Acoplamento Hood↔Carcaça — o achado mais importante.** O autor lembrou
+que muitos compressores ficam enclausurados em invólucros acústicos (Hood)
+por restrição de ruído offshore, às vezes com o trem inteiro — motor,
+gearbox, os dois estágios — dentro do mesmo gabinete até a saída do 2º
+estágio. Isso expôs uma inconsistência real no fechamento da Eq. 9.6 feito
+mais cedo nesta mesma sessão: as Eqs. 9.15-9.17 usavam $T_{amb}$ como
+referência de convecção da carcaça, correto só para instalação a céu
+aberto — quando o elemento compressor está dentro do mesmo Hood que o
+motor/VSD/gearbox (Capítulo 2, que já tinha Eq. 2.1/2.2 para o balanço
+térmico do invólucro desde antes desta sessão), o ar que banha a carcaça é
+o ar interno do invólucro, já aquecido pelas outras fontes — não o
+ambiente externo verdadeiro. $T_c$ calculado com $T_{amb}$ nesse cenário
+estava sistematicamente subestimado.
+
+Fechado com uma nova subseção ao fim do Capítulo 2 ("Fechamento Térmico do
+Invólucro"), pedido explícito de não esquecer a entrada de ar renovado e a
+saída de ar quente do exaustor (as duas pontas de $\dot m_{\text{vent}}$ já
+presentes na Eq. 2.2): Eq. 2.4 fecha $T_{\text{hood}} = T_{amb} +
+\dot Q_{\text{gerado}}/(\dot m_{\text{vent}}\cdot c_p)$, sob a hipótese de
+mistura completa ($T_{\text{hood}}\equiv T_{\text{exaustão}}$, a própria
+leitura de saída do exaustor). Também resolveu uma aparente circularidade
+entre os dois capítulos: $\dot Q_{\text{casco}}$ (Eq. 2.1) é a mesma
+grandeza que a soma $\dot Q_{\text{ext}}+\dot Q_{\text{arref}}$ do
+Cap. 9, e em regime permanente iguala $\dot Q_{\text{int}}$ (Eq. 9.14) —
+ou seja, calculável direto do ponto de operação, sem precisar de $T_c$
+primeiro. Ordem de cálculo correta, agora documentada: (1) $\dot Q_{\text{int}}$
+(Eq. 9.14) → (2) $\dot Q_{\text{gerado}}$ (Eq. 2.1) e $T_{\text{hood}}$
+(Eq. 2.4) → (3) $T_c$ (Eq. 9.16, agora referenciada a $T_{\text{hood}}$, não
+$T_{amb}$, para instalações com invólucro). Cap. 9 ganhou um parágrafo de
+ressalva explícito logo após a Eq. 9.17, cross-referenciando a Eq. 2.4, sem
+reescrever nenhuma das três equações (a forma matemática não muda, só a
+leitura do termo de referência).
+
+**Achado colateral corrigido de passagem**: ao mexer no Capítulo 2, uma
+varredura pelo PDF compilado revelou que os labels das 3 equações
+pré-existentes do capítulo (`eq:s2-1`, `eq:s2-2`, `eq:s2-3`) **nunca
+correspondiam à ordem física/numeração exibida** — `eq:s2-2` (Q_gerado)
+renderizava como (2.1), `eq:s2-3` (Q_hood) como (2.2), `eq:s2-1` (V_res)
+como (2.3), uma inconsistência pré-existente que nenhuma sessão anterior
+tinha pegado (nenhuma auditoria de equações tinha revisitado o Cap. 2
+especificamente). As referências cruzadas em si nunca estiveram quebradas
+(o `\eqref{}` sempre resolve pelo contador real, não pelo texto do label),
+mas violava a convenção "sufixo do label = número exibido" e teria
+confundido qualquer edição futura por busca de texto. Corrigido por
+relabeling cíclico antes de adicionar a Eq. 2.4, com todas as 4
+ocorrências de `\eqref{}` a esses labels no documento inteiro atualizadas
+juntas. **Lição para auditorias futuras de referenciamento de equações**:
+a varredura de 26-30/07/2026 nunca cobriu o Capítulo 2 — vale conferir os
+capítulos ainda não auditados dessa forma se uma sessão futura for atrás
+de mais inconsistências desse tipo.
+
+**Verificação de não regressão**: compilação limpa em 3 passagens
+(143→146 páginas), 208 labels `eq:s*-*` (era 203) = 519 ocorrências
+"(N.N)" no PDF extraído (subiu de 507 por causa dos hardcodes convertidos
+para `\eqref{}`, ver abaixo), 0 "??", 0 referência indefinida, 0 label
+duplicado, numeração dos Capítulos 6 e 10 em diante intacta. Overfull
+hboxes foram de 33 para 34 (mesma magnitude mínima de 2,01pt já
+documentada como insignificante — uma linha "adimensional" a mais na
+Nomenclatura).
+
+**Erro cometido e corrigido durante esta própria edição**: ao escrever a
+nova subseção do Capítulo 2, usei `Equação~9.14`/`9.15--9.17`/`9.6`/`5.2`
+como texto solto em vez de `\eqref{}` em 8 ocorrências — violação direta
+da própria convenção "sempre referencie por `\eqref{}`, nunca hardcode o
+número" (`CONTEXTO.md`, seção de Convenções). Pego numa varredura
+`grep -noE "Equaç(ão|ões)~?[0-9]+\.[0-9]+"` logo em seguida, antes de
+compilar a versão final — todas as 8 ocorrências corrigidas para
+`\eqref{}`. **Vale repetir essa varredura sempre que um parágrafo novo
+mencionar uma equação de outro capítulo** — é justamente nas referências
+cruzadas *entre* capítulos (não dentro do mesmo capítulo, onde o hábito de
+usar `\eqref{}` parece mais automático) que o hardcode escapou.
+
+Símbolos novos verificados contra a Nomenclatura antes de inserir (regra
+permanente): $P_{ag}$, $P_{\text{fixas}}$ (Cap. 4), $f_D$\dag, $L_{\text{linha}}$,
+$D_{\text{linha}}$ (Cap. 5) — nenhuma colisão nova; $T_{\text{hood}}$ e
+$\dot Q_{\text{casco}}$ não precisaram de entrada própria (subscritos de
+$T$ e $\dot Q$, já genéricos). A coluna Capítulos de $\dot Q$ na
+Nomenclatura foi estendida para incluir o Cap. 2.
+
+**Atualização, mesma sessão**: o autor pediu para replicar os três achados
+também no `aplicativo/`, incluindo um subsistema de motor elétrico novo
+(o app não tinha nenhuma representação do Cap. 4 até então) — ver
+`CONTEXTO_app.md`, "Motor, invólucro/Hood e tubulação interestágios".
+**Nada foi commitado ainda** (livro nem app) — aguardando revisão do autor.
+
 ## Fechamento do balanço térmico da carcaça — Eq. 9.6 (15/08/2026)
 
 Continuação direta da verificação feita no `aplicativo/` (ver `CONTEXTO_app.md`,
