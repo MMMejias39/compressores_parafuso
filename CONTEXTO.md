@@ -2116,10 +2116,19 @@ aproximada de valor:
    escrito nesta pendência originalmente). Ver "Extensão de três
    pendências no livro" abaixo. **App**: sem gerador sistemático de
    dataset multi-mecanismo ainda — só o cenário único do Cap. 29.
-8. **Supervisório real** (painel contínuo por máquina/frota, não uma
-   simulação pontual de um cenário por vez) — nem o livro nem o app cobrem
-   isso hoje; o app é ferramenta de simulação/demonstração, não um sistema
-   de operação contínua.
+8. ~~Supervisório real~~ — **feito no livro em 16/08/2026**, restrito a
+   metodologia (o autor optou por não estender o app nesta rodada): Cap.
+   26, nova subseção "Painel Supervisório de Frota", após "Requisitos de
+   Passagem para Produção". Reaproveita `ekf_update` (Eq. 26.1), o Health
+   Index (Eq. 26.4), a matriz de alarmes (Tabela 18.2) e o prognóstico GP
+   (Eq. 19.10) num laço por máquina/ciclo, com pseudocódigo Python
+   (`ciclo_supervisorio`) no mesmo padrão dos outros trechos de código do
+   capítulo — sem inventar algoritmo novo. Formaliza a ordenação por
+   urgência (alarme ativo primeiro, depois menor HI) e a propagação do NIS
+   junto com o HI, para não confundir "máquina degradando" com "estimativa
+   não confiável". **App**: sem implementação — exigiria estado
+   persistente entre sessões do Streamlit e agendamento contínuo, nenhum
+   dos dois presente hoje; registrado como tal na própria seção nova.
 
 **Deliberadamente descartado**: a recomendação do Manus de abandonar o termo
 "Enciclopédia" no título por ser ambicioso demais para 105 páginas. Contraria a
@@ -2279,3 +2288,30 @@ qualquer citação, mesmo quando o padrão parece familiar.
 referências indefinidas, sem rótulo duplicado, sem *overfull hbox* severo
 (>20pt) introduzido pelas mudanças — conferido por `grep` no log de
 compilação antes de reportar como concluído.
+
+Commitado em `0a00800`.
+
+## Apresentação sincronizada com as três pendências (16/08/2026)
+
+Pedido do autor: "atualize a apresentação também com essas mudanças".
+Edições mínimas, sem inflar o deck (permanece 24 slides): slide do EKF
+ganhou uma frase curta sobre leitura portátil/wireless e $\kappa_{\text{port}}$;
+slide do Cap. 28 passou a mostrar $\Lambda$ com 4 elementos e a contagem
+correta do catálogo (59, não $\sim$57); slide de síntese atualizado para
+164 p. Uma tentativa inicial de também mencionar o item 7 (treino
+multi-mecanismo) no slide do Cap. 29 foi revertida: o texto extra levava o
+`Overfull \vbox` daquele frame de 15pt (já presente na versão original,
+tolerável) para 72pt — regressão real, não document de layout aceitável.
+**Lição**: para slides do Beamer, sempre comparar o log de overfull antes/
+depois da edição (`git stash` + recompilar a versão base), não só olhar o
+log da versão editada isoladamente — o número absoluto não diz se a
+mudança piorou algo; a comparação diz. Commitado em `5e84bb6`.
+
+## Item 8 (supervisório real) implementado no livro (16/08/2026)
+
+Pedido do autor: "implementa o item 8 (supervisório real)". Escopo
+esclarecido via pergunta direta: só o livro nesta rodada, sem estender o
+app (opção escolhida entre "só livro", "só app" e "ambos"). Detalhes em
+"Pendências conhecidas", item 8, acima. Verificado: 3 passagens de
+`pdflatex`, 164→165 páginas, sem referências indefinidas, sem *overfull
+hbox* severo introduzido (>20pt).

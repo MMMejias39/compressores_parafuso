@@ -3366,11 +3366,44 @@ def piml_loss(y_pred, y_true, inputs, lambda_phys):
 		\item \textbf{Rastreabilidade da decisão:} toda ação automática executada deve registrar as entradas, o estado estimado e a versão de modelo que a produziram. Sem isso não há auditoria de incidente possível — e, num ambiente offshore sujeito a requisitos de segurança de processo, não há como demonstrar a lógica que levou o sistema a agir.
 	\end{itemize}
 
+	\subsection{Painel Supervisório de Frota}
+
+	Todo o capítulo até aqui — e o simulador de referência que o acompanha — trata o Gêmeo Digital como um cálculo executado para \textbf{uma} máquina, disparado sob demanda para \textbf{um} cenário: um ponto de operação é montado, os algoritmos rodam uma vez, um diagnóstico sai. Uma instalação offshore real opera $N_{\text{frota}}$ máquinas simultaneamente (Equação~\eqref{eq:s16-1}), continuamente, não sob demanda — e é essa lacuna, entre o protótipo de análise pontual e o \textbf{painel supervisório}, que os cinco requisitos de produção da subseção anterior preparam mas não fecham sozinhos.
+
+	O painel supervisório não introduz algoritmo novo: ele repete, para cada máquina $i \in \{1, \dots, N_{\text{frota}}\}$ e a cada ciclo de varredura $t_k$, exatamente o ciclo já definido neste documento — predição-correção do EKF (Equação~\eqref{eq:s26-1}), atualização do Health Index (Equação~\eqref{eq:s26-4}) e verificação da matriz de alarmes (Tabela~\ref{tab:18-2}) — e acumula o resultado como uma \textbf{série temporal por máquina}, não um número isolado, publicado uma vez e descartado. O trecho abaixo formaliza esse laço, reaproveitando a mesma função \texttt{ekf\_update} já definida nesta seção:
+
+	\begin{verbatim}
+def ciclo_supervisorio(frota, t_k):
+    painel = []
+    for maquina in frota:
+        x_new, P_new, y_res, nis = ekf_update(
+            maquina.x_hat, maquina.P, maquina.z(t_k),
+            maquina.u(t_k), maquina.Q, maquina.R_meas,
+            dt=t_k - maquina.t_last)
+        maquina.x_hat, maquina.P, maquina.t_last = x_new, P_new, t_k
+
+        hi = health_index(maquina.residuos(x_new))    # Eq. 26.4
+        alarmes = verificar_alarmes(maquina.z(t_k))    # Tabela 18.2
+
+        painel.append({"maquina": maquina.id, "t": t_k,
+                        "hi": hi, "nis": nis, "alarmes": alarmes})
+
+    # urgencia: alarme ativo primeiro, depois menor HI
+    painel.sort(key=lambda m: (not m["alarmes"], m["hi"]))
+    return painel
+	\end{verbatim}
+
+	Duas decisões desse laço merecem destaque, porque são exatamente onde um painel construído sem cuidado costuma falhar. Primeiro, a \textbf{ordenação por urgência}, não por identificador de máquina: a subseção de Indicadores Globais de Saúde já advertiu que o $HI$ é ferramenta de priorização, não de proteção — o painel aplica esse conselho diretamente, listando primeiro qualquer máquina com alarme ativo (independente do $HI$) e, entre as demais, a de menor $HI$. Segundo, o NIS de cada máquina (Equação~\eqref{eq:s21-7}) é propagado junto com o $HI$, não descartado: um $HI$ baixo sustentado por um filtro já divergente é uma leitura sem valor, e o operador precisa distinguir ``máquina degradando'' de ``estimativa não confiável'' — a mesma distinção que o Capítulo 21 já exige numa única máquina, aqui elevada ao nível do painel inteiro.
+
+	O prognóstico de vida remanescente de cada máquina acompanha o mesmo princípio: a regressão por Processo Gaussiano da Equação~\eqref{eq:s19-10} — a mesma usada pontualmente no Capítulo 29 para $RUL_\delta$ — se recalcula por máquina a cada ciclo, a partir da série acumulada de $\hat\delta_i(t)$ do EKF daquela unidade, em vez de ser recalculada do zero apenas quando um operador decide investigar. A janela de manutenção projetada fica, assim, sempre disponível no painel, não só sob demanda.
+
+	Esta subseção descreve a arquitetura, não uma implementação de referência: o simulador que acompanha este documento (\texttt{aplicativo/}) permanece uma ferramenta de análise pontual — um cenário e uma máquina por execução, sem estado persistente entre sessões do Streamlit e sem mecanismo de agendamento contínuo. Reproduzir o laço acima exige as duas peças, nenhuma presente hoje — candidato natural de evolução, registrado como tal no plano de manutenção do simulador.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A implementação de referência deste capítulo (EKF em NumPy puro, PIML em PyTorch) é suficiente para prototipagem e validação offline; migrar para produção exige, no mínimo, os cinco requisitos listados acima — versionamento conjunto de modelo e dados, testes de regressão contra o histórico de falhas conhecidas, detecção de deriva, degradação graciosa na perda de sensor e rastreabilidade da decisão — mais o pipeline de retreinamento descrito no Capítulo de Diretrizes de Desenvolvimento. Implantar o protótipo diretamente em campo sem essa camada de engenharia de MLOps é o erro mais comum na transição de Gêmeos Digitais de piloto para operação contínua.
+	\textbf{Diretriz Técnica Final:} A implementação de referência deste capítulo (EKF em NumPy puro, PIML em PyTorch) é suficiente para prototipagem e validação offline; migrar para produção exige, no mínimo, os cinco requisitos listados acima — versionamento conjunto de modelo e dados, testes de regressão contra o histórico de falhas conhecidas, detecção de deriva, degradação graciosa na perda de sensor e rastreabilidade da decisão — mais o pipeline de retreinamento descrito no Capítulo de Diretrizes de Desenvolvimento. Implantar o protótipo diretamente em campo sem essa camada de engenharia de MLOps é o erro mais comum na transição de Gêmeos Digitais de piloto para operação contínua. O painel supervisório fecha esse capítulo com o lembrete complementar: mesmo depois de toda essa engenharia, o valor final para o operador não é o cálculo de uma única máquina, mas a série contínua e ordenada por urgência de toda a frota — é essa visão agregada, não o algoritmo isolado, que transforma um protótipo validado num sistema de operação real.
 
 	\newpage
 	
