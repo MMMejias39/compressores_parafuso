@@ -745,10 +745,8 @@ processo em background) — reiniciado pela última vez após a correção do
 bug de colisão de `key` dos sliders de VAE/PIML, com o código final desta
 sessão. Verificado sem exceção via `streamlit.testing.v1.AppTest`
 (Claude-in-Chrome ficou indisponível a sessão toda — ver a seção acima
-para o porquê de usar `AppTest` em vez de renderização isolada). Commit
-mais recente do app: `06c50bb` (15/08/2026, fase 1/EKF-PSO) — **o
-trabalho de VAE/PIML/MPC desta entrada ainda não foi commitado**, ver
-`git status` para o estado exato antes de assumir que já está salvo.
+para o porquê de usar `AppTest` em vez de renderização isolada). Commit mais recente do app: `a9c5059` (15/08/2026, fase 2/VAE-PIML-MPC,
+commitado logo após esta entrada ser escrita).
 
 O diretório `aplicativo/` foi commitado em 01/08/2026 (commit `693a2c6`,
 junto com este arquivo e as linhas de `.gitignore` para
