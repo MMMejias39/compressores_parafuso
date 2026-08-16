@@ -81,15 +81,26 @@ completa em 8 passos, cada um comentado com a numeração das equações:
 5. **Aftercooler + separador**: mesma estrutura do intercooler, seguida de
    arraste de água residual (Eq. 14.4).
 6. **Secador PSA**: purga (fração fixa `fator_purga`), saída saturada no
-   PDP "medido" (`pdp_real_c`, um slider — não W=0 fixo).
+   PDP "medido" (`pdp_real_c`, um slider — não W=0 fixo). Calcula
+   `p_aquecedor_nominal` (Eq. 3.3, potência elétrica **sem** recuperação de
+   calor) — o valor final `p_aquecedor` só fecha no passo 8b, depois que
+   `q_gerado_hood` estiver disponível.
 7. **Vaso pulmão/rede**: `dP/dt` diagnóstico (Eq. 16.4) e autonomia até o
    limite (Eq. 16.5) — usa a vazão de **planta** (`m_dot_util * n_comp`).
-8. **Totais e KPIs**: potência total, η_global (referência isotérmica),
-   SPC (Eq. 11.11).
-   - **8b**: motor (Eqs. 4.10–4.12) → hood (Eqs. 2.1/2.4, com a identidade
-     Q_casco = Q_int em regime permanente que fecha a circularidade entre
-     as duas equações) → carcaça (Eq. 9.16, referenciada a T_hood ou T_amb
-     conforme o toggle `hood_enclausurado`).
+8a. **Motor** (Eqs. 4.10–4.12) → **hood** (Eqs. 2.1/2.4, com a identidade
+    Q_casco = Q_int em regime permanente que fecha a circularidade entre
+    as duas equações) → **carcaça** (Eq. 9.16, referenciada a T_hood ou
+    T_amb conforme o toggle `hood_enclausurado`).
+8b. **Aproveitamento de calor da regeneração** (Eqs. 15.10/15.11,
+    16/08/2026 — antes só no livro, agora implementado): `q_disp =
+    q_aftercooler + q_gerado_hood` (Q_óleo fica de fora, sem circuito de
+    óleo modelado neste app); `p_aquecedor = max(0, p_aquecedor_nominal -
+    eps_recup_psa * q_disp)`. **Só então** — depois de `p_aquecedor` estar
+    no valor final — `sec_dry`, `w_total`, `eta_global` e `spc_valor` são
+    calculados (não em "8. Totais e KPIs" antes do hood, como numa leitura
+    puramente sequencial do arquivo sugeriria — a ordem real de
+    dependência de dados é hood → recuperação → totais, não totais →
+    hood).
 
 O retorno é um dicionário com três chaves: `nos` (lista de 6 pontos de
 estado — P, T, PDP, `m_dot`/`m_dot_total`/`w` em cada um), `potencias`
@@ -111,12 +122,25 @@ teórica da Eq. 13.8).
 
 Generaliza a alternância de 2 torres da Figura 15.1 para N torres em
 rodízio round-robin, com **3 fases** por torre: adsorvendo (Eq. 15.1),
-regenerando (recuperação linear até `q_eq` — simplificação de modelagem, o
-Cap. 15 não fecha a cinética de dessorção) e **resfriando** (fase extra:
-capacidade já restaurada quimicamente, mas o leito ainda quente é pouco
-eficaz). A cobertura contínua (≥1 torre sempre adsorvendo) **não é
-garantida por construção** — o módulo calcula e expõe
+regenerando (recuperação exponencial de 1ª ordem até `q_eq`, Eq. 15.12 —
+16/08/2026, substituiu uma reta que não tinha respaldo físico) e
+**resfriando** (fase extra: capacidade já restaurada quimicamente, mas o
+leito ainda quente é pouco eficaz). A cobertura contínua (≥1 torre sempre
+adsorvendo) **não é garantida por construção** — o módulo calcula e expõe
 `tempo_sem_secagem_min`, e a UI alerta se for maior que zero.
+
+`t_res_min` (Eq. 15.14, 16/08/2026) **não é mais parâmetro de entrada** —
+é derivado dentro da função a partir de `massa_leito_kg`,
+`capacidade_trabalho` e da umidade do ar de entrada (`nucleo.razao_umidade`
+sobre `pdp_entrada_c`): tempo até o leito saturar totalmente à vazão/carga
+atual. Bug real corrigido nesta mesma revisão — antes, `t_res_min` era um
+slider independente, e aumentar a massa do leito não tinha **nenhum**
+efeito sobre o PDP (achado pelo autor testando o app). Uma primeira
+tentativa de correção baseada em tempo de contato gás-sólido (volume de
+vazios / vazão volumétrica) também falhou — dava residência em segundos,
+incompatível com a escala de minutos já calibrada de `k_ads`; o balanço de
+massa de água (capacidade do leito / taxa de chegada de água) foi a
+formulação que funcionou. Exposto em `kpis.t_res_calc_min`.
 
 `pdp_saida_c` (16/08/2026, série temporal do PDP na saída do secador —
 mais uma simplificação de modelagem, não equação do livro): a cada
@@ -126,6 +150,13 @@ instante, identifica a torre **adsorvendo** com **menor** `q_norm`
 remoção). Quando nenhuma torre adsorve, usa o mesmo limite de
 `pdp_entrada_c` (ar passa sem secar). Produz o serrilhado esperado: cada
 troca de torre reinicia a curva de degradação daquele leito.
+
+`constantes.MATERIAIS_DESSECANTE` também define `t_regen_ref_min`/
+`t_resfriamento_ref_min` por material (só o valor da Alumina Ativada — 45
+min regen, 10 min resfriamento — vem de experiência de campo relatada
+pelo autor; os outros dois materiais reaproveitam por analogia, sem fonte
+própria) — preenchem o default dos sliders correspondentes em `app.py`
+quando o material é trocado, do mesmo jeito que `k_ads_ref` já fazia.
 
 ## `compressor_sim/calib_lm.py` — Calibração em Lote via Levenberg-Marquardt
 

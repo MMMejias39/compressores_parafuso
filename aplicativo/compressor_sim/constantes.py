@@ -91,22 +91,45 @@ MATERIAIS_DESSECANTE = {
     "Alumina Ativada": {
         "densidade_kg_m3": 750.0,       # ASSUMIDO — meio da faixa 600-800 kg/m³
         "capacidade_trabalho": 0.10,    # ASSUMIDO — kg água / kg seco, baixa UR
-        "k_ads_ref": 1.5,
+        "k_ads_ref": 1.5,               # ASSUMIDO — NÃO verificado contra
+                                         # literatura/ensaio, só uma ordenação
+                                         # relativa plausível entre os 3
+                                         # materiais (ver CONTEXTO_app.md,
+                                         # pendência levantada pelo autor
+                                         # 16/08/2026 — dinâmica de adsorção
+                                         # dos materiais ainda não equacionada
+                                         # de fato)
+        "t_regen_ref_min": 45.0,        # fonte: experiência de campo do autor
+                                         # (16/08/2026) — não é valor de
+                                         # literatura
+        "t_resfriamento_ref_min": 10.0, # idem, meio da faixa 5-15 min citada
+                                         # pelo autor
     },
     "Sílica Gel": {
         "densidade_kg_m3": 700.0,       # ASSUMIDO
         "capacidade_trabalho": 0.08,    # ASSUMIDO — desempenho fraco em baixa UR
-        "k_ads_ref": 1.2,
+        "k_ads_ref": 1.2,               # ASSUMIDO — não verificado (idem acima)
+        "t_regen_ref_min": 45.0,        # ASSUMIDO por analogia à alumina — sem
+                                         # fonte própria, ao contrário do valor
+                                         # de alumina acima
+        "t_resfriamento_ref_min": 10.0, # ASSUMIDO por analogia
     },
     "Peneira Molecular 13X": {
         "densidade_kg_m3": 720.0,       # ASSUMIDO
         "capacidade_trabalho": 0.18,    # ASSUMIDO — melhor em baixa UR/PDP baixo
-        "k_ads_ref": 1.8,
+        "k_ads_ref": 1.8,               # ASSUMIDO — não verificado (idem acima)
+        "t_regen_ref_min": 45.0,        # ASSUMIDO por analogia à alumina — sem
+                                         # fonte própria
+        "t_resfriamento_ref_min": 10.0, # ASSUMIDO por analogia
     },
 }
 MATERIAL_PSA_DEFAULT = "Alumina Ativada"
 MASSA_LEITO_PSA_DEFAULT_KG = 200.0  # kg por torre — ASSUMIDO (ordem de grandeza
                                      # de leito industrial de médio porte)
+EPSILON_RECUP_PSA_DEFAULT = 0.5  # efetividade do trocador de recuperação de
+                                  # calor da regeneração (Eq. 15.11) — ASSUMIDO,
+                                  # meio de uma faixa típica de trocador
+                                  # ar-ar/ar-líquido compacto (0,3-0,7)
 DP_NOM_PSA = 0.30e5         # Pa, perda de carga nominal de projeto do leito (Eq. 15.7) — ASSUMIDO
 W_DRUM_PADRAO = 0.0         # W, potência do motor do tambor rotativo (Eq. 15.6) — este app
                              # modela só o secador PSA a frio, não o HOC de tambor rotativo

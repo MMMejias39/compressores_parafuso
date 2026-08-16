@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from . import nucleo
 from .constantes import PDP_ALVO_C
 
 # κ_regen da Eq. 15.12 (capacidade) e valor análogo reaproveitado para a
@@ -58,7 +59,6 @@ def simular_ciclo_psa(
     t_resfriamento_min: float,
     n_vasos: int,
     k_ads: float,
-    t_res_min: float,
     p_low: float,
     p_high: float,
     fator_purga: float,
@@ -83,13 +83,36 @@ def simular_ciclo_psa(
     (ver `pdp_saida_c` abaixo). capacidade_trabalho: fração mássica água/
     dessecante seco em baixa UR (kg água / kg leito), do material
     selecionado em `constantes.MATERIAIS_DESSECANTE`. massa_leito_kg: massa
-    de dessecante por torre [kg] — os dois juntos convertem a capacidade
-    normalizada `q_norm` em massa real de água adsorvida (`agua_adsorvida_kg`).
+    de dessecante por torre [kg] — usada tanto para a massa de água
+    adsorvida (`agua_adsorvida_kg`) quanto para o tempo de residência de
+    projeto do leito (`t_res_min`, Eq. 15.14, 16/08/2026, derivado do
+    balanço de massa de água em vez de recebido como parâmetro
+    independente) — sem essa segunda ligação, aumentar a massa de
+    dessecante não tinha nenhum efeito sobre a cinética de esgotamento do
+    leito (achado do autor testando o app: PDP não melhorava "mesmo
+    aumentando absurdamente a quantidade de alumina").
     """
     n_vasos = max(2, int(round(n_vasos)))
     t_ciclo = t_ads_min + t_regen_min + t_resfriamento_min
     n = int(round(horizonte_min / dt_min)) + 1
     t = np.linspace(0.0, horizonte_min, n)
+
+    # --- Tempo de residência de projeto do leito (Eq. 15.14) — derivado do
+    # balanço de massa de água, não do tempo de contato gás-sólido: quanto
+    # tempo o leito, na capacidade de trabalho do material e na carga de
+    # umidade do ar de entrada, levaria para saturar totalmente à vazão
+    # atual. Mais massa de dessecante (à mesma vazão/umidade) => mais
+    # capacidade total => satura mais devagar => Eq. 15.1 decai mais
+    # devagar => PDP sustentado por mais tempo — a relação física que
+    # faltava antes desta correção (o autor testou o app e viu que
+    # aumentar a massa não mudava o PDP em nada; a 1ª tentativa de
+    # correção, baseada em tempo de contato gás-sólido, também não
+    # funcionava — dava segundos, não minutos, incompatível com a escala
+    # de tempo já calibrada de k_ads na Eq. 15.1).
+    w_in = nucleo.razao_umidade(pdp_entrada_c + 273.15, p_high, 1.0)
+    taxa_agua_kg_min = m_dot_ar * w_in * 60.0
+    capacidade_leito_kg = massa_leito_kg * capacidade_trabalho
+    t_res_min = capacidade_leito_kg / max(taxa_agua_kg_min, 1e-12)
 
     q_no_inicio_regen = np.exp(-k_ads * t_ads_min / t_res_min)
 
@@ -200,6 +223,7 @@ def simular_ciclo_psa(
             "tempo_sem_secagem_min": tempo_sem_secagem_min,
             "pdp_saida_max_c": float(np.max(pdp_saida_c)),
             "agua_adsorvida_max_kg": float(np.max(agua_adsorvida_kg)),
+            "t_res_calc_min": float(t_res_min),
         },
     }
 

@@ -331,7 +331,7 @@ def test_psa_cobertura_continua_quando_bem_dimensionado(n_vasos):
     # t_ads = t_regen + t_resfriamento -> handoff exato entre torres, sem gap
     r = psa_ciclo.simular_ciclo_psa(
         horizonte_min=30, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
-        t_resfriamento_min=2.0, n_vasos=n_vasos, k_ads=1.5, t_res_min=4.0,
+        t_resfriamento_min=2.0, n_vasos=n_vasos, k_ads=1.5,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
         t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0,
         capacidade_trabalho=0.10, massa_leito_kg=200.0)
@@ -345,7 +345,7 @@ def test_psa_gap_quando_resfriamento_nao_cabe_no_rodizio():
     # exatamente o problema físico que motivou a fase de resfriamento.
     r = psa_ciclo.simular_ciclo_psa(
         horizonte_min=10, m_dot_ar=0.5, t_ads_min=3.0, t_regen_min=4.0,
-        t_resfriamento_min=3.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        t_resfriamento_min=3.0, n_vasos=2, k_ads=1.5,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
         t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0,
         capacidade_trabalho=0.10, massa_leito_kg=200.0)
@@ -356,7 +356,7 @@ def test_psa_gap_quando_resfriamento_nao_cabe_no_rodizio():
 def test_psa_capacidade_decai_regenera_e_mantem_no_resfriamento():
     r = psa_ciclo.simular_ciclo_psa(
         horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
-        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
         t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0,
         capacidade_trabalho=0.10, massa_leito_kg=200.0)
@@ -377,7 +377,7 @@ def test_psa_capacidade_decai_regenera_e_mantem_no_resfriamento():
 def test_psa_purga_so_durante_regeneracao_e_escala_com_torres_simultaneas():
     r = psa_ciclo.simular_ciclo_psa(
         horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
-        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
         t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0,
         capacidade_trabalho=0.10, massa_leito_kg=200.0)
@@ -391,7 +391,7 @@ def test_psa_purga_so_durante_regeneracao_e_escala_com_torres_simultaneas():
 def test_psa_temperatura_do_leito_sobe_na_regeneracao_e_desce_no_resfriamento():
     r = psa_ciclo.simular_ciclo_psa(
         horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
-        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
         t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0,
         capacidade_trabalho=0.10, massa_leito_kg=200.0)
@@ -417,7 +417,7 @@ def test_psa_pdp_saida_degrada_com_carga_do_leito_e_satura_no_pdp_entrada():
     pdp_entrada = 5.0
     r = psa_ciclo.simular_ciclo_psa(
         horizonte_min=12.0, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
-        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
         t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=pdp_entrada,
         capacidade_trabalho=0.10, massa_leito_kg=200.0)
@@ -440,7 +440,7 @@ def test_psa_pdp_saida_no_pdp_entrada_quando_nenhuma_torre_adsorve():
     pdp_entrada = 5.0
     r = psa_ciclo.simular_ciclo_psa(
         horizonte_min=10, m_dot_ar=0.5, t_ads_min=3.0, t_regen_min=4.0,
-        t_resfriamento_min=3.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        t_resfriamento_min=3.0, n_vasos=2, k_ads=1.5,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
         t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=pdp_entrada,
         capacidade_trabalho=0.10, massa_leito_kg=200.0)
@@ -470,7 +470,7 @@ def test_agua_adsorvida_kg_cresce_na_adsorcao_e_some_apos_regeneracao():
     capacidade, massa = 0.10, 200.0
     r = psa_ciclo.simular_ciclo_psa(
         horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
-        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
         t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0,
         capacidade_trabalho=capacidade, massa_leito_kg=massa)
@@ -490,11 +490,55 @@ def test_agua_adsorvida_kg_cresce_na_adsorcao_e_some_apos_regeneracao():
     assert agua[(t >= 9.9) & (t < 10.0)][-1] < 0.05 * capacidade * massa
 
 
+def test_psa_mais_massa_de_dessecante_melhora_pdp_e_t_res():
+    # Regressão do bug real encontrado pelo autor (16/08/2026): aumentar a
+    # massa do leito não tinha NENHUM efeito sobre o PDP, porque t_res não
+    # dependia da massa. Corrigido via balanço de massa de água (Eq. 15.14)
+    # — mais massa deve, agora, esgotar mais devagar e sustentar um PDP
+    # mais próximo do alvo pelo mesmo tempo de adsorção.
+    kwargs = dict(
+        horizonte_min=30, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
+        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5,
+        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=25.61,
+        capacidade_trabalho=0.10)
+    massas = [5.0, 50.0, 500.0]
+    t_res = []
+    pdp_max = []
+    for m in massas:
+        r = psa_ciclo.simular_ciclo_psa(massa_leito_kg=m, **kwargs)
+        t_res.append(r["kpis"]["t_res_calc_min"])
+        pdp_max.append(r["kpis"]["pdp_saida_max_c"])
+    # t_res cresce linearmente com a massa (mesma vazão/umidade de entrada)
+    assert t_res[0] < t_res[1] < t_res[2]
+    assert t_res[1] == pytest.approx(t_res[0] * 10, rel=0.01)
+    # PDP máximo (pior caso) melhora (cai) monotonicamente com mais massa
+    assert pdp_max[0] > pdp_max[1] > pdp_max[2]
+
+
 def test_umidade_nao_aumenta_ao_longo_do_tratamento():
     res = simular()
     ws = [no["w"] for no in res["nos"]]
     assert ws[2] <= ws[1] + 1e-9   # intercooler condensa
     assert ws[4] <= ws[3] + 1e-3   # aftercooler + separador (arraste pequeno)
+
+
+def test_recuperacao_de_calor_reduz_potencia_do_aquecedor():
+    # Eqs. 15.10/15.11 — calor recuperado (aftercooler + hood) deve reduzir
+    # a potência ELÉTRICA do aquecedor de regeneração, sem "sumir" energia:
+    # eps=0 reproduz a potência nominal (Eq. 3.3), sem recuperação nenhuma.
+    p_sem_recup = parametros_default() | {"eps_recup_psa": 0.0}
+    p_com_recup = parametros_default() | {"eps_recup_psa": 0.8}
+    r_sem = simular(p_sem_recup)
+    r_com = simular(p_com_recup)
+    pw_sem = r_sem["potencias"]
+    pw_com = r_com["potencias"]
+    assert pw_sem["aquecedor"] == pytest.approx(pw_sem["aquecedor_nominal"])
+    assert pw_com["aquecedor"] < pw_com["aquecedor_nominal"]
+    assert pw_com["aquecedor"] < pw_sem["aquecedor"]
+    assert pw_com["aquecedor"] >= 0.0  # nunca negativo (max(0, ...) da Eq. 15.11)
+    # mesmo Q_disp nos dois casos (não depende de eps_recup_psa)
+    assert pw_com["q_disp_regen"] == pytest.approx(pw_sem["q_disp_regen"])
 
 
 # --- Dinâmica temporal ---------------------------------------------------------

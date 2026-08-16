@@ -200,19 +200,6 @@ with tab_config:
             n_vasos_psa = st.number_input(
                 "Torres em rodízio N (assumido — mínimo do princípio PSA)",
                 2, 6, 2, 1)
-            t_ads_psa = st.slider(
-                "Duração da adsorção por torre [min] (assumido)",
-                2.0, 20.0, 6.0, 0.5)
-            t_regen_psa = st.slider(
-                "Duração da regeneração por torre [min] (assumido)",
-                1.0, 15.0, 4.0, 0.5)
-            t_resfriamento_psa = st.slider(
-                "Resfriamento pós-regeneração [min] (assumido)",
-                0.0, 10.0, 2.0, 0.5,
-                help="Tempo em que a torre já regenerou mas ainda está quente "
-                     "demais para voltar a adsorver com eficiência — sem essa "
-                     "fase o rodízio simularia uma troca instantânea entre "
-                     "regeneração e adsorção que não existe fisicamente.")
             material_psa = st.selectbox(
                 "Material dessecante (Tabela 15.2)",
                 list(constantes.MATERIAIS_DESSECANTE.keys()),
@@ -227,25 +214,63 @@ with tab_config:
                      "fraca em baixa UR, raramente usada sozinha para "
                      "-40 °C.")
             _props_material = constantes.MATERIAIS_DESSECANTE[material_psa]
+            t_ads_psa = st.slider(
+                "Duração da adsorção por torre [min] (assumido)",
+                2.0, 240.0, 60.0, 1.0,
+                help="Estenda junto com regeneração/resfriamento abaixo para "
+                     "um ciclo proporcional — regeneração térmica real "
+                     "costuma levar dezenas de minutos, não os poucos "
+                     "minutos de um ciclo PSA a frio por oscilação de "
+                     "pressão.")
+            t_regen_psa = st.slider(
+                "Duração da regeneração por torre [min] (assumido)",
+                1.0, 90.0, float(_props_material["t_regen_ref_min"]), 1.0,
+                help=f"Valor de referência de {material_psa} preenchido "
+                     "automaticamente — ajuste livremente. Só o valor da "
+                     "Alumina Ativada (45 min) vem de experiência de campo "
+                     "relatada pelo autor (16/08/2026); os outros dois "
+                     "materiais reaproveitam o mesmo número por analogia, "
+                     "sem fonte própria (ver constantes.py).")
+            t_resfriamento_psa = st.slider(
+                "Resfriamento pós-regeneração [min] (assumido)",
+                0.0, 20.0, float(_props_material["t_resfriamento_ref_min"]), 1.0,
+                help="Tempo em que a torre já regenerou mas ainda está quente "
+                     "demais para voltar a adsorver com eficiência — sem essa "
+                     "fase o rodízio simularia uma troca instantânea entre "
+                     "regeneração e adsorção que não existe fisicamente. "
+                     "Faixa 5-15 min relatada pelo autor para Alumina "
+                     "Ativada (16/08/2026); outros materiais por analogia.")
             massa_leito_psa = st.number_input(
                 "Massa do leito por torre [kg] (assumido)",
-                10.0, 2000.0, constantes.MASSA_LEITO_PSA_DEFAULT_KG, 10.0,
+                1.0, 5000.0, constantes.MASSA_LEITO_PSA_DEFAULT_KG, 10.0,
                 help=f"{material_psa}: densidade aparente "
                      f"≈{_props_material['densidade_kg_m3']:.0f} kg/m³, "
                      f"capacidade de trabalho ≈"
                      f"{_props_material['capacidade_trabalho']*100:.0f}% "
                      "(kg água/kg leito, baixa UR) — usados para converter a "
                      "capacidade normalizada em massa real de água "
-                     "adsorvida no gráfico da aba Secagem PSA.")
+                     "adsorvida (aba Secagem PSA) e, via balanço de massa "
+                     "de água (Eq. 15.14), no tempo de residência de "
+                     "projeto do leito — mais massa esgota mais devagar e "
+                     "sustenta o PDP por mais tempo.")
             k_ads_psa = st.slider(
                 "Constante de taxa de adsorção k_ads (Eq. 15.1, Fig. 15.2)",
                 0.3, 4.0, float(_props_material["k_ads_ref"]), 0.1,
                 help=f"Valor de referência do material selecionado "
                      f"({material_psa}) preenchido automaticamente — ajuste "
-                     "livremente se tiver um valor de ensaio próprio.")
-            t_res_psa = st.slider(
-                "Tempo de residência de projeto do leito [min] (assumido)",
-                1.0, 15.0, 4.0, 0.5)
+                     "livremente se tiver um valor de ensaio próprio. "
+                     "**Não verificado contra literatura/ensaio** — só uma "
+                     "ordenação relativa plausível entre os 3 materiais "
+                     "(ver constantes.py).")
+            eps_recup_psa = st.slider(
+                "Efetividade do trocador de recuperação de calor ε (Eq. 15.11)",
+                0.0, 1.0, constantes.EPSILON_RECUP_PSA_DEFAULT, 0.05,
+                help="Fração do calor residual disponível (aftercooler + "
+                     "hood, Eq. 15.10 — óleo não modelado neste app) "
+                     "efetivamente recuperada para pré-aquecer o ar de "
+                     "regeneração, reduzindo a potência elétrica do "
+                     "aquecedor resistivo (Eq. 3.3) na mesma proporção. "
+                     "ε=0 desliga a recuperação (aquecedor 100% elétrico).")
 
     with cfg2:
         with st.expander("Gêmeo Digital — EKF (aba 4, Eqs. 21.2-21.8)", expanded=True):
@@ -476,7 +501,12 @@ with st.sidebar:
         fator_ev = st.slider("Fator do pico (×demanda)", 1.2, 3.0, 2.0, 0.1)
 
     with st.expander("Secagem PSA — leitura atual (aba 3)"):
-        horizonte_psa = st.slider("Horizonte de simulação PSA [min]", 10, 120, 30)
+        horizonte_psa = st.slider(
+            "Horizonte de simulação PSA [min]", 10, 7200, 240, 10,
+            help="Até 7200 min (5 dias) — ciclos de regeneração térmica "
+                 "real (dezenas de minutos) precisam de um horizonte bem "
+                 "maior que os poucos minutos de um ciclo PSA a frio para "
+                 "mostrar várias trocas de torre.")
         st.caption("Saúde do dessecante (Eq. 15.7) — valores medidos/simulados:")
         dp_real_psa_mbar = st.slider(
             "ΔP real do leito [mbar] (medido)", 15.0, 90.0,
@@ -519,6 +549,7 @@ params = {
     "p_limite": p_limite_bar * 1e5,
     "dp_real_psa": dp_real_psa_mbar * 100.0,
     "pdp_real_c": pdp_real_psa_c,
+    "eps_recup_psa": eps_recup_psa,
 }
 
 res = simular(params)
@@ -726,11 +757,27 @@ with tab_est:
             "Perda V_i LP [kW]": round(pw["perda_vi_lp"] / 1000, 2),
             "Perda V_i HP [kW]": round(pw["perda_vi_hp"] / 1000, 2),
             "Aquecedor de regeneração [kW]": round(pw["aquecedor"] / 1000, 2),
+            "Aquecedor sem recuperação (nominal, Eq. 3.3) [kW]":
+                round(pw["aquecedor_nominal"] / 1000, 2),
+            "Calor disponível p/ recuperação, Eq. 15.10 [kW]":
+                round(pw["q_disp_regen"] / 1000, 2),
             "Q̇ intercooler [kW]": round(pw["q_intercooler"] / 1000, 2),
             "Q̇ aftercooler [kW]": round(pw["q_aftercooler"] / 1000, 2),
             "W isotérmico (referência) [kW]":
                 round(pw["w_isotermico"] / 1000, 2),
         })
+        economia_aquecedor_pct = (
+            (1.0 - pw["aquecedor"] / pw["aquecedor_nominal"]) * 100.0
+            if pw["aquecedor_nominal"] > 0 else 0.0)
+        st.caption(
+            f"Aproveitamento de calor rejeitado na regeneração (Eqs. 15.10/"
+            f"15.11, 16/08/2026) — Q_disp soma aftercooler + hood (Q_óleo "
+            "não modelado neste app); reduz **{:.0f}%** da potência "
+            "elétrica nominal do aquecedor resistivo, sem mudar o ΔT de "
+            "regeneração alvo (mesmo processo térmico, parte do calor vem "
+            "de graça em vez do aquecedor). ε ajustável na aba "
+            "Configurações → Secagem PSA.".format(economia_aquecedor_pct)
+        )
 
 # ===========================================================================
 # Aba 2 — Dinâmica temporal
@@ -899,7 +946,6 @@ with tab_psa:
         t_resfriamento_min=t_resfriamento_psa,
         n_vasos=n_vasos_psa,
         k_ads=k_ads_psa,
-        t_res_min=t_res_psa,
         p_low=p_low_psa,
         p_high=p_high_psa,
         fator_purga=params["fator_purga"],
@@ -935,7 +981,7 @@ with tab_psa:
             "mais torres em rodízio."
         )
 
-    d1, d2, d3, d4 = st.columns(4)
+    d1, d2, d3, d4, d5 = st.columns(5)
     d1.metric("Trocas no horizonte", f"{kp['n_trocas']}")
     d2.metric("Capacidade mín. do leito (fim da adsorção)",
              f"{kp['q_min'] * 100:.1f}% de q_eq")
@@ -943,6 +989,13 @@ with tab_psa:
              f"{kp['purga_media_kg_s'] * 3600:.1f} kg/h")
     d4.metric("Torres adsorvendo simultaneamente (mín.)",
              f"{kp['n_adsorvendo_min']}")
+    d5.metric("Tempo de residência de projeto (Eq. 15.14)",
+             f"{kp['t_res_calc_min']:.1f} min",
+             help="Derivado da massa/capacidade do leito e da carga de "
+                  "umidade do ar de entrada (16/08/2026) — não é mais um "
+                  "valor independente. Aumentar a massa do leito (aba "
+                  "Configurações) aumenta este valor e, com ele, quanto "
+                  "tempo o PDP fica sustentado perto do alvo.")
 
     st.subheader("Indicadores Globais de Performance (Cap. 15)")
     e1, e2, e3 = st.columns(3)

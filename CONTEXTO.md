@@ -2378,3 +2378,26 @@ teoria" (bullet mais longo, citando os três métodos por extenso) levou o
 overflow daquele frame de 18,5pt para 35,1pt — acima do próprio teto já
 tolerado no deck (27,4pt, slide de Agenda); encurtado até voltar a
 18,5pt, igual ao valor original, antes de aceitar como pronto.
+
+## Cap. 15: Eq. 15.14 (t_res por balanço de massa) e Tabela 15.2 expandida (16/08/2026)
+
+Pedido do autor: "não esqueça de atualizar o documento .tex, .pdf e
+CONTEXTO.md", na sequência de um bug real que ele encontrou testando o
+app — massa do leito dessecante não tinha nenhum efeito sobre o PDP de
+saída. Detalhe completo da causa raiz, das duas tentativas de correção
+(a primeira, baseada em tempo de contato gás-sólido, não funcionou — dava
+segundos, não minutos) e da correção final (balanço de massa de água) em
+`CONTEXTO_app.md`, seção "Bug real: massa do leito desconectada do PDP".
+
+Livro: nova Equação 15.14, fechando o próprio $t_{res}$ da Eq. 15.1 (até
+aqui nunca calculado a partir de nenhum dado de projeto) pelo mesmo
+balanço de massa de água da Eq. 15.13. Tabela 15.2 ganhou duas colunas
+novas ($t_{regen}$ e $t_{resfriamento}$ de referência) e um parágrafo de
+ressalva: só os valores de Alumina Ativada (45 min / 10 min) vêm de
+experiência de campo relatada pelo autor — os outros dois materiais, e
+todos os valores de $k_{ads}$, são assumidos por analogia, sem fonte
+verificada (o autor perguntou diretamente sobre isso, e a resposta
+honesta é que não).
+
+166→167 páginas. 3 passagens de `pdflatex`, sem referências indefinidas
+nem overfull severo.

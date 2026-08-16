@@ -1240,16 +1240,119 @@ mesmo padrão das ~20 outras tabelas do livro.
 referências indefinidas, sem rótulo duplicado, sem overfull severo após a
 correção.
 
+## Bug real: massa do leito desconectada do PDP + 3 pedidos em sequência (16/08/2026)
+
+O autor testou o app ao vivo e reportou, em mensagens sucessivas na mesma
+sessão: "a temperatura de ponto de orvalho não está sustentando... mesmo
+aumentando absurdamente a quantidade de alumina, não está fazendo sentido
+técnico"; depois "os gráficos das torres também estão errados"; depois
+perguntou se havia "erro na integração ao longo do tempo" (resposta: não
+há nenhum solver numérico neste módulo, tudo é fórmula fechada — `exp()`
+avaliada em cada ponto, vetorizado, sem passo-a-passo tipo Euler/RK4); e
+por fim três pedidos novos: horizonte de simulação em dias, tempos reais
+de regeneração/resfriamento da Alumina (experiência de campo do autor) e
+aproveitamento do calor dos estágios na regeneração. Dois pedidos
+adicionais (soprador booster para aumentar h de convecção; verificar a
+dinâmica de adsorção "equacionada" de fato) foram **conscientemente
+adiados** — o autor escolheu, via pergunta direta, terminar o que já
+estava em andamento antes de abrir essas duas frentes novas.
+
+**Causa raiz do bug**: `massa_leito_kg` (adicionado na sessão anterior)
+só alimentava `agua_adsorvida_kg` (um display derivado) — nunca entrava
+na cinética de esgotamento do leito (`q_norm`, Eq. 15.1), porque `t_res`
+continuava sendo um slider independente. Resultado: qualquer massa de
+alumina produzia exatamente a mesma curva de PDP.
+
+**Duas tentativas até a fórmula certa** (ambas verificadas por `python -c`
+antes de integrar na UI, não só "parecia razoável"):
+1. Tempo de contato gás-sólido (volume de vazios do leito / vazão
+   volumétrica de ar, com porosidade 0,40 pesquisada via `WebSearch` —
+   fonte: faixa 0,36-0,46 para pellets/esferas empacotados). **Não
+   funcionou**: dava t_res em segundos (0,001-3,5 min mesmo a 2000 kg),
+   ordens de grandeza menor que a escala de minutos já calibrada de
+   `k_ads` — o leito esgotava quase instantaneamente independente da
+   massa, só um pouco menos errado que antes.
+2. Balanço de massa de água: `t_res = (massa_leito_kg * capacidade_trabalho)
+   / (m_dot_ar * W_in * 60)`, com `W_in` calculado via
+   `nucleo.razao_umidade(pdp_entrada_c+273,15, p_high, 1.0)` (nova
+   dependência: `psa_ciclo.py` passou a importar `nucleo`). **Funcionou**:
+   verificado que massa de 1→2000 kg move t_res de 1,4→2729 min e PDP
+   máximo de +25,5°C→-39,8°C de forma suave e monotônica. `POROSIDADE_LEITO_PSA`
+   (da tentativa 1) removida por ficar sem uso — não escondida, deletada.
+
+**Consequência**: o "tempo de residência" deixou de significar o que o
+nome sugere fisicamente (contato gás-sólido) — passou a ser "tempo até
+saturação total à carga atual", uma grandeza de balanço de massa. Livro
+(Eq. 15.14) documenta essa reinterpretação explicitamente, não esconde a
+mudança de significado atrás do mesmo símbolo $t_{res}$.
+
+**Recalibração de defaults**: com a fórmula corrigida, os defaults
+antigos (200 kg, t_ads=6 min) ficavam com t_res≈273 min — bed
+"comicamente" sobredimensionado para um ciclo de 6 min. Novos defaults:
+`t_ads_psa`=60 min, `t_regen_psa`/`t_resfriamento_psa` agora vêm de
+`MATERIAIS_DESSECANTE[material]["t_regen_ref_min"/"t_resfriamento_ref_min"]`
+(45/10 min para Alumina — **única fonte real, experiência de campo do
+autor**; Sílica Gel e Peneira Molecular reaproveitam os mesmos números
+por analogia, sem fonte própria — marcado assim no código e no livro).
+Sliders estendidos: `horizonte_psa` 120→7200 min (5 dias — testado 3 dias/
+86401 pontos em 0,035s, sem problema de performance), `t_ads_psa` até 240
+min, `t_regen_psa` até 90 min, `t_resfriamento_psa` até 20 min.
+
+**Aproveitamento de calor da regeneração (Eqs. 15.10/15.11)**: já existia
+no livro desde antes desta sessão, nunca implementado no app. Agora sim:
+`sistema.py` reordenado — `p_aquecedor_nominal` (Eq. 3.3) calculado no
+passo do secador, mas o valor final `p_aquecedor` só fecha depois de
+`q_gerado_hood` (passo 8b), como `max(0, p_aquecedor_nominal -
+eps_recup_psa*(q_aftercooler+q_gerado_hood))`. Novo slider `eps_recup_psa`
+(Configurações, default 0,5). `w_total`/`eta_global`/`spc_valor`/`sec_dry`
+precisaram ser deslocados para depois dessa correção (reordenação real do
+arquivo, não só um valor trocado) — Q_óleo fica de fora por não haver
+circuito de óleo modelado neste app, omissão explícita, não escondida.
+Testado ao vivo: com os defaults, Q_disp (22,66 kW) é ~10× maior que o
+aquecedor nominal (2,26 kW) — resultado plausível, não bug (o purge é uma
+fração pequena da vazão total, e o aftercooler sozinho rejeita a maior
+parte do calor de compressão) — verificado por conta manual batendo com
+os números exibidos antes de aceitar como correto.
+
+**Honestidade sobre `k_ads_ref`**: o autor perguntou diretamente se a
+"dinâmica de adsorção dos materiais" tinha sido equacionada de verdade.
+Resposta: não — os valores de `k_ads_ref` (1,5/1,2/1,8) nunca foram
+verificados contra literatura ou ensaio, só uma ordenação relativa
+assumida (peneira molecular mais rápida, sílica mais lenta). Marcado
+explicitamente como tal no código, na UI (help text do slider) e no
+livro (Tabela 15.2) — não apresentado como precisão que não existe.
+Registrado como pendência real, não resolvido nesta sessão.
+
+**Testes novos**: `test_psa_mais_massa_de_dessecante_melhora_pdp_e_t_res`
+(regressão direta do bug — t_res escala linear com massa, PDP melhora
+monotonicamente), `test_recuperacao_de_calor_reduz_potencia_do_aquecedor`
+— 79/79 passam (77 antigos + 2 novos). Assinatura de
+`simular_ciclo_psa()` mudou de novo (`t_res_min` removido, `densidade_kg_m3`
+adicionado e depois removido na mesma sessão, ao trocar de fórmula) — 8
+call sites de teste atualizados via substituição em lote.
+
+**Pendências explicitamente adiadas, a pedido do próprio autor**:
+1. Soprador booster antes da resistência de aquecimento, para aumentar o
+   coeficiente de convecção — exigiria um modelo de transferência de
+   calor no aquecedor (h, área) que não existe hoje; `delta_t_regen`
+   continua um valor assumido, não calculado.
+2. Diferença de troca (pellets vs. esferas) e vazão diferenciada do
+   soprador — parte da mesma frente acima, não iniciado.
+
+**Documentação atualizada**: `GUIA_CODIGO.md` (§ `psa_ciclo.py` e §
+`sistema.py`, ordem real de dependência 8a/8b documentada).
+
 ## Pendências conhecidas
 
-1. O app cobre os Capítulos 5, 9, 10, 11, 12, 13, 14, 15, 16 do livro
-   (trem termodinâmico + psicrometria + rede) e agora um recorte do
-   Cap. 4 (motor elétrico — $\eta_{mot}$ simplificado via Eqs. 4.10-4.12,
-   ver "Motor, invólucro/Hood e tubulação interestágios" acima; VSD, Eq.
-   4.3, continua sem representação própria). A Parte II inteira (EKF, VAE,
-   PIML, MPC, PSO — Caps. 19-27) não tem nenhuma representação no
-   simulador — candidato natural de expansão futura, mas não pedido ainda.
-   Rotordinâmica/mancais (Caps. 8, 9, 11)
+1. **[Item desatualizado — corrigido em 16/08/2026]** O app cobre os
+   Capítulos 5, 9, 10, 11, 12, 13, 14, 15, 16 do livro (trem termodinâmico
+   + psicrometria + rede) e um recorte do Cap. 4 (motor elétrico —
+   $\eta_{mot}$ simplificado via Eqs. 4.10-4.12; VSD, Eq. 4.3, continua
+   sem representação própria). A Parte II (EKF, VAE, PIML, MPC, PSO) **já
+   está implementada** desde 15/08/2026 (ver "Parte II no app" acima) —
+   este item dizia o contrário até esta correção, claramente obsoleto
+   (ficou sem atualização por várias sessões). Rotordinâmica/mancais
+   (Caps. 8, 9, 11)
    agora tem cobertura **parcial**: Eq. 9.3 (eficiência volumétrica por
    folga) desde antes, e Eq. 9.6 (balanço térmico da carcaça, regime
    permanente) desde 15/08/2026 — ver seção acima. Seguem sem
@@ -1292,3 +1395,18 @@ correção.
    Se qualquer uma dessas for pedida para o app no futuro, o ponto de
    partida é a seção correspondente do `compressores.tex` (números acima)
    — a arquitetura já está descrita lá, falta só o código.
+5. **Soprador booster na regeneração** (levantado pelo autor, 16/08/2026,
+   explicitamente adiado por ele para depois de outras correções em
+   andamento) — aumentaria o coeficiente de convecção no aquecedor de
+   regeneração, mas isso exigiria um modelo de transferência de calor
+   (h·A·ΔT ou NTU) que não existe hoje neste app nem no livro;
+   `delta_t_regen` continua um parâmetro assumido (ASSUMIDO), não
+   calculado a partir de vazão/geometria do aquecedor.
+6. **Diferença de forma do dessecante (pellets vs. esferas)** e vazão
+   diferenciada do soprador (autor, 16/08/2026, mesma frente do item 5,
+   também adiado) — nem `MATERIAIS_DESSECANTE` nem a Eq. 15.1 distinguem
+   forma de partícula hoje, só material.
+7. **`k_ads_ref` não verificado** (autor perguntou diretamente, 16/08/2026,
+   ver "Bug real: massa do leito desconectada do PDP" acima) — os 3
+   valores de referência (1,5/1,2/1,8) são uma ordenação relativa
+   assumida, não uma medição nem valor de literatura confirmado.

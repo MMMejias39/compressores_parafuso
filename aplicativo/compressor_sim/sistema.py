@@ -21,6 +21,7 @@ from .constantes import (
     DEMANDA_M3_MIN,
     DP_NOM_PSA,
     D_LINHA_DEFAULT,
+    EPSILON_RECUP_PSA_DEFAULT,
     ETA_MECANICA,
     ETA_SEPARADOR,
     FAD_DEFAULT_M3_MIN,
@@ -94,6 +95,7 @@ def parametros_default() -> dict:
         "demanda_m3_min": DEMANDA_M3_MIN,
         "dp_real_psa": DP_NOM_PSA,   # medido — default = nominal (leito limpo)
         "pdp_real_c": PDP_ALVO_C,    # medido — default = alvo (secador saudável)
+        "eps_recup_psa": EPSILON_RECUP_PSA_DEFAULT,  # Eq. 15.11
     }
 
 
@@ -199,7 +201,7 @@ def simular(par: dict | None = None) -> dict:
     # --- 6. Secador PSA --------------------------------------------------------
     m_purge = p["fator_purga"] * m_dot_seco         # fração de 10–18 % (:1971)
     eta_pur = subsistemas.eta_purga(m_purge, m_dot_seco)               # Eq. 15.9
-    p_aquecedor = subsistemas.potencia_aquecedor(                      # Eq. 3.3
+    p_aquecedor_nominal = subsistemas.potencia_aquecedor(               # Eq. 3.3
         m_purge, p["delta_t_regen"])
     m_dot_util = m_dot_seco - m_purge
     # W de saída = saturação no PDP real medido (Eq. 10.6, mesma convenção de
@@ -208,7 +210,6 @@ def simular(par: dict | None = None) -> dict:
     # PDP real usada em HI_des (Eq. 15.7): degradar o PDP medido agora reduz
     # de fato a qualidade do ar entregue à rede, não só o índice de saúde.
     w_pos_secador = nucleo.razao_umidade(p["pdp_real_c"] + 273.15, p_rede, 1.0)
-    sec_dry = subsistemas.sec_dry(p_aquecedor, W_DRUM_PADRAO, m_dot_util)  # Eq. 15.6
     hi_des = subsistemas.hi_des(                                      # Eq. 15.7
         DP_NOM_PSA, p["dp_real_psa"], PDP_ALVO_C, p["pdp_real_c"])
 
@@ -222,14 +223,7 @@ def simular(par: dict | None = None) -> dict:
     t_autonomia = subsistemas.autonomia_vaso(                          # Eq. 16.5
         p["v_vaso"], p_rede, p["p_limite"], demanda_m3_s, p["p_amb"])
 
-    # --- 8. Totais e KPIs ------------------------------------------------------
-    w_iso = nucleo.potencia_isotermica(             # referência das Eqs. 5.12/5.13
-        p["p_amb"], v_dot_fad, p["pi_total"])
-    w_total = w_lp + w_hp + perda_vi_lp + perda_vi_hp + p_aquecedor
-    eta_global = w_iso / w_total if w_total > 0 else 0.0
-    spc_valor = nucleo.spc(w_total, p["fad_m3_min"])                   # Eq. 11.11
-
-    # --- 8b. Motor (Eqs. 4.10-4.12), invólucro/Hood (Eqs. 2.1/2.4) e -----------
+    # --- 8a. Motor (Eqs. 4.10-4.12), invólucro/Hood (Eqs. 2.1/2.4) e -----------
     #         fechamento da carcaça do estágio LP (Eq. 9.6/9.16) ---------------
     # p_eixo_mot é a potência mecânica de eixo (compressão + perdas V_i),
     # sem o aquecedor de regeneração — que é carga elétrica resistiva, não
@@ -245,6 +239,27 @@ def simular(par: dict | None = None) -> dict:
         p_perdas_mot, p["p_loss_hood_outros"], q_int_lp)
     t_hood = nucleo.temperatura_hood_regime(                           # Eq. 2.4
         q_gerado_hood, p["m_dot_vent"], CP_AR, p["t_amb"])
+
+    # --- 8b. Aproveitamento de calor rejeitado na regeneração (Eqs. 15.10/
+    # 15.11, 16/08/2026 — descritas no livro desde antes desta sessão, nunca
+    # implementadas no app até agora). Q_disp soma as correntes que o app já
+    # calcula (aftercooler + hood); Q_óleo (Cap. 12) fica de fora por não
+    # haver um circuito de óleo modelado aqui — omissão explícita, não W=0
+    # escondido. O calor recuperado reduz a potência ELÉTRICA do aquecedor
+    # resistivo na mesma proporção, sem mudar ΔT_regen (o processo de
+    # regeneração continua atingindo a mesma temperatura-alvo — só uma
+    # fração dela vem de graça em vez de vir do aquecedor).
+    q_disp = q_after + q_gerado_hood                                    # Eq. 15.10
+    p_aquecedor = max(                                                   # Eq. 15.11
+        0.0, p_aquecedor_nominal - p["eps_recup_psa"] * q_disp)
+    sec_dry = subsistemas.sec_dry(p_aquecedor, W_DRUM_PADRAO, m_dot_util)  # Eq. 15.6
+
+    # --- 9. Totais e KPIs (após a correção do aquecedor acima) -----------------
+    w_iso = nucleo.potencia_isotermica(             # referência das Eqs. 5.12/5.13
+        p["p_amb"], v_dot_fad, p["pi_total"])
+    w_total = w_lp + w_hp + perda_vi_lp + perda_vi_hp + p_aquecedor
+    eta_global = w_iso / w_total if w_total > 0 else 0.0
+    spc_valor = nucleo.spc(w_total, p["fad_m3_min"])                   # Eq. 11.11
 
     t_ref_carcaca = t_hood if p["hood_enclausurado"] else p["t_amb"]
     t_carcaca = nucleo.temperatura_carcaca_regime(                     # Eq. 9.16
@@ -305,7 +320,8 @@ def simular(par: dict | None = None) -> dict:
         "potencias": {
             "w_lp": w_lp, "w_hp": w_hp,
             "perda_vi_lp": perda_vi_lp, "perda_vi_hp": perda_vi_hp,
-            "aquecedor": p_aquecedor, "w_total": w_total,
+            "aquecedor": p_aquecedor, "aquecedor_nominal": p_aquecedor_nominal,
+            "q_disp_regen": q_disp, "w_total": w_total,
             "w_isotermico": w_iso,
             "q_intercooler": q_inter, "q_aftercooler": q_after,
             # --- Planta (n_comp unidades idênticas em paralelo) ---

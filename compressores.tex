@@ -2095,19 +2095,21 @@ q_d = q_{eq} \cdot \exp \left( -k_{ads} \cdot \frac{t_{ads}}{t_{res}} \right)
 		\begin{table}[h!tbp]
 			\centering
 			\resizebox{\textwidth}{!}{
-			\begin{tabular}{l c c c}
+			\begin{tabular}{l c c c c c}
 				\toprule
-				\textbf{Material} & \textbf{Densidade [kg/m³]} & \textbf{Capacidade de Trabalho $q_{eq}$} & \textbf{$k_{ads}$ de Referência} \\ \midrule
-				Alumina Ativada & 750 & 10\% & 1,5 \\
-				Sílica Gel & 700 & 8\% & 1,2 \\
-				Peneira Molecular 13X & 720 & 18\% & 1,8 \\ \bottomrule
+				\textbf{Material} & \textbf{Densidade [kg/m³]} & \textbf{Capacidade $q_{eq}$} & \textbf{$k_{ads}$ Ref.} & \textbf{$t_{regen}$ Ref. [min]} & \textbf{$t_{resfriamento}$ Ref. [min]} \\ \midrule
+				Alumina Ativada & 750 & 10\% & 1,5 & 45 & 10 \\
+				Sílica Gel & 700 & 8\% & 1,2 & 45 & 10 \\
+				Peneira Molecular 13X & 720 & 18\% & 1,8 & 45 & 10 \\ \bottomrule
 			\end{tabular}
 			}
-			\caption[Propriedades de referência dos materiais dessecantes]{Propriedades de referência dos materiais dessecantes mais comuns em secadores PSA de ar comprimido — densidade aparente e capacidade de trabalho em baixa UR (ASSUMIDO, faixas típicas de literatura/fabricante), constante de taxa de adsorção de referência para a Equação~\eqref{eq:s15-1}.}
+			\caption[Propriedades de referência dos materiais dessecantes]{Propriedades de referência dos materiais dessecantes mais comuns em secadores PSA de ar comprimido — densidade aparente e capacidade de trabalho em baixa UR (ASSUMIDO, faixas típicas de literatura/fabricante), constante de taxa de adsorção e tempos de regeneração/resfriamento de referência.}
 			\label{tab:15-2}
 		\end{table}
 
 		É a peneira molecular, não a alumina ativada (o material mais citado como padrão de mercado para ar comprimido), que oferece a maior capacidade de trabalho em baixa UR e o menor ponto de orvalho alcançável — o que a torna preferível quando a especificação normativa exige a Classe 2 da ISO 8573-1 (PDP alvo de $-40\,^{\circ}\text{C}$, já adotada neste documento no Capítulo 18) com folga de projeto. A sílica gel, por desempenho fraco em baixa UR, raramente é usada isoladamente para esse alvo — sua aplicação típica é em umidade relativa mais alta, fora do regime de um secador de ar comprimido já pré-secado.
+
+		Vale uma ressalva de proveniência, na mesma linha da distinção já feita neste documento entre parâmetro medido, inferível, calibrável e desconhecido (Tabela~\ref{tab:28-1}): só os tempos de regeneração e resfriamento da \textbf{Alumina Ativada} na Tabela~\ref{tab:15-2} vêm de experiência de campo relatada pelo autor (16/08/2026) — os mesmos valores foram reaproveitados por analogia para os outros dois materiais, sem fonte própria verificada. Os valores de $k_{ads}$ de referência, para os três materiais, \textbf{não} foram verificados contra literatura nem ensaio — representam apenas uma ordenação relativa plausível (peneira molecular mais rápida, sílica mais lenta), não uma medição. As duas lacunas ficam registradas aqui deliberadamente, pela mesma disciplina de transparência já adotada para outros parâmetros ASSUMIDOS deste documento, em vez de apresentar precisão que os dados não sustentam.
 
 		Com a capacidade de trabalho da Tabela~\ref{tab:15-2} e a massa real do leito por torre ($M_{leito}$, um dado de projeto), a Equação~\eqref{eq:s15-13} converte a capacidade normalizada da Equação~\eqref{eq:s15-1} em massa física de água retida — uma alternativa prática ao balanço rigoroso da Equação~\eqref{eq:s15-3}, útil quando não há um sensor contínuo de $W_{out}$ na saída do leito, apenas o modelo cinético da Eq. 15.1 e a especificação do material:
 
@@ -2116,6 +2118,14 @@ q_d = q_{eq} \cdot \exp \left( -k_{ads} \cdot \frac{t_{ads}}{t_{res}} \right)
 		\end{equation}
 
 		As duas estimativas de massa de água — o balanço mássico direto (Equação~\eqref{eq:s15-3}, exige $W_{out}$ medido) e a baseada em capacidade (Equação~\eqref{eq:s15-13}, exige só a cinética e a especificação do material) — deveriam concordar num leito saudável; uma divergência persistente entre elas é, por si só, um sintoma diagnóstico: indica que a capacidade real do material já não corresponde ao valor de catálogo da Tabela~\ref{tab:15-2}, tipicamente por contaminação (óleo carreado por falha do separador, Capítulo 14) ou envelhecimento do próprio dessecante.
+
+		O próprio $t_{res}$ da Equação~\eqref{eq:s15-1} — descrito ali como ``tempo de residência do ar no leito'', mas nunca antes desta revisão calculado a partir de nenhum dado de projeto — se fecha pela mesma via de balanço de massa de água da Equação~\eqref{eq:s15-13}: o tempo que o leito, na capacidade de trabalho do material selecionado e na carga de umidade do ar de entrada, levaria para saturar totalmente à vazão de projeto. A Equação~\eqref{eq:s15-14} formaliza esse fechamento:
+
+		\begin{equation}\label{eq:s15-14}
+		t_{res} = \frac{M_{leito} \cdot q_{eq}}{60 \cdot \dot{m}_{ar} \cdot W_{in}}
+		\end{equation}
+
+		Onde $\dot{m}_{ar}$ é a vazão mássica de ar a secar [kg/s] (mesma variável da Equação~\eqref{eq:s15-2}) e $W_{in}$ a razão de umidade do ar que chega ao secador (Equação~\eqref{eq:s10-6}), calculada a partir do ponto de orvalho de entrada; o fator 60 converte de segundos para minutos, a mesma unidade de $t_{ads}$ na Equação~\eqref{eq:s15-1}. A consequência prática fecha exatamente a lacuna que motivou esta equação: mais massa de dessecante, à mesma vazão e umidade, aumenta $t_{res}$ proporcionalmente — e, pela própria Equação~\eqref{eq:s15-1}, esgota o leito mais devagar e sustenta o ponto de orvalho de saída mais perto do alvo por mais tempo. Sem essa relação, a massa do leito seria um parâmetro de projeto sem nenhum efeito sobre o desempenho do secador no modelo — uma inconsistência física real, identificada ao testar uma versão anterior desta seção que ainda tratava $t_{res}$ como parâmetro independente da massa do leito.
 
 		\subsection{\textbf{Termodinâmica do Secador de Tambor Rotativo (HOC)}}
 		
