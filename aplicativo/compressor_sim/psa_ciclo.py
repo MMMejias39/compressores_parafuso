@@ -47,6 +47,8 @@ def simular_ciclo_psa(
     p_low: float,
     p_high: float,
     fator_purga: float,
+    t_entrada_c: float,
+    delta_t_regen: float,
     dt_min: float = 0.05,
 ) -> dict:
     """Simula o rodízio de N torres PSA (3 fases) e devolve séries + KPIs.
@@ -54,6 +56,10 @@ def simular_ciclo_psa(
     m_dot_ar: vazão de ar a secar [kg/s] — de UM compressor ou da PLANTA
     inteira, conforme a topologia escolhida ("por compressor" vs.
     "por sistema", ver app.py). Eq. 15.2 usa essa vazão para a purga.
+    t_entrada_c: temperatura do ar na entrada do secador [°C] — mesma leitura
+    da "Saída aftercooler" da cascata estática (Cap. 14). delta_t_regen: salto
+    de temperatura do aquecedor de regeneração (Eq. 3.3), mesmo parâmetro já
+    usado para dimensionar sua potência.
     """
     n_vasos = max(2, int(round(n_vasos)))
     t_ciclo = t_ads_min + t_regen_min + t_resfriamento_min
@@ -64,6 +70,7 @@ def simular_ciclo_psa(
 
     q_norm = np.empty((n_vasos, n))
     estado = np.empty((n_vasos, n), dtype=object)
+    temp_c = np.empty((n_vasos, n))
 
     for i in range(n_vasos):
         offset = i * t_ciclo / n_vasos
@@ -89,6 +96,21 @@ def simular_ciclo_psa(
         # --- Resfriamento: capacidade já restaurada, torre fora de serviço ---
         q_norm[i, resfriando] = 1.0
 
+        # --- Temperatura do leito por fase (simplificação de modelagem, a
+        # mesma família da recuperação linear de capacidade acima — o Cap. 15
+        # não fecha a dinâmica térmica do leito): sobe linearmente durante a
+        # regeneração (aquecedor, Eq. 3.3) e desce linearmente durante o
+        # resfriamento, formando um perfil triangular por ciclo. Adsorvendo,
+        # o leito está na temperatura do ar de entrada.
+        temp_c[i, adsorvendo] = t_entrada_c
+        temp_c[i, regenerando] = t_entrada_c + delta_t_regen * frac_regen
+        if t_resfriamento_min > 0.0:
+            frac_resf = (fase[resfriando] - t_ads_min - t_regen_min) / t_resfriamento_min
+            frac_resf = np.clip(frac_resf, 0.0, 1.0)
+        else:
+            frac_resf = 1.0
+        temp_c[i, resfriando] = t_entrada_c + delta_t_regen * (1.0 - frac_resf)
+
     n_adsorvendo = np.sum(estado == "Adsorvendo", axis=0)
     n_regenerando_arr = np.sum(estado == "Regenerando", axis=0)
 
@@ -109,6 +131,7 @@ def simular_ciclo_psa(
         "t_min": t,
         "q_norm": q_norm,
         "estado": estado,
+        "temp_c": temp_c,
         "m_purge_kg_s": m_purge,
         "n_adsorvendo": n_adsorvendo,
         "kpis": {

@@ -326,7 +326,8 @@ def test_psa_cobertura_continua_quando_bem_dimensionado(n_vasos):
     r = psa_ciclo.simular_ciclo_psa(
         horizonte_min=30, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
         t_resfriamento_min=2.0, n_vasos=n_vasos, k_ads=1.5, t_res_min=4.0,
-        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
+        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
+        t_entrada_c=25.0, delta_t_regen=80.0)
     assert r["kpis"]["tempo_sem_secagem_min"] == pytest.approx(0.0)
     assert r["kpis"]["n_adsorvendo_min"] >= 1
 
@@ -338,7 +339,8 @@ def test_psa_gap_quando_resfriamento_nao_cabe_no_rodizio():
     r = psa_ciclo.simular_ciclo_psa(
         horizonte_min=10, m_dot_ar=0.5, t_ads_min=3.0, t_regen_min=4.0,
         t_resfriamento_min=3.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
-        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
+        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
+        t_entrada_c=25.0, delta_t_regen=80.0)
     assert r["kpis"]["tempo_sem_secagem_min"] > 0.0
     assert r["kpis"]["n_adsorvendo_min"] == 0
 
@@ -347,7 +349,8 @@ def test_psa_capacidade_decai_regenera_e_mantem_no_resfriamento():
     r = psa_ciclo.simular_ciclo_psa(
         horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
         t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
-        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
+        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
+        t_entrada_c=25.0, delta_t_regen=80.0)
     torre0 = r["q_norm"][0]
     t = r["t_min"]
     # adsorvendo em [0, 6): capacidade cai monotonicamente
@@ -366,12 +369,33 @@ def test_psa_purga_so_durante_regeneracao_e_escala_com_torres_simultaneas():
     r = psa_ciclo.simular_ciclo_psa(
         horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
         t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
-        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15)
+        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
+        t_entrada_c=25.0, delta_t_regen=80.0)
     n_regenerando = np.sum(r["estado"] == "Regenerando", axis=0)
     esperado_por_torre = 0.5 * (1.05e5 / 8.4e5) * 0.15
     # purga é zero quando ninguém regenera, e escala com quantas regeneram
     assert np.allclose(r["m_purge_kg_s"], n_regenerando * esperado_por_torre)
     assert (r["m_purge_kg_s"][n_regenerando == 0] == 0.0).all()
+
+
+def test_psa_temperatura_do_leito_sobe_na_regeneracao_e_desce_no_resfriamento():
+    r = psa_ciclo.simular_ciclo_psa(
+        horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
+        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
+        t_entrada_c=25.0, delta_t_regen=80.0)
+    torre0 = r["temp_c"][0]
+    t = r["t_min"]
+    # adsorvendo em [0, 6): leito na temperatura de entrada
+    assert np.allclose(torre0[t < 6.0], 25.0)
+    # regenerando em [6, 10): temperatura sobe monotonicamente até T_entrada+ΔT
+    fase_regen = torre0[(t >= 6.0) & (t < 10.0)]
+    assert np.all(np.diff(fase_regen) >= -1e-9)
+    assert fase_regen[-1] == pytest.approx(105.0, abs=1.0)
+    # resfriando em [10, 12): temperatura desce monotonicamente de volta
+    fase_resfriamento = torre0[t >= 10.0]
+    assert np.all(np.diff(fase_resfriamento) <= 1e-9)
+    assert fase_resfriamento[-1] < fase_resfriamento[0]
 
 
 def test_umidade_nao_aumenta_ao_longo_do_tratamento():

@@ -559,6 +559,40 @@ with tab_din:
             "Eq. 13.7; ciclagem teórica: Eq. 13.8."
         )
 
+    st.subheader("Pressão e temperatura em cada ponto do trem, ao longo do tempo")
+    x_c_ativo = din["x_c"] > 0.02  # abaixo disso, compressor tratado como parado
+    cores_pontos = plt.cm.tab10(np.linspace(0, 1, len(res["nos"])))
+    figP, (axP, axT) = plt.subplots(1, 2, figsize=(12.6, 3.6))
+    for idx, no in enumerate(res["nos"]):
+        p_serie = np.where(x_c_ativo, no["p_bar"], np.nan)
+        t_serie = np.where(x_c_ativo, no["t_c"], np.nan)
+        axP.plot(din["t_min"], p_serie, color=cores_pontos[idx], lw=1.4,
+                 label=no["nome"])
+        axT.plot(din["t_min"], t_serie, color=cores_pontos[idx], lw=1.4,
+                 label=no["nome"])
+    axP.set_xlabel("Tempo [min]")
+    axP.set_ylabel("Pressão [bar abs]")
+    axT.set_xlabel("Tempo [min]")
+    axT.set_ylabel("Temperatura [°C]")
+    axP.legend(fontsize=6.5, ncol=2, loc="center left")
+    figP.tight_layout()
+    st.pyplot(figP)
+    st.caption(
+        "Linhas constantes enquanto o compressor está ativo — neste "
+        "modelo, P e T de cada ponto do trem dependem só do ponto de "
+        "operação fixo (pressão de rede, temperaturas ambiente/água), não "
+        "da vazão instantânea: um compressor de deslocamento positivo a "
+        "razão de pressão fixa entrega o mesmo perfil P/T em qualquer "
+        "fração de carga do VSD, só a vazão mássica muda (gráfico "
+        "\"Vazão mássica\" acima). O que de fato varia aqui é **quando** "
+        "cada ponto está ativo: no modo Carga/Alívio, as linhas somem "
+        "durante os intervalos de alívio (compressor parado, sem fluxo) — "
+        "o padrão liga/desliga é o sinal relevante, não a forma da curva. "
+        "Para ver P/T variando de verdade, seria preciso um cenário onde "
+        "a própria pressão de rede (setpoint) ou as temperaturas de "
+        "referência mudassem no tempo — não modelado nesta aba."
+    )
+
 # ===========================================================================
 # Aba 3 — Secagem PSA (ciclo de torres)
 # ===========================================================================
@@ -594,6 +628,8 @@ with tab_psa:
         p_low=p_low_psa,
         p_high=p_high_psa,
         fator_purga=params["fator_purga"],
+        t_entrada_c=res["nos"][4]["t_c"],
+        delta_t_regen=params["delta_t_regen"],
     )
     kp = r_psa["kpis"]
 
@@ -648,8 +684,8 @@ with tab_psa:
             "lateral). Ver Tabela 15.1 (Matriz de Diagnóstico de Falhas)."
         )
 
-    st.subheader("Capacidade de adsorção normalizada por torre (Eq. 15.1)")
-    fig8, ax8 = plt.subplots(figsize=(9.0, 3.4))
+    st.subheader("Capacidade de adsorção e temperatura do leito por torre (Eq. 15.1)")
+    fig8, ax8 = plt.subplots(figsize=(9.0, 3.6))
     cores_torres = plt.cm.tab10(np.linspace(0, 1, n_vasos_psa))
     for i in range(n_vasos_psa):
         ax8.plot(r_psa["t_min"], r_psa["q_norm"][i], color=cores_torres[i],
@@ -657,9 +693,25 @@ with tab_psa:
     ax8.set_xlabel("Tempo [min]")
     ax8.set_ylabel(r"$q_d \, / \, q_{eq}$")
     ax8.set_ylim(-0.05, 1.05)
-    ax8.legend(fontsize=8, ncol=min(n_vasos_psa, 4))
+    ax8b = ax8.twinx()
+    for i in range(n_vasos_psa):
+        ax8b.plot(r_psa["t_min"], r_psa["temp_c"][i], color=cores_torres[i],
+                  ls="--", lw=1.0, alpha=0.6)
+    ax8b.set_ylabel("Temperatura do leito [°C] (tracejado)")
+    ax8b.grid(False)
+    ax8.legend(fontsize=8, ncol=min(n_vasos_psa, 4), loc="lower left")
     fig8.tight_layout()
     st.pyplot(fig8)
+    st.caption(
+        "Linha cheia: capacidade normalizada (eixo esquerdo). Linha "
+        "tracejada: temperatura do leito (eixo direito) — sobe durante a "
+        "regeneração (aquecedor, ΔT_regen) e desce no resfriamento, "
+        "simplificação linear análoga à recuperação de capacidade (o "
+        "Cap. 15 não fecha a dinâmica térmica do leito). Pressão de "
+        f"entrada/saída do secador é constante no horizonte simulado: "
+        f"{p_high_psa / 1e5:.2f} bar abs (alta) e {p_low_psa / 1e5:.2f} "
+        "bar abs (purga, à pressão ambiente)."
+    )
 
     st.subheader("Chaveamento entre torres")
     # 0 = Adsorvendo, 1 = Regenerando, 2 = Resfriando

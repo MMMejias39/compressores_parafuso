@@ -332,6 +332,73 @@ tempo — um candidato natural seria acoplá-la à aba "Dinâmica temporal"
 durante um evento de pico de demanda. Não implementado por não ter sido
 pedido; só o valor de regime permanente está na aba 1 hoje.
 
+## Gráficos temporais: temperatura do leito PSA e P/T por ponto do trem (15/08/2026)
+
+O autor pediu gráficos "em tempo real" das secadoras, além de P/T de
+entrada/saída de cada parte do sistema. Duas questões de escopo
+clarificadas com o autor antes de implementar: (1) sobrepor P/T nos 3
+gráficos já existentes da aba PSA, em vez de um gráfico novo separado; (2)
+P/T de cada ponto do trem evoluindo no tempo, sincronizado com a aba
+"Dinâmica temporal" (não só a tabela/gráfico estático da aba 1).
+
+**Achado importante antes de implementar o item 2**: neste modelo, a
+pressão e a temperatura em cada ponto do trem (`sistema.simular()`)
+dependem só do ponto de operação fixo — pressão de rede, temperaturas
+ambiente/água, índice politrópico — **nunca da vazão** (`fad_m3_min`).
+Um compressor de deslocamento positivo a razão de pressão fixa entrega o
+mesmo P/T em qualquer fração de carga do VSD; só a vazão mássica muda.
+Isso significa que "re-simular a cascata inteira a cada passo de tempo"
+geraria exatamente os mesmos valores em todo instante — **redundante e
+caro** (chamar `sistema.simular()` centenas/milhares de vezes por
+recarga da página) para um resultado que já é conhecido de antemão.
+Implementação adotada em vez disso: usar os valores de `res["nos"]` (já
+calculados uma vez) e mascará-los com `NaN` nos instantes em que o
+compressor está parado (`din["x_c"] <= 0.02`) — no modo VSD isso nunca
+acontece (`x_c_min` = 30% por padrão), então as linhas ficam contínuas;
+no modo Carga/Alívio, as linhas **somem** durante os intervalos de
+alívio, mostrando o padrão liga/desliga real. Muito mais barato
+(nenhuma chamada extra a `simular()`) e tão correto quanto a
+re-simulação completa, dado que o resultado seria idêntico.
+
+**Novo gráfico na aba "Dinâmica temporal"**: dois painéis lado a lado
+(Pressão × tempo, Temperatura × tempo), uma linha por ponto do trem (6
+pontos, mesma paleta `tab10`), com legenda e a explicação acima em
+`st.caption()` — para o autor não interpretar "linhas retas" como bug.
+
+**Aba "Secagem PSA"**: `psa_ciclo.simular_ciclo_psa()` ganhou dois
+parâmetros novos, `t_entrada_c` (temperatura na entrada do secador — usa
+`res["nos"][4]["t_c"]`, a saída do aftercooler) e `delta_t_regen` (salto
+do aquecedor de regeneração, Eq. 3.3, já existente em `constantes.py`).
+Nova saída `temp_c[torre, tempo]`: perfil **triangular** por torre —
+constante em `t_entrada_c` durante a adsorção, sobe linearmente até
+`t_entrada_c + delta_t_regen` durante a regeneração, desce linearmente de
+volta durante o resfriamento. Mesma simplificação de modelagem já
+adotada para a recuperação de capacidade (`q_norm`) — o Cap. 15 não
+fecha a dinâmica térmica do leito, então o app usa rampas lineares em vez
+de inventar uma constante de tempo não citada no livro. Sobreposto como
+eixo Y secundário (tracejado) no gráfico "Capacidade de adsorção
+normalizada por torre" já existente — não um gráfico novo. Pressão de
+entrada/saída do secador é constante no horizonte (mesma razão do achado
+acima) e é reportada como texto na legenda, não como linha reta redundante.
+
+**Testes**: 1 novo (`test_psa_temperatura_do_leito_sobe_na_regeneracao_e_
+desce_no_resfriamento`) — 49 no total, todos passando; os 4 testes já
+existentes de `simular_ciclo_psa` foram atualizados com os 2 parâmetros
+novos (obrigatórios, sem default, mesmo estilo dos demais parâmetros da
+função).
+
+**Verificação**: Claude-in-Chrome ficou indisponível nesta sessão
+(extensão desconectada) — verificado em vez disso chamando as mesmas
+funções de plotagem do `app.py` diretamente via script Python (mesmos
+parâmetros, mesmas chamadas a `dinamica.simular_transiente`/
+`psa_ciclo.simular_ciclo_psa`), salvando as figuras em PNG e inspecionando
+visualmente: painel P/T por ponto mostra linhas constantes com um gap
+visível no modo Carga/Alívio (confirmando o comportamento liga/desliga);
+gráfico da PSA mostra o perfil triangular de temperatura corretamente
+sincronizado com as transições de estado de cada torre. Log do servidor
+sem traceback, `/_stcore/health` respondeu `ok`. Servidor encerrado ao
+final — não ficou rodando.
+
 ## Motor, invólucro/Hood e tubulação interestágios (Eqs. 4.10-4.12, 2.1, 2.4, 5.15 — 15/08/2026)
 
 Continuação direta da mesma sessão: uma auditoria pedida pelo autor sobre
@@ -425,12 +492,15 @@ threading em `sistema.py`).
 
 ## Estado atual
 
-Código compila sem erro de sintaxe, 48/48 testes passam
+Código compila sem erro de sintaxe, 49/49 testes passam
 (`venv/bin/pytest tests/ -q`) — 41 após a Eq. 9.6, mais 7 do motor/Hood/
-tubulação (ver "Motor, invólucro/Hood e tubulação interestágios" acima).
-Servidor Streamlit **não está rodando** no momento — testado e encerrado
-em três rodadas de 15/08/2026 (as duas de implementação, mais uma sessão
-extra de teste real no navegador via Claude-in-Chrome, ver "Motor,
+tubulação, mais 1 da temperatura do leito PSA (ver "Gráficos temporais" e
+"Motor, invólucro/Hood e tubulação interestágios" acima). Servidor
+Streamlit **não está rodando** no momento — testado e encerrado em quatro
+rodadas de 15/08/2026 (as duas de implementação, uma sessão de teste real
+no navegador via Claude-in-Chrome, e a mais recente verificada por
+renderização direta das figuras porque a extensão ficou desconectada; ver
+"Motor,
 invólucro/Hood e tubulação interestágios" acima); a última vez que ficou
 de pé continuamente foi após a correção de umidade (02/08/2026), sessão
 anterior. Commit mais recente do app: `ad97a78` (15/08/2026) — o teste no
