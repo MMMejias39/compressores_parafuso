@@ -78,6 +78,23 @@ class SubstitutoPIML(nn.Module):
         return self.rede(x)
 
 
+def _prever_colocacao(modelo: nn.Module, entradas_coloc: np.ndarray,
+                      media_x: np.ndarray, desvio_x: np.ndarray,
+                      desvio_y_t: torch.Tensor, media_y_t: torch.Tensor,
+                      device: torch.device) -> torch.Tensor:
+    """Avalia o modelo num lote de pontos de colocação e desfaz a
+    padronização das saídas para unidades reais (K, kg/s, W) — a
+    padronização por si só violaria as equações físicas dos resíduos, que
+    somam grandezas com unidades concretas. Usada tanto no passo de treino
+    quanto no balanceamento adaptativo de λ (Eq. 23.4), em `treinar()` e em
+    `treinar_com_identificacao()` — mesmo padrão nas duas, extraído aqui
+    para não repetir a padronização de entrada e a desnormalização de saída
+    quatro vezes (duas por função).
+    """
+    x_coloc = torch.tensor((entradas_coloc - media_x) / desvio_x, dtype=torch.float32, device=device)
+    return modelo(x_coloc) * desvio_y_t + media_y_t
+
+
 def _residuo_fisico(saida_pred: torch.Tensor) -> torch.Tensor:
     """F = Q̇_pred − ṁ_seco_pred·c_p·(T_LP,out_pred − T_HP,in_pred) — Eq. 23.2,
     forma algébrica em regime permanente da Eq. 10.1 (balanço de energia do
@@ -134,12 +151,8 @@ def treinar(entradas: np.ndarray, saidas: np.ndarray, faixas_colocacao: dict,
         perda_dados = torch.mean((pred_dados - y_norm) ** 2)  # L_data
 
         entradas_coloc = _amostrar_entradas(n_colocacao, faixas_colocacao, rng)
-        x_coloc = torch.tensor((entradas_coloc - media_x) / desvio_x, dtype=torch.float32, device=device)
-        pred_coloc_norm = modelo(x_coloc)
-        # desfaz a padronização das SAÍDAS para avaliar o resíduo físico em
-        # unidades reais (K, kg/s, W) — a padronização por si só violaria
-        # a Eq. 10.1, que soma grandezas com unidades físicas concretas
-        pred_coloc = pred_coloc_norm * desvio_y_t + media_y_t
+        pred_coloc = _prever_colocacao(modelo, entradas_coloc, media_x, desvio_x,
+                                       desvio_y_t, media_y_t, device)
         residuo = _residuo_fisico(pred_coloc) / escala_residuo
         perda_fisica = torch.mean(residuo ** 2)  # L_physics
 
@@ -157,8 +170,8 @@ def treinar(entradas: np.ndarray, saidas: np.ndarray, faixas_colocacao: dict,
             mag_dados = np.mean([g.abs().mean().item() for g in grad_dados if g is not None])
 
             entradas_coloc2 = _amostrar_entradas(n_colocacao, faixas_colocacao, rng)
-            x_coloc2 = torch.tensor((entradas_coloc2 - media_x) / desvio_x, dtype=torch.float32, device=device)
-            pred_coloc2 = modelo(x_coloc2) * desvio_y_t + media_y_t
+            pred_coloc2 = _prever_colocacao(modelo, entradas_coloc2, media_x, desvio_x,
+                                            desvio_y_t, media_y_t, device)
             perda_fisica2 = torch.mean((_residuo_fisico(pred_coloc2) / escala_residuo) ** 2)
             grad_fisica = torch.autograd.grad(perda_fisica2, params_treinaveis,
                                               retain_graph=False, allow_unused=True)
@@ -205,8 +218,7 @@ def residuo_fisico_real(modelo_info: dict, entradas: np.ndarray) -> np.ndarray:
 
 
 def _residuo_inverso(pred_coloc: torch.Tensor, entradas_coloc: np.ndarray,
-                     xi: torch.Tensor, params_base: dict,
-                     device: torch.device | None = None) -> torch.Tensor:
+                     xi: torch.Tensor, params_base: dict) -> torch.Tensor:
     """F(ŷ; Ξ) = ṁ_seco_pred − ṁ_seco,eq93(Ξ) — Eq. 23.5 (Seção 23.8), forma
     do problema inverso sobre a Equação 9.3: em vez de K fixo em
     `params_base` (como em `_rotular`, que gerou os dados rotulados), ele é
@@ -223,7 +235,7 @@ def _residuo_inverso(pred_coloc: torch.Tensor, entradas_coloc: np.ndarray,
     compensar incorretamente, dominando o termo real de Ξ na Eq. 9.3 (cujo
     efeito, em folgas típicas, é da ordem de décimos de %).
     """
-    device = device if device is not None else pred_coloc.device
+    device = pred_coloc.device  # mesmo device de quem chamou (ver _prever_colocacao)
     pi_total = torch.tensor(entradas_coloc[:, NOMES_ENTRADA.index("pi_total")], dtype=torch.float32, device=device)
     t_amb_c = entradas_coloc[:, NOMES_ENTRADA.index("t_amb_c")]
     t_amb_k = torch.tensor(t_amb_c, dtype=torch.float32, device=device) + 273.15
@@ -291,10 +303,9 @@ def treinar_com_identificacao(entradas: np.ndarray, saidas: np.ndarray, faixas_c
         perda_dados = torch.mean((pred_dados - y_norm) ** 2)  # L_data
 
         entradas_coloc = _amostrar_entradas(n_colocacao, faixas_colocacao, rng)
-        x_coloc = torch.tensor((entradas_coloc - media_x) / desvio_x, dtype=torch.float32, device=device)
-        pred_coloc_norm = modelo(x_coloc)
-        pred_coloc = pred_coloc_norm * desvio_y_t + media_y_t
-        residuo = _residuo_inverso(pred_coloc, entradas_coloc, xi, params_base, device) / escala_residuo
+        pred_coloc = _prever_colocacao(modelo, entradas_coloc, media_x, desvio_x,
+                                       desvio_y_t, media_y_t, device)
+        residuo = _residuo_inverso(pred_coloc, entradas_coloc, xi, params_base) / escala_residuo
         perda_fisica = torch.mean(residuo ** 2)  # L_physics(θ, Ξ) — Eq. 23.5
 
         perda_total = perda_dados + lam * perda_fisica
@@ -310,9 +321,9 @@ def treinar_com_identificacao(entradas: np.ndarray, saidas: np.ndarray, faixas_c
             mag_dados = np.mean([g.abs().mean().item() for g in grad_dados if g is not None])
 
             entradas_coloc2 = _amostrar_entradas(n_colocacao, faixas_colocacao, rng)
-            x_coloc2 = torch.tensor((entradas_coloc2 - media_x) / desvio_x, dtype=torch.float32, device=device)
-            pred_coloc2 = modelo(x_coloc2) * desvio_y_t + media_y_t
-            residuo2 = _residuo_inverso(pred_coloc2, entradas_coloc2, xi, params_base, device) / escala_residuo
+            pred_coloc2 = _prever_colocacao(modelo, entradas_coloc2, media_x, desvio_x,
+                                            desvio_y_t, media_y_t, device)
+            residuo2 = _residuo_inverso(pred_coloc2, entradas_coloc2, xi, params_base) / escala_residuo
             perda_fisica2 = torch.mean(residuo2 ** 2)
             grad_fisica = torch.autograd.grad(perda_fisica2, params_treinaveis,
                                               retain_graph=False, allow_unused=True)

@@ -194,10 +194,15 @@ Ambas as funções normalizam o resíduo físico pela própria escala da saída
 de treino satura as unidades `tanh` da rede de forma irrecuperável (o
 resíduo em unidades reais é ordens de grandeza maior que o erro de dados já
 padronizado). Ambas também rodam em GPU quando disponível (`torch_device.py`
-acima) — `_residuo_inverso()` recebe o `device` explicitamente, propagado
-pelos dois pontos onde `treinar_com_identificacao()` a chama, para que os
-tensores que ela cria internamente (a partir de arrays NumPy) fiquem no
-mesmo device do resto do grafo.
+acima). `_prever_colocacao()` (nova, extraída na refatoração de 16/08/2026)
+concentra o padrão "padronizar entrada → avaliar rede → desnormalizar
+saída" que se repetia 4 vezes (duas por função, uma no passo de treino e
+outra no balanceamento de λ) — as duas funções de treino chamam essa única
+função em vez de duplicar as três linhas. `_residuo_inverso()` não recebe
+mais `device` como parâmetro explícito: como sempre é chamada com o
+`pred_coloc` que `_prever_colocacao()` devolveu, ela lê o device direto do
+próprio tensor (`pred_coloc.device`) — mais simples que propagar o
+parâmetro por dois pontos de chamada.
 
 ## `compressor_sim/mpc.py` — Controle Preditivo
 
