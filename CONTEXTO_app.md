@@ -397,9 +397,23 @@ escoamento fisicamente alta demais, ~39 m/s, no valor original; 0,10 m dá
 
 7 testes novos (funções puras + 3 testes de integração via `simular()`,
 incluindo o que verifica que `hood_enclausurado=True` produz $T_c$ maior
-que `False`) — 48 no total, todos passando. App testado subindo sem erro
-em runtime (servidor iniciado, `curl` 200, log sem traceback, encerrado —
-não ficou rodando ao fim da sessão).
+que `False`) — 48 no total, todos passando.
+
+**Teste real no navegador (Claude-in-Chrome), não só `curl`**: subiu o
+servidor, abriu `localhost:8501` e navegou pela UI de fato — abriu os 3
+expanders novos na barra lateral ("Motor e invólucro (Hood)", "Carcaça do
+estágio LP", "Tubulação interestágios") e conferiu que todos os controles
+(escorregamento, perdas fixas do motor, vazão de ventilação, perdas de
+VSD/gearbox, fator de atrito de Darcy, comprimento/diâmetro da linha)
+aparecem com os defaults corretos. Os 3 blocos de métricas novos na aba
+"Operação estática" renderizam com os valores exatos já conferidos por
+`pytest`/`python -c` ($\eta_{mot}=94{,}7\%$, $T_{\text{hood}}=40{,}4\,^\circ$C,
+$T_c=68{,}5\,^\circ$C, $\Delta P_{\text{linha}}=0{,}73\,$mbar). **Testado o
+toggle "Compressor dentro de invólucro (Hood)?" ao vivo**: desmarcar fez
+$T_{\text{referência}}$ cair de $40{,}4$ para $30{,}0\,^\circ$C (= $T_{amb}$
+exato) e $T_c$ cair de $68{,}5$ para $58{,}1\,^\circ$C — reativo e correto,
+sem precisar recarregar a página. Console do navegador sem erros/exceções.
+Servidor encerrado ao final — não ficou rodando ao fim da sessão.
 
 **Pendências abertas por este trabalho**: VSD (Eq. 4.3) e decomposição de
 perdas da gearbox (Eq. 5.2) continuam sem representação própria no app —
@@ -415,9 +429,12 @@ Código compila sem erro de sintaxe, 48/48 testes passam
 (`venv/bin/pytest tests/ -q`) — 41 após a Eq. 9.6, mais 7 do motor/Hood/
 tubulação (ver "Motor, invólucro/Hood e tubulação interestágios" acima).
 Servidor Streamlit **não está rodando** no momento — testado e encerrado
-ao fim de cada uma das duas rodadas de mudança de 15/08/2026; a última vez
-que ficou de pé continuamente foi após a correção de umidade (02/08/2026),
-sessão anterior. Commit mais recente do app: `ad97a78` (15/08/2026).
+em três rodadas de 15/08/2026 (as duas de implementação, mais uma sessão
+extra de teste real no navegador via Claude-in-Chrome, ver "Motor,
+invólucro/Hood e tubulação interestágios" acima); a última vez que ficou
+de pé continuamente foi após a correção de umidade (02/08/2026), sessão
+anterior. Commit mais recente do app: `ad97a78` (15/08/2026) — o teste no
+navegador não gerou mudança de código, só confirmação visual.
 
 O diretório `aplicativo/` foi commitado em 01/08/2026 (commit `693a2c6`,
 junto com este arquivo e as linhas de `.gitignore` para
