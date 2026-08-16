@@ -2401,3 +2401,69 @@ honesta é que não).
 
 166→167 páginas. 3 passagens de `pdflatex`, sem referências indefinidas
 nem overfull severo.
+
+## Relatório externo Gemini_ajuste.pdf: 5 de 6 correções eram reais (16/08/2026)
+
+Pedido do autor: "use também o arquivo Gemini_ajuste.pdf que é uma
+avaliação do último documento criado em .pdf" — mesmo padrão já usado
+para o Kimi CLI ([[feedback-workflow-contexto-depois-dicas-kimi]]):
+tratar relatório externo de IA com ceticismo, verificar cada item
+contra o texto real do livro antes de aplicar qualquer correção. O
+arquivo (não criado por mim, deixado fora do git como os outros
+relatórios de revisor) listava 6 "correções" e 5 "adições". Resultado
+da verificação, item a item:
+
+**Correções confirmadas e aplicadas (5 de 6):**
+- **Eq. 6.3 (Cap. 6, engrenamento):** o livro tinha literalmente
+  `\cos^{-1}(\phi)` (arco-cosseno) multiplicando uma potência — erro
+  dimensional real (ângulo em radianos não se multiplica por potência).
+  A física correta (AGMA/ISO) é a secante do ângulo de pressão. Corrigido
+  para `\sec(\phi)`.
+- **Eq. 8.5 (Cap. 8, rigidez de mancais):** derivação própria (rotor de
+  Jeffcott, dois mancais idênticos sustentando a mesma carga em
+  paralelo) confirma que a flexibilidade de suporte é $1/(2k_b)$, não
+  $2/k_b$ como estava. A fórmula original tratava os mancais como se
+  estivessem em série entre si. Corrigido.
+- **Eq. 10.4 (Cap. 10, penalidade térmica HP):** misturava a base
+  politrópica ($n/(n-1)$, expoente $(n-1)/n$) com divisão por
+  $\eta_{is}$ (que pertence à formulação isentrópica, como a própria
+  Eq. 11.2 do livro já usa para a mesma grandeza $\dot{W}_{HP}$).
+  Corrigido trocando $n$ por $\gamma$ nos expoentes, alinhando com a
+  Eq. 11.2 já existente (mesmo símbolo $\dot{W}_{HP}$, mesma máquina).
+- **Eq. 18.3 (Cap. 18, emissão de CO2):** inconsistente com a Eq. 17.5
+  do próprio livro — 17.5 usa $\dot{W}_{total} \cdot EF_{carbon}$
+  (sem desconto), 18.3 tinha o fator extra $(1-\eta_{ex})$, o que
+  subestimava a pegada de carbono real (em unidade offshore, cada kWh
+  consumido dos geradores emite CO2 integralmente, independente da
+  eficiência exergética interna da máquina). Fator removido; $\eta_{ex}$
+  continua calculado na mesma equação, só não desconta mais o CO2.
+- **Eq. 7.7 (Cap. 7, SOH do óleo):** a razão direta
+  $\mu_{real}/\mu_{nom}$ só penalizava afinamento do óleo; envelhecimento
+  por oxidação eleva a viscosidade (razão $>1$), mascarando degradação.
+  Substituído por $\Theta_\mu = \max(0, 1 - |\mu_{real}-\mu_{nom}|/\text{Tol}_\mu)$
+  (desvio bilateral), mantendo o mesmo $\min(\cdot)$ com os outros dois
+  termos.
+
+**Falso positivo (1 de 6) — não aplicado:** Eq. 13.2 (Cap. 13, função
+$\Phi(r)$ de escoamento bloqueado). O relatório alegava raiz quadrada
+aplicada duas vezes sobre a potência do expoente. Conferindo o LaTeX
+real (`\sqrt{\dfrac{\gamma}{2}}\left(\dfrac{2}{\gamma+1}\right)^{...}`),
+a raiz já cobre só o fator $\gamma/2$, não a potência inteira — o livro
+já estava exatamente na forma que o próprio relatório propôs como
+correção. Bom exemplo de por que verificar contra o texto real antes de
+aplicar checklist externo, não só contra o resumo do relatório.
+
+**Não implementado ainda — 5 propostas de adição (Seção 2 do relatório):**
+balanço térmico do rotor $T_r$ (Cap. 9/11), calor latente nos trocadores
+(Cap. 10/14), expansão do vetor $z$ do EKF com medições interestágio
+(Cap. 21), fuga compressível/sônica no estágio HP (Cap. 11), e modelo de
+capacitância/tensão de eixo para EDM (Seção 4.4). São adições de escopo
+maior, não correções de erro — dado que a sessão já tem pendências
+explicitamente adiadas pelo autor (ver lista de pendências), ficam
+registradas aqui para o autor decidir se/quando entrar nelas, em vez de
+implementadas sem confirmação.
+
+167 páginas mantidas, sem alteração no total (só correções pontuais de
+equações + prosa ao redor). 1 passagem de `latexmk`, sem referências
+indefinidas nem overfull severo introduzido pelas edições (dois
+underfulls preexistentes nas linhas ~3792/3854, não relacionados).

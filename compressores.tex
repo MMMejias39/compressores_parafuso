@@ -981,9 +981,9 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{itemize}
 		\item \textbf{Perdas por Engrenamento ($P_{\text{mesh}}$):} A Equação~\eqref{eq:s6-3} modela a fração da potência transmitida ($P_{\text{trans}}$) que se converte em atrito no contato entre os dentes, escalada pelo coeficiente de atrito e por um termo geométrico dependente do ângulo de pressão da engrenagem:
 		\begin{equation}\label{eq:s6-3}
- P_{\text{mesh}} = f_{\text{fric}} \cdot P_{\text{trans}} \cdot \cos^{-1}(\phi)
+ P_{\text{mesh}} = f_{\text{fric}} \cdot P_{\text{trans}} \cdot \sec(\phi)
 \end{equation}
-		Onde $f_{\text{fric}}$ é o coeficiente de atrito (função da rugosidade e lubrificação) e $\phi$ é o ângulo de pressão.
+		Onde $f_{\text{fric}}$ é o coeficiente de atrito (função da rugosidade e lubrificação) e $\phi$ é o ângulo de pressão — a força normal sobre o flanco do dente escala com $\sec(\phi) = 1/\cos(\phi)$ (normas AGMA/ISO), não com o arco-cosseno de $\phi$.
 		\item \textbf{Perdas por Agitação e Ventilação ($P_{\text{windage}}$):} O arrasto viscoso do óleo contra as engrenagens em rotação cresce com o cubo da velocidade angular, pela Equação~\eqref{eq:s6-4}:
 		\begin{equation}\label{eq:s6-4}
  P_{\text{windage}} = C_w \cdot \rho_{\text{óleo}} \cdot \omega^3 \cdot D^5 
@@ -1145,9 +1145,9 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\end{itemize}
 	
 	\vspace{1em}
-	\textbf{Estado de Saúde do Sistema de Óleo ($SOH_{\text{oil}}$):} A Equação~\eqref{eq:s7-7} consolida três razões normalizadas — viscosidade real sobre nominal, limite de perda de carga sobre perda real no filtro, e efetividade real sobre nominal do resfriador — cada uma variando entre 0 (crítico) e 1 (saudável), e toma o menor valor entre as três como saúde global do sistema:
+	\textbf{Estado de Saúde do Sistema de Óleo ($SOH_{\text{oil}}$):} A Equação~\eqref{eq:s7-7} consolida três indicadores normalizados — desvio de viscosidade, limite de perda de carga sobre perda real no filtro, e efetividade real sobre nominal do resfriador — cada um variando entre 0 (crítico) e 1 (saudável), e toma o menor valor entre os três como saúde global do sistema. O termo de viscosidade não pode ser a razão direta $\mu_{\text{real}}/\mu_{\text{nom}}$: essa razão só penaliza o afinamento do óleo ($\mu_{\text{real}} < \mu_{\text{nom}}$), mas o envelhecimento por oxidação e formação de borras/vernizes eleva a viscosidade ($\mu_{\text{real}} > \mu_{\text{nom}}$), o que produziria razão $>1$ e mascararia a degradação. O indicador $\Theta_\mu$ penaliza o desvio \textbf{bilateral} em relação à tolerância de projeto $\text{Tol}_\mu$:
 	\begin{equation}\label{eq:s7-7}
- \boxed{SOH_{\text{oil}} = \min \left( \frac{\mu_{\text{real}}}{\mu_{\text{nom}}}, \frac{\Delta P_{\text{lim}}}{\Delta P_{\text{real}}}, \frac{\epsilon_{\text{real}}}{\epsilon_{\text{nom}}} \right)}
+ \Theta_\mu = \max\left(0,\ 1 - \frac{|\mu_{\text{real}} - \mu_{\text{nom}}|}{\text{Tol}_\mu}\right) \qquad \boxed{SOH_{\text{oil}} = \min \left( \Theta_\mu, \frac{\Delta P_{\text{lim}}}{\Delta P_{\text{real}}}, \frac{\epsilon_{\text{real}}}{\epsilon_{\text{nom}}} \right)}
 \end{equation}
 
 	\subsection{\textbf{Análise Físico-Química do Óleo (Canal Laboratorial \textit{Offline})}}
@@ -1234,7 +1234,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{itemize}
 		\item \textbf{Velocidade Crítica (Modelo de Jeffcott):} Aproximando o conjunto eixo-pinhão como um rotor de Jeffcott (massa concentrada $m$ sobre um eixo de rigidez lateral $k_s$, apoiado em mancais de rigidez $k_b$), a primeira velocidade crítica é dada pela Equação~\eqref{eq:s8-5}:
 		\begin{equation}\label{eq:s8-5}
- \omega_{cr} = \sqrt{\frac{k_{eq}}{m}} \quad \text{onde} \quad \frac{1}{k_{eq}} = \frac{1}{k_s} + \frac{2}{k_b} 
+ \omega_{cr} = \sqrt{\frac{k_{eq}}{m}} \quad \text{onde} \quad \frac{1}{k_{eq}} = \frac{1}{k_s} + \frac{1}{2 k_b}
 \end{equation}
 		A rigidez de mancal $k_b$ não é constante: em mancais hidrodinâmicos ela varia com a viscosidade $\mu(T)$ e a excentricidade, de modo que $\omega_{cr}$ se desloca com a temperatura de óleo e a carga — o Gêmeo Digital deve recalcular $\omega_{cr}$ em tempo real a partir de $T_{\text{oil}}$ e não tratá-la como constante de projeto.
 		\item \textbf{Margem de Separação (API 684 \cite{api684}):} A norma exige margem mínima entre a velocidade de operação $\omega_{op}$ e qualquer velocidade crítica dentro da faixa de operação do VSD, formalizada na Equação~\eqref{eq:s8-6}:
@@ -1521,7 +1521,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{equation}\label{eq:s10-4}
 	\begin{aligned}
 		\Delta \dot{W}_{\text{penalty}} &= \dot{W}_{HP}(T_{w,\text{in,atual}}) - \dot{W}_{HP}(T_{w,\text{in,nominal}}) \\[4pt]
-		\dot{W}_{HP} &= \frac{\dot{m} \cdot R \cdot T_{HP,\text{in}}}{\eta_{is}} \cdot \left( \frac{n}{n-1} \right) \cdot \left[ \left( \frac{P_{HP,\text{out}}}{P_{HP,\text{in}}} \right)^{\frac{n-1}{n}} - 1 \right]
+		\dot{W}_{HP} &= \frac{\dot{m} \cdot R \cdot T_{HP,\text{in}}}{\eta_{is}} \cdot \left( \frac{\gamma}{\gamma-1} \right) \cdot \left[ \left( \frac{P_{HP,\text{out}}}{P_{HP,\text{in}}} \right)^{\frac{\gamma-1}{\gamma}} - 1 \right]
 	\end{aligned}
 \end{equation}
 	
@@ -2491,12 +2491,12 @@ O processamento matemático do Gêmeo Digital é executado através da integraç
 \end{aligned}
 \end{equation}
 
-\textbf{3. Domínio de Exergia e Sustentabilidade Ambiental (Global):} A Equação~\eqref{eq:s18-3} retoma a destruição de exergia introduzida na Equação~\eqref{eq:s17-3} — aqui escrita em termos de entropia de fluxo ($s$) de entrada e saída mais a troca de calor com o ambiente — e a propaga para a eficiência exergética global e, a partir dela, para a taxa de emissão de $CO_2$:
+\textbf{3. Domínio de Exergia e Sustentabilidade Ambiental (Global):} A Equação~\eqref{eq:s18-3} retoma a destruição de exergia introduzida na Equação~\eqref{eq:s17-3} — aqui escrita em termos de entropia de fluxo ($s$) de entrada e saída mais a troca de calor com o ambiente — e fecha a eficiência exergética global $\eta_{\text{ex}}$; a taxa de emissão de $CO_2$ (mesma forma da Equação~\eqref{eq:s17-5}) é reportada separadamente, proporcional à potência elétrica total consumida — em uma unidade offshore, cada kWh demandado dos geradores emite $CO_2$ integralmente, independentemente da eficiência exergética interna da máquina, de modo que $\eta_{\text{ex}}$ não deve descontar essa emissão:
 \begin{equation}\label{eq:s18-3}
 \begin{aligned}
 	\dot{I} &= T_0 \left[ \sum (\dot{m}s)_{\text{out}} - \sum (\dot{m}s)_{\text{in}} - \frac{\dot{Q}}{T_{\text{surr}}} \right] \\[8pt]
 	\eta_{\text{ex}} &= 1 - \frac{\dot{I}}{\dot{W}_{\text{elec}}} \\[8pt]
-	\dot{m}_{\text{CO}_2} &= \dot{W}_{\text{elec}} \cdotp EF_{\text{carbon}} \cdotp (1 - \eta_{\text{ex}})
+	\dot{m}_{\text{CO}_2} &= \dot{W}_{\text{elec}} \cdotp EF_{\text{carbon}}
 \end{aligned}
 \end{equation}
 
