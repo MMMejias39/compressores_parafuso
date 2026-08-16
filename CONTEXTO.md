@@ -2333,3 +2333,29 @@ na raiz do repositório". Reduzido aqui só a um ponteiro porque a
 convenção deste projeto mantém o contexto do app separado (ver
 "Convenções específicas do app" em `CONTEXTO_app.md`) — este arquivo
 principal registra que a mudança aconteceu, não a duplica.
+
+## Cap. 15 (Secagem PSA): cinética de regeneração e materiais dessecantes (16/08/2026)
+
+Pedido do autor: "ajuste as equações do livro", na sequência de melhorias
+implementadas primeiro no app (material dessecante selecionável, massa
+real do leito, dinâmica de regeneração exponencial em vez de linear —
+detalhe completo em `CONTEXTO_app.md`, seções "Material dessecante, massa
+real e dinâmica não linear do secador" e "Sincronia com o livro: Eqs.
+15.12/15.13, Tabela 15.2"). Nova subseção no Cap. 15: Equação 15.12
+(recuperação exponencial de 1ª ordem na regeneração, fecha uma lacuna que
+a própria Eq. 15.1 já reconhecia mas nunca fechava — $q_{eq}$ e $k_{ads}$
+descritos como dependentes do material, sem valor nunca dado), Tabela
+15.2 (propriedades de 3 materiais — alumina ativada, sílica gel, peneira
+molecular 13X — pesquisadas via `WebSearch` antes de escrever, não de
+memória), Equação 15.13 (massa de água por capacidade, complementar ao
+balanço mássico já existente na Eq. 15.3, não um substituto). Também
+corrigido: $k_{ads}$ estava categorizado como "Cap. 14" na Nomenclatura,
+claramente errado (é definido e usado só no Cap. 15) — notado e corrigido
+por estar mexendo exatamente naquela linha, não uma varredura deliberada
+de todo o documento.
+
+165→166 páginas. Um erro cometido e corrigido antes de reportar como
+concluído: a Tabela 15.2 inicial não usava `\resizebox` (diferente de
+toda outra tabela do documento) e transbordou a largura da página
+(*overfull hbox* de 85,9pt) — detectado pela checagem de rotina do log de
+compilação, não por inspeção visual do PDF.

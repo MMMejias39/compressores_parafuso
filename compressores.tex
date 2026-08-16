@@ -293,7 +293,9 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$P_{\text{sat}}(T)$ & Pressão de saturação do vapor d'água na temperatura $T$ & kPa & Cap. 10 \\
 	$T_{dp}$ & Ponto de orvalho sob pressão & $^{\circ}$C & Cap. 3, 14, 15, 19 \\
 	$e_{\text{filme}}$\dag & Espessura do filme de óleo no mancal & m, $\mu$m & Cap. 7 \\
-	$k_{ads}$\dag & Constante de taxa de adsorção do dessecante & s$^{-1}$ & Cap. 14 \\
+	$k_{ads}$\dag & Constante de taxa de adsorção do dessecante (Eq. 15.1) & s$^{-1}$ & Cap. 15 \\
+	$\kappa_{regen}$\dag & Constante de taxa de recuperação de capacidade na regeneração (Eq. 15.12) — mesma família de $k_{ads}$, processo reverso ($\kappa$ está ocupado pelo fator de suavização do PIML, Cap. 23, e por $\kappa_{\text{port}}$, Cap. 18) & s$^{-1}$ & Cap. 15 \\
+	$M_{leito}$ & Massa de material dessecante por torre & kg & Cap. 15 \\
 	$\dot{Q}_{\text{gerado}}$ & Calor total gerado dentro do invólucro do pacote (motor, VSD, gearbox, casco) & W & Cap. 2 \\
 	$\dot{Q}_{\text{hood}}$ & Calor removido pelo exaustor forçado do invólucro & W & Cap. 2, 14 \\
 	$\dot{m}_{\text{vent}}$ & Vazão mássica de ar de ventilação forçada do invólucro & kg\,s$^{-1}$ & Cap. 2 \\
@@ -2077,7 +2079,44 @@ q_d = q_{eq} \cdot \exp \left( -k_{ads} \cdot \frac{t_{ads}}{t_{res}} \right)
 			\end{aligned}
 \end{equation}
 		\end{itemize}
-		
+
+		\subsection{\textbf{Cinética de Regeneração e Propriedades do Material Dessecante}}
+
+		A Equação~\eqref{eq:s15-1} descreve como a capacidade do leito decai durante a adsorção, mas o processo inverso — a regeneração térmica que devolve essa capacidade — permanecia, até esta revisão, descrito apenas qualitativamente neste documento. A mesma forma exponencial de 1ª ordem que governa a adsorção descreve, por simetria física, a recuperação de capacidade durante a regeneração: um processo de transporte de massa/calor limitado por uma força motriz que diminui à medida que o leito se aproxima do equilíbrio — não uma reta com uma quina abrupta no fim da fase, fisicamente implausível para um leito real. A Equação~\eqref{eq:s15-12} formaliza essa recuperação:
+
+		\begin{equation}\label{eq:s15-12}
+		q_d(t_{regen}) = q_{eq} - \left(q_{eq} - q_{d,0}\right) \cdot \exp\left(-\kappa_{regen} \cdot \frac{t_{regen}}{t_{regen,ciclo}}\right)
+		\end{equation}
+
+		Onde $q_{d,0}$ é a capacidade remanescente ao final da fase de adsorção (o valor de $q_d$ da Equação~\eqref{eq:s15-1} no instante da troca), $t_{regen}$ o tempo decorrido de regeneração, $t_{regen,ciclo}$ a duração total programada da fase, e $\kappa_{regen}$ a constante de taxa da recuperação — análoga a $k_{ads}$, mas para o processo reverso, tipicamente maior (dessorção forçada por um aquecedor de regeneração costuma ser mais rápida que a adsorção passiva à temperatura ambiente). O mesmo perfil exponencial descreve a temperatura do leito durante a regeneração e o resfriamento subsequente — a resposta térmica de uma massa aquecida ou resfriada por convecção é, por construção, de 1ª ordem, nunca uma rampa linear.
+
+		A constante $\kappa_{regen}$, como $k_{ads}$, depende do material dessecante empregado — e o próprio $q_{eq}$ da Equação~\eqref{eq:s15-1} nunca foi, até aqui, associado a um valor numérico concreto neste documento, apenas descrito como ``a isoterma do dessecante''. A Tabela~\ref{tab:15-2} fecha essa lacuna para os três materiais mais comuns em secadores PSA de ar comprimido offshore, com densidade aparente e capacidade de \textbf{trabalho} — a fração mássica de água retida em \textbf{baixa} umidade relativa, o regime real de um secador a jusante de aftercooler e separador (Capítulo 14), sempre menor que a capacidade estática máxima de folha de dados de fabricante (medida em alta UR, condição que o leito nunca alcança em serviço PSA):
+
+		\begin{table}[h!tbp]
+			\centering
+			\resizebox{\textwidth}{!}{
+			\begin{tabular}{l c c c}
+				\toprule
+				\textbf{Material} & \textbf{Densidade [kg/m³]} & \textbf{Capacidade de Trabalho $q_{eq}$} & \textbf{$k_{ads}$ de Referência} \\ \midrule
+				Alumina Ativada & 750 & 10\% & 1,5 \\
+				Sílica Gel & 700 & 8\% & 1,2 \\
+				Peneira Molecular 13X & 720 & 18\% & 1,8 \\ \bottomrule
+			\end{tabular}
+			}
+			\caption[Propriedades de referência dos materiais dessecantes]{Propriedades de referência dos materiais dessecantes mais comuns em secadores PSA de ar comprimido — densidade aparente e capacidade de trabalho em baixa UR (ASSUMIDO, faixas típicas de literatura/fabricante), constante de taxa de adsorção de referência para a Equação~\eqref{eq:s15-1}.}
+			\label{tab:15-2}
+		\end{table}
+
+		É a peneira molecular, não a alumina ativada (o material mais citado como padrão de mercado para ar comprimido), que oferece a maior capacidade de trabalho em baixa UR e o menor ponto de orvalho alcançável — o que a torna preferível quando a especificação normativa exige a Classe 2 da ISO 8573-1 (PDP alvo de $-40\,^{\circ}\text{C}$, já adotada neste documento no Capítulo 18) com folga de projeto. A sílica gel, por desempenho fraco em baixa UR, raramente é usada isoladamente para esse alvo — sua aplicação típica é em umidade relativa mais alta, fora do regime de um secador de ar comprimido já pré-secado.
+
+		Com a capacidade de trabalho da Tabela~\ref{tab:15-2} e a massa real do leito por torre ($M_{leito}$, um dado de projeto), a Equação~\eqref{eq:s15-13} converte a capacidade normalizada da Equação~\eqref{eq:s15-1} em massa física de água retida — uma alternativa prática ao balanço rigoroso da Equação~\eqref{eq:s15-3}, útil quando não há um sensor contínuo de $W_{out}$ na saída do leito, apenas o modelo cinético da Eq. 15.1 e a especificação do material:
+
+		\begin{equation}\label{eq:s15-13}
+		M_{ads,cap}(t) = \left[q_{eq} - q_d(t)\right] \cdot M_{leito}
+		\end{equation}
+
+		As duas estimativas de massa de água — o balanço mássico direto (Equação~\eqref{eq:s15-3}, exige $W_{out}$ medido) e a baseada em capacidade (Equação~\eqref{eq:s15-13}, exige só a cinética e a especificação do material) — deveriam concordar num leito saudável; uma divergência persistente entre elas é, por si só, um sintoma diagnóstico: indica que a capacidade real do material já não corresponde ao valor de catálogo da Tabela~\ref{tab:15-2}, tipicamente por contaminação (óleo carreado por falha do separador, Capítulo 14) ou envelhecimento do próprio dessecante.
+
 		\subsection{\textbf{Termodinâmica do Secador de Tambor Rotativo (HOC)}}
 		
 		Este subsistema utiliza o calor residual do estágio de alta pressão ($HP$) para regenerar a matriz dessecante.
