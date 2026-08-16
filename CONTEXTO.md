@@ -51,6 +51,72 @@ build do LaTeX `*.aux/.log/.out/.toc/.nav/.snm` e o ambiente Python
 `scripts/venv/`, `scripts/__pycache__/`). Ainda não há nenhum commit — nunca crie
 commits sem pedido explícito do autor.
 
+## Fluxo conceitual do pipeline completo (raciocínio do autor, 16/08/2026)
+
+O autor articulou explicitamente a lógica de ponta a ponta que amarra livro,
+apresentação e app — vale reler isso antes de propor qualquer mudança
+estrutural grande, porque é o "porquê" por trás da ordem Parte I → Parte II
+→ Parte III que já rege o documento. Fluxo, nas palavras do autor,
+organizado em etapas, cada uma já mapeada ao que existe hoje:
+
+1. **Entendimento do sistema de compressão** — cada elemento explicado, com
+   sua posição no processo/sistema. → Parte I (Caps. 2–18), com o Cap. 2
+   definindo a arquitetura dos quatro pilares.
+2. **Equacionamento determinístico**, o mais realista possível. → toda a
+   Parte I, física de primeiros princípios, sem componente de IA.
+3. **Simulação** para verificar que os resultados fazem sentido físico e
+   respondem a alterações. → o `aplicativo/` (`sistema.simular()`), com 71
+   testes de sanidade que checam justamente isso — a grandeza se move na
+   direção fisicamente esperada quando um parâmetro muda.
+4. **Módulo de aprendizado com problemas inversos** para determinar
+   parâmetros que a literatura não fecha como constante física, só como
+   aproximação — e que por isso podem introduzir erro se usados cegamente
+   num modelo de aprendizado de máquina. → Cap. 23.8 (PINN) + Cap. 28.1
+   (EKF com estado aumentado), que citam explicitamente $K$, $\eta_{mec}$,
+   $\zeta_{ref}$ como "valores de catálogo... calibrados em bancada, não na
+   instalação real" — e a mesma lógica no app (`ekf.py`/`piml.py`).
+5. **Perdas simuladas de tubulações, válvulas e outros acessórios** — parte
+   do mesmo problema do item 4 (coeficientes de perda também são valores de
+   catálogo, não constantes universais). → parcialmente coberto: tubulação
+   interestágios (Eq. 5.15) e filtro de admissão (Eq. 5.4/$\zeta$) têm
+   coeficiente próprio; válvulas específicas (blow-off, *check valve*, PSV)
+   ainda não têm um coeficiente de perda parametrizado e identificável —
+   ver pendência nova abaixo.
+6. **Partir de um equipamento ajustado ("OK")** antes de usar os dados para
+   aprendizado. → a **janela de calibração** do Cap. 28.1/EKF aumentado —
+   comissionamento ou pós-manutenção confirmada, onde os estados dinâmicos
+   são tratados como conhecidos para que os parâmetros estáticos convirjam.
+7. **Aprendizado de máquina por algoritmos de gêmeos digitais.** → Parte II
+   inteira (EKF, VAE, PIML, MPC, PSO).
+8. **Simular diversos tipos de defeitos e mecanismos de falha** para
+   aprender a reação do sistema, captada por sensores fixos ou móveis. →
+   parcialmente coberto: Cap. 28.3 cataloga 57 mecanismos de falha e liga
+   cada um a um algoritmo de detecção; Cap. 29/app demonstram **um**
+   cenário completo (desgaste de folga) ponta a ponta. Sensores **móveis**
+   e o treino sistemático sobre **múltiplos** mecanismos simultaneamente
+   não existem ainda — ver pendências novas abaixo.
+9. **Supervisório por máquina e sistema**, com detecção e acompanhamento do
+   crescimento da falha. → o crescimento é coberto pelo prognóstico
+   (Eq. 19.10, $RUL_\delta$ no Cap. 29); um supervisório real — painel
+   contínuo monitorando uma frota, não uma simulação pontual de um cenário
+   por vez — não existe ainda.
+
+**Quatro lacunas reais identificadas por este exercício**, registradas
+também em "Pendências conhecidas" para não se perderem:
+- Sensores **móveis** (hoje só fixos, Tabela 18.1, pontos A–I instalados
+  permanentemente) — nem o livro nem o app cobrem instrumentação portátil/
+  não permanente.
+- Perdas de **válvulas** como elemento parametrizado e identificável (hoje
+  só tubulação e filtro têm coeficiente próprio; válvulas só aparecem como
+  mecanismo de falha binário no catálogo do Cap. 28.3).
+- **Treino sobre múltiplos mecanismos de falha simultaneamente** — hoje só
+  um cenário (δ/L) é demonstrado ponta a ponta; não há geração sistemática
+  de dados sintéticos cobrindo vários dos 57 mecanismos do catálogo para
+  treinar um classificador mais geral.
+- **Supervisório real** (painel contínuo por máquina/frota) — o app é uma
+  ferramenta de simulação/demonstração pontual, não um sistema de operação
+  contínua.
+
 ## Arquivos e pastas
 
 - `compressores.tex` — documento principal (fonte única de verdade).
@@ -1980,6 +2046,30 @@ Livro em 160 páginas, apresentação em 24 slides, app com 71 testes — todos
 verificados limpos ao final desta entrada. Repositório sem nada pendente de
 commit; `arquivos_apoio/` continua fora do controle de versão, como sempre.
 
+**Atualização, mesmo dia — a sessão continuou depois desta entrada**: mais
+três peças, ainda não commitadas no momento desta atualização:
+
+- **Fluxo conceitual do pipeline completo**: o autor articulou de próprio
+  punho a lógica de ponta a ponta que amarra livro/apresentação/app — ver
+  "Fluxo conceitual do pipeline completo (raciocínio do autor, 16/08/2026)"
+  logo após "Visão de longo prazo do projeto" no topo deste arquivo.
+  Confirmou que o fluxo já descrito bate com o que existe (Parte I →
+  simulação → problema inverso → Parte II → catálogo/estudo de caso →
+  prognóstico), e revelou 4 lacunas reais, adicionadas como itens 5–8 de
+  "Pendências conhecidas": sensores móveis, perda de válvulas
+  parametrizada, treino sobre múltiplos mecanismos de falha, supervisório
+  real.
+- **Uso de GPU (CUDA) no app**: o autor notou que a GPU (RTX 4070) não
+  era usada mesmo estando disponível. Implementado de verdade — novo
+  módulo `compressor_sim/torch_device.py`, `vae.py`/`piml.py` movendo
+  modelo e tensores para `device`, `requirements.txt` sem a restrição
+  CPU-only, torch reinstalado no venv do autor com build CUDA e verificado
+  com `nvidia-smi` mostrando utilização real durante um treino. Detalhes
+  completos em `CONTEXTO_app.md`, "Uso de GPU (CUDA) quando disponível".
+- Estas duas peças **não têm commit próprio ainda** — o resumo dos commits
+  acima continua sendo a lista completa até `166040b`. Ver `git status`/
+  `git log` antes de assumir o estado exato do repositório a partir daqui.
+
 ## Pendências conhecidas (candidatos para a próxima sessão)
 
 Nada está quebrado — o documento compila limpo e não há dívida técnica em
@@ -2003,6 +2093,25 @@ aproximada de valor:
    "Inventário de algoritmos da Parte II" acima.
 4. ~~Estudo de caso numérico de ponta a ponta~~ — **feito em 15/08/2026**,
    ver "Parte III — Estudo de Caso Integrado, Capítulo 28" acima.
+5. **Sensores móveis/portáteis** — todo o equacionamento de instrumentação
+   (Tabela 18.1) assume pontos fixos instalados permanentemente; nem o
+   livro nem o app cobrem inspeção com sensor não permanente (portátil,
+   drone, etc.). Levantado pelo autor em 16/08/2026 — ver "Fluxo conceitual
+   do pipeline completo" no topo deste arquivo.
+6. **Perda de carga de válvulas como elemento parametrizado** — hoje só
+   tubulação (Eq. 5.15) e filtro (Eq. 5.4) têm coeficiente de perda
+   próprio; válvulas (blow-off, *check valve*, PSV) só aparecem como
+   mecanismo de falha binário no catálogo do Cap. 28.3, sem coeficiente
+   identificável pelo mesmo mecanismo de problema inverso do Cap. 23.8/28.1.
+7. **Treino sobre múltiplos mecanismos de falha simultaneamente** — o
+   Cap. 29/app demonstram só o cenário de desgaste de folga (δ/L) ponta a
+   ponta; falta geração sistemática de dados sintéticos cobrindo vários dos
+   57 mecanismos do catálogo (Cap. 28.3) para treinar um classificador mais
+   geral, não um cenário único.
+8. **Supervisório real** (painel contínuo por máquina/frota, não uma
+   simulação pontual de um cenário por vez) — nem o livro nem o app cobrem
+   isso hoje; o app é ferramenta de simulação/demonstração, não um sistema
+   de operação contínua.
 
 **Deliberadamente descartado**: a recomendação do Manus de abandonar o termo
 "Enciclopédia" no título por ser ambicioso demais para 105 páginas. Contraria a
