@@ -411,11 +411,13 @@ threading em `sistema.py`).
 
 ## Estado atual
 
-Código compila sem erro de sintaxe, 41/41 testes passam
-(`venv/bin/pytest tests/ -q`). Servidor Streamlit **não está rodando** no
-momento — testado e encerrado ao fim da sessão de 15/08/2026 (ver "Balanço
-térmico da carcaça" acima); a última vez que ficou de pé continuamente foi
-após a correção de umidade (02/08/2026), sessão anterior.
+Código compila sem erro de sintaxe, 48/48 testes passam
+(`venv/bin/pytest tests/ -q`) — 41 após a Eq. 9.6, mais 7 do motor/Hood/
+tubulação (ver "Motor, invólucro/Hood e tubulação interestágios" acima).
+Servidor Streamlit **não está rodando** no momento — testado e encerrado
+ao fim de cada uma das duas rodadas de mudança de 15/08/2026; a última vez
+que ficou de pé continuamente foi após a correção de umidade (02/08/2026),
+sessão anterior. Commit mais recente do app: `ad97a78` (15/08/2026).
 
 O diretório `aplicativo/` foi commitado em 01/08/2026 (commit `693a2c6`,
 junto com este arquivo e as linhas de `.gitignore` para
@@ -438,11 +440,14 @@ contexto para ele.
 
 ## Pendências conhecidas
 
-1. O app usa apenas os Capítulos 5, 9, 10, 11, 12, 13, 14, 15, 16 do livro
-   (trem termodinâmico + psicrometria + rede). Motor elétrico (Cap. 4) e a
-   Parte II inteira (EKF, VAE, PIML, MPC, PSO — Caps. 19-27) não têm
-   nenhuma representação no simulador — candidato natural de expansão
-   futura, mas não pedido ainda. Rotordinâmica/mancais (Caps. 8, 9, 11)
+1. O app cobre os Capítulos 5, 9, 10, 11, 12, 13, 14, 15, 16 do livro
+   (trem termodinâmico + psicrometria + rede) e agora um recorte do
+   Cap. 4 (motor elétrico — $\eta_{mot}$ simplificado via Eqs. 4.10-4.12,
+   ver "Motor, invólucro/Hood e tubulação interestágios" acima; VSD, Eq.
+   4.3, continua sem representação própria). A Parte II inteira (EKF, VAE,
+   PIML, MPC, PSO — Caps. 19-27) não tem nenhuma representação no
+   simulador — candidato natural de expansão futura, mas não pedido ainda.
+   Rotordinâmica/mancais (Caps. 8, 9, 11)
    agora tem cobertura **parcial**: Eq. 9.3 (eficiência volumétrica por
    folga) desde antes, e Eq. 9.6 (balanço térmico da carcaça, regime
    permanente) desde 15/08/2026 — ver seção acima. Seguem sem

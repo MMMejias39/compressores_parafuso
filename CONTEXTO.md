@@ -1265,7 +1265,7 @@ Nomenclatura foi estendida para incluir o Cap. 2.
 também no `aplicativo/`, incluindo um subsistema de motor elétrico novo
 (o app não tinha nenhuma representação do Cap. 4 até então) — ver
 `CONTEXTO_app.md`, "Motor, invólucro/Hood e tubulação interestágios".
-**Nada foi commitado ainda** (livro nem app) — aguardando revisão do autor.
+Commitado em `ad97a78` (app) e `f47303b` (livro).
 
 ## Fechamento do balanço térmico da carcaça — Eq. 9.6 (15/08/2026)
 
@@ -1334,8 +1334,11 @@ antes dela — ver "Backlog Kimi implementado" acima); **atualização de
 15/08/2026**: os 13 itens do Backlog Kimi descritos como "sem commit" no
 parágrafo abaixo já foram commitados desde então (`2876885`, conferir sempre
 `git log` em vez desta nota — ver aviso mais abaixo), e o documento está em
-**143 páginas** após o fechamento da Eq. 9.6 (seção acima). Sem erros/
-referências indefinidas/labels duplicados nas duas sessões. Todos os 27
+**146 páginas** após o trabalho de 15/08/2026 (Eq. 9.6, auditoria de perdas
+termodinâmicas/fluidas, acoplamento Hood↔Carcaça, correção em massa das
+~110 equações sem número citado antes de aparecer, e o bug de cabeçalho do
+Capítulo 9 — ver as seções correspondentes acima, todas já commitadas até
+`11e13f3`). Sem erros/referências indefinidas/labels duplicados. Todos os 27
 capítulos têm subseções e aparecem estruturados no sumário. O parágrafo
 original desta seção segue abaixo, para contexto histórico do que a sessão do
 Backlog Kimi deixou pendente **antes** de ser commitado. Repositório git
