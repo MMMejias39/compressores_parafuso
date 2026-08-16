@@ -1508,6 +1508,62 @@ app, ver `CONTEXTO_app.md`) e `13826b9` (Eqs. 9.14-9.17 + Nomenclatura, este
 arquivo), o app sempre antes do livro para o código nunca divergir
 silenciosamente do texto. Nenhum trailer de coautoria de IA, como sempre.
 
+## Quarto relatório externo (dicas_kimi.md, versão de 16/08/2026) implementado (16/08/2026)
+
+Um **novo** `dicas_kimi.md` foi commitado na raiz em `702d3b2` (16/08/2026) —
+distinto do relatório de mesmo nome de 31/07/2026 já implementado em
+01/08/2026 (esse antigo está em `arquivos_apoio/dicas_kimi.md`, 4KB; o novo
+tem 7,7KB e avalia o documento já em 151 páginas, pós-Capítulo 28). Avaliação
+de qualidade do PDF compilado, diagnóstico geral "excelente estado
+técnico-editorial" com um checklist de 5 itens, todos implementados nesta
+sessão:
+
+- **Cabeçalho do Capítulo 28 quebrando em 2 linhas e colidindo com o número
+  de página** (mesma classe de defeito já corrigida no Capítulo 9 em
+  15/08/2026, mas o Cap. 28 foi criado depois daquela correção e ficou de
+  fora): `\markboth{Estudo de Caso Integrado: Diagnóstico Precoce de
+  Desgaste de Folgas}{}` logo após o `\section{}` do capítulo. Confirmado
+  visualmente (`pdftoppm`) — cabeçalho agora em uma linha só, sem colisão; os
+  4 warnings de `headheight` do log desapareceram.
+- **5 legendas de tabela sem forma curta** (Tabelas 14.1, 16.1, 17.1, 18.1,
+  18.2 — todas "Matrizes de diagnóstico/decisão"): adicionado
+  `\caption[curta]{longa}` às cinco. Confirmado na Lista de Tabelas extraída
+  do PDF — as 5 entradas agora cabem em uma linha cada (16.1 e 17.1 antes
+  quebravam em duas).
+- **2 `\bibitem` órfãos** (`bloch`, `isa51`) — decisão do autor: verificar se
+  havia ponto de citação natural antes de decidir remover. Achados dois
+  pontos legítimos, sem inventar conteúdo: `\cite{isa51}` (ANSI/ISA-5.1-2024,
+  símbolos e identificação de instrumentação) inserido no parágrafo do
+  Cap. 18 que já descrevia a "convenção ISA" de níveis H/HH/LL na Tabela
+  18.2 — é exatamente a norma que padroniza essa convenção. `\cite{bloch}`
+  (*A Practical Guide to Compressor Technology*) inserido na frase de
+  abertura do Capítulo 3 (detalhamento de componentes), como referência
+  geral de apoio à organização por subsistema já usada no capítulo. Nenhuma
+  referência restou órfã — fecha também a pendência menor do `isa51}`
+  registrada em 02/08/2026.
+- **Floats `[h!]` sem fallback** (15 tabelas + 20 figuras): trocado para
+  `[h!tbp]` (mantém a preferência por "aqui", mas com posições de
+  fallback), eliminando os warnings de `'h' float specifier changed to
+  'ht'` do log. `\begin{table}[H]` (2 ocorrências, pacote `float`, posição
+  fixa) não foi tocado — não é o mesmo mecanismo e não gera esse warning.
+- **Item 5, opcional, decisão do autor** (atualizar
+  `apresentacao_compressores.tex` com slides da Parte III/Capítulo 28) —
+  **não implementado nesta sessão**, aguardando decisão do autor (ver
+  próxima interação).
+
+**Verificação de não regressão**: compilação limpa em 3 passagens, 151
+páginas (mesma contagem de antes — nenhuma mudança estrutural, só correções
+pontuais), 0 referências indefinidas, 0 labels `eq`/`tab`/`fig` duplicados
+(a única mensagem de "duplicate ignored" no log é a `name{page.1}` já
+conhecida e inofensiva, mistura de numeração romana/arábica — não é um label
+do documento), 0 `??`/caracteres de substituição no PDF extraído, overfull
+hboxes em 35 (mesmo baseline de ~2pt na Nomenclatura, sem regressão), 0
+warnings de `headheight` ou `float specifier` (eram 4 e ≥13 antes desta
+sessão). Renderização visual conferida na página do Capítulo 28 (cabeçalho
+em uma linha) e na Lista de Tabelas (5 entradas agora em uma linha).
+
+**Nada foi commitado** — aguardando revisão do autor, como sempre.
+
 ## Estado atual (última sessão)
 
 Documento compilava em 141 páginas ao fim da sessão do Backlog Kimi (era 135

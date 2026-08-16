@@ -470,7 +470,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	O sistema de ar comprimido offshore é uma planta de utilidade crítica, composta por máquinas rotativas, trocadores de calor, vasos de pressão e sistemas de purificação \cite{brunkurz}. A integração desses elementos garante o fornecimento de energia pneumática estável para instrumentação e ferramentas de serviço. A Figura~\ref{fig:2-1} resume esses quatro pilares (Geração, Tratamento, Armazenamento e Gestão, já introduzidos no Capítulo 1) como um diagrama de blocos, com a camada de Gestão realimentando dados e ações de controle sobre as três primeiras — a mesma estrutura de malha fechada que este documento equaciona capítulo a capítulo.
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.75\textwidth]{figuras/fig_2_2_arquitetura.pdf}
 		\caption[Diagrama de blocos da arquitetura do sistema]{Diagrama de blocos da arquitetura do sistema: os quatro pilares funcionais e a realimentação do Gêmeo Digital sobre a planta física.}
@@ -480,7 +480,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\subsection{\textbf{Princípio de Funcionamento do Compressor de Parafuso}}
 	Antes de qualquer equacionamento, é necessário compreender o princípio físico que gera a compressão: dois rotores helicoidais — o macho, com lóbulos convexos, e a fêmea, com cavidades côncavas — giram engrenados dentro de uma carcaça cilíndrica dupla \cite{hanlon}. A relação de lóbulos mais comum é $4{:}6$ (quatro lóbulos no macho para seis cavidades na fêmea), um perfil assimétrico desenvolvido para minimizar as áreas de vedação e o vazamento interno \cite{lysholm}. A Figura~\ref{fig:2-2} mostra o perfil real desse engrenamento assimétrico (aqui numa relação $5{:}6$, mesmo princípio geométrico) — repare como o contorno de um rotor é o negativo do outro, mantendo contato de vedação contínuo ao longo de toda a rotação.
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_2_1_rotores.pdf}
 		\caption[Perfil de engrenamento assimétrico de rotores helicoidais]{Perfil de engrenamento assimétrico de rotores helicoidais (relação 5:6), com centros dos eixos indicados. Adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0 (traços reforçados e marcadores de centro adicionados pelo autor).}
@@ -504,7 +504,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	Para visualizar como esses elementos se conectam fisicamente — do acionamento elétrico até a descarga final de alta pressão —, a Figura~\ref{fig:2-3} apresenta o trem de compressão completo em perspectiva 3D: o motor elétrico aciona a caixa multiplicadora (gearbox) através de um acoplamento flexível; a gearbox distribui a rotação para os dois estágios de compressão (pinhões LP e HP engrenados à coroa central, mesma cinemática detalhada no Capítulo de Engenharia do Trem de Transmissão); o ar atmosférico admitido no estágio de baixa pressão (LP) é resfriado no intercooler antes de seguir para o estágio de alta pressão (HP), de onde é descarregado para o tratamento posterior (aftercooler e secagem, detalhados nos capítulos seguintes). É um esquema ilustrativo, não um desenho de projeto: motor, gearbox e tubulação são representados por formas geométricas simples, enquanto os dois pares de rotores reaproveitam a mesma técnica de varredura helicoidal usada no render do elemento compressor isolado apresentado no capítulo seguinte, em escalas proporcionalmente diferentes entre os estágios LP e HP (o de menor pressão é fisicamente maior, o de maior pressão é mais compacto).
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.80\textwidth]{figuras/fig_2_3_conjunto3d.pdf}
 		\caption[Trem de compressão completo em perspectiva 3D]{Trem de compressão completo em perspectiva 3D — do motor elétrico ao estágio HP e à saída para tratamento, passando pela gearbox e pelo intercooler. Esquema ilustrativo; motor, gearbox e tubulação são formas 3D simplificadas, e os pares de rotores reaproveitam a varredura helicoidal do perfil de engrenamento adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0.}
@@ -583,9 +583,9 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\clearpage
 	\section{\textbf{Detalhamento de Componentes, Acessórios e Instrumentação}}
 	
-	Antes de detalhar cada subsistema individualmente, é útil visualizar o coração do pacote: o elemento compressor (airend), onde os dois rotores helicoidais executam fisicamente a compressão. A Figura~\ref{fig:3-1} apresenta o par de rotores em perspectiva tridimensional, obtida por varredura helicoidal do mesmo perfil de engrenamento assimétrico $5{:}6$ já apresentado na Figura~\ref{fig:2-2}: o rotor macho (à direita) recebe uma torção total de $300^\circ$ ao longo do comprimento, enquanto a fêmea gira em sentido contrário com hélice oposta, na razão $5/6$ da torção do macho — exatamente a relação cinemática que mantém o contato de vedação contínuo durante a rotação. Os tocos de eixo nas extremidades são os assentos dos rolamentos e, no lado de acionamento, a interface com a caixa multiplicadora (gearbox). As subseções seguintes detalham os blocos que cercam esse núcleo — motor elétrico, acoplamento, gearbox e acessórios — e sua instrumentação associada.
+	Antes de detalhar cada subsistema individualmente, é útil visualizar o coração do pacote: o elemento compressor (airend), onde os dois rotores helicoidais executam fisicamente a compressão. A Figura~\ref{fig:3-1} apresenta o par de rotores em perspectiva tridimensional, obtida por varredura helicoidal do mesmo perfil de engrenamento assimétrico $5{:}6$ já apresentado na Figura~\ref{fig:2-2}: o rotor macho (à direita) recebe uma torção total de $300^\circ$ ao longo do comprimento, enquanto a fêmea gira em sentido contrário com hélice oposta, na razão $5/6$ da torção do macho — exatamente a relação cinemática que mantém o contato de vedação contínuo durante a rotação. Os tocos de eixo nas extremidades são os assentos dos rolamentos e, no lado de acionamento, a interface com a caixa multiplicadora (gearbox). As subseções seguintes detalham os blocos que cercam esse núcleo — motor elétrico, acoplamento, gearbox e acessórios — e sua instrumentação associada, seguindo a mesma organização por subsistema já consolidada na literatura de referência sobre tecnologia de compressores \cite{bloch}.
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.80\textwidth]{figuras/fig_3_1_parafuso3d.pdf}
 		\caption[Par de rotores helicoidais do elemento compressor (3D)]{Par de rotores helicoidais do elemento compressor (airend) em perspectiva 3D, gerado por varredura helicoidal do perfil de engrenamento da Figura~\ref{fig:2-2} (torção de $300^\circ$ no rotor macho, relação $5{:}6$, hélices opostas). Elaboração 3D original do autor; perfil 2D adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0.}
@@ -859,7 +859,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\end{itemize}
 	A Figura~\ref{fig:5-1} plota as Equações~\eqref{eq:s5-8} e \eqref{eq:s5-9} em função da razão $\pi/\pi_i$: a perda é sempre mínima (idealmente nula) exatamente no ponto de projeto $\pi=\pi_i$, e cresce em ambas as direções conforme a pressão de rede se afasta desse ponto — visualmente, é um ``V'' de perda com vértice no ponto de casamento perfeito entre a geometria do rotor e a demanda da planta.
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_5_1_vi_perdas.pdf}
 		\caption[Perdas termodinâmicas por sub e sobrecompressão]{Perdas termodinâmicas por sub/sobrecompressão em função do descasamento entre a razão de pressão real e a razão interna ideal do rotor.}
@@ -972,7 +972,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\subsection{\textbf{Matriz de Mecanismos de Falha e Indicadores Digitais}}
 	A Tabela~\ref{tab:6-1} correlaciona cada componente físico da caixa multiplicadora ao seu modo de falha característico e ao indicador digital que permite detectá-lo. A leitura é por linha: o componente identifica \textit{onde} a falha ocorre; o mecanismo descreve \textit{como} ela progride fisicamente; e o indicador digital é a grandeza — medida ou inferida — cujo desvio denuncia a progressão antes que ela atinja o limite funcional. Essa estrutura de três colunas se repete nas matrizes de falha dos capítulos seguintes, e é o que permite ao Gêmeo Digital passar de um diagnóstico genérico (``vibração alta'') para uma hipótese de causa raiz específica.
 	
-	\begin{table}[h!]
+	\begin{table}[h!tbp]
 		\centering
 		\resizebox{\textwidth}{!}{
 		\begin{tabular}{l l l l}
@@ -1056,7 +1056,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 		Onde $a$, $b$ e $c$ são constantes empíricas obtidas por ajuste de curva aos dados do fabricante do lubrificante (não possuem significado físico individual — apenas a combinação reproduz a curva $\mu \times T$ medida). A Figura~\ref{fig:7-1} ilustra a forma típica dessa curva: a viscosidade cai de forma acentuadamente não linear com o aumento da temperatura, e é justamente essa não linearidade que torna a Equação~\eqref{eq:s7-2} necessária em vez de uma simples interpolação linear.
 
-		\begin{figure}[h!]
+		\begin{figure}[h!tbp]
 			\centering
 			\includegraphics[width=0.60\textwidth]{figuras/fig_7_1_vogel.pdf}
 			\caption[Curva de viscosidade de Vogel]{Curva de viscosidade de Vogel — queda não linear da viscosidade com a temperatura (valores ilustrativos).}
@@ -1097,7 +1097,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	\subsection{\textbf{Matriz de Mecanismos de Falha do Sistema de Óleo}}
 	A Tabela~\ref{tab:7-1} associa cada componente do circuito de lubrificação ao seu modo de falha típico e ao indicador digital correspondente, usado pelo Gêmeo Digital para diagnóstico automático.
-	\begin{table}[h!]
+	\begin{table}[h!tbp]
 		\centering
 		\small
 		\renewcommand{\arraystretch}{1.5}
@@ -1155,7 +1155,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\subsection{\textbf{Cinemática da Transmissão e Relações de Velocidade}}
 	Em uma configuração de motor único com caixa integrada, a coroa principal (\textit{Bull Gear}) aciona simultaneamente os pinhões dos estágios de Baixa Pressão (LP) e Alta Pressão (HP). O sincronismo interno de cada par de rotores é garantido por engrenagens de \textit{timing} dedicadas. A Figura~\ref{fig:8-1} esquematiza essa cinemática: a coroa central, acionada pelo motor, engrena simultaneamente com os dois pinhões (LP e HP), cada um girando a uma velocidade diferente conforme sua própria relação de dentes — exatamente a lógica capturada pela Equação~\eqref{eq:s8-1} a seguir.
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.75\textwidth]{figuras/fig_8_1_gearbox.pdf}
 		\caption[Esquema cinemático da caixa multiplicadora]{Esquema cinemático simplificado da caixa multiplicadora: coroa (\textit{bull gear}) acionando os pinhões LP e HP, com engrenagem de sincronismo (\textit{timing}).}
@@ -1197,7 +1197,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 		Onde $F_r$ e $F_a$ são as cargas radial e axial medidas/estimadas no rolamento, $X$ e $Y$ são os fatores radial e axial de carga dinâmica (tabelados pelo fabricante do rolamento em função da razão $F_a/F_r$), $N_{\text{rot}}$ é a rotação do eixo em RPM (para não colidir com $N$ usado como número de compressores na frota, Cap. 14), $C$ é a capacidade de carga dinâmica e $p$ é o expoente de vida (3 para esferas, 10/3 para rolos). Por ser uma lei de potência com expoente $p=3$, a vida do rolamento é extremamente sensível à carga — a Figura~\ref{fig:8-3} mostra que dobrar a carga reduz a vida a aproximadamente 1/8, motivo pelo qual pequenos desalinhamentos ou desbalanceamentos que elevam $P$ têm impacto desproporcional na confiabilidade do mancal.
 
-		\begin{figure}[h!]
+		\begin{figure}[h!tbp]
 			\centering
 			\includegraphics[width=0.60\textwidth]{figuras/fig_8_3_l10h.pdf}
 			\caption[Sensibilidade da vida do rolamento à carga]{Sensibilidade da vida nominal do rolamento ($L_{10h}$) à carga equivalente — note a escala logarítmica no eixo vertical.}
@@ -1223,7 +1223,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\item \textbf{Diagnóstico via Diagrama de Campbell:} O cruzamento entre as linhas de excitação ($1\times$ RPM, $2\times$ RPM, frequência de engrenamento $GMF$) e as velocidades críticas identificadas por impacto ou \textit{run-up} é mapeado em um Diagrama de Campbell digital, atualizado com os dados de vibração em tempo real, permitindo detectar o deslocamento de $\omega_{cr}$ por desgaste de mancal antes que a margem de separação seja violada. A Figura~\ref{fig:8-2} exemplifica esse diagrama: as retas de excitação crescem linearmente com a rotação, a velocidade crítica é uma reta horizontal, e a faixa de operação do VSD (sombreada) deve evitar a zona de risco ao redor do cruzamento — exatamente o critério formalizado na Equação~\eqref{eq:s8-6}.
 	\end{itemize}
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.75\textwidth]{figuras/fig_8_2_campbell.pdf}
 		\caption[Diagrama de Campbell]{Diagrama de Campbell ilustrativo: cruzamento das linhas de excitação ($1\times$, $2\times$ RPM, GMF) com a velocidade crítica $\omega_{cr}$ e a faixa de operação do VSD.}
@@ -1252,7 +1252,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	\subsection{\textbf{Matriz de Falhas de Transmissão}}
 	A Tabela~\ref{tab:8-1} resume os principais modos de falha do trem de transmissão (rolamentos, dentes, sincronismo), suas causas raiz e o respectivo indicador digital de detecção.
-	\begin{table}[h!]
+	\begin{table}[h!tbp]
 		\centering
 		\small
 		\renewcommand{\arraystretch}{1.5}
@@ -1324,7 +1324,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 		Onde $L$ é o comprimento de referência do rotor (normaliza a folga $\delta$) e $K$ é uma constante empírica de vazamento, calibrada por ensaio de desempenho da máquina (agrega efeitos de geometria do perfil e coeficiente de descarga não capturados explicitamente pelos demais termos). A Figura~\ref{fig:9-1} mostra que a queda de $\eta_v$ com o desgaste da folga é mais acentuada quanto maior a razão de pressão do estágio — ou seja, o mesmo desgaste físico penaliza proporcionalmente mais um estágio HP do que um estágio LP.
 
-		\begin{figure}[h!]
+		\begin{figure}[h!tbp]
 			\centering
 			\includegraphics[width=0.60\textwidth]{figuras/fig_9_1_etav.pdf}
 			\caption[Eficiência volumétrica em função da folga]{Eficiência volumétrica em função da folga do rotor, para diferentes razões de pressão do estágio.}
@@ -1377,7 +1377,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	\subsection{\textbf{Matriz de Falhas Integrada do Estágio LP}}
 	A Tabela~\ref{tab:9-1} integra os modos de falha do estágio LP com seus indicadores digitais e a assinatura vibracional correspondente, permitindo diferenciar causas puramente térmicas de causas mecânicas.
-	\begin{table}[h!]
+	\begin{table}[h!tbp]
 		\centering
 		\renewcommand{\arraystretch}{1.5}
 		\resizebox{\textwidth}{!}{
@@ -1480,7 +1480,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	A origem física dessa expressão logarítmica fica clara ao observar o perfil de temperatura ao longo do trocador (Figura~\ref{fig:10-1}): como a diferença de temperatura entre os dois fluidos ($\Delta T_1$ na entrada, $\Delta T_2$ na saída) varia continuamente ao longo do comprimento, a força motriz térmica ``média'' correta não é a média aritmética simples, e sim a média logarítmica dessas duas diferenças extremas.
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_10_1_lmtd.pdf}
 		\caption[Perfil de temperatura e origem física da LMTD]{Perfil de temperatura ao longo de um trocador em contracorrente — origem física da LMTD.}
@@ -1530,7 +1530,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 	A Figura~\ref{fig:10-2} mostra essa correlação em escala logarítmica: a pressão de saturação praticamente dobra a cada 10-12$^{\circ}$C de aumento de temperatura, o que explica por que uma pequena falha de resfriamento no aftercooler tem efeito desproporcional na quantidade de água que chega ao secador PSA a jusante.
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_10_2_psat.pdf}
 		\caption[Correlação de Arden Buck]{Correlação de Arden Buck para a pressão de saturação do vapor d'água em função da temperatura.}
@@ -1552,7 +1552,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\subsection{\textbf{Matriz de Falhas Integrada do Sistema Intermediário}}
 
 	A Tabela~\ref{tab:10-1} diferencia os distúrbios externos (\textit{offloading}, baixo fluxo de água) das falhas internas do próprio intercooler (\textit{fouling}, drenagem), cada um com sua variável de controle e ação recomendada.
-	\begin{table}[h!]
+	\begin{table}[h!tbp]
 		\centering
 		\renewcommand{\arraystretch}{1.5}
 		\resizebox{\textwidth}{!}{
@@ -1675,7 +1675,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\subsection{\textbf{Matriz de Diagnóstico do Estágio HP}}
 
 	A Tabela~\ref{tab:11-1} resume os cinco modos de falha críticos do estágio HP e seu impacto relativo no Consumo de Potência Específica (SPC), permitindo priorizar a resposta do Gêmeo Digital.
-	\begin{table}[h!]
+	\begin{table}[h!tbp]
 		\centering
 		\small
 		\renewcommand{\arraystretch}{1.5}
@@ -1982,7 +1982,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\subsection{Matriz de Diagnóstico de Tratamento Primário}
 	A Tabela~\ref{tab:14-1} cruza os sintomas de temperatura, perda de carga nos filtros e umidade de saída para diferenciar incrustação do aftercooler, saturação de filtro e falha de dreno (aberto ou fechado).
 
-	\begin{table}[h!]
+	\begin{table}[h!tbp]
 		\centering
 		\resizebox{\textwidth}{!}{
 		\begin{tabular}{l l l l l}
@@ -1996,7 +1996,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 			\bottomrule
 		\end{tabular}
 		}
-		\caption{Matriz de diagnóstico de tratamento primário.}
+		\caption[Matriz de diagnóstico de tratamento primário]{Matriz de diagnóstico de tratamento primário.}
 		\label{tab:14-1}
 	\end{table}
 
@@ -2017,7 +2017,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		
 		O sistema de secagem representa o estágio final de tratamento no Gêmeo Digital, monitorando a remoção de vapor de água para atingir o Ponto de Orvalho sob Pressão ($PDP$). O sistema integra torres de adsorção oscilante (\textbf{PSA}) e secadores de \textbf{tambor rotativo} por calor de compressão (HOC). A Figura~\ref{fig:15-1} ilustra o princípio de operação alternada das duas torres: enquanto uma adsorve umidade do ar de processo (A), a outra é regenerada (D) pela expansão de parte do ar já seco, e os papéis se invertem ciclicamente — o ar úmido entra (I), o ar seco sai (O) e a purga de regeneração é exaurida (E).
 
-		\begin{figure}[h!]
+		\begin{figure}[h!tbp]
 			\centering
 			\includegraphics[width=0.75\textwidth]{figuras/fig_15_1_psa.pdf}
 			\caption[Princípio de operação das torres PSA]{Princípio de operação das torres PSA em ciclos alternados de adsorção (A) e regeneração/dessorção (D). I = entrada de ar úmido, O = saída de ar seco, E = exaustão da purga. Fonte: \textit{Pressure swing adsorption principle}, Cmglee, Wikimedia Commons, licença CC BY-SA 4.0.}
@@ -2035,7 +2035,7 @@ q_d = q_{eq} \cdot \exp \left( -k_{ads} \cdot \frac{t_{ads}}{t_{res}} \right)
 \end{equation}
 			Onde $q_{eq}$ é a capacidade de adsorção em equilíbrio (isoterma do dessecante), $t_{ads}$ o tempo decorrido de adsorção, $t_{res}$ o tempo de residência do ar no leito, e $k_{ads}$ é a constante de taxa de adsorção do material dessecante (obtida experimentalmente, específica da alumina ativada ou peneira molecular empregada; subscrito para não colidir com $k$ do relé IEC 60255 ou o índice de tempo discreto usado nos capítulos de EKF/MPC/PSO). A Figura~\ref{fig:15-2} mostra como um $k_{ads}$ maior — leito mais fino, mais contaminado ou material dessecante degradado — acelera drasticamente a saturação, esgotando a capacidade útil do leito muito antes do fim do ciclo programado.
 
-			\begin{figure}[h!]
+			\begin{figure}[h!tbp]
 				\centering
 				\includegraphics[width=0.60\textwidth]{figuras/fig_15_2_adsorcao.pdf}
 				\caption[Capacidade de adsorção dinâmica normalizada]{Capacidade de adsorção dinâmica normalizada em função do tempo relativo de adsorção, para diferentes constantes de taxa $k_{ads}$.}
@@ -2091,7 +2091,7 @@ q_d = q_{eq} \cdot \exp \left( -k_{ads} \cdot \frac{t_{ads}}{t_{res}} \right)
 
 		\subsection{\textbf{Matriz de Diagnóstico de Falhas}}
 		A Tabela~\ref{tab:15-1} relaciona as falhas típicas do secador PSA/tambor rotativo (saturação do leito, falha de chaveamento, degradação térmica e desgaste mecânico) aos seus indicadores primários e à ação prescrita pelo Gêmeo Digital.
-		\begin{table}[h!]
+		\begin{table}[h!tbp]
 			\centering
 			\resizebox{\textwidth}{!}{
 			\renewcommand{\arraystretch}{1.5}
@@ -2204,7 +2204,7 @@ t_{to\_cut} = \frac{V_{tank} \cdotp (P_{actual} - P_{threshold})}{\dot{V}_{deman
 \subsection{Matriz de Diagnóstico de Falhas (Frota e Distribuição)}
 
 A operação com múltiplos compressores em paralelo introduz riscos específicos de frota (refluxo, sobrepressão por travamento de PSV, falha de sequenciamento) que a Tabela~\ref{tab:16-1} resume junto ao indicador primário e à ação correspondente do Gêmeo Digital.
-\begin{table}[h!]
+\begin{table}[h!tbp]
 \centering
 \noindent\resizebox{\textwidth}{!}{
 	\begin{tabular}{l l l l}
@@ -2217,7 +2217,7 @@ A operação com múltiplos compressores em paralelo introduz riscos específico
 		\textbf{PSV Travada (Aberta)} & Disparo prematuro & Fadiga da mola / Sujeira & Alarme de perda de eficiência \\ \bottomrule
 	\end{tabular}
 }
-\caption{Matriz de diagnóstico de falhas de frota e distribuição (header e vasos pulmão).}
+\caption[Matriz de diagnóstico de falhas de frota e distribuição]{Matriz de diagnóstico de falhas de frota e distribuição (header e vasos pulmão).}
 \label{tab:16-1}
 \end{table}
 
@@ -2323,7 +2323,7 @@ J = w_1 \cdotp \dot{I} + w_2 \cdotp \dot{m}_{CO_2} + w_3 \cdotp (T_{dp} - T_{dp,
 \subsection{Matriz de Diagnóstico, Normas e Sustentabilidade}
 
 A Tabela~\ref{tab:17-1} conecta cada variável crítica de automação ao indicador de IA correspondente, à norma ou risco associado e à ação que o Gêmeo Digital deve tomar automaticamente.
-\begin{table}[h!]
+\begin{table}[h!tbp]
 \centering
 \noindent\resizebox{\textwidth}{!}{
 	\begin{tabular}{l l l l}
@@ -2335,7 +2335,7 @@ A Tabela~\ref{tab:17-1} conecta cada variável crítica de automação ao indica
 		\textbf{$\dot{m}$ (Vazão)} & Balanço de Massa & Vazamento de Inventário & Localizar perda mássica \\ \bottomrule
 	\end{tabular}
 }
-\caption{Matriz de diagnóstico, normas associadas e ações de sustentabilidade do Gêmeo Digital.}
+\caption[Matriz de diagnóstico e sustentabilidade do Gêmeo Digital]{Matriz de diagnóstico, normas associadas e ações de sustentabilidade do Gêmeo Digital.}
 \label{tab:17-1}
 \end{table}
 
@@ -2363,7 +2363,7 @@ A observabilidade total do sistema — condição necessária para que o Filtro 
 
 Duas leituras dessa tabela são úteis. Na horizontal, ela funciona como especificação de instrumentação: cada linha corresponde a um requisito de projeto verificável na lista de instrumentos da planta. Na vertical, agrupada por ponto, ela revela a densidade de medição de cada subsistema — e é aí que se identificam as lacunas de observabilidade, isto é, os pontos onde o Gêmeo Digital depende inteiramente de inferência por modelo porque não há sensor físico disponível. Essas lacunas não são falhas de projeto: instrumentar diretamente a câmara de compressão de um rotor girando a milhares de RPM é impraticável, e é justamente por isso que o \textit{soft-sensor} existe. Mas elas precisam estar explícitas, porque determinam onde a incerteza do modelo (Capítulo 25) é maior e onde a validação física do PIML (Capítulo 23) é mais crítica.
 
-\begin{table}[h!]
+\begin{table}[h!tbp]
 	\centering
 	\resizebox{\textwidth}{!}{
 		\begin{tabular}{c l l c l l}
@@ -2396,7 +2396,7 @@ Duas leituras dessa tabela são úteis. Na horizontal, ela funciona como especif
 			& & Status Ramal & $\delta_{i}$ & $\text{bin}$ & Lógica de corte (Serviço/Processo) \\ \bottomrule
 		\end{tabular}
 	}
-	\caption{Matriz completa de variáveis e instrumentação do Gêmeo Digital.}
+	\caption[Matriz de variáveis e instrumentação do Gêmeo Digital]{Matriz completa de variáveis e instrumentação do Gêmeo Digital.}
 	\label{tab:18-1}
 \end{table}
 
@@ -2449,9 +2449,9 @@ O processamento matemático do Gêmeo Digital é executado através da integraç
 
 \subsection{Matriz Global de Alarmes e Lógica de Decisão}
 
-A lógica de proteção e otimização do Gêmeo Digital não se apoia em indicadores isolados, mas na correlação entre grandezas medidas diretamente por sensor e grandezas inferidas pelo modelo. A Tabela~\ref{tab:18-2} organiza essa lógica em cinco colunas: o \textbf{indicador crítico} monitorado; sua \textbf{tag} no sistema de automação; o \textbf{nível} de severidade na convenção ISA (H = alarme alto, que exige ação corretiva mas permite operação continuada; HH = desligamento por valor alto; LL = desligamento por valor baixo); a \textbf{condição de gatilho}, isto é, a inequação que o Gêmeo Digital avalia a cada ciclo de varredura; e a \textbf{ação automática} disparada. Note que os quatro primeiros indicadores são grandezas físicas medidas ou calculadas por primeiros princípios, enquanto os três últimos ($E_{\text{rec}}$, $\dot{I}$ e $\dot{m}_{\text{CO}_2}$) são indicadores virtuais que só existem porque há um modelo por trás — é essa combinação que distingue a matriz de um intertravamento convencional.
+A lógica de proteção e otimização do Gêmeo Digital não se apoia em indicadores isolados, mas na correlação entre grandezas medidas diretamente por sensor e grandezas inferidas pelo modelo. A Tabela~\ref{tab:18-2} organiza essa lógica em cinco colunas: o \textbf{indicador crítico} monitorado; sua \textbf{tag} no sistema de automação; o \textbf{nível} de severidade na convenção ISA \cite{isa51} (H = alarme alto, que exige ação corretiva mas permite operação continuada; HH = desligamento por valor alto; LL = desligamento por valor baixo); a \textbf{condição de gatilho}, isto é, a inequação que o Gêmeo Digital avalia a cada ciclo de varredura; e a \textbf{ação automática} disparada. Note que os quatro primeiros indicadores são grandezas físicas medidas ou calculadas por primeiros princípios, enquanto os três últimos ($E_{\text{rec}}$, $\dot{I}$ e $\dot{m}_{\text{CO}_2}$) são indicadores virtuais que só existem porque há um modelo por trás — é essa combinação que distingue a matriz de um intertravamento convencional.
 
-\begin{table}[h!]
+\begin{table}[h!tbp]
 	\centering
 	\resizebox{\textwidth}{!}{
 		\begin{tabular}{l c c l l}
@@ -2466,7 +2466,7 @@ A lógica de proteção e otimização do Gêmeo Digital não se apoia em indica
 			\textbf{Emissões GEE} & $\dot{m}_{\text{CO}_2}$ & \textbf{H} & $\dot{m} > \dot{m}_{\text{target}}$ & Rebalanceamento de carga da frota \\ \bottomrule
 		\end{tabular}
 	}
-	\caption{Matriz de decisão, alarmes e ações de controle do Gêmeo Digital.}
+	\caption[Matriz de decisão, alarmes e ações de controle do Gêmeo Digital]{Matriz de decisão, alarmes e ações de controle do Gêmeo Digital.}
 	\label{tab:18-2}
 \end{table}
 
@@ -2589,7 +2589,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 \end{equation}
 	com $b_f$ (expoente de Basquin, subscrito para não colidir com a largura de dente $b$ do modelo de Lewis) e $C$ constantes de fadiga do material. Falha é prevista quando $D = 1$. A Figura~\ref{fig:19-1} traça essa curva S-N em escala log-log — cada ponto vermelho representa um par $(\sigma_i, N_i)$ do histórico de ciclos por \textit{rainflow}, e é a soma das razões $n_i/N_i(\sigma_i)$ para todos esses pontos que compõe o dano $D$ da Equação~\eqref{eq:s19-7}.
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_20_1_basquin.pdf}
 		\caption[Curva S-N de Basquin]{Curva S-N de Basquin (escala log-log) — base da contagem de ciclos da Regra de Palmgren-Miner.}
@@ -2793,7 +2793,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	A Figura~\ref{fig:21-1} ilustra esse ciclo ao longo de vários passos de tempo: a cada nova medição ruidosa $z_k$ (marcadores em X), a estimativa do EKF (linha azul) se aproxima do estado real não observado (linha verde), e a banda sombreada — a covariância $P_{k|k}$ da Equação~\eqref{eq:s21-4} — se estreita a cada correção, representando a redução da incerteza sobre o estado estimado.
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_21_1_ekf.pdf}
 		\caption[Ciclo de predição-correção do EKF]{Ciclo de predição-correção do EKF: estimativa convergindo para o estado real a partir de medições ruidosas, com banda de incerteza $P_{k|k}$.}
@@ -2868,7 +2868,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\subsection{Arquitetura Probabilística e Espaço Latente}
 	O VAE projeta o vetor de 28 variáveis em um espaço latente ($\ell$) modelado por distribuições gaussianas. A Figura~\ref{fig:22-1} ilustra essa arquitetura de ``gargalo'': o encoder comprime progressivamente a entrada $z$ até os poucos parâmetros do espaço latente, e o decoder expande esse gargalo de volta ao tamanho original, produzindo a reconstrução $\hat{z}$ — a diferença entre $z$ e $\hat{z}$ é justamente o erro de reconstrução usado como resíduo de diagnóstico mais adiante neste capítulo.
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.75\textwidth]{figuras/fig_22_1_vae.pdf}
 		\caption[Arquitetura do Autoencoder Variacional]{Arquitetura do Autoencoder Variacional: o encoder comprime o vetor de entrada $z$ até o espaço latente $\ell$ (parametrizado por $\mu$ e $\sigma$), e o decoder reconstrói $\hat{z}$ a partir dele.}
@@ -3031,7 +3031,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\subsection{Controle Preditivo Baseado em Modelo (MPC)}
 	O MPC, consolidado como referência de controle de processos industriais por Camacho e Bordons \cite{mpc} e formalizado em teoria, computação e projeto por Rawlings, Mayne e Diehl \cite{rawlings}, projeta o comportamento do sistema em um horizonte $H$ para otimizar as variáveis de controle ($u$). A Figura~\ref{fig:24-1} ilustra o princípio de horizonte deslizante (\textit{receding horizon}) que dá nome ao método: a cada instante $k$, o controlador usa o modelo físico para projetar a trajetória futura de $y$ ao longo de todo o horizonte $H$, otimiza toda a sequência de ações de controle, mas aplica apenas a primeira ($u(k)$) — no instante seguinte, com uma nova medição disponível, todo o processo se repete com o horizonte deslocado um passo à frente:
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.60\textwidth]{figuras/fig_24_1_mpc.pdf}
 		\caption[Princípio de horizonte deslizante do MPC]{Princípio de horizonte deslizante do MPC: a trajetória prevista (tracejada) é otimizada até o fim do horizonte $H$, mas só a primeira ação de controle é aplicada antes de reotimizar.}
@@ -3107,7 +3107,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	O critério de parada não deve ser apenas um número máximo de iterações. Duas condições adicionais são mais informativas: \textbf{estagnação} de $g_{\text{best}}$, isto é, ausência de melhoria relativa significativa por um número consecutivo de iterações, e \textbf{colapso de diversidade}, medido pela dispersão das posições das partículas. Este segundo critério merece destaque porque distingue duas situações que o primeiro confunde: um enxame que parou de melhorar \textit{porque convergiu} e um que parou \textit{porque perdeu diversidade cedo demais} e ficou preso. Só o segundo caso justifica reiniciar a busca com nova semeadura.
 	A Figura~\ref{fig:24-2} mostra esse comportamento em duas iterações de um enxame sobre uma superfície de custo hipotética: inicialmente as partículas estão espalhadas e suas velocidades (setas) combinam o puxão em direção à melhor posição já visitada por cada uma ($p_{\text{best}}$) com o puxão em direção à melhor posição já vista por todo o enxame ($g_{\text{best}}$); depois de algumas iterações, o enxame converge e se concentra ao redor do mínimo global encontrado.
 
-	\begin{figure}[h!]
+	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.75\textwidth]{figuras/fig_24_2_pso.pdf}
 		\caption[Convergência do enxame de partículas do PSO]{Convergência do enxame de partículas do PSO sobre uma superfície de custo hipotética: dispersão inicial (esquerda) e concentração em torno do mínimo global $g_{\text{best}}$ após convergência (direita).}
@@ -3139,7 +3139,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 \end{equation}
 		Onde $\gamma_{\text{EM}} \approx 0{,}5772$ é a constante de Euler-Mascheroni (subscrita para não colidir com a razão de calores específicos $\gamma$ usada nos capítulos de termodinâmica). Um escore $s_{\text{IF}}$ próximo de 1 indica forte probabilidade de anomalia (caminho de isolamento muito curto); próximo de 0,5, o ponto é indistinguível do comportamento normal. O Gêmeo Digital usa esse escore para filtrar picos espúrios de sensor antes que alimentem o EKF ou o VAE, evitando falsos diagnósticos de falha originados por ruído de instrumentação, não por degradação real do equipamento. A Figura~\ref{fig:25-1} ilustra a ideia geometricamente: um ponto anômalo isolado do resto dos dados é separado do restante em poucos cortes retangulares aleatórios, enquanto um ponto no meio do aglomerado normal só se isola depois de muitos cortes sucessivos.
 
-		\begin{figure}[h!]
+		\begin{figure}[h!tbp]
 			\centering
 			\includegraphics[width=0.60\textwidth]{figuras/fig_25_1_isoforest.pdf}
 			\caption[Princípio do \textit{Isolation Forest}]{Princípio do \textit{Isolation Forest}: um ponto anômalo se isola do restante dos dados em poucos cortes aleatórios; um ponto no meio de um aglomerado normal exige muito mais cortes.}
@@ -3362,7 +3362,7 @@ domain.add_constraint(PointwiseProbabilityConstraint(
 
 	As ferramentas discutidas nas subseções anteriores não competem entre si — cada uma ocupa uma camada distinta da arquitetura de execução, e é a composição das quatro que entrega o desempenho pretendido. A Tabela~\ref{tab:27-1} organiza essa divisão de responsabilidades: a coluna \textbf{camada} indica o nível arquitetural, a coluna \textbf{ferramenta} nomeia a implementação de referência adotada neste documento e a coluna \textbf{função} descreve o papel específico daquela camada no Gêmeo Digital. A leitura de cima para baixo acompanha o caminho do dado: o núcleo Physics-ML substitui a simulação CFD cara por um modelo substituto treinado; o solver de EDP resolve os problemas inversos de identificação de parâmetros; a camada de controle consome o estado estimado e produz a ação; e a camada de visualização devolve o resultado ao operador em forma inteligível.
 
-	\begin{table}[h!]
+	\begin{table}[h!tbp]
 	\centering
 	\begin{tabular}{lll}
 		\toprule
@@ -3396,6 +3396,7 @@ domain.add_constraint(PointwiseProbabilityConstraint(
 
 \clearpage
 \section{Estudo de Caso Integrado: Diagnóstico Precoce de Desgaste de Folgas via EKF, VAE, PIML e MPC/PSO}
+\markboth{Estudo de Caso Integrado: Diagnóstico Precoce de Desgaste de Folgas}{}
 
 Os capítulos anteriores apresentaram cada peça do Gêmeo Digital isoladamente — a física da Parte I, e os cinco algoritmos da Parte II (EKF, VAE, PIML, MPC, PSO), cada um em seu próprio capítulo, cada um com sua própria Diretriz Técnica Final. O Capítulo 18 unificou as equações num motor de cálculo único, e o Capítulo 20 encadeou os algoritmos num fluxo de trabalho conceitual de quatro etapas. O que falta, e é o que este capítulo entrega, é ver esse fluxo \textbf{atravessado por um cenário só}, com números concretos passando de um algoritmo para o outro — não uma nova física, nem um novo algoritmo, mas a demonstração de que as peças já equacionadas neste documento realmente se encaixam.
 
@@ -3409,7 +3410,7 @@ O cenário é o desgaste gradual da folga radial do estágio LP ($\delta$, mesma
 
 O ponto de operação de referência usa os mesmos valores já adotados como padrão ao longo deste documento e do aplicativo de referência: pressão de rede $\pi = 8$, índice politrópico $n = 1{,}35$, temperatura ambiente $T_{amb} = 30\,^{\circ}\text{C}$, coeficiente de vazamento $K = 0{,}05$ (Equação~\eqref{eq:s9-3}) e folga relativa nova $\delta/L = 0{,}002$. A razão de pressão por estágio é $\pi_{lp} = \sqrt{\pi} = 2{,}828$ (Equação~\eqref{eq:s5-7} com estágios simétricos). Desses valores, a Equação~\eqref{eq:s9-3} dá a eficiência volumétrica de referência, $\eta_v = 1 - 0{,}05 \times 0{,}002 \times 2{,}828 \approx 99{,}97\,\%$, e a Equação~\eqref{eq:s11-1} dá a temperatura de descarga do LP prevista pelo modelo, $T_{d,lp} = 303{,}15 \times 2{,}828^{\,0{,}35/1{,}35} \approx 396{,}9\,\text{K} = 123{,}8\,^{\circ}\text{C}$. A Tabela~\ref{tab:28-1} consolida esses valores de referência junto com a corrente elétrica e a vibração global saudáveis, ambas ilustrativas (não derivadas de outra equação deste documento, apenas fixadas como ponto de partida do cenário).
 
-\begin{table}[h!]
+\begin{table}[h!tbp]
 	\centering
 	\resizebox{\textwidth}{!}{
 	\begin{tabular}{lccc}
@@ -3461,7 +3462,7 @@ O PSO não participa dessa decisão em tempo real — o Capítulo 24 já registr
 
 A Tabela~\ref{tab:28-2} percorre o cenário inteiro em ordem, mostrando explicitamente o que cada algoritmo recebeu, o que produziu e quem consumiu essa saída em seguida — a pergunta que os Capítulos 18 e 20, olhados isoladamente, respondem em teoria mas não demonstram em números.
 
-\begin{table}[h!]
+\begin{table}[h!tbp]
 	\centering
 	\resizebox{\textwidth}{!}{
 	\begin{tabular}{l l l l}
