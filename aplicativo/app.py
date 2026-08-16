@@ -25,6 +25,8 @@ Abas:
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import matplotlib
 
 matplotlib.use("Agg")  # mesmo backend do scripts/gen_figuras.py
@@ -1458,6 +1460,17 @@ with tab_dados:
 
     with st.expander("Matriz de referência do livro — Tabela 18.1 (9 pontos, A-I)"):
         st.dataframe(_REFERENCIA_TAB18_1, width="stretch", hide_index=True)
+
+    _exemplo_path = Path(__file__).parent / "exemplos" / "instrumentacao_exemplo.csv"
+    if _exemplo_path.exists():
+        st.download_button(
+            "⬇️ Baixar exemplo (.csv, os 9 pontos da Tabela 18.1)",
+            data=_exemplo_path.read_bytes(),
+            file_name="instrumentacao_exemplo.csv",
+            mime="text/csv",
+            help="Mesmo arquivo em aplicativo/exemplos/ — baixe, apague as "
+                 "linhas que não se aplicam à sua planta e reenvie abaixo "
+                 "para ver a comparação de cobertura.")
 
     arquivo_medidas = st.file_uploader(
         "Planilha de instrumentação desta planta (.xlsx ou .csv)",

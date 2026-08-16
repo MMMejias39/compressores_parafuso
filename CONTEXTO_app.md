@@ -1053,6 +1053,32 @@ do Python para PowerShell, não uma verificação empírica neste projeto.
 Se algum comando falhar num Windows real, é o primeiro lugar a
 conferir.
 
+## Exemplo de arquivo para upload na aba "Dados Medidos" (16/08/2026)
+
+O autor testou a aba "Dados Medidos" (ver "Reorganização visual" acima) e
+perguntou onde estava o arquivo de exemplo — não havia nenhum: o CSV usado
+para verificar a funcionalidade durante a implementação foi criado só no
+diretório temporário da sessão (`scratchpad`), nunca fez parte do
+repositório.
+
+Corrigido com duas peças:
+- **`aplicativo/exemplos/instrumentacao_exemplo.csv`** — cópia completa da
+  Tabela 18.1 do livro (25 linhas, os 9 pontos A-I, incluindo a coluna
+  "Função"), em ASCII puro (sem subscritos/gregas Unicode, para abrir sem
+  problema de encoding em qualquer planilha eletrônica, inclusive no
+  Excel do Windows).
+- **Botão "⬇️ Baixar exemplo"** (`st.download_button`) na própria aba,
+  logo acima do `file_uploader` — lê o arquivo via
+  `Path(__file__).parent / "exemplos" / ...` (caminho relativo ao próprio
+  `app.py`, não ao diretório de trabalho, para funcionar independente de
+  onde o Streamlit for iniciado). Evita o usuário ter que caçar o arquivo
+  no sistema de arquivos.
+
+**Verificação**: `pytest`/`AppTest` sem exceção; testado ao vivo via
+Claude-in-Chrome — upload do próprio `instrumentacao_exemplo.csv` mostrou
+corretamente "25 variáveis carregadas" e "9/9 pontos cobertos" (mensagem
+de sucesso, não de aviso).
+
 ## Pendências conhecidas
 
 1. O app cobre os Capítulos 5, 9, 10, 11, 12, 13, 14, 15, 16 do livro

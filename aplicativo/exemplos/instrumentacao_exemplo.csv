@@ -1,0 +1,26 @@
+Ponto,Localização,Variável,Tag,Unidade,Função
+A,MCC / Relé,Tensão de Linha,V_L,V,Potencial elétrico de alimentação
+A,MCC / Relé,Corrente de Fase,I,A,Carga elétrica do motor principal
+A,MCC / Relé,Frequência,f,Hz,Ciclo da rede / Velocidade do VFD
+A,MCC / Relé,Fator de Potência,cos phi,-,Eficiência da conversão elétrica
+B,Transmissão,Velocidade Angular,omega,rad/s,Rotação real do eixo primário
+B,Transmissão,Torque no Eixo,tau,N.m,Momento torsor transmitido
+B,Transmissão,Vibração Global,v_rms,mm/s,Severidade vibratória (base API 619/OEM)
+B,Transmissão,Tensão no Dente,sigma_b,MPa,Esforço na raiz da engrenagem
+C,Estágio LP,Pressão Sucção,P_s_lp,bar,Pressão de entrada (atmosférica)
+C,Estágio LP,Temp. Descarga,T_d_lp,°C,Calor de compressão do 1º estágio
+C,Estágio LP,Folga Interna,delta_lp,um,Espaço residual entre parafusos
+D,Intercooler,Temp. Água In,T_w_in,°C,Temperatura do fluido de resfriamento
+D,Intercooler,Delta Pressão,dP_ic,bar,Perda de carga no trocador
+D,Intercooler,Vazão Condensado,m_dot_c,kg/h,Taxa de remoção de umidade
+E,Estágio HP,Pressão Descarga,P_d_hp,bar,Pressão final de compressão
+E,Estágio HP,Temp. Descarga,T_d_hp,°C,Temperatura crítica do 2º estágio
+E,Estágio HP,Folga Interna,delta_hp,um,Desgaste/Dilatação térmica HP
+E,Estágio HP,Posição Axial,delta_ax,um,"Desgaste do mancal de escora, precede vibração"
+F,Aftercooler,Temp. Saída,T_ac_out,°C,Temperatura pré-secagem
+G,Secador PSA,Ponto de Orvalho,T_dp,°C,Umidade residual (ISO 8573-1)
+G,Secador PSA,Vazão de Purga,m_dot_p,kg/s,Ar perdido na regeneração
+H,Vaso Pulmão,Pressão Vaso,P_tk,bar,Energia potencial acumulada
+H,Vaso Pulmão,Nível Condensado,L_tk,%,Acúmulo de líquido no pulmão
+I,Header,Vazão de Demanda,m_dot_tot,kg/s,Consumo real da unidade offshore
+I,Header,Status Ramal,delta_i,bin,Lógica de corte (Serviço/Processo)
