@@ -2359,3 +2359,22 @@ concluído: a Tabela 15.2 inicial não usava `\resizebox` (diferente de
 toda outra tabela do documento) e transbordou a largura da página
 (*overfull hbox* de 85,9pt) — detectado pela checagem de rotina do log de
 compilação, não por inspeção visual do PDF.
+
+## Apresentação sincronizada com a sessão de hoje (16/08/2026)
+
+Pedido do autor: "atualiza a apresentação também". Edições mínimas, sem
+inflar o deck (permanece 24 slides): slide de secagem PSA ganhou 1 bullet
+curto sobre material selecionável e cinética exponencial (Eqs. 15.12/
+Tabela 15.2); slide "Não é só teoria" corrigido — estava desatualizado
+mesmo antes deste pedido (dizia "71 testes"/"4ª aba"/"dois caminhos" de
+identificação de K, todos errados desde as sessões anteriores: são 77
+testes, 6 abas, três caminhos com a calibração LM nova); slide de síntese
+com a contagem de páginas atualizada (164→166).
+
+Repetindo a disciplina já estabelecida: comparado o log de `Overfull
+\vbox` da versão editada contra a versão antes da edição (não só olhado
+a versão editada isolada). Uma primeira tentativa no slide "Não é só
+teoria" (bullet mais longo, citando os três métodos por extenso) levou o
+overflow daquele frame de 18,5pt para 35,1pt — acima do próprio teto já
+tolerado no deck (27,4pt, slide de Agenda); encurtado até voltar a
+18,5pt, igual ao valor original, antes de aceitar como pronto.

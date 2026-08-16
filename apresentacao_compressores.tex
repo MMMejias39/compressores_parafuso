@@ -197,6 +197,7 @@
 			\item Duas torres: uma adsorve sob pressão, a outra regenera por purga de ar seco.
 			\item Variável crítica: ponto de orvalho $T_{dp} \le -40\,^{\circ}$C (ISO 8573-1).
 			\item O DT antecipa o \textbf{breakthrough} do leito dessecante pela taxa $dT_{dp}/dt$ — antes do limite normativo.
+			\item Material selecionável (alumina, sílica, peneira molecular); regeneração como recuperação exponencial de 1ª ordem, não uma reta.
 		\end{itemize}
 	\end{columns}
 \end{frame}
@@ -347,10 +348,10 @@
 \end{frame}
 
 \begin{frame}{Não é só teoria: simulador funcional (\texttt{aplicativo/})}
-	Implementação real (Python/NumPy/PyTorch/SciPy) de cada algoritmo da Parte II, não pseudocódigo — 71 testes automatizados:
+	Implementação real (Python/NumPy/PyTorch/SciPy) de cada algoritmo da Parte II, não pseudocódigo — 77 testes automatizados, 6 abas interativas (Streamlit):
 	\begin{itemize}
-		\item \textbf{EKF, VAE, PIML, MPC, PSO}: os cinco rodam de fato, numa 4ª aba interativa (Streamlit) ao lado da simulação do trem.
-		\item \textbf{Identificação por problema inverso} (Cap.\ 23.8/28.1): o coeficiente $K$ — fixo no resto do app — é recuperado a partir de dados simulados por dois caminhos complementares, EKF aumentado (online) e PINN (offline).
+		\item \textbf{EKF, VAE, PIML, MPC, PSO}: os cinco rodam de fato, ao lado da simulação do trem.
+		\item \textbf{Identificação de $K$}: EKF aumentado (online), PIML (offline) e, agora, calibração em lote via Levenberg-Marquardt — sem filtro nem rede.
 		\item Toda equação no código cita o número do livro — rastreável ao texto, não uma reimplementação paralela.
 	\end{itemize}
 	\begin{alertblock}{Achado real do processo}
@@ -370,7 +371,7 @@
 	\end{itemize}
 	\vfill
 	\centering
-	\small Documento completo: \textit{Gêmeo Digital de Sistemas de Compressão Offshore — Diretrizes Técnicas, Modelagem e Implementação} (164 p.)
+	\small Documento completo: \textit{Gêmeo Digital de Sistemas de Compressão Offshore — Diretrizes Técnicas, Modelagem e Implementação} (166 p.)
 \end{frame}
 
 \end{document}
