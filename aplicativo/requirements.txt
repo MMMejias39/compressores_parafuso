@@ -2,3 +2,10 @@ streamlit>=1.40
 numpy>=2.0
 matplotlib>=3.9
 pytest>=8.0
+scipy>=1.16
+
+# torch (VAE/PIML, Caps. 22/23) fica de fora deste arquivo de propósito: o
+# índice padrão do PyPI publica a build com CUDA (vários GB); a build CPU,
+# muito menor e suficiente para este app, exige o índice dedicado. Instale
+# à parte, uma vez, antes de rodar o app:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu

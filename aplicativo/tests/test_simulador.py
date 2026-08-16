@@ -17,12 +17,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from compressor_sim import (
     dinamica,
     ekf,
+    mpc,
     nucleo,
     parametros_default,
+    piml,
     psa_ciclo,
     pso,
     simular,
     subsistemas,
+    vae,
 )
 
 
@@ -518,3 +521,148 @@ def test_pso_minimiza_spc_sem_restricao_vai_para_pressao_minima():
     r = pso.otimizar(custo, limite_inf=[5.0], limite_sup=[12.0],
                      n_particulas=12, n_iter=25, seed=3)
     assert r["g_best"][0] == pytest.approx(5.0, abs=0.1)
+
+
+# --- VAE (Eqs. 20.4, 22.1-22.7) -------------------------------------------------
+
+def test_vae_extrai_features_tamanho_correto():
+    res = simular()
+    feat = vae.extrair_features(res)
+    assert feat.shape == (len(vae.NOMES_FEATURES),)
+    assert np.all(np.isfinite(feat))
+
+
+def test_vae_gerar_dataset_forma_correta():
+    p = parametros_default()
+    ds = vae.gerar_dataset_saudavel(50, p, seed=0)
+    assert ds.shape == (50, len(vae.NOMES_FEATURES))
+    assert np.all(np.isfinite(ds))
+
+
+def test_vae_treino_reduz_perda():
+    p = parametros_default()
+    ds = vae.gerar_dataset_saudavel(200, p, seed=0)
+    info = vae.treinar(ds, n_epocas=150)
+    assert info["historico_loss"][-1] < info["historico_loss"][0]
+
+
+def test_vae_detecta_anomalia_clara_fora_do_limiar():
+    p = parametros_default()
+    ds_treino = vae.gerar_dataset_saudavel(400, p, seed=0)
+    ds_val = vae.gerar_dataset_saudavel(150, p, seed=1)
+    info = vae.treinar(ds_treino, n_epocas=300)
+    limiar = vae.calibrar_limiar(info, ds_val, n_desvios=3.0)
+
+    # ponto de operação saudável (referência) não deve disparar
+    feat_saudavel = vae.extrair_features(simular(p))[None, :]
+    e_saudavel = vae.erro_reconstrucao(info, feat_saudavel)
+    assert e_saudavel[0] < limiar
+
+    # folga bem fora da faixa de comissionamento (0,0018-0,0022) deve disparar
+    p_deg = {**p, "folga_rel": 0.02}
+    feat_deg = vae.extrair_features(simular(p_deg))[None, :]
+    e_deg = vae.erro_reconstrucao(info, feat_deg)
+    assert e_deg[0] > limiar
+
+
+# --- PIML (Eqs. 23.1-23.4) -------------------------------------------------------
+
+_FAIXAS_PIML_TESTE = {
+    "pi_total": (6.0, 10.0), "t_amb_c": (10.0, 40.0),
+    "folga_rel": (0.001, 0.02), "r_f_equiv": (0.0, 5e-4),
+    "fad_m3_min": (8.0, 12.0),
+}
+
+
+def test_piml_gerar_dataset_forma_correta():
+    p = parametros_default()
+    entradas, saidas = piml.gerar_dataset(30, p, _FAIXAS_PIML_TESTE, seed=0)
+    assert entradas.shape == (30, len(piml.NOMES_ENTRADA))
+    assert saidas.shape == (30, len(piml.NOMES_SAIDA))
+    assert np.all(np.isfinite(entradas)) and np.all(np.isfinite(saidas))
+
+
+def test_piml_treino_reduz_ambas_as_perdas():
+    p = parametros_default()
+    entradas, saidas = piml.gerar_dataset(300, p, _FAIXAS_PIML_TESTE, seed=0)
+    info = piml.treinar(entradas, saidas, _FAIXAS_PIML_TESTE, n_epocas=200, lr=1e-2)
+    assert info["hist_data"][-1] < info["hist_data"][0]
+    assert info["hist_fisica"][-1] < info["hist_fisica"][0]
+
+
+def test_piml_preve_proximo_do_simulador_real():
+    p = parametros_default()
+    entradas, saidas = piml.gerar_dataset(400, p, _FAIXAS_PIML_TESTE, seed=0)
+    info = piml.treinar(entradas, saidas, _FAIXAS_PIML_TESTE, n_epocas=300, lr=1e-2)
+
+    entradas_teste, saidas_teste = piml.gerar_dataset(20, p, _FAIXAS_PIML_TESTE, seed=99)
+    pred = piml.prever(info, entradas_teste)
+    # T_HP,in praticamente não varia (intercooler efetivo) -> erro deve ser mínimo;
+    # T_LP,out e ṁ_seco têm faixa maior, tolerância proporcionalmente maior
+    assert np.abs(pred[:, 1] - saidas_teste[:, 1]).mean() < 0.5   # °C
+    assert np.abs(pred[:, 2] - saidas_teste[:, 2]).mean() < 0.01  # kg/s
+
+
+def test_piml_residuo_fisico_pequeno_apos_treino():
+    p = parametros_default()
+    entradas, saidas = piml.gerar_dataset(400, p, _FAIXAS_PIML_TESTE, seed=0)
+    info = piml.treinar(entradas, saidas, _FAIXAS_PIML_TESTE, n_epocas=300, lr=1e-2)
+
+    entradas_coloc, _ = piml.gerar_dataset(50, p, _FAIXAS_PIML_TESTE, seed=123)
+    residuo = piml.residuo_fisico_real(info, entradas_coloc)
+    q_medio = np.abs(saidas[:, 3]).mean()
+    # resíduo médio bem abaixo da escala típica de Q̇ — o livro é explícito que a
+    # penalização física é fraca (não nula), então a tolerância aqui é generosa
+    assert np.abs(residuo).mean() < 0.05 * q_medio
+
+
+# --- MPC (Eqs. 24.1/24.2) --------------------------------------------------------
+
+def test_mpc_x_c_respeita_limites():
+    params = parametros_default()
+    res = simular(params)
+    pw = res["potencias"]
+    m_dot_cap = res["nos"][-1]["m_dot"] * pw["n_compressores"]
+    rho_amb = nucleo.densidade_ar(params["p_amb"], params["t_amb"])
+    dem_base = rho_amb * 5.0 / 60.0
+    r = mpc.simular_mpc(
+        horizonte_min=6.0, dt=5.0, n_horizonte=10, m_dot_cap=m_dot_cap,
+        v_vaso=params["v_vaso"], t_k=params["t_amb"],
+        p_set=params["p_amb"] * params["pi_total"], dem_base=dem_base,
+        t_ev=(90.0, 180.0), fator_ev=1.4, rho=0.05, x_c_min=0.3,
+        w_nom=pw["w_total_planta"], eta_vsd=0.95)
+    assert np.all(r["x_c"] >= 0.3 - 1e-9)
+    assert np.all(r["x_c"] <= 1.0 + 1e-9)
+
+
+def test_mpc_rastreia_referencia_melhor_que_controle_reativo():
+    # cenário com margem de capacidade (evento moderado, não satura o vaso)
+    # -- o MPC antecipa a demanda futura conhecida; o controle reativo de
+    # dinamica.py só responde à demanda do instante atual via rampa de 1ª
+    # ordem (Eq. 13.7) -- o MPC deve rastrear a pressão de referência com
+    # erro médio menor.
+    params = parametros_default()
+    res = simular(params)
+    pw = res["potencias"]
+    m_dot_cap = res["nos"][-1]["m_dot"] * pw["n_compressores"]
+    rho_amb = nucleo.densidade_ar(params["p_amb"], params["t_amb"])
+    dem_base = rho_amb * 5.0 / 60.0
+    p_set = params["p_amb"] * params["pi_total"]
+    horizonte_min, t_ev, fator_ev = 10.0, (240.0, 390.0), 1.4
+
+    r_mpc = mpc.simular_mpc(
+        horizonte_min=horizonte_min, dt=5.0, n_horizonte=12,
+        m_dot_cap=m_dot_cap, v_vaso=params["v_vaso"], t_k=params["t_amb"],
+        p_set=p_set, dem_base=dem_base, t_ev=t_ev, fator_ev=fator_ev,
+        rho=0.05, x_c_min=0.3, w_nom=pw["w_total_planta"], eta_vsd=0.95)
+    r_reativo = dinamica.simular_transiente(
+        horizonte_min=horizonte_min, m_dot_cap=m_dot_cap,
+        w_nom=pw["w_total_planta"], v_vaso=params["v_vaso"],
+        t_k=params["t_amb"], p_set=p_set, p_limite=params["p_limite"],
+        dem_base=dem_base, t_ev=t_ev, fator_ev=fator_ev, modo="VSD",
+        dp_db=0.5e5)
+
+    p_ref_bar = p_set / 1e5
+    desvio_mpc = np.mean(np.abs(r_mpc["p_bar"] - p_ref_bar))
+    desvio_reativo = np.mean(np.abs(r_reativo["p_bar"] - p_ref_bar))
+    assert desvio_mpc < desvio_reativo

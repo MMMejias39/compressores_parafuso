@@ -25,7 +25,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 
-from compressor_sim import dinamica, ekf, nucleo, parametros_default, psa_ciclo, pso, simular
+from compressor_sim import (
+    dinamica,
+    ekf,
+    mpc,
+    nucleo,
+    parametros_default,
+    piml,
+    psa_ciclo,
+    pso,
+    simular,
+    vae,
+)
 
 # Paleta e estilo herdados de scripts/gen_figuras.py
 NAVY = "#1f3b57"
@@ -261,6 +272,49 @@ with st.sidebar:
         w_fim_pso = st.slider("Peso de inércia final w_fim", 0.1, 0.6, 0.4, 0.05)
         c1_pso = st.slider("Coeficiente cognitivo c1", 0.5, 3.0, 2.0, 0.1)
         c2_pso = st.slider("Coeficiente social c2", 0.5, 3.0, 2.0, 0.1)
+
+    with st.expander("Gêmeo Digital — VAE (aba 4, Eqs. 20.4, 22.1-22.7)"):
+        st.caption(
+            "Treinado sobre amostras sintéticas saudáveis (comissionamento, "
+            "δ/L entre 0,0018-0,0022) — não existe dado real de planta "
+            "neste projeto.")
+        n_amostras_vae = st.slider("Amostras de treino (assumido)", 200, 1000, 500, 50,
+                                   key="n_amostras_vae")
+        n_epocas_vae = st.slider("Épocas de treino", 100, 500, 300, 50, key="n_epocas_vae")
+        folga_cenario_vae = st.number_input(
+            "δ/L do cenário de teste (assumido)", 0.0005, 0.03, 0.015, 0.001,
+            format="%.4f",
+            help="Valor bem fora da faixa saudável de treino dispara a "
+                 "anomalia por padrão; reduza para ver o limite de detecção.")
+
+    with st.expander("Gêmeo Digital — PIML (aba 4, Eqs. 23.1-23.4)"):
+        st.caption(
+            "Substituto treinado para [T_LP,out, T_HP,in, ṁ_seco, "
+            "Q̇_intercooler] a partir de [π, T_amb, δ/L, R_f, FAD], com "
+            "resíduo físico do balanço de energia do intercooler "
+            "(Eq. 10.1) avaliado em pontos de colocação sem rótulo.")
+        n_amostras_piml = st.slider("Amostras de treino (assumido)", 200, 800, 400, 50,
+                                    key="n_amostras_piml")
+        n_epocas_piml = st.slider("Épocas de treino", 100, 500, 300, 50, key="n_epocas_piml")
+
+    with st.expander("Gêmeo Digital — MPC (aba 4, Eqs. 24.1/24.2)"):
+        st.caption(
+            "Compara o MPC (antecipa a demanda futura conhecida) contra o "
+            "controle reativo já usado na aba \"Dinâmica temporal\" "
+            "(só responde à demanda do instante atual).")
+        demanda_base_mpc = st.slider(
+            "Demanda base para o teste [m³/min] (assumido)", 1.0, 8.0, 5.0, 0.5,
+            help="Mantida deliberadamente com folga em relação à capacidade "
+                 "instalada — com demanda muito perto do limite, qualquer "
+                 "controlador (MPC ou reativo) satura igualmente, e a "
+                 "comparação deixa de mostrar diferença.")
+        fator_ev_mpc = st.slider("Fator do pico de demanda", 1.1, 2.0, 1.4, 0.1)
+        horizonte_mpc = st.slider("Horizonte de simulação [min]", 5, 20, 10, 1)
+        dt_mpc = st.slider("Passo de tempo Δt [s] (assumido)", 2.0, 10.0, 5.0, 1.0)
+        n_horizonte_mpc = st.slider("Horizonte de predição H [passos]", 6, 24, 12, 2)
+        rho_mpc = st.number_input(
+            "Peso do esforço de controle ρ (Eq. 24.1)", 0.0, 1.0, 0.05, 0.01,
+            format="%.2f")
 
 params = {
     **defaults,
@@ -950,3 +1004,189 @@ with tab_gd:
         st.info("Clique em \"Rodar PSO\" para otimizar — não roda "
                 "automaticamente a cada mudança de slider, por ser mais "
                 "custoso que o resto do app.")
+
+    st.divider()
+    st.subheader("Detecção de Anomalia via VAE (Eqs. 20.4, 22.1-22.7)")
+    st.caption(
+        "Autoencoder variacional treinado sobre pontos de operação "
+        "saudáveis sintéticos (não há dado real de planta neste "
+        "projeto). O erro de reconstrução E_rec funciona como sensor "
+        "virtual de anomalia — o limiar de disparo (Eq. 22.6) é "
+        "calibrado estatisticamente sobre um conjunto de validação "
+        "saudável, não escolhido à mão."
+    )
+
+    @st.cache_resource(show_spinner="Treinando VAE...")
+    def _treinar_vae_cache(_params_base, chave, n_amostras, n_epocas):
+        ds_treino = vae.gerar_dataset_saudavel(n_amostras, _params_base, seed=0)
+        ds_val = vae.gerar_dataset_saudavel(max(80, n_amostras // 3), _params_base, seed=1)
+        info_treinado = vae.treinar(ds_treino, n_epocas=n_epocas)
+        limiar_calibrado = vae.calibrar_limiar(info_treinado, ds_val, n_desvios=3.0)
+        e_val_calc = vae.erro_reconstrucao(info_treinado, ds_val)
+        return info_treinado, limiar_calibrado, e_val_calc
+
+    chave_vae = (round(params["t_amb"], 1), round(params["pi_total"], 2),
+                round(params["fad_m3_min"], 2), n_amostras_vae, n_epocas_vae)
+    info_vae, limiar_vae, e_val_vae = _treinar_vae_cache(
+        params, chave_vae, n_amostras_vae, n_epocas_vae)
+
+    feat_saudavel = vae.extrair_features(res)[None, :]
+    e_saudavel = float(vae.erro_reconstrucao(info_vae, feat_saudavel)[0])
+    p_cenario_vae = {**params, "folga_rel": folga_cenario_vae}
+    feat_cenario = vae.extrair_features(simular(p_cenario_vae))[None, :]
+    e_cenario = float(vae.erro_reconstrucao(info_vae, feat_cenario)[0])
+
+    v1, v2, v3 = st.columns(3)
+    v1.metric("E_rec — ponto de operação atual", f"{e_saudavel:.2f}")
+    v2.metric(f"E_rec — cenário δ/L={folga_cenario_vae:.4f}", f"{e_cenario:.2f}",
+             delta=f"{e_cenario - limiar_vae:+.2f} vs. limiar")
+    v3.metric("Limiar de disparo (Eq. 22.6)", f"{limiar_vae:.2f}")
+    if e_cenario > limiar_vae:
+        st.warning(f"Cenário de teste classificado como **anômalo** — "
+                   f"E_rec ({e_cenario:.2f}) > limiar ({limiar_vae:.2f}).")
+    else:
+        st.success(f"Cenário de teste dentro do esperado — "
+                   f"E_rec ({e_cenario:.2f}) ≤ limiar ({limiar_vae:.2f}).")
+
+    figvae, (axv1, axv2) = plt.subplots(1, 2, figsize=(12.4, 3.2))
+    axv1.plot(info_vae["historico_loss"], color=BLUE)
+    axv1.set_xlabel("Época")
+    axv1.set_ylabel("Perda (ELBO)")
+    axv1.set_title("Convergência do treino", fontsize=10)
+
+    axv2.hist(e_val_vae, bins=20, color=BLUE, alpha=0.6,
+             label="E_rec (validação saudável)")
+    axv2.axvline(limiar_vae, color=RED, ls="--", label="limiar")
+    axv2.axvline(e_cenario, color=GREEN, ls="-", label="cenário de teste")
+    axv2.set_xlabel("E_rec")
+    axv2.set_ylabel("Contagem")
+    axv2.legend(fontsize=7)
+    axv2.set_title("Distribuição saudável vs. cenário", fontsize=10)
+    figvae.tight_layout()
+    st.pyplot(figvae)
+    st.caption(
+        "Nenhuma das 12 variáveis de entrada precisa isoladamente cruzar "
+        "um limiar próprio para o VAE sinalizar — é a combinação "
+        "conjunta que se afasta da distribuição aprendida na operação "
+        "saudável (a mesma lógica do achado que motivou o Capítulo 28 "
+        "do livro)."
+    )
+
+    st.divider()
+    st.subheader("Modelo Substituto PIML (Eqs. 23.1-23.4)")
+    st.caption(
+        "Rede treinada para prever T_LP,out, T_HP,in, ṁ_seco e "
+        "Q̇_intercooler a partir do ponto de operação, com um resíduo "
+        "físico (balanço de energia do intercooler, Eq. 10.1) penalizado "
+        "em pontos de colocação sem rótulo — inclusive fora da faixa "
+        "rotulada de treino."
+    )
+
+    _FAIXAS_PIML_APP = {
+        "pi_total": (6.0, 10.0), "t_amb_c": (10.0, 40.0),
+        "folga_rel": (0.001, 0.02), "r_f_equiv": (0.0, 5e-4),
+        "fad_m3_min": (8.0, 12.0),
+    }
+
+    @st.cache_resource(show_spinner="Treinando o substituto PIML...")
+    def _treinar_piml_cache(_params_base, chave, n_amostras, n_epocas):
+        entradas_tr, saidas_tr = piml.gerar_dataset(
+            n_amostras, _params_base, _FAIXAS_PIML_APP, seed=0)
+        info_treinado = piml.treinar(entradas_tr, saidas_tr, _FAIXAS_PIML_APP,
+                                     n_epocas=n_epocas, lr=1e-2)
+        entradas_tst, saidas_tst = piml.gerar_dataset(
+            max(20, n_amostras // 10), _params_base, _FAIXAS_PIML_APP, seed=99)
+        return info_treinado, entradas_tst, saidas_tst
+
+    chave_piml = (round(params["t_amb"], 1), n_amostras_piml, n_epocas_piml)
+    info_piml, entradas_teste_piml, saidas_teste_piml = _treinar_piml_cache(
+        params, chave_piml, n_amostras_piml, n_epocas_piml)
+
+    pred_piml = piml.prever(info_piml, entradas_teste_piml)
+    erro_piml = np.abs(pred_piml - saidas_teste_piml).mean(axis=0)
+    residuo_piml = piml.residuo_fisico_real(info_piml, entradas_teste_piml)
+
+    pi1, pi2, pi3 = st.columns(3)
+    pi1.metric("Erro médio T_LP,out", f"{erro_piml[0]:.2f} °C")
+    pi2.metric("Erro médio ṁ_seco", f"{erro_piml[2] * 1000:.2f} g/s")
+    pi3.metric("Resíduo físico médio |F|", f"{np.abs(residuo_piml).mean():.1f} W",
+              help="O livro é explícito (Cap. 23, \"Limitações e "
+                   "Cautelas\") que essa penalização é fraca, não uma "
+                   "garantia — o resíduo deve ser medido, não presumido "
+                   "nulo.")
+
+    figpiml, (axp1, axp2) = plt.subplots(1, 2, figsize=(12.4, 3.2))
+    axp1.plot(info_piml["hist_data"], color=BLUE, label="L_data")
+    axp1.plot(info_piml["hist_fisica"], color=RED, label="L_physics")
+    axp1.set_yscale("log")
+    axp1.set_xlabel("Época")
+    axp1.set_ylabel("Perda (escala log)")
+    axp1.legend(fontsize=8)
+    axp1.set_title("Convergência das duas perdas", fontsize=10)
+
+    axp2.plot(info_piml["hist_lambda"], color=NAVY)
+    axp2.set_xlabel("Época")
+    axp2.set_ylabel("λ")
+    axp2.set_title("Balanceamento adaptativo de λ (Eq. 23.4)", fontsize=10)
+    figpiml.tight_layout()
+    st.pyplot(figpiml)
+    st.caption(
+        "λ parte de 0,1 e se ajusta pela razão entre as magnitudes dos "
+        "gradientes de L_data e L_physics — sem essa normalização, o "
+        "resíduo físico (medido em watts, ordens de grandeza acima do "
+        "erro de dados já padronizado) satura a rede logo no 1º passo de "
+        "treino (ver CONTEXTO_app.md para o diagnóstico completo)."
+    )
+
+    st.divider()
+    st.subheader("MPC vs. Controle Reativo (Eqs. 24.1/24.2)")
+
+    rho_amb_gd = nucleo.densidade_ar(params["p_amb"], params["t_amb"])
+    dem_base_mpc = rho_amb_gd * demanda_base_mpc / 60.0
+    m_dot_cap_gd = res["nos"][-1]["m_dot"] * pw["n_compressores"]
+    p_set_mpc = params["p_amb"] * params["pi_total"]
+    hor_s_mpc = horizonte_mpc * 60.0
+    t_ev_mpc = (0.4 * hor_s_mpc, 0.65 * hor_s_mpc)
+
+    r_mpc = mpc.simular_mpc(
+        horizonte_min=horizonte_mpc, dt=dt_mpc, n_horizonte=n_horizonte_mpc,
+        m_dot_cap=m_dot_cap_gd, v_vaso=params["v_vaso"], t_k=params["t_amb"],
+        p_set=p_set_mpc, dem_base=dem_base_mpc, t_ev=t_ev_mpc,
+        fator_ev=fator_ev_mpc, rho=rho_mpc, x_c_min=dinamica.X_C_MIN,
+        w_nom=pw["w_total_planta"], eta_vsd=dinamica.ETA_VSD)
+    r_reativo_mpc = dinamica.simular_transiente(
+        horizonte_min=horizonte_mpc, m_dot_cap=m_dot_cap_gd,
+        w_nom=pw["w_total_planta"], v_vaso=params["v_vaso"],
+        t_k=params["t_amb"], p_set=p_set_mpc, p_limite=params["p_limite"],
+        dem_base=dem_base_mpc, t_ev=t_ev_mpc, fator_ev=fator_ev_mpc,
+        modo="VSD", dp_db=0.5e5)
+
+    p_ref_bar_mpc = p_set_mpc / 1e5
+    desvio_mpc = float(np.mean(np.abs(r_mpc["p_bar"] - p_ref_bar_mpc)))
+    desvio_reativo = float(np.mean(np.abs(r_reativo_mpc["p_bar"] - p_ref_bar_mpc)))
+
+    mm1, mm2, mm3 = st.columns(3)
+    mm1.metric("Desvio médio — MPC", f"{desvio_mpc * 1000:.1f} mbar")
+    mm2.metric("Desvio médio — reativo (VSD)", f"{desvio_reativo * 1000:.1f} mbar")
+    melhora_mpc = (1.0 - desvio_mpc / desvio_reativo) * 100.0 if desvio_reativo > 0 else 0.0
+    mm3.metric("Melhora do MPC", f"{melhora_mpc:.0f} %")
+
+    figmpc, axmpc = plt.subplots(figsize=(9.0, 3.4))
+    axmpc.plot(r_mpc["t_min"], r_mpc["p_bar"], color=BLUE, label="MPC (antecipa)")
+    axmpc.plot(r_reativo_mpc["t_min"], r_reativo_mpc["p_bar"], color=RED, ls="--",
+              label="Reativo (rampa 1ª ordem)")
+    axmpc.axhline(p_ref_bar_mpc, color=GREEN, ls=":", label="Referência")
+    axmpc.set_xlabel("Tempo [min]")
+    axmpc.set_ylabel("Pressão da rede [bar abs]")
+    axmpc.legend(fontsize=8)
+    figmpc.tight_layout()
+    st.pyplot(figmpc)
+    st.caption(
+        "Mesmo evento de demanda, dois controladores: o reativo (mesmo da "
+        "aba \"Dinâmica temporal\") só responde à demanda do instante "
+        "atual; o MPC otimiza a sequência de x_c ao longo do horizonte H "
+        "com a demanda futura conhecida (Eq. 24.1) e por isso antecipa o "
+        "evento em vez de correr atrás dele. Demanda base mantida com "
+        "folga (barra lateral) — perto da capacidade máxima, qualquer "
+        "controlador satura igualmente e a comparação perde sentido."
+    )

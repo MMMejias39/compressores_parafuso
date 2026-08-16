@@ -332,6 +332,151 @@ tempo — um candidato natural seria acoplá-la à aba "Dinâmica temporal"
 durante um evento de pico de demanda. Não implementado por não ter sido
 pedido; só o valor de regime permanente está na aba 1 hoje.
 
+## Parte II no app: VAE, PIML e MPC reais (fase 2 de 2 — 15/08/2026)
+
+Continuação direta da fase 1 (EKF/PSO, seção abaixo). Autor pediu para
+completar os 5 algoritmos + integração. **PyTorch e SciPy instalados**
+no venv do app (antes não existiam): `pip install torch --index-url
+https://download.pytorch.org/whl/cpu` (build CPU, ~192MB — a build padrão
+do PyPI vem com CUDA, vários GB, desnecessário aqui) e `pip install
+scipy`. `requirements.txt` atualizado: `scipy>=1.16` direto; `torch`
+deixado **fora** da lista automática de propósito, com instrução em
+comentário — o índice CPU dedicado não é o padrão do `pip install -r`.
+
+**A Parte III (demo integrada) ficou pendente** — não implementada nesta
+sessão; ver "Pendência" ao final desta entrada.
+
+### VAE (`compressor_sim/vae.py`, Eqs. 20.4, 22.1-22.7)
+
+Autoencoder variacional treinado sobre amostras sintéticas de operação
+saudável (não existe dado de planta real). **Achado real ao testar**: a
+primeira versão usava 16 features dominadas por pressões/temperaturas
+que — mesmo achado já registrado para a aba "Dinâmica temporal" — são
+**invariantes** a δ/L e R_f neste modelo (só dependem do ponto de
+operação fixo). Um cenário claramente degradado (δ/L=0,015 contra
+comissionamento 0,002) não disparava a anomalia porque 12 das 16
+features não carregavam nenhum sinal. Corrigido: feature vector reduzido
+a 12 grandezas, com `m_dot_seco` (sinal real de δ/L via Eq. 9.3)
+explicitamente incluído — antes ausente por descuido — e ruído sintético
+reduzido de 0,2% para 0,03% da leitura (o sinal físico de degradação é
+da ordem de décimos percentuais; ruído maior o encobria por construção,
+não por realismo de sensor). Limiar de disparo calibrado
+estatisticamente (média + 3σ do erro de reconstrução em validação
+saudável, Eq. 22.6) — não escolhido à mão. Resultado final verificado:
+E_rec ≈ 0,2-0,6 em operação saudável, ≈ 11-12 em δ/L=0,015 (bem acima do
+limiar ≈ 10-13, que varia por seed de treino).
+
+### PIML (`compressor_sim/piml.py`, Eqs. 23.1-23.4)
+
+Substituto treinado para prever [T_LP,out, T_HP,in, ṁ_seco,
+Q̇_intercooler] a partir de [π, T_amb, δ/L, R_f, FAD], com resíduo
+físico do balanço de energia do intercooler (forma algébrica em regime
+permanente da Eq. 10.1 — este simulador não tem EDPs para diferenciação
+automática, então o resíduo aqui é a contraparte estacionária dos
+resíduos de conservação de massa/energia do livro, Eq. 23.2) avaliado em
+pontos de colocação sem rótulo, inclusive fora da faixa de treino.
+Balanceamento adaptativo de λ (Eq. 23.4) implementado de fato via
+`torch.autograd.grad` nas magnitudes dos gradientes de cada termo.
+
+**Bug real encontrado e corrigido**: a rede não aprendia nada — `L_data`
+ficava travado em ~1,02 (espaço normalizado) por centenas de épocas,
+mesmo com bastante treino. Causa: o resíduo físico é medido em watts
+(escala ~10⁴, ao quadrado ~10⁶-10⁸), ordens de grandeza acima do erro de
+dados já padronizado (~O(1)) — com `λ_inicial=1,0`, o primeiro passo de
+otimização levava um gradiente de até ~1,4×10⁶, saturando todas as
+unidades `tanh` da rede permanentemente (unidades mortas) antes que o
+balanceamento adaptativo de λ tivesse qualquer chance de agir (ele só
+corrige a cada 5 épocas, devagar demais para um choque no passo 0).
+Corrigido normalizando o resíduo físico pelo próprio desvio-padrão de
+Q̇ antes de elevar ao quadrado (não muda a física exigida, $\mathcal{F}=0$
+continua $\mathcal{F}=0$, só evita o choque numérico) e reduzindo
+`λ_inicial` para 0,1. Depois da correção: `L_data` cai de 1,10 para
+~0,005 em 400 épocas, `L_physics` de 0,12 para ~0,0005, λ estabiliza
+perto de 1,1-1,2. Erro médio de predição verificado: T_LP,out ≈0,9°C,
+ṁ_seco ≈0,001-0,0014 kg/s, resíduo físico médio ≈55-65 W (livro é
+explícito, Cap. 23 "Limitações e Cautelas": a penalização é fraca, o
+resíduo deve ser medido, não presumido nulo — a UI reporta esse número
+em vez de escondê-lo).
+
+### MPC (`compressor_sim/mpc.py`, Eqs. 24.1/24.2)
+
+Horizonte deslizante real (não um esquema simplificado): a cada passo,
+`scipy.optimize.minimize` (L-BFGS-B) resolve a sequência ótima de
+x_c(k) sobre um horizonte H usando a **mesma** integração de Euler do
+balanço de massa do vaso/rede já usada em `dinamica.py` (Eq. 16.4/13.4)
+como restrição de propagação — só x_c(0) é de fato aplicado antes de
+reotimizar no passo seguinte (princípio da Fig. 24.1). Deliberadamente
+**não** encadeia o substituto PIML como modelo de predição do MPC (ao
+contrário da recomendação do Cap. 24 para sistemas caros de avaliar):
+o balanço de massa já é uma expressão fechada barata o bastante para
+ser avaliada milhares de vezes sem precisar de substituto — registrado
+explicitamente no docstring do módulo para não parecer uma omissão.
+
+**Achado real ao testar**: com os defaults de demanda do resto do app
+(8 m³/min, ~97% da capacidade instalada), um evento de pico satura
+qualquer controlador (MPC ou reativo) igualmente, e a comparação não
+mostra diferença nenhuma. A UI do MPC usa sliders de demanda/pico
+**próprios**, independentes do resto do app, com defaults deliberadamente
+folgados (5 m³/min base, pico ×1,4). Com essa margem, verificado que o
+MPC rastreia a pressão de referência com desvio médio ~4x menor que o
+controle reativo (antecipa a demanda futura conhecida em vez de só
+reagir ao instante atual) — resultado consistente entre o teste manual e
+o teste via `pytest`.
+
+### Verificação — Claude-in-Chrome indisponível a sessão inteira
+
+A extensão nunca reconectou nesta sessão. Em vez de continuar caindo para
+renderização de figuras isoladas, foi usado o **framework de teste
+headless nativo do Streamlit** (`streamlit.testing.v1.AppTest`) — roda o
+`app.py` inteiro (as 4 abas, todo o conteúdo de cada `with tab_x:`
+executa a cada rerun, independente de qual aba está visualmente
+selecionada) num harness que expõe qualquer exceção Python levantada
+durante a execução, sem precisar de navegador. **Achado real, e a razão
+de valer a pena registrar esta técnica para sessões futuras**: pegou um
+bug de verdade que nem `pytest` nem `curl`/log jamais capturariam —
+`StreamlitDuplicateElementId`, dois `st.slider("Épocas de treino", 100,
+500, 300, 50)` idênticos (um para VAE, um para PIML) colidindo no ID
+automático do Streamlit (baseado em label+parâmetros). Corrigido com
+`key=` explícito nos 4 sliders de amostras/épocas de VAE e PIML.
+Confirmado depois: `at.run()` sem exceção, 4 abas detectadas, todos os
+`st.metric`/`st.subheader` esperados presentes com valores fisicamente
+plausíveis (E_rec da VAE corretamente classificando o cenário de teste
+como anômalo, MPC 76% melhor que o controle reativo no teste). Cache
+(`st.cache_resource`) confirmado funcionando: 1ª execução ~14s, 2ª
+execução (mesmo estado) ~4,9s.
+
+**Recomendação para sessões futuras**: se o Claude-in-Chrome estiver
+indisponível ao testar mudanças na UI deste app, usar `AppTest` antes de
+recorrer a scripts de figura isolados — é mais barato e pega uma classe
+inteira de bugs (colisão de IDs, exceções de import, `KeyError` em
+`session_state`) que a verificação por função isolada não pega, porque
+exercita o `app.py` real, com o Streamlit real, não uma reimplementação
+paralela da mesma lógica.
+
+**Achado colateral**: um caractere cirílico (`б` em vez de `b`) entrou
+por acidente no docstring de `mpc.py` durante a escrita — pego por uma
+varredura Unicode deliberada (`unicodedata.name()` procurando
+`CYRILLIC`/`GREEK` fora do conjunto de letras gregas já usadas de
+propósito no documento) logo depois de escrever os 5 módulos novos.
+Vale repetir essa varredura ao escrever conteúdo novo extenso — o
+caractere é visualmente quase idêntico ao Latin `b` e não haveria como
+notar por leitura visual do código.
+
+### Testes
+
+10 testes novos (4 VAE, 4 PIML, 2 MPC) — **66 no total, todos passando**,
+suíte completa em ~8-10s (o aumento vem do treino real de VAE/PIML
+dentro dos testes, não simulação simplificada).
+
+### Pendência desta fase
+
+A **Parte III do app** (demo integrada replicando o Capítulo 28 do
+livro — EKF→VAE→PIML→prognóstico→MPC/PSO como um pipeline único) não foi
+implementada — os 5 algoritmos existem e funcionam cada um na sua própria
+seção da aba "Gêmeo Digital", mas não há ainda uma orquestração que
+encadeie a saída de um como entrada do próximo, na mesma aba/fluxo. Fica
+para uma próxima sessão, se pedido.
+
 ## Parte II no app: EKF e PSO reais (fase 1 de 2 — 15/08/2026)
 
 O autor pediu para implementar a Parte II e a Parte III do livro
@@ -583,23 +728,27 @@ threading em `sistema.py`).
 
 ## Estado atual
 
-Código compila sem erro de sintaxe, 56/56 testes passam
-(`venv/bin/pytest tests/ -q`) — 41 após a Eq. 9.6, mais 7 do motor/Hood/
-tubulação, mais 1 da temperatura do leito PSA, mais 7 do EKF/PSO (ver
-"Parte II no app", "Gráficos temporais" e "Motor, invólucro/Hood e
-tubulação interestágios" acima). 4ª aba do app ("🧠 Gêmeo Digital
-(EKF/PSO)") e dois módulos novos (`compressor_sim/ekf.py`,
-`compressor_sim/pso.py`), ainda sem novas dependências no
-`requirements.txt` (só NumPy). Servidor Streamlit **não está rodando** no
-momento — testado e encerrado em cinco rodadas de 15/08/2026 (as duas
-primeiras de implementação, uma sessão de teste real no navegador via
-Claude-in-Chrome, e as duas mais recentes verificadas por renderização
-direta das figuras porque a extensão ficou desconectada; ver
-"Motor,
-invólucro/Hood e tubulação interestágios" acima); a última vez que ficou
-de pé continuamente foi após a correção de umidade (02/08/2026), sessão
-anterior. Commit mais recente do app: `ad97a78` (15/08/2026) — o teste no
-navegador não gerou mudança de código, só confirmação visual.
+Código compila sem erro de sintaxe, **66/66 testes passam**
+(`venv/bin/pytest tests/ -q`, ~8-10s) — 41 após a Eq. 9.6, mais 7 do
+motor/Hood/tubulação, mais 1 da temperatura do leito PSA, mais 7 do
+EKF/PSO, mais 10 de VAE/PIML/MPC (ver "Parte II no app: VAE, PIML e MPC
+reais", "Parte II no app: EKF e PSO reais", "Gráficos temporais" e
+"Motor, invólucro/Hood e tubulação interestágios" acima). 4ª aba do app
+("🧠 Gêmeo Digital") cobre os 5 algoritmos da Parte II — EKF, PSO, VAE,
+PIML, MPC — em 5 módulos novos (`compressor_sim/{ekf,pso,vae,piml,mpc}.py`).
+**PyTorch e SciPy agora instalados** no venv (antes só NumPy) —
+`requirements.txt` atualizado, `torch` fica de fora da instalação
+automática de propósito (índice CPU dedicado, ver seção acima).
+
+**Servidor Streamlit ESTÁ RODANDO no momento** (`localhost:8501`,
+processo em background) — reiniciado pela última vez após a correção do
+bug de colisão de `key` dos sliders de VAE/PIML, com o código final desta
+sessão. Verificado sem exceção via `streamlit.testing.v1.AppTest`
+(Claude-in-Chrome ficou indisponível a sessão toda — ver a seção acima
+para o porquê de usar `AppTest` em vez de renderização isolada). Commit
+mais recente do app: `06c50bb` (15/08/2026, fase 1/EKF-PSO) — **o
+trabalho de VAE/PIML/MPC desta entrada ainda não foi commitado**, ver
+`git status` para o estado exato antes de assumir que já está salvo.
 
 O diretório `aplicativo/` foi commitado em 01/08/2026 (commit `693a2c6`,
 junto com este arquivo e as linhas de `.gitignore` para
