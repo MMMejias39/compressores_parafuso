@@ -73,6 +73,40 @@ T_RESFRIAMENTO_PSA_DEFAULT_MIN = 2.0  # duração do resfriamento pós-regenera�
                                        # t_resfriamento exatamente, dando cobertura
                                        # contínua sem gap (ver docstring do módulo)
 N_VASOS_PSA_DEFAULT = 2     # torres em rodízio — ASSUMIDO (mínimo do princípio PSA)
+
+# --- Materiais dessecantes (16/08/2026) — o livro (Eq. 15.1) não fecha massa
+# nem material do leito, só a capacidade normalizada q_d/q_eq. Densidade
+# aparente e capacidade de TRABALHO (não a capacidade estática máxima de
+# folha de dados — a de trabalho é medida em baixa UR, o regime real de um
+# secador de ar comprimido já pré-secado por aftercooler+separador, e é
+# sempre menor que a capacidade estática) são faixas típicas de literatura/
+# fabricante, ASSUMIDAS por não haver ensaio específico deste projeto:
+# ScienceDirect "Activated Alumina" (densidade 600-800 kg/m³, capacidade
+# 7-12% em baixa UR) e guias de peneira molecular 13X (capacidade dinâmica
+# >25% em alta UR, PDP alcançável até -73°C — por isso é o material típico
+# para a Classe 2/-40°C do livro; sílica gel é fraca em baixa UR, raramente
+# usada sozinha para esse PDP). k_ads_ref é só um ponto de partida razoável
+# para o slider já existente (Eq. 15.1) — o usuário pode ajustar livremente.
+MATERIAIS_DESSECANTE = {
+    "Alumina Ativada": {
+        "densidade_kg_m3": 750.0,       # ASSUMIDO — meio da faixa 600-800 kg/m³
+        "capacidade_trabalho": 0.10,    # ASSUMIDO — kg água / kg seco, baixa UR
+        "k_ads_ref": 1.5,
+    },
+    "Sílica Gel": {
+        "densidade_kg_m3": 700.0,       # ASSUMIDO
+        "capacidade_trabalho": 0.08,    # ASSUMIDO — desempenho fraco em baixa UR
+        "k_ads_ref": 1.2,
+    },
+    "Peneira Molecular 13X": {
+        "densidade_kg_m3": 720.0,       # ASSUMIDO
+        "capacidade_trabalho": 0.18,    # ASSUMIDO — melhor em baixa UR/PDP baixo
+        "k_ads_ref": 1.8,
+    },
+}
+MATERIAL_PSA_DEFAULT = "Alumina Ativada"
+MASSA_LEITO_PSA_DEFAULT_KG = 200.0  # kg por torre — ASSUMIDO (ordem de grandeza
+                                     # de leito industrial de médio porte)
 DP_NOM_PSA = 0.30e5         # Pa, perda de carga nominal de projeto do leito (Eq. 15.7) — ASSUMIDO
 W_DRUM_PADRAO = 0.0         # W, potência do motor do tambor rotativo (Eq. 15.6) — este app
                              # modela só o secador PSA a frio, não o HOC de tambor rotativo

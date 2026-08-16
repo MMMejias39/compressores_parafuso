@@ -39,6 +39,7 @@ import streamlit as st
 
 from compressor_sim import (
     calib_lm,
+    constantes,
     dinamica,
     ekf,
     mpc,
@@ -212,9 +213,36 @@ with tab_config:
                      "demais para voltar a adsorver com eficiência — sem essa "
                      "fase o rodízio simularia uma troca instantânea entre "
                      "regeneração e adsorção que não existe fisicamente.")
+            material_psa = st.selectbox(
+                "Material dessecante (Tabela 15.2)",
+                list(constantes.MATERIAIS_DESSECANTE.keys()),
+                index=list(constantes.MATERIAIS_DESSECANTE.keys()).index(
+                    constantes.MATERIAL_PSA_DEFAULT),
+                help="Densidade e capacidade de trabalho (kg água/kg leito, "
+                     "baixa UR) de cada material — mesma Tabela 15.2 do "
+                     "livro (16/08/2026), faixas típicas de literatura/"
+                     "fabricante, ASSUMIDAS (ver constantes.py). Peneira "
+                     "molecular alcança PDP mais baixo; alumina ativada é o "
+                     "padrão de mercado para ar comprimido; sílica gel é "
+                     "fraca em baixa UR, raramente usada sozinha para "
+                     "-40 °C.")
+            _props_material = constantes.MATERIAIS_DESSECANTE[material_psa]
+            massa_leito_psa = st.number_input(
+                "Massa do leito por torre [kg] (assumido)",
+                10.0, 2000.0, constantes.MASSA_LEITO_PSA_DEFAULT_KG, 10.0,
+                help=f"{material_psa}: densidade aparente "
+                     f"≈{_props_material['densidade_kg_m3']:.0f} kg/m³, "
+                     f"capacidade de trabalho ≈"
+                     f"{_props_material['capacidade_trabalho']*100:.0f}% "
+                     "(kg água/kg leito, baixa UR) — usados para converter a "
+                     "capacidade normalizada em massa real de água "
+                     "adsorvida no gráfico da aba Secagem PSA.")
             k_ads_psa = st.slider(
                 "Constante de taxa de adsorção k_ads (Eq. 15.1, Fig. 15.2)",
-                0.3, 4.0, 1.5, 0.1)
+                0.3, 4.0, float(_props_material["k_ads_ref"]), 0.1,
+                help=f"Valor de referência do material selecionado "
+                     f"({material_psa}) preenchido automaticamente — ajuste "
+                     "livremente se tiver um valor de ensaio próprio.")
             t_res_psa = st.slider(
                 "Tempo de residência de projeto do leito [min] (assumido)",
                 1.0, 15.0, 4.0, 0.5)
@@ -878,6 +906,8 @@ with tab_psa:
         t_entrada_c=res["nos"][4]["t_c"],
         delta_t_regen=params["delta_t_regen"],
         pdp_entrada_c=res["nos"][4]["pdp_c"],
+        capacidade_trabalho=_props_material["capacidade_trabalho"],
+        massa_leito_kg=massa_leito_psa,
     )
     kp = r_psa["kpis"]
 
@@ -951,14 +981,41 @@ with tab_psa:
     fig8.tight_layout()
     st.pyplot(fig8)
     st.caption(
-        "Linha cheia: capacidade normalizada (eixo esquerdo). Linha "
-        "tracejada: temperatura do leito (eixo direito) — sobe durante a "
-        "regeneração (aquecedor, ΔT_regen) e desce no resfriamento, "
-        "simplificação linear análoga à recuperação de capacidade (o "
-        "Cap. 15 não fecha a dinâmica térmica do leito). Pressão de "
+        "Linha cheia: capacidade normalizada, recuperação exponencial de "
+        "1ª ordem na regeneração (Eq. 15.12 do livro, 16/08/2026 — eixo "
+        "esquerdo). Linha tracejada: temperatura do leito (eixo direito) "
+        "— sobe durante a regeneração (aquecedor, ΔT_regen) e desce no "
+        "resfriamento, mesma forma exponencial por analogia física, não "
+        "por uma equação própria do livro (que fecha a cinética de "
+        "capacidade, não a dinâmica térmica do leito). Pressão de "
         f"entrada/saída do secador é constante no horizonte simulado: "
         f"{p_high_psa / 1e5:.2f} bar abs (alta) e {p_low_psa / 1e5:.2f} "
         "bar abs (purga, à pressão ambiente)."
+    )
+
+    st.subheader(f"Água adsorvida por torre [kg] — {material_psa}")
+    fig_agua, ax_agua = plt.subplots(figsize=(9.0, 3.0))
+    for i in range(n_vasos_psa):
+        ax_agua.plot(r_psa["t_min"], r_psa["agua_adsorvida_kg"][i],
+                    color=cores_torres[i], lw=1.6, label=f"Torre {i + 1}")
+    ax_agua.axhline(_props_material["capacidade_trabalho"] * massa_leito_psa,
+                    color=RED, ls=":",
+                    label="Capacidade máx. (leito saturado)")
+    ax_agua.set_xlabel("Tempo [min]")
+    ax_agua.set_ylabel("Água adsorvida [kg]")
+    ax_agua.legend(fontsize=8, ncol=min(n_vasos_psa + 1, 5), loc="upper right")
+    fig_agua.tight_layout()
+    st.pyplot(fig_agua)
+    st.caption(
+        f"Massa real de água retida no leito (Eq. 15.13 do livro, "
+        "16/08/2026 — alternativa ao balanço mássico rigoroso da Eq. 15.3, "
+        "útil sem sensor contínuo de W_out), não só a fração normalizada "
+        f"do gráfico acima: (1 − capacidade normalizada) × capacidade de "
+        f"trabalho ({_props_material['capacidade_trabalho']*100:.0f}% para "
+        f"{material_psa}, Tabela 15.2) × massa do leito "
+        f"({massa_leito_psa:.0f} kg/torre, aba Configurações). Zera ao fim "
+        "de cada regeneração (água expulsa pelo ar de purga quente) e "
+        "cresce de novo ao longo da adsorção seguinte."
     )
 
     st.subheader("Ponto de orvalho na saída do secador ao longo do tempo")

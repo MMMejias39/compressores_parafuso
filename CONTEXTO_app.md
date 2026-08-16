@@ -1146,6 +1146,100 @@ bug de implementação.
 `calib_lm.py`), `IMPLEMENTACAO.md` ("três caminhos de identificação de K",
 horizonte em dias, PDP dinâmico).
 
+## Material dessecante, massa real e dinâmica não linear do secador (16/08/2026)
+
+Pedido do autor, ao ver o app ao vivo: "estou estranhando também a
+responsividade dos gráficos, está tudo muito linear para um equipamento
+real. Além disso não pode faltar a massa do adsorvedor e as opções de
+materiais adesorventes, como alumina, sílica, etc." — na sequência de ter
+perguntado antes "não achei a massa do adsorvedor" (resposta: de fato não
+existia, porque a Eq. 15.1 do livro é inteiramente normalizada, sem massa
+nenhuma — ver conversa).
+
+Valores de propriedade dos materiais **pesquisados via `WebSearch` antes
+de codificar** (não inventados de memória): ScienceDirect "Activated
+Alumina" (densidade 600-800 kg/m³, capacidade 7-12% em baixa UR) e guias
+de peneira molecular 13X (capacidade dinâmica >25% em alta UR, PDP até
+-73°C). Usados valores representativos de **baixa UR** (regime real de um
+secador de ar comprimido já pré-secado por aftercooler+separador), não a
+capacidade estática máxima de folha de dados — sempre maior e enganosa
+para este uso.
+
+**`constantes.py`**: novo dict `MATERIAIS_DESSECANTE` — Alumina Ativada
+(750 kg/m³, 10%, k_ads=1.5), Sílica Gel (700 kg/m³, 8%, k_ads=1.2),
+Peneira Molecular 13X (720 kg/m³, 18%, k_ads=1.8), todos ASSUMIDO com a
+fonte anotada. `MATERIAL_PSA_DEFAULT` e `MASSA_LEITO_PSA_DEFAULT_KG`
+(200 kg/torre).
+
+**`psa_ciclo.py`**: dois parâmetros novos e obrigatórios em
+`simular_ciclo_psa()` — `capacidade_trabalho`, `massa_leito_kg`. Nova
+saída `agua_adsorvida_kg` = (1 − q_norm) × capacidade × massa, por torre
+e por passo de tempo. **Recuperação de capacidade na regeneração e
+temperatura do leito trocadas de reta linear para aproximação
+exponencial de 1ª ordem** (`TAXA_1A_ORDEM=4`, >98% de recuperação dentro
+da própria janela de fase) — resposta física real de um processo
+térmico/de transporte, não uma reta com quina abrupta no fim da fase.
+Isso é, em si, a resposta à reclamação de "responsividade... muito
+linear": as curvas de capacidade e água adsorvida agora têm a forma
+côncava esperada de um equipamento real, visíveis lado a lado com o
+material selecionável no gráfico "Água adsorvida por torre [kg]".
+
+**`app.py`**: nova aba Configurações → Secagem PSA ganhou `st.selectbox`
+de material (preenche automaticamente o default de `k_ads_psa`, ainda
+ajustável) e `st.number_input` de massa do leito. Novo gráfico "Água
+adsorvida por torre [kg] — {material}" na aba Secagem PSA, com linha de
+capacidade máxima de referência. Testado ao vivo via Claude-in-Chrome:
+trocar o material (Alumina → Peneira Molecular 13X) atualizou o título,
+a capacidade máxima (20 kg → 36 kg) e a legenda do gráfico em tempo real.
+
+**Testes novos**: `test_materiais_dessecante_tem_propriedades_fisicamente_plausiveis`,
+`test_agua_adsorvida_kg_cresce_na_adsorcao_e_some_apos_regeneracao` — 77/77
+passam (75 antigos + 2 novos). Um teste existente de temperatura
+(`test_psa_temperatura_do_leito_sobe_na_regeneracao_e_desce_no_resfriamento`)
+tinha uma asserção calibrada para a reta linear antiga (`== 105.0 ±1`);
+corrigida para uma verificação relativa (`> 95% do salto`), compatível
+com a nova curva assintótica em vez de recalibrar um número mágico.
+
+## Sincronia com o livro: Eqs. 15.12/15.13, Tabela 15.2 (16/08/2026)
+
+Pedido do autor, na sequência direta do trabalho acima: "ajuste as
+equações do livro". Antes desta sessão, a cinética de regeneração
+(dessorção) e as propriedades de material dessecante eram lacunas
+**reconhecidas mas nunca fechadas** pelo Cap. 15 — a Eq. 15.1 já
+mencionava "$q_{eq}$... isoterma do dessecante" e "$k_{ads}$... específica
+da alumina ativada ou peneira molecular" sem nunca lhes dar um valor.
+Achado útil ao reler o capítulo antes de editar: a **Eq. 15.3 já existia**
+(balanço mássico de água via $W_{in}-W_{out}$, $M_{ads}(t)=\int
+\dot m_{water}\,dt$) — não seria substituída, e sim complementada por uma
+segunda via de estimativa (capacidade × massa, mais barata quando não há
+sensor contínuo de $W_{out}$).
+
+Adicionado ao `compressores.tex`, Cap. 15: nova subseção "Cinética de
+Regeneração e Propriedades do Material Dessecante", entre "Cinética de
+Adsorção e Balanço de Massa" e "Termodinâmica do Secador de Tambor
+Rotativo" — Eq. 15.12 (recuperação exponencial de 1ª ordem, simétrica à
+Eq. 15.1, novo símbolo $\kappa_{regen}$), Tabela 15.2 (as mesmas 3
+materiais/valores de `constantes.py`, mesma fonte), Eq. 15.13
+($M_{ads,cap} = [q_{eq}-q_d(t)]\cdot M_{leito}$, a via de estimativa por
+capacidade) e um parágrafo novo de diagnóstico: divergência persistente
+entre Eq. 15.3 e Eq. 15.13 indica que o material degradou abaixo do
+catálogo. Nomenclatura: $\kappa_{regen}$\dag e $M_{leito}$ adicionados;
+$k_{ads}$ corrigido de "Cap. 14" para "Cap. 15" (categorização já estava
+errada antes desta sessão — só notada por estar mexendo exatamente ali).
+
+**Erro cometido e corrigido antes de reportar como concluído**: a
+primeira versão da Tabela 15.2 usava `tabular` puro (sem `\resizebox`),
+diferente de toda outra tabela deste documento — gerou um *Overfull
+\textbackslash hbox* de 85,9pt (a tabela literalmente não cabia na
+largura da página). Descoberto pelo próprio hábito de sempre conferir o
+log de compilação por *overfull* >20pt antes de reportar, não por
+inspeção visual do PDF. Corrigido envolvendo em `\resizebox{\textwidth}{!}`,
+mesmo padrão das ~20 outras tabelas do livro.
+
+**Verificação**: 3 passagens de `pdflatex`, 165→166 páginas, sem
+referências indefinidas, sem rótulo duplicado, sem overfull severo após a
+correção.
+
 ## Pendências conhecidas
 
 1. O app cobre os Capítulos 5, 9, 10, 11, 12, 13, 14, 15, 16 do livro

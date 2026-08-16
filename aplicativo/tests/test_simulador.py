@@ -333,7 +333,8 @@ def test_psa_cobertura_continua_quando_bem_dimensionado(n_vasos):
         horizonte_min=30, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
         t_resfriamento_min=2.0, n_vasos=n_vasos, k_ads=1.5, t_res_min=4.0,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
-        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0)
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0,
+        capacidade_trabalho=0.10, massa_leito_kg=200.0)
     assert r["kpis"]["tempo_sem_secagem_min"] == pytest.approx(0.0)
     assert r["kpis"]["n_adsorvendo_min"] >= 1
 
@@ -346,7 +347,8 @@ def test_psa_gap_quando_resfriamento_nao_cabe_no_rodizio():
         horizonte_min=10, m_dot_ar=0.5, t_ads_min=3.0, t_regen_min=4.0,
         t_resfriamento_min=3.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
-        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0)
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0,
+        capacidade_trabalho=0.10, massa_leito_kg=200.0)
     assert r["kpis"]["tempo_sem_secagem_min"] > 0.0
     assert r["kpis"]["n_adsorvendo_min"] == 0
 
@@ -356,7 +358,8 @@ def test_psa_capacidade_decai_regenera_e_mantem_no_resfriamento():
         horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
         t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
-        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0)
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0,
+        capacidade_trabalho=0.10, massa_leito_kg=200.0)
     torre0 = r["q_norm"][0]
     t = r["t_min"]
     # adsorvendo em [0, 6): capacidade cai monotonicamente
@@ -376,7 +379,8 @@ def test_psa_purga_so_durante_regeneracao_e_escala_com_torres_simultaneas():
         horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
         t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
-        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0)
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0,
+        capacidade_trabalho=0.10, massa_leito_kg=200.0)
     n_regenerando = np.sum(r["estado"] == "Regenerando", axis=0)
     esperado_por_torre = 0.5 * (1.05e5 / 8.4e5) * 0.15
     # purga é zero quando ninguém regenera, e escala com quantas regeneram
@@ -389,15 +393,19 @@ def test_psa_temperatura_do_leito_sobe_na_regeneracao_e_desce_no_resfriamento():
         horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
         t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
-        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0)
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0,
+        capacidade_trabalho=0.10, massa_leito_kg=200.0)
     torre0 = r["temp_c"][0]
     t = r["t_min"]
     # adsorvendo em [0, 6): leito na temperatura de entrada
     assert np.allclose(torre0[t < 6.0], 25.0)
-    # regenerando em [6, 10): temperatura sobe monotonicamente até T_entrada+ΔT
+    # regenerando em [6, 10): temperatura sobe monotonicamente, aproximação
+    # exponencial de 1ª ordem (não mais reta) — ao fim da fase já recuperou
+    # pelo menos 95% do salto T_entrada->T_entrada+ΔT (TAXA_1A_ORDEM=4,
+    # exp(-4*0,9875)≈0,019 no último passo antes do limite de fase)
     fase_regen = torre0[(t >= 6.0) & (t < 10.0)]
     assert np.all(np.diff(fase_regen) >= -1e-9)
-    assert fase_regen[-1] == pytest.approx(105.0, abs=1.0)
+    assert fase_regen[-1] > 25.0 + 80.0 * 0.95
     # resfriando em [10, 12): temperatura desce monotonicamente de volta
     fase_resfriamento = torre0[t >= 10.0]
     assert np.all(np.diff(fase_resfriamento) <= 1e-9)
@@ -411,7 +419,8 @@ def test_psa_pdp_saida_degrada_com_carga_do_leito_e_satura_no_pdp_entrada():
         horizonte_min=12.0, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
         t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
-        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=pdp_entrada)
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=pdp_entrada,
+        capacidade_trabalho=0.10, massa_leito_kg=200.0)
     pdp_saida = r["pdp_saida_c"]
     t = r["t_min"]
     # leito recém-trocado (q_norm=1, t=0): PDP no alvo (leito "novo")
@@ -433,11 +442,52 @@ def test_psa_pdp_saida_no_pdp_entrada_quando_nenhuma_torre_adsorve():
         horizonte_min=10, m_dot_ar=0.5, t_ads_min=3.0, t_regen_min=4.0,
         t_resfriamento_min=3.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
-        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=pdp_entrada)
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=pdp_entrada,
+        capacidade_trabalho=0.10, massa_leito_kg=200.0)
     sem_secagem = r["n_adsorvendo"] == 0
     assert sem_secagem.any()  # este cenário tem gap (ver teste do rodízio)
     assert np.allclose(r["pdp_saida_c"][sem_secagem], pdp_entrada)
     assert r["kpis"]["pdp_saida_max_c"] == pytest.approx(pdp_entrada, abs=1e-6)
+
+
+def test_materiais_dessecante_tem_propriedades_fisicamente_plausiveis():
+    from compressor_sim.constantes import MATERIAIS_DESSECANTE
+    assert len(MATERIAIS_DESSECANTE) >= 3
+    for nome, props in MATERIAIS_DESSECANTE.items():
+        assert 400.0 < props["densidade_kg_m3"] < 1200.0, nome
+        assert 0.0 < props["capacidade_trabalho"] < 0.5, nome  # fração mássica
+        assert props["k_ads_ref"] > 0.0, nome
+    # peneira molecular 13X: melhor capacidade de trabalho em baixa UR entre
+    # os materiais do catálogo (motivo pelo qual é o típico para PDP baixo,
+    # ISO 8573-1 Classe 2 — ver comentário em constantes.py)
+    cap_13x = MATERIAIS_DESSECANTE["Peneira Molecular 13X"]["capacidade_trabalho"]
+    outras = [p["capacidade_trabalho"] for n, p in MATERIAIS_DESSECANTE.items()
+             if n != "Peneira Molecular 13X"]
+    assert cap_13x > max(outras)
+
+
+def test_agua_adsorvida_kg_cresce_na_adsorcao_e_some_apos_regeneracao():
+    capacidade, massa = 0.10, 200.0
+    r = psa_ciclo.simular_ciclo_psa(
+        horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
+        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0,
+        capacidade_trabalho=capacidade, massa_leito_kg=massa)
+    agua = r["agua_adsorvida_kg"][0]
+    t = r["t_min"]
+    # leito "novo" no início (q_norm=1): nenhuma água ainda
+    assert agua[0] == pytest.approx(0.0, abs=1e-9)
+    # cresce monotonicamente durante a adsorção — mesma janela do teste de
+    # capacidade normalizada (t < 6.0)
+    fase_ads = agua[t < 6.0]
+    assert np.all(np.diff(fase_ads) >= -1e-9)
+    assert fase_ads[-1] > 0.0
+    # limite físico: nunca excede capacidade * massa (kg de água no leito
+    # "totalmente saturado", q_norm=0)
+    assert np.all(agua <= capacidade * massa + 1e-9)
+    # ao fim da regeneração (t~10), a maior parte da água já foi expulsa
+    assert agua[(t >= 9.9) & (t < 10.0)][-1] < 0.05 * capacidade * massa
 
 
 def test_umidade_nao_aumenta_ao_longo_do_tratamento():
