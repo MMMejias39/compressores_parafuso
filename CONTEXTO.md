@@ -2582,3 +2582,56 @@ que uma correção pontual, registrado como pendência em
 
 169→171 páginas. Compilação limpa, sem referências indefinidas nem
 overfull severo.
+
+## Revisão via kimi CLI: 3 erros reais nas equações novas, corrigidos (16/08/2026)
+
+Pedido do autor: "envie para o cli kimi para que possa avaliar os
+serviços". Rodei `kimi -p "..."` (não interativo) apontando para o
+`git diff` dos 3 commits desta sessão (`afbd662..2e0b8c7`) e pedindo
+auditoria física/matemática das equações novas — mesmo tratamento
+cético já dado ao relatório Gemini. **O kimi bateu no limite de uso da
+conta (erro 403, cota de billing) antes de terminar** e não produziu um
+relatório estruturado — mas o rascunho de raciocínio que ele já tinha
+gerado antes de falhar continha 3 problemas reais, que verifiquei de
+forma independente (refazendo as contas à mão) antes de aceitar
+qualquer um deles:
+
+1. **Eq. 15.18 ($a_v$ invertida):** eu tinha escrito $a_v = 6\psi_p/d_p$.
+   A definição correta de esfericidade ($\psi_p$ = área da esfera de
+   mesmo volume / área real da partícula, $\le 1$ para não-esfera) dá
+   área real $= $ área da esfera$/\psi_p$, logo $a_v = 6/(\psi_p d_p)$
+   — o inverso do que eu tinha escrito. Com a fórmula errada, a Eq.
+   15.18 previa $k_{ads}$ \textbf{menor} para pellets, contradizendo a
+   própria prosa ao lado ("mais área externa acelera a troca de
+   massa"). Corrigido: $a_v = 6/(\psi_p d_p)$, $k_{ads} = k_{ads,ref}/\psi_p$.
+2. **Prosa do soprador booster (após Eq. 15.16) com a tendência
+   invertida:** eu tinha escrito que aumentar $\dot m_{reg}$ eleva
+   $NTU$ e satura $\epsilon_{heater}$. Conta real: $h \propto
+   \dot m_{reg}^{0{,}8}$, $NTU = hA/(\dot m_{reg} c_p) \propto
+   \dot m_{reg}^{-0{,}2}$ — $NTU$ (e $\epsilon_{heater}$) na verdade
+   \textbf{cai} levemente com mais vazão, não sobe. Reescrito com a
+   física correta: o booster não existe para elevar $T_{reg,in}$, existe
+   para elevar a potência térmica total entregue ao leito
+   ($\dot Q_{heater} \propto \dot m_{reg}^{0{,}8}$, ainda crescente,
+   apesar de $\epsilon_{heater}$ cair) — o mesmo trade-off de vazão
+   ótima se mantém, só que pela razão física certa.
+3. **Eq. 10.9 (calor latente) com incompatibilidade de unidades:**
+   $h_{fg}(T)$ estava em $\text{kJ}\,\text{kg}^{-1}$ somada a um termo
+   com $c_{p,\text{úmido}}$ em $\text{J}\,\text{kg}^{-1}\text{K}^{-1}$
+   — um fator 1000 de erro se alguém substituir os números direto.
+   Reescrita em unidades SI compatíveis ($h_{fg}(T) \approx 2\,501\,000
+   - 2360\,T$, J/kg), mesma correção replicada na menção equivalente do
+   Cap. 14 (aftercooler).
+
+Todos os três já eram erros genuínos, não críticas de estilo — o kimi
+não chegou a terminar o relatório, mas o que produziu antes de falhar
+já valeu a pena conferir. Itens que o kimi já tinha validado como
+corretos antes de parar (Eq. 6.3 sec(φ), Eq. 8.5 rigidez de mancais,
+Eq. 11.3 análise dimensional, Eq. 15.17 Ergun, Eq. 18.3 CO2, Eq. 21.2
+EKF) não foram reabertos — coincidem com a verificação independente já
+feita nesta sessão.
+
+Autor pediu para prosseguir sem o kimi após o erro de cota
+("continue com suas análises sem o kimi").
+
+171 páginas mantidas (só correções pontuais). Compilação limpa.
