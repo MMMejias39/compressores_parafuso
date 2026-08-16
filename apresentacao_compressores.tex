@@ -236,7 +236,7 @@
 		\begin{itemize}
 			\item Estima estados \textbf{não instrumentáveis}: folga residual $\delta$, eficiência $\eta_{is}$, incrustação $R_f$.
 			\item Ciclo predição--correção: o modelo físico prevê, a medição ruidosa corrige via ganho de Kalman.
-			\item A banda de incerteza $P_{k|k}$ se estreita a cada correção.
+			\item A banda de incerteza $P_{k|k}$ se estreita a cada correção (leitura portátil/wireless: $\mathcal{R}$ inflada por $\kappa_{\text{port}}$).
 		\end{itemize}
 	\end{columns}
 \end{frame}
@@ -322,14 +322,14 @@
 \end{frame}
 
 \begin{frame}{Parte III: calibrar antes de detectar (Cap.\ 28)}
-	Parâmetros nunca medidos nesta máquina ($K$, $\eta_{\text{mec}}$, $\zeta_{\text{ref}}$) entram no vetor de estado do EKF:
+	Parâmetros nunca medidos nesta máquina entram no vetor de estado do EKF:
 	\begin{equation*}
-		x_{\text{aug}} = \begin{bmatrix} x \\ \Lambda \end{bmatrix}, \qquad \Lambda = \begin{bmatrix} K \\ \eta_{\text{mec}} \\ \zeta_{\text{ref}} \end{bmatrix}
+		x_{\text{aug}} = \begin{bmatrix} x \\ \Lambda \end{bmatrix}, \qquad \Lambda = \begin{bmatrix} K \\ \eta_{\text{mec}} \\ \zeta_{\text{ref}} \\ \zeta_{\text{valv}} \end{bmatrix}
 	\end{equation*}
 	\begin{itemize}
 		\item Calibrados numa \textbf{janela saudável}; depois, deriva lenta rastreada com $Q_\Lambda$ pequeno.
 		\item Protocolo de 4 categorias classifica todo parâmetro: medido, inferível, calibrável ou desconhecido.
-		\item Catálogo: $\sim$57 mecanismos de falha $\to$ algoritmo mais indicado — sem inflar a IA onde um limiar já basta.
+		\item Catálogo: 59 mecanismos de falha $\to$ algoritmo mais indicado — sem inflar a IA onde um limiar já basta.
 	\end{itemize}
 \end{frame}
 
@@ -370,7 +370,7 @@
 	\end{itemize}
 	\vfill
 	\centering
-	\small Documento completo: \textit{Gêmeo Digital de Sistemas de Compressão Offshore — Diretrizes Técnicas, Modelagem e Implementação} (158 p.)
+	\small Documento completo: \textit{Gêmeo Digital de Sistemas de Compressão Offshore — Diretrizes Técnicas, Modelagem e Implementação} (164 p.)
 \end{frame}
 
 \end{document}
