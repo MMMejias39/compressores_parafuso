@@ -16,9 +16,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from compressor_sim import (
     dinamica,
+    ekf,
     nucleo,
     parametros_default,
     psa_ciclo,
+    pso,
     simular,
     subsistemas,
 )
@@ -430,3 +432,89 @@ def test_vsd_pressao_constante_sem_evento():
         p_set=8e5, p_limite=6e5, dem_base=0.08,
         t_ev=(math.inf, math.inf), fator_ev=2.0, modo="VSD", dp_db=0.5e5)
     assert d["kpis"]["p_max_bar"] == pytest.approx(d["kpis"]["p_min_bar"], abs=1e-9)
+
+
+# --- EKF (Eqs. 21.2/21.4/21.7/21.8) --------------------------------------------
+
+def test_ekf_medicao_responde_a_folga_e_fouling():
+    p = parametros_default()
+    z_base = ekf.medicao(np.array([0.002, 0.0]), p)
+    z_folga_alta = ekf.medicao(np.array([0.015, 0.0]), p)
+    z_fouling_alto = ekf.medicao(np.array([0.002, 5e-4]), p)
+    # mais folga -> menos eficiência volumétrica -> menos vazão de ar seco
+    assert z_folga_alta[0] < z_base[0]
+    # mais fouling -> UA cai -> intercooler resfria menos -> T_HP,in maior
+    assert z_fouling_alto[1] > z_base[1]
+
+
+def test_ekf_converge_para_estado_constante_com_ruido_baixo():
+    p = parametros_default()
+    n_passos = 40
+    folga_true = np.full(n_passos, 0.010)
+    r_f_true = np.zeros(n_passos)
+    r = ekf.simular_ekf(
+        p, folga_true, r_f_true, sigma_m_dot=1e-4, sigma_t_hp=0.05,
+        q_proc_diag=(1e-8, 1e-10), x0=(0.002, 0.0), p0_diag=(1e-4, 1e-6))
+    # com ruído baixo e estado verdadeiro constante, a estimativa final deve
+    # convergir para perto do valor real de folga
+    assert r["x_hat"][-1, 0] == pytest.approx(0.010, abs=0.001)
+    # a incerteza (desvio-padrão) deve cair ao longo dos ciclos de correção
+    assert r["std"][-1, 0] < r["std"][0, 0]
+
+
+def test_ekf_acompanha_deriva_lenta():
+    p = parametros_default()
+    n_passos = 60
+    folga_true = np.linspace(0.002, 0.009, n_passos)  # mesma deriva do Cap. 28
+    r_f_true = np.zeros(n_passos)
+    r = ekf.simular_ekf(
+        p, folga_true, r_f_true, sigma_m_dot=1e-4, sigma_t_hp=0.05,
+        q_proc_diag=(1e-7, 1e-10), x0=(0.002, 0.0), p0_diag=(1e-4, 1e-6))
+    # a estimativa final deve acompanhar a deriva (com algum atraso esperado
+    # do filtro), não ficar presa perto do valor inicial de 0,002
+    assert r["x_hat"][-1, 0] > 0.006
+
+
+def test_ekf_nis_proximo_dos_graus_de_liberdade_quando_bem_calibrado():
+    # com Q e R usados na geração dos dados == Q e R do filtro, o NIS médio
+    # deve orbitar em torno de n_z=2 (2 medições) — Eq. 21.7
+    p = parametros_default()
+    n_passos = 80
+    folga_true = np.full(n_passos, 0.002)
+    r_f_true = np.zeros(n_passos)
+    r = ekf.simular_ekf(
+        p, folga_true, r_f_true, sigma_m_dot=2e-4, sigma_t_hp=0.1,
+        q_proc_diag=(1e-9, 1e-11), x0=(0.002, 0.0), p0_diag=(1e-6, 1e-8),
+        seed=7)
+    nis_medio = float(np.mean(r["nis"][10:]))  # descarta transiente inicial
+    assert 0.3 < nis_medio < 8.0  # faixa larga e tolerante em torno de n_z=2
+
+
+# --- PSO (Eqs. 24.3/24.4) -------------------------------------------------------
+
+def test_pso_minimiza_funcao_quadratica_simples():
+    custo = lambda x: (x[0] - 3.0) ** 2 + (x[1] + 1.5) ** 2
+    r = pso.otimizar(custo, limite_inf=[-10.0, -10.0], limite_sup=[10.0, 10.0],
+                     n_particulas=25, n_iter=50, seed=1)
+    assert r["g_best"][0] == pytest.approx(3.0, abs=0.05)
+    assert r["g_best"][1] == pytest.approx(-1.5, abs=0.05)
+    assert r["g_best_custo"] < 1e-2
+
+
+def test_pso_historico_de_custo_nao_aumenta():
+    custo = lambda x: (x[0] - 1.0) ** 2
+    r = pso.otimizar(custo, limite_inf=[-5.0], limite_sup=[5.0],
+                     n_particulas=15, n_iter=30, seed=2)
+    hist = r["historico_custo"]
+    assert np.all(np.diff(hist) <= 1e-12)  # g_best só melhora ou empata
+
+
+def test_pso_minimiza_spc_sem_restricao_vai_para_pressao_minima():
+    # sem restrição de autonomia, SPC cresce com a pressão de rede (regra dos
+    # ~7%/bar) -> o mínimo irrestrito deve ficar no limite inferior da busca
+    def custo(x):
+        return simular({"pi_total": float(x[0])})["kpis"]["spc"]
+
+    r = pso.otimizar(custo, limite_inf=[5.0], limite_sup=[12.0],
+                     n_particulas=12, n_iter=25, seed=3)
+    assert r["g_best"][0] == pytest.approx(5.0, abs=0.1)

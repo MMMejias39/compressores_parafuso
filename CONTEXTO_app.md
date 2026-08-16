@@ -332,6 +332,97 @@ tempo — um candidato natural seria acoplá-la à aba "Dinâmica temporal"
 durante um evento de pico de demanda. Não implementado por não ter sido
 pedido; só o valor de regime permanente está na aba 1 hoje.
 
+## Parte II no app: EKF e PSO reais (fase 1 de 2 — 15/08/2026)
+
+O autor pediu para implementar a Parte II e a Parte III do livro
+(EKF/VAE/PIML/MPC/PSO) também no app, "preciso que isso apareça". Dado o
+tamanho — 5 algoritmos + a integração da Parte III —, foi combinado
+**fasear**: EKF e PSO primeiro (só NumPy, já disponível), VAE/PIML/MPC
+depois (exigem PyTorch e SciPy, dependências novas, ainda não instaladas
+nesta sessão). Esta entrada documenta a fase 1.
+
+**Nova aba "🧠 Gêmeo Digital (EKF/PSO)"** — 4ª aba do app.
+
+### EKF (`compressor_sim/ekf.py`, Eqs. 21.2/21.4/21.7/21.8)
+
+O livro define o vetor de estado da Eq. 21.2 como $x=[\eta_{is,LP},
+\eta_{is,HP}, \delta, R_f, \sigma_b]$ — mas só $\delta$ (folga, via Eq. 9.3)
+e $R_f$ (fouling do intercooler, via Eq. 10.5) têm contraparte
+**calculável** neste simulador; os demais dependeriam de um motor
+elétrico/engrenagem modelados a um nível de detalhe que o app não tem.
+Escopo do EKF aqui, portanto, **reduzido a esses dois estados**:
+
+- **Estado** $x = [\delta/L, R_f]$; **medição** $z = [\dot m_{\text{seco}},
+  T_{HP,in}]$ — os dois canais que de fato respondem a $x$ na cascata real
+  (`nucleo.eficiencia_volumetrica` e `subsistemas.ua_com_fouling`).
+- **Jacobianos numéricos** (diferenças finitas centradas) em vez de
+  analíticos — chamam `sistema.simular()` diretamente como $g(x)$, então
+  não há necessidade de derivar a cascata inteira à mão; tecnicamente
+  equivalente à Eq. 21.3, mais barato de manter correto.
+- **Modelo de transição $f(x)=x$** (passeio aleatório) — o livro não fecha
+  uma dinâmica própria de evolução para $\delta$/$R_f$, então a incerteza
+  de processo $Q$ absorve a deriva esperada.
+- Forma de Joseph (Eq. 21.8) para a covariância, NIS (Eq. 21.7) para
+  auto-auditoria do filtro.
+- **Demo na UI**: o cenário é configurável (valor verdadeiro inicial/final
+  de $\delta/L$ e $R_f$ ao longo de um horizonte de passos, níveis de
+  ruído de medição e de processo) — default reproduz a mesma deriva do
+  Capítulo 28 do livro ($\delta/L$: 0,002→0,009). **O filtro sempre parte
+  de uma crença fixa de comissionamento** ($\delta/L=0{,}002$, $R_f=0$),
+  independente do valor verdadeiro configurado, para que a convergência
+  mostrada seja estimação de verdade, não o filtro sabendo a resposta de
+  antemão. Gráficos: estimativa vs. verdade com banda $\pm1\sigma$ para
+  cada estado, e NIS ao longo do tempo com a referência $n_z=2$.
+
+### PSO (`compressor_sim/pso.py`, Eqs. 24.3/24.4)
+
+Implementação padrão (peso de inércia decaindo linearmente de 0,9 a 0,4,
+mesma recomendação do Cap. 24). Aplicado a um problema real do app:
+minimizar o SPC (Eq. 11.11) variando a pressão de rede $\pi$, sujeito a
+manter a autonomia do vaso (Eq. 16.5) acima de um mínimo — restrição
+imposta por penalidade (PSO básico não trata restrições nativamente),
+rodado sob demanda via botão (não a cada mudança de slider, por ser mais
+caro que o resto do app).
+
+**Achado ao testar**: com o default original da restrição (5 min) e os
+demais defaults do app (vaso de 2 m³, demanda de 8 m³/min), a autonomia
+real nunca chega a 5 min em nenhum ponto da faixa de $\pi$ pesquisada
+(5–12 bar) — o custo fica monotônico e o "ótimo" cai exatamente na borda
+superior da busca, já resolvido na 1ª iteração, produzindo um gráfico de
+convergência sem nenhuma variação visível (não é bug — é o comportamento
+correto de PSO/penalidade para um problema sem mínimo interno na região
+viável). Corrigido trocando o default da restrição para 1 min, valor que
+cruza a curva de autonomia dentro da própria faixa de $\pi$ pesquisada e
+produz um ótimo interno de verdade ($\pi\approx9{,}9$ bar com os demais
+defaults) — com uma nota explicando o caso de borda para quando o autor
+reconfigurar a restrição para um valor mais alto.
+
+### Testes e verificação
+
+7 testes novos (2 de sanidade da medição EKF, 2 de convergência/deriva do
+EKF, 1 de calibração do NIS, 3 do PSO — mínimo quadrático conhecido,
+histórico não regride, minimização real de SPC) — **56 no total, todos
+passando**. Claude-in-Chrome continuou desconectado nesta sessão (mesma
+limitação já registrada) — verificado chamando `ekf.simular_ekf()` e
+`pso.otimizar()` diretamente com os mesmos parâmetros do `app.py`,
+salvando as figuras geradas e inspecionando visualmente: banda de
+incerteza do EKF estreitando corretamente ao longo dos ciclos, NIS
+oscilando em torno da referência teórica, convergência do PSO com forma
+de curva real (não mais reta) após a correção do default. Log do servidor
+sem traceback, `/_stcore/health` respondeu `ok`, servidor encerrado ao
+final.
+
+### Pendência desta fase
+
+VAE (detecção de anomalia), PIML (substituto físico) e MPC (controle
+preditivo) ficam para uma próxima sessão — exigem instalar PyTorch (VAE/
+PIML) e SciPy (MPC), gerar dados de treino sintéticos (não existe dado
+real), e são significativamente mais trabalhosos de fazer bem (o próprio
+livro já registra, na Seção "Limitações e Cautelas" do Cap. 23, que PINNs
+são notoriamente mais difíceis de convergir que redes convencionais). A
+Parte III (Capítulo 28) do app — a demonstração integrada — depende dos
+três, então também fica para depois.
+
 ## Gráficos temporais: temperatura do leito PSA e P/T por ponto do trem (15/08/2026)
 
 O autor pediu gráficos "em tempo real" das secadoras, além de P/T de
@@ -492,14 +583,18 @@ threading em `sistema.py`).
 
 ## Estado atual
 
-Código compila sem erro de sintaxe, 49/49 testes passam
+Código compila sem erro de sintaxe, 56/56 testes passam
 (`venv/bin/pytest tests/ -q`) — 41 após a Eq. 9.6, mais 7 do motor/Hood/
-tubulação, mais 1 da temperatura do leito PSA (ver "Gráficos temporais" e
-"Motor, invólucro/Hood e tubulação interestágios" acima). Servidor
-Streamlit **não está rodando** no momento — testado e encerrado em quatro
-rodadas de 15/08/2026 (as duas de implementação, uma sessão de teste real
-no navegador via Claude-in-Chrome, e a mais recente verificada por
-renderização direta das figuras porque a extensão ficou desconectada; ver
+tubulação, mais 1 da temperatura do leito PSA, mais 7 do EKF/PSO (ver
+"Parte II no app", "Gráficos temporais" e "Motor, invólucro/Hood e
+tubulação interestágios" acima). 4ª aba do app ("🧠 Gêmeo Digital
+(EKF/PSO)") e dois módulos novos (`compressor_sim/ekf.py`,
+`compressor_sim/pso.py`), ainda sem novas dependências no
+`requirements.txt` (só NumPy). Servidor Streamlit **não está rodando** no
+momento — testado e encerrado em cinco rodadas de 15/08/2026 (as duas
+primeiras de implementação, uma sessão de teste real no navegador via
+Claude-in-Chrome, e as duas mais recentes verificadas por renderização
+direta das figuras porque a extensão ficou desconectada; ver
 "Motor,
 invólucro/Hood e tubulação interestágios" acima); a última vez que ficou
 de pé continuamente foi após a correção de umidade (02/08/2026), sessão

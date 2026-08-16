@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 
-from compressor_sim import dinamica, nucleo, parametros_default, psa_ciclo, simular
+from compressor_sim import dinamica, ekf, nucleo, parametros_default, psa_ciclo, pso, simular
 
 # Paleta e estilo herdados de scripts/gen_figuras.py
 NAVY = "#1f3b57"
@@ -207,6 +207,61 @@ with st.sidebar:
             "PDP real [°C] (medido)", -45.0, 10.0,
             float(defaults["pdp_real_c"]), 1.0)
 
+    with st.expander("Gêmeo Digital — EKF (aba 4, Eqs. 21.2-21.8)"):
+        st.caption(
+            "Cenário: folga do estágio LP (δ/L) e fouling do intercooler "
+            "(R_f) evoluem de um valor inicial a um final ao longo do "
+            "horizonte — o EKF nunca vê esses valores, só as medições "
+            "ruidosas de ṁ_seco e T_HP,in, e tenta reconstruí-los.")
+        n_passos_ekf = st.slider("Horizonte do EKF [passos]", 20, 150, 60, 10)
+        folga_ini_ekf = st.number_input(
+            "δ/L verdadeira — início (assumido)", 0.0005, 0.02, 0.002, 0.0005,
+            format="%.4f")
+        folga_fim_ekf = st.number_input(
+            "δ/L verdadeira — fim (assumido)", 0.0005, 0.02, 0.009, 0.0005,
+            format="%.4f")
+        r_f_ini_ekf = st.number_input(
+            "R_f verdadeiro — início (assumido)", 0.0, 1e-3, 0.0, 1e-5,
+            format="%.5f")
+        r_f_fim_ekf = st.number_input(
+            "R_f verdadeiro — fim (assumido)", 0.0, 1e-3, 0.0, 1e-5,
+            format="%.5f")
+        sigma_m_dot_ekf = st.number_input(
+            "Ruído do sensor de vazão σ [kg/s] (assumido)",
+            1e-5, 5e-3, 1e-4, 1e-5, format="%.5f")
+        sigma_t_hp_ekf = st.number_input(
+            "Ruído do sensor de T_HP,in σ [°C] (assumido)",
+            0.01, 2.0, 0.05, 0.01)
+        q_folga_ekf = st.number_input(
+            "Ruído de processo Q — δ/L (assumido)",
+            1e-9, 1e-5, 1e-7, 1e-9, format="%.1e")
+        q_rf_ekf = st.number_input(
+            "Ruído de processo Q — R_f (assumido)",
+            1e-12, 1e-7, 1e-10, 1e-12, format="%.1e")
+
+    with st.expander("Gêmeo Digital — PSO (aba 4, Eqs. 24.3/24.4)"):
+        st.caption(
+            "Otimiza a pressão de setpoint da rede (π) para minimizar o "
+            "SPC (Eq. 11.11), sujeito a manter a autonomia do vaso acima "
+            "de um mínimo requerido.")
+        autonomia_min_pso = st.slider(
+            "Autonomia mínima exigida [min] (restrição)", 0.0, 30.0, 1.0, 0.5,
+            help="Com os defaults de vaso/demanda, a autonomia real fica "
+                 "abaixo de ~1,5 min em toda a faixa de π pesquisada — uma "
+                 "restrição alta (ex. 5 min) é inatingível em qualquer "
+                 "ponto, e o PSO corretamente converge para a borda "
+                 "superior da busca (menor penalidade possível, não um "
+                 "mínimo interno) já na 1ª iteração, produzindo um "
+                 "gráfico de convergência sem variação visível. O default "
+                 "de 1 min já cruza a curva de autonomia dentro da faixa "
+                 "de π, dando um ótimo interno de verdade para observar.")
+        n_particulas_pso = st.slider("Número de partículas", 10, 60, 25, 5)
+        n_iter_pso = st.slider("Número de iterações", 10, 100, 40, 5)
+        w_ini_pso = st.slider("Peso de inércia inicial w_ini", 0.5, 1.0, 0.9, 0.05)
+        w_fim_pso = st.slider("Peso de inércia final w_fim", 0.1, 0.6, 0.4, 0.05)
+        c1_pso = st.slider("Coeficiente cognitivo c1", 0.5, 3.0, 2.0, 0.1)
+        c2_pso = st.slider("Coeficiente social c2", 0.5, 3.0, 2.0, 0.1)
+
 params = {
     **defaults,
     "t_amb": t_amb_c + 273.15,
@@ -250,8 +305,9 @@ pw = res["potencias"]
 for aviso in res["avisos"]:
     st.warning(aviso)
 
-tab_est, tab_din, tab_psa = st.tabs(
-    ["⚙️ Operação estática", "📈 Dinâmica temporal", "🌀 Secagem PSA"])
+tab_est, tab_din, tab_psa, tab_gd = st.tabs(
+    ["⚙️ Operação estática", "📈 Dinâmica temporal", "🌀 Secagem PSA",
+     "🧠 Gêmeo Digital (EKF/PSO)"])
 
 # ===========================================================================
 # Aba 1 — Operação estática
@@ -744,3 +800,153 @@ with tab_psa:
         "acima desse patamar sinalizaria falha de chaveamento (ver "
         "Tabela 15.1)."
     )
+
+# ===========================================================================
+# Aba 4 — Gêmeo Digital (EKF/PSO)
+# ===========================================================================
+with tab_gd:
+    st.subheader("Estimação de Estado via EKF (Eqs. 21.2, 21.4, 21.7, 21.8)")
+    st.caption(
+        "Estado x = [δ/L, R_f] — os dois únicos estados do vetor da Eq. 21.2 "
+        "com contraparte calculável neste app (δ/L via Eq. 9.3, R_f via "
+        "Eq. 10.5). Medição z = [ṁ_seco, T_HP,in], com ruído gaussiano "
+        "simulado. O filtro parte sempre de uma crença de comissionamento "
+        "(δ/L=0,002, R_f=0 — \"como novo\"), independente dos valores "
+        "verdadeiros configurados na barra lateral, para que a convergência "
+        "abaixo seja estimação de verdade, não o filtro \"sabendo\" a resposta."
+    )
+
+    folga_true_ekf = np.linspace(folga_ini_ekf, folga_fim_ekf, n_passos_ekf)
+    r_f_true_ekf = np.linspace(r_f_ini_ekf, r_f_fim_ekf, n_passos_ekf)
+    r_ekf = ekf.simular_ekf(
+        params_base=params,
+        folga_true=folga_true_ekf,
+        r_f_true=r_f_true_ekf,
+        sigma_m_dot=sigma_m_dot_ekf,
+        sigma_t_hp=sigma_t_hp_ekf,
+        q_proc_diag=(q_folga_ekf, q_rf_ekf),
+        x0=(0.002, 0.0),
+        p0_diag=(1e-4, 1e-6),
+    )
+    passos_ekf = np.arange(n_passos_ekf)
+
+    f1, f2 = st.columns(2)
+    with f1:
+        figekf1, axekf1 = plt.subplots(figsize=(6.2, 3.4))
+        axekf1.plot(passos_ekf, r_ekf["folga_true"], color=GREEN, ls="--",
+                    label="δ/L verdadeira")
+        axekf1.plot(passos_ekf, r_ekf["x_hat"][:, 0], color=BLUE,
+                    label="δ/L estimada (EKF)")
+        banda_inf = r_ekf["x_hat"][:, 0] - r_ekf["std"][:, 0]
+        banda_sup = r_ekf["x_hat"][:, 0] + r_ekf["std"][:, 0]
+        axekf1.fill_between(passos_ekf, banda_inf, banda_sup, color=BLUE,
+                            alpha=0.2, label="±1σ (P_k|k)")
+        axekf1.set_xlabel("Passo de tempo")
+        axekf1.set_ylabel("δ/L")
+        axekf1.legend(fontsize=8)
+        figekf1.tight_layout()
+        st.pyplot(figekf1)
+
+    with f2:
+        figekf2, axekf2 = plt.subplots(figsize=(6.2, 3.4))
+        axekf2.plot(passos_ekf, r_ekf["r_f_true"], color=GREEN, ls="--",
+                    label="R_f verdadeiro")
+        axekf2.plot(passos_ekf, r_ekf["x_hat"][:, 1], color=BLUE,
+                    label="R_f estimado (EKF)")
+        banda_inf_rf = r_ekf["x_hat"][:, 1] - r_ekf["std"][:, 1]
+        banda_sup_rf = r_ekf["x_hat"][:, 1] + r_ekf["std"][:, 1]
+        axekf2.fill_between(passos_ekf, banda_inf_rf, banda_sup_rf, color=BLUE,
+                            alpha=0.2, label="±1σ (P_k|k)")
+        axekf2.set_xlabel("Passo de tempo")
+        axekf2.set_ylabel("R_f [m²K/W]")
+        axekf2.legend(fontsize=8)
+        figekf2.tight_layout()
+        st.pyplot(figekf2)
+
+    g1, g2, g3 = st.columns(3)
+    g1.metric("δ/L estimada (final)", f"{r_ekf['x_hat'][-1, 0]:.4f}",
+             help=f"Verdadeira: {r_ekf['folga_true'][-1]:.4f}")
+    g2.metric("R_f estimado (final)", f"{r_ekf['x_hat'][-1, 1]:.5f}",
+             help=f"Verdadeiro: {r_ekf['r_f_true'][-1]:.5f}")
+    g3.metric("NIS médio (Eq. 21.7)", f"{np.mean(r_ekf['nis']):.2f}",
+             help="Esperado em torno de n_z=2 (duas medições) se o filtro "
+                  "estiver bem calibrado — muito acima indica modelo/Q "
+                  "subestimados, muito abaixo indica filtro conservador "
+                  "demais.")
+
+    figekf3, axekf3 = plt.subplots(figsize=(9.0, 2.4))
+    axekf3.plot(passos_ekf, r_ekf["nis"], color=NAVY, lw=1.2)
+    axekf3.axhline(2.0, color=RED, ls=":", label="n_z = 2 (esperado)")
+    axekf3.set_xlabel("Passo de tempo")
+    axekf3.set_ylabel("NIS")
+    axekf3.legend(fontsize=8)
+    figekf3.tight_layout()
+    st.pyplot(figekf3)
+    st.caption(
+        "NIS (Normalized Innovation Squared, Eq. 21.7) audita o próprio "
+        "filtro sem conhecer o estado verdadeiro — é a estatística que um "
+        "Gêmeo Digital real usaria para saber se pode confiar na "
+        "estimativa acima. Mesma leitura operacional do Capítulo 21: NIS "
+        "consistentemente alto sinaliza Q subestimada ou modelo defasado; "
+        "consistentemente baixo, filtro excessivamente conservador."
+    )
+
+    st.divider()
+    st.subheader("Otimização de Setpoint via PSO (Eqs. 24.3/24.4)")
+    st.caption(
+        "Minimiza o SPC (Eq. 11.11) variando a pressão de setpoint da rede "
+        "π, sujeito a manter a autonomia do vaso (Eq. 16.5) acima do "
+        "mínimo definido na barra lateral — restrição imposta por "
+        "penalidade, já que o PSO básico não trata restrições nativamente."
+    )
+
+    if st.button("🔄 Rodar PSO"):
+        def _custo_pso(x: np.ndarray) -> float:
+            pi_cand = float(x[0])
+            r_cand = simular({**params, "pi_total": pi_cand})
+            spc_cand = r_cand["kpis"]["spc"]
+            autonomia_cand = r_cand["kpis"]["autonomia_min"]
+            penalidade = 0.0
+            if np.isfinite(autonomia_cand) and autonomia_cand < autonomia_min_pso:
+                penalidade = 1e3 * (autonomia_min_pso - autonomia_cand)
+            return spc_cand + penalidade
+
+        st.session_state["r_pso"] = pso.otimizar(
+            _custo_pso, limite_inf=[5.0], limite_sup=[12.0],
+            n_particulas=n_particulas_pso, n_iter=n_iter_pso,
+            w_ini=w_ini_pso, w_fim=w_fim_pso, c1=c1_pso, c2=c2_pso)
+
+    if "r_pso" in st.session_state:
+        r_pso = st.session_state["r_pso"]
+        pi_otimo = float(r_pso["g_best"][0])
+        res_otimo = simular({**params, "pi_total": pi_otimo})
+
+        p1, p2, p3 = st.columns(3)
+        p1.metric("π ótimo encontrado", f"{pi_otimo:.2f} bar abs")
+        p2.metric("SPC no ótimo", f"{res_otimo['kpis']['spc']:.2f} kW·min/m³",
+                 help=f"SPC no π atual da barra lateral: {k['spc']:.2f} "
+                      "kW·min/m³")
+        p3.metric("Autonomia no ótimo",
+                 f"{res_otimo['kpis']['autonomia_min']:.1f} min"
+                 if np.isfinite(res_otimo["kpis"]["autonomia_min"])
+                 else "∞ (sem demanda)")
+
+        figpso, axpso = plt.subplots(figsize=(9.0, 2.8))
+        axpso.plot(r_pso["historico_custo"], color=BLUE, lw=1.6)
+        axpso.set_xlabel("Iteração")
+        axpso.set_ylabel("Custo de g_best (SPC + penalidade)")
+        figpso.tight_layout()
+        st.pyplot(figpso)
+        st.caption(
+            "Convergência do enxame: o custo de g_best nunca piora entre "
+            "iterações (Eqs. 24.3/24.4 só atualizam g_best quando a nova "
+            "posição é melhor). Sem restrição de autonomia ativa, o "
+            "mínimo tende à menor pressão pesquisada — SPC cresce com π "
+            "pela mesma \"regra dos 7 %/bar\" já discutida no Capítulo de "
+            "Trem de Potência; é a restrição de autonomia mínima que "
+            "impede o otimizador de simplesmente zerar o setpoint."
+        )
+    else:
+        st.info("Clique em \"Rodar PSO\" para otimizar — não roda "
+                "automaticamente a cada mudança de slider, por ser mais "
+                "custoso que o resto do app.")
