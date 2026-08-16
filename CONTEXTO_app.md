@@ -812,6 +812,8 @@ T_HP,in) nem no resíduo de energia/massa já implementados no PIML; estendê-lo
 exigiria um canal de medição novo (ex. potência elétrica para η_mec, ΔP do
 filtro para ζ_ref) e fica para uma sessão futura, se pedido.
 
+**Commitado em `da20c83`.**
+
 ## Documentação de implementação criada (16/08/2026)
 
 A pedido do autor, três documentos novos em `aplicativo/`, complementares a
@@ -843,7 +845,15 @@ histórico completo):
 PIML/MPC/PSO existirem — só citava os 4 módulos originais da cascata
 estática) e agora linka os três documentos novos.
 
-**Nada foi commitado ainda** — aguardando revisão do autor.
+**Nada foi commitado ainda** — aguardando revisão do autor. **Atualização**:
+commitado em `166040b`, junto com o slide novo do Beamer (ver `CONTEXTO.md`).
+Também verificado ao vivo no navegador (Claude-in-Chrome, a pedido do
+autor): servidor subido, aba "Gêmeo Digital" aberta, roladas e conferidas as
+duas seções desta entrada — a extensão desconectou entre mensagens no meio
+da verificação (precisou reconectar, comportamento já visto em sessões
+anteriores) mas os gráficos de convergência de K (EKF aumentado, ~0,054) e
+de Ξ (PIML, ~0,047) renderizaram corretamente, ambos perto do K real
+(0,05). Servidor encerrado ao final.
 
 ## Estado atual
 

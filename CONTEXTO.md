@@ -1849,7 +1849,8 @@ colisão com o número de página. Sumário e Lista de Tabelas conferidos:
 "III Estudo de Caso Integrado" (p. 142), Capítulos 28/29 com suas subseções,
 Tabelas 28.1/28.2/29.1/29.2 todas listadas.
 
-**Nada foi commitado ainda** — aguardando revisão do autor.
+**Nada foi commitado ainda** — aguardando revisão do autor. **Atualização**:
+commitado em `68d302f`.
 
 ## Slides da Parte III adicionados ao Beamer (16/08/2026)
 
@@ -1874,7 +1875,48 @@ conferido via `pdftoppm`. O slide do Capítulo 29 coube de primeira.
 indefinidas, 23 páginas. Renderização visual conferida em 4 slides (Agenda,
 os dois novos, Síntese).
 
-**Nada foi commitado ainda** — aguardando revisão do autor.
+**Nada foi commitado ainda** — aguardando revisão do autor. **Atualização**:
+commitado em `e059d24`.
+
+## Problema inverso: Cap. 23.8 novo, Cap. 28.1 revisado (16/08/2026)
+
+O autor observou: "já solicitei uma inserção nas Partes II e III sobre
+problemas inversos para detecção de parâmetros normalmente ajustados por
+valores referenciais que podem ter alguma variação dependendo do local e do
+tipo de instalação." Verificação contra o texto então existente: o Cap. 28.1
+(EKF com estado aumentado) já cobria o mecanismo, mas sem o termo "problema
+inverso" nem a motivação explícita de variação por local/instalação; o Cap.
+27 já citava "problemas inversos" como papel do DeepXDE (desde 26/07/2026),
+mas nunca elaborado em conteúdo real na Parte II. Autor escolheu fechar as
+duas lacunas ("as duas coisas").
+
+**Cap. 23.8 (nova subseção, fim do Capítulo 23 — PIML)**: usa a dualidade
+direto/inverso do próprio título do artigo de Raissi et al. 2019 já citado
+(`\cite{piml}` — "Solving Forward **and Inverse** Problems", verificado
+contra a entrada da bibliografia antes de basear a afirmação nisso) para
+apresentar identificação de parâmetro via PINN: o parâmetro físico $\Xi$
+passa a ser variável treinável junto aos pesos da rede, Equação~23.5 nova
+(`eq:s23-5`), explicitamente ligada ao DeepXDE do Cap. 27 e ao mesmo
+objetivo do Cap. 28.1 — mas por um caminho offline, capaz de parâmetros
+distribuídos no espaço. Símbolo novo $\Xi$ na Nomenclatura, sem colisão
+(verificado — $\theta$ já estava saturado com três significados distintos
+no documento, por isso não foi reaproveitado).
+
+**Cap. 28.1 (parágrafo de abertura revisado)**: nomeia "problema inverso"
+explicitamente (definição direto vs. inverso) e explica por que K, $\eta_{mec}$
+e $\zeta_{ref}$ variam entre instalações — lote de fabricação, alinhamento/
+lubrificação de campo, fornecedor do elemento filtrante, plataforma — em vez
+de só dizer "nunca medidos nesta máquina específica" como antes.
+
+**Verificação**: compilação limpa em 3 passagens, 160 páginas (era 158),
+212 labels `eq:s*-*` (era 211, +1 — `eq:s23-5`), 0 referências indefinidas,
+0 `??`, 0 hardcode de equação, auto-referência da equação nova confirmada.
+Renderização visual conferida nas 3 páginas relevantes (Cap. 23.8, Cap.
+28.1 revisado) — sem overfull novo, referências cruzadas entre capítulos
+(23↔27↔28) resolvendo corretamente.
+
+**Nada foi commitado ainda** — aguardando revisão do autor. **Atualização**:
+commitado em `fcfa407`.
 
 ## Slide novo no Beamer: o app como prova de conceito (16/08/2026)
 
@@ -1890,7 +1932,53 @@ ajuste de conteúdo do primeiro slide desta família (encurtado após estourar
 a moldura na primeira versão, `pdftoppm` confirmou depois de corrigido).
 Deck foi de 23 para 24 slides, compilação limpa.
 
-**Nada foi commitado ainda** — aguardando revisão do autor.
+**Nada foi commitado ainda** — aguardando revisão do autor. **Atualização**:
+commitado em `166040b` (junto com a documentação do app, ver abaixo).
+
+## Resumo da sessão de 16/08/2026
+
+Sessão longa, um único dia, que cobriu o `dicas_kimi.md` novo, a Parte III
+inteira do livro (Cap. 28 + renumeração do estudo de caso para Cap. 29), a
+ponte problema-inverso entre Partes II e III, os slides correspondentes, e a
+extensão simétrica de tudo isso no `aplicativo/` — mais documentação de
+implementação do app, criada do zero. Para quem só ler esta entrada:
+
+- **`dicas_kimi.md`** (relatório novo, distinto do de 01/08): checklist de 5
+  itens implementado (cabeçalho do Cap. 28, legendas curtas, 2 referências
+  órfãs resolvidas, floats sem fallback) — avaliação crítica registrada
+  depois: relatório mais preciso já recebido no projeto, uma única
+  imprecisão cosmética de sintaxe.
+- **Capítulo 28 (metodologia) + Capítulo 29 (estudo de caso, renumerado)**:
+  EKF com estado aumentado (Λ=[K, η_mec, ζ_ref], Eqs. 28.1/28.2), protocolo
+  de 4 categorias de proveniência de parâmetro (Tabela 28.1), catálogo de
+  ~57 mecanismos de falha ligados ao algoritmo de detecção primário (Tabela
+  28.2). Renumeração feita por um fork que excedeu escopo — incidente
+  registrado, verificado como correto e aproveitado.
+- **Problema inverso** (Cap. 23.8 novo + Cap. 28.1 revisado): PINN
+  identificando parâmetro físico Ξ como variável treinável (Eq. 23.5),
+  ligada ao DeepXDE já citado no Cap. 27; Cap. 28.1 ganhou a nomenclatura
+  explícita de "problema inverso" e a motivação de variação por
+  local/instalação que faltava.
+- **Apresentação**: 3 slides novos (Parte III/Cap. 28, Cap. 29, e o app como
+  prova de conceito) — 21→24 slides.
+- **App (`aplicativo/`)**: os mesmos dois mecanismos de identificação de K
+  portados para código real — EKF aumentado (`ekf.py`) e PIML com problema
+  inverso (`piml.py`) — com 5 testes novos (71 no total) e dois bugs reais
+  encontrados e corrigidos durante a implementação (condicionamento do EKF
+  em baixa folga; resíduo do PIML ignorando a correção psicrométrica). Três
+  documentos novos (`IMPLEMENTACAO.md`, `GUIA_CODIGO.md`, `MANUTENCAO.md`)
+  mais `README.md` atualizado — ver `CONTEXTO_app.md` para os detalhes.
+  Verificado depois ao vivo no navegador, a pedido do autor, com o
+  Claude-in-Chrome (que desconectou e precisou reconectar no meio da
+  verificação — comportamento já visto em sessões anteriores).
+
+**Commits desta sessão, em ordem**: `702d3b2` (autor, `dicas_kimi.md` novo)
+→ `7f6ddc3` (checklist do relatório) → `68d302f` (Cap. 28/29) → `e059d24`
+(slides Parte III) → `fcfa407` (problema inverso no livro) → `da20c83`
+(problema inverso no app) → `166040b` (documentação do app + slide final).
+Livro em 160 páginas, apresentação em 24 slides, app com 71 testes — todos
+verificados limpos ao final desta entrada. Repositório sem nada pendente de
+commit; `arquivos_apoio/` continua fora do controle de versão, como sempre.
 
 ## Pendências conhecidas (candidatos para a próxima sessão)
 
