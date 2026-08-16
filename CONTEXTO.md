@@ -2315,3 +2315,21 @@ app (opção escolhida entre "só livro", "só app" e "ambos"). Detalhes em
 "Pendências conhecidas", item 8, acima. Verificado: 3 passagens de
 `pdflatex`, 164→165 páginas, sem referências indefinidas, sem *overfull
 hbox* severo introduzido (>20pt).
+
+## README.md na raiz do repositório (16/08/2026)
+
+Pedido do autor: "colocar um resumo do aplicativo no GitHub explicando
+como funciona, pra que serve e qual a forma de preparar para rodar em
+Linux e em Windows". A raiz do repositório não tinha nenhum `README.md`
+até esta sessão — o GitHub não renderizava nada na página principal do
+projeto. Criado `README.md` na raiz: resumo de uma linha do livro,
+seguido de um resumo do aplicativo (o que simula, os 5 algoritmos da
+Parte II, a estrutura das 6 abas) e instruções de preparo/execução/teste
+duplicadas para Linux/macOS e Windows (PowerShell). Trabalho
+majoritariamente sobre o app — detalhe completo, incluindo a ressalva de
+que os comandos de Windows não foram testados num Windows real (ambiente
+de desenvolvimento é Linux), está em `CONTEXTO_app.md`, seção "README.md
+na raiz do repositório". Reduzido aqui só a um ponteiro porque a
+convenção deste projeto mantém o contexto do app separado (ver
+"Convenções específicas do app" em `CONTEXTO_app.md`) — este arquivo
+principal registra que a mudança aconteceu, não a duplica.
