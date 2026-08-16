@@ -208,7 +208,7 @@ também em "Pendências conhecidas" para não se perderem:
 
 Em 26/07/2026 foi feita uma revisão completa de diagramação do PDF compilado (compilação limpa
 conferida, mais inspeção visual das páginas via `pdftoppm`). O diagnóstico original está em
-`relatorio_diagramacao.md` na raiz do projeto. **Todos os 8 itens do relatório foram implementados**
+`relatorio_diagramacao.md` (movido em 16/08/2026 para `arquivos a eliminar/`, ver "Saneamento de arquivos" no fim deste arquivo). **Todos os 8 itens do relatório foram implementados**
 no mesmo dia — o arquivo fica só como referência histórica do diagnóstico, não há mais pendência de
 diagramação em aberto.
 
@@ -391,7 +391,9 @@ a fonte de onde veio.
 
 ## Documentos de apoio
 
-O subdiretório `documentos de apoio/` guarda material da base inicial do trabalho.
+O subdiretório `documentos de apoio/` guardava material da base inicial do
+trabalho — **movido em 16/08/2026 para `arquivos a eliminar/`** (o subdiretório
+em si foi removido, vazio; ver "Saneamento de arquivos" no fim deste arquivo).
 `referências iniciais.docx` contém as listas de referências bibliográficas geradas
 nas sessões originais com o GPAI. Em 26/07/2026 essas listas foram cotejadas com a
 bibliografia do `.tex`: 19 referências que haviam se perdido foram adicionadas ao
@@ -2119,6 +2121,82 @@ visão de longo prazo do autor registrada no topo deste arquivo — a obra é o
 primeiro volume de uma coleção modular, e o título descreve o projeto, não o
 volume isolado. Não reabrir sem o autor levantar o assunto.
 
-Observação: há 4 JPEGs soltos em `figuras/` baixados pelo autor como referência
-visual (thumbnails de baixa resolução, licença não verificada) — **não** usá-los no
-documento; serviram só de inspiração para o render 3D da Figura 3.1.
+~~Observação: há 4 JPEGs soltos em `figuras/` baixados pelo autor como
+referência visual...~~ — **movidos em 16/08/2026** para `arquivos a
+eliminar/`, os 4 (o quarto era um arquivo oculto, `.jpcompressor processo
+de compressão 3D 2.jpeg`, que passou despercebido numa primeira varredura
+com `ls` sem `-a` — achado só depois de um erro de staging no commit
+seguinte forçar conferir `git ls-files` diretamente), ver "Saneamento de
+arquivos" abaixo. Não são mais usados nem como referência de inspiração; a
+Figura 3.1 já está pronta há semanas.
+
+## Saneamento de arquivos (16/08/2026)
+
+O autor pediu um saneamento: arquivos com mais de uma semana sem
+atualização e sem uso, movidos para uma pasta nova, `arquivos a eliminar/`
+(não deletados — só isolados, para revisão antes de uma remoção definitiva
+que ninguém pediu ainda). O autor também avisou que usa o **Kimi CLI** como
+revisor externo das tarefas — isso explica arquivos como `.mcp.json` e
+`aplicativo/.kimi-code/` que aparecem sem terem sido criados nesta sessão
+(já investigados antes desta entrada, não tocados — ver conversa).
+
+**Levantamento**: todo arquivo/pasta na raiz do projeto (excluindo `.git/`,
+`.claude/`, `venv/`, `__pycache__/`), com data de modificação e checagem de
+uso (rastreamento git, referência em `.tex`/scripts/app). Critério: mais de
+uma semana (antes de 09/08/2026) **e** sem uso corrente — não bastava ser
+antigo (`figuras/`, `scripts/gen_figuras.py` são de 26/07 e continuam em uso
+ativo, por exemplo, então ficaram de fora).
+
+**Movidos** (6 itens, todos confirmados sem referência em nenhum `.tex`,
+script ou módulo do app antes de mover):
+- `compressores v.0.7.tex` — rascunho antigo, parte do commit inicial
+  (`ec228ac`, 26/07/2026), nunca mais tocado, sem nenhuma referência em
+  lugar nenhum. Claramente superado pelo `compressores.tex` atual.
+- 4 JPEGs de `figuras/` (`compressor em corte.jpeg`, `compressor processo
+  de compressão 3d.jpeg`, `design parafuso digital.jpeg`, e o quarto —
+  achado só depois, arquivo oculto — `.jpcompressor processo de
+  compressão 3D 2.jpeg`) — o próprio
+  `CONTEXTO.md` já os descrevia como "não usá-los no documento", inspiração
+  visual para a Figura 3.1, já finalizada há semanas. O texto antigo dizia
+  "4 JPEGs"; só 3 foram encontrados nesta sessão (o quarto já não existia).
+- `relatorio_diagramacao.md` — relatório de diagramação de 26/07/2026, os 8
+  itens já implementados no mesmo dia, mantido só como referência histórica
+  desde então.
+- `documentos de apoio/referências iniciais.docx` — base bibliográfica
+  original (GPAI), já cotejada com o `.tex` em 26/07/2026 (19 referências
+  cruzadas, ver "Documentos de apoio" acima). O subdiretório ficou vazio
+  depois e foi removido.
+
+**Deliberadamente mantido, a pedido do autor**: `arquivos_apoio/` (7
+relatórios externos — Manus, Copilot, Kimi de 01/08, Backlog, etc.) — o
+autor confirmou explicitamente que prefere manter essa pasta como está,
+mesmo com o saneamento em curso. **Não mover/tocar sem novo pedido
+explícito** — a proteção original (`CONTEXTO.md`, seção "Estado atual",
+"Não mexer em nenhum arquivo de `arquivos_apoio/`...") continua valendo.
+
+**Verificação**: `compressores.tex` recompilado em 3 passagens depois da
+movimentação — limpo, 160 páginas, nenhuma referência quebrada (nenhum dos
+6 itens movidos era `\input`/`\includegraphics` do documento). Todos os 6
+já estavam rastreados pelo git (confirmado via `git ls-files`, não por
+inspeção visual — ver a armadilha abaixo), movidos com `git mv` para
+preservar histórico.
+
+**Dois erros próprios cometidos e corrigidos ainda dentro desta mesma
+tarefa**: (1) `ls figuras/` sem `-a` não mostra arquivos ocultos —
+`.jpcompressor processo de compressão 3D 2.jpeg` (o "4º JPEG" que uma nota
+antiga deste arquivo já mencionava) passou despercebido na primeira
+varredura; só apareceu ao rodar `git ls-files` diretamente depois de um
+problema de commit. **Lição**: para inventariar arquivos de forma
+confiável, usar `git ls-files`/`find` (que não escondem dotfiles por
+padrão), não `ls` sem `-a`. (2) Um `git add caminho1 "caminho com espaço
+que não existe mais" caminho3` falhou com `fatal:` no pathspec inválido e
+**não** commitou nenhum dos caminhos daquela chamada — incluindo os
+válidos (`CONTEXTO.md` ficou de fora do primeiro commit desta tarefa sem
+eu perceber, só notado ao conferir `git status` depois do commit).
+**Lição**: `git add` com múltiplos pathspecs falha atômico — um caminho
+inválido derruba a chamada inteira; preferir chamadas separadas por
+caminho quando algum deles é incerto (pasta que pode já ter sido
+removida, por exemplo), e sempre conferir `git status` depois de commitar,
+não só antes.
+
+**Nada foi commitado ainda** — aguardando revisão do autor.
