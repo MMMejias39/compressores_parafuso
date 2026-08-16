@@ -12,26 +12,48 @@ Todas as equações vêm do livro — o número de cada uma está citado no cód
 
 ## Instalação
 
+**Linux / macOS:**
 ```bash
 cd aplicativo
 python3 -m venv venv
 venv/bin/pip install -r requirements.txt
 ```
 
+**Windows (PowerShell):**
+```powershell
+cd aplicativo
+python -m venv venv
+venv\Scripts\pip install -r requirements.txt
+```
+
 ## Execução
 
+**Linux / macOS:**
 ```bash
 cd aplicativo
 venv/bin/streamlit run app.py
+```
+
+**Windows (PowerShell):**
+```powershell
+cd aplicativo
+venv\Scripts\streamlit run app.py
 ```
 
 Abre no navegador em <http://localhost:8501>.
 
 ## Testes
 
+**Linux / macOS:**
 ```bash
 cd aplicativo
 venv/bin/pytest tests/
+```
+
+**Windows (PowerShell):**
+```powershell
+cd aplicativo
+venv\Scripts\pytest tests/
 ```
 
 ## Documentação
