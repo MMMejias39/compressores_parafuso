@@ -11,7 +11,16 @@ Abas:
   carga/alívio (Eqs. 13.4, 13.7, 13.8, 16.4);
 - "Secagem PSA": rodízio de N torres PSA (Eq. 15.1) com topologia
   configurável (N vasos por compressor ou N vasos compartilhados pela
-  planta).
+  planta);
+- "Gêmeo Digital (EKF/PSO)": os 5 algoritmos da Parte II — EKF, VAE, PIML,
+  MPC, PSO — incluindo os dois caminhos de identificação por problema
+  inverso (EKF com estado aumentado, Cap. 28; PIML, Cap. 23.8);
+- "Configurações": geometria de equipamento e hiperparâmetros de
+  algoritmo que não mudam de uma sessão de análise para a outra — as
+  condições de operação do momento continuam na barra lateral;
+- "Dados Medidos": upload de referência (.xlsx/.csv) com a instrumentação
+  real de uma planta, comparada contra a Tabela 18.1 do livro. Só
+  documentação — não altera a simulação.
 """
 
 from __future__ import annotations
@@ -23,6 +32,7 @@ matplotlib.use("Agg")  # mesmo backend do scripts/gen_figuras.py
 import matplotlib.colors
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import streamlit as st
 
 from compressor_sim import (
@@ -66,7 +76,303 @@ st.caption(
 defaults = parametros_default()
 
 # ---------------------------------------------------------------------------
-# Barra lateral — entradas
+# Abas — criadas cedo: a aba "Configurações" precisa renderizar (e atribuir
+# suas variáveis) antes do dict `params` ser montado, porque alimenta parte
+# dele. Os corpos de tab_est/tab_din/tab_psa/tab_gd continuam mais abaixo,
+# depois de `res = simular(params)` estar pronto.
+# ---------------------------------------------------------------------------
+tab_est, tab_din, tab_psa, tab_gd, tab_config, tab_dados = st.tabs([
+    "⚙️ Operação estática", "📈 Dinâmica temporal", "🌀 Secagem PSA",
+    "🧠 Gêmeo Digital (EKF/PSO)", "🎛️ Configurações", "📂 Dados Medidos",
+])
+
+# ---------------------------------------------------------------------------
+# Aba "Configurações" — geometria de equipamento e hiperparâmetros de
+# algoritmo: valores que descrevem esta máquina ou este experimento, não a
+# condição de operação do momento (essa fica na barra lateral).
+# ---------------------------------------------------------------------------
+with tab_config:
+    st.caption(
+        "Parâmetros que normalmente não mudam de uma sessão de análise "
+        "para a outra — geometria/constantes de equipamento e "
+        "hiperparâmetros dos algoritmos da Parte II. Para temperatura "
+        "ambiente, pressão de rede, demanda e outras condições do momento, "
+        "use a barra lateral."
+    )
+
+    cfg1, cfg2 = st.columns(2)
+
+    with cfg1:
+        with st.expander("Compressor — geometria e eficiência", expanded=True):
+            fad = st.number_input(
+                "Vazão FAD por unidade [m³/min] (assumido — não consta no livro)",
+                1.0, 100.0, defaults["fad_m3_min"], 0.5)
+            n_compressores = st.number_input(
+                "Compressores idênticos em paralelo (assumido)",
+                1, 10, defaults["n_compressores"], 1)
+            n_pol = st.slider("Índice politrópico n (Eq. 5.5)", 1.20, 1.40,
+                              defaults["n"], 0.01)
+            v_i = st.slider("Razão volumétrica interna V_i (Eq. 5.6)", 2.0, 7.0,
+                            defaults["v_i"], 0.1)
+            eta_mec = st.slider("Eficiência mecânica η_mec", 0.90, 1.00,
+                                defaults["eta_mec"], 0.005)
+
+        with st.expander("Carcaça do estágio LP — balanço térmico (Eq. 9.6)"):
+            m_carcaca = st.number_input(
+                "Massa térmica da carcaça M_c [kg] (assumido)",
+                50.0, 2000.0, defaults["m_carcaca"], 10.0)
+            c_carcaca = st.number_input(
+                "Calor específico c_c [J/(kg·K)] (assumido — ferro fundido típico)",
+                300.0, 900.0, defaults["c_carcaca"], 10.0)
+            cond_ext_carcaca = st.number_input(
+                "Condutância de convecção externa carcaça-ambiente [W/K] (assumido)",
+                1.0, 200.0, defaults["cond_ext_carcaca"], 1.0)
+            cond_arref_carcaca = st.number_input(
+                "Condutância do arrefecimento ativo/ventilação forçada [W/K] (assumido)",
+                1.0, 500.0, defaults["cond_arref_carcaca"], 1.0)
+
+        with st.expander("Motor e invólucro (Hood) — Eqs. 4.10-4.12, 2.1, 2.4"):
+            hood_enclausurado = st.checkbox(
+                "Compressor dentro de invólucro acústico (Hood)?",
+                value=defaults["hood_enclausurado"],
+                help="Se marcado, a carcaça do estágio LP (Eq. 9.6) referencia "
+                     "T_hood (Eq. 2.4) em vez da temperatura ambiente externa — "
+                     "arranjo comum offshore, às vezes com o trem inteiro (motor "
+                     "a saída do 2º estágio) no mesmo invólucro por restrição "
+                     "de ruído.")
+            s_motor = st.slider("Escorregamento do motor s (assumido)",
+                                0.005, 0.05, defaults["s_motor"], 0.005,
+                                format="%.3f")
+            p_fixas_motor = st.number_input(
+                "Perdas fixas do motor P_fixas [W] (assumido — ensaio a vazio)",
+                200.0, 10000.0, defaults["p_fixas_motor"], 100.0)
+            m_dot_vent = st.number_input(
+                "Vazão de ventilação forçada do exaustor [kg/s] (assumido)",
+                0.05, 5.0, defaults["m_dot_vent"], 0.05)
+            p_loss_hood_outros = st.number_input(
+                "Perdas de VSD+gearbox no invólucro [W] (assumido — Eqs. 4.3/5.2 "
+                "não decompostas neste app)",
+                0.0, 10000.0, defaults["p_loss_hood_outros"], 100.0)
+
+        with st.expander("Tubulação interestágios (Eq. 5.15)"):
+            f_d_linha = st.number_input(
+                "Fator de atrito de Darcy f_D (assumido)",
+                0.005, 0.08, defaults["f_d_linha"], 0.005, format="%.3f")
+            l_linha = st.number_input(
+                "Comprimento do trecho LP→HP [m] (assumido)",
+                0.5, 30.0, defaults["l_linha"], 0.5)
+            d_linha = st.number_input(
+                "Diâmetro interno da linha [m] (assumido)",
+                0.02, 0.30, defaults["d_linha"], 0.01)
+
+        with st.expander("Resfriamento, vaso e rede — equipamento"):
+            ua = st.number_input("UA de projeto [W/K] (assumido)", 500.0, 20000.0,
+                                 defaults["ua_projeto"], 100.0)
+            eta_sep = st.slider("Eficiência do separador η_sep (Eq. 14.4)",
+                                0.80, 1.00, defaults["eta_sep"], 0.01)
+            purga_pct = st.slider("Purga do secador PSA [%] (:1971)", 5, 25,
+                                  int(defaults["fator_purga"] * 100))
+            v_vaso = st.number_input("Volume do vaso [m³] (assumido)", 0.5, 20.0,
+                                     defaults["v_vaso"], 0.5)
+            p_limite_bar = st.number_input("Pressão mínima da rede [bar abs]",
+                                           3.0, 8.0,
+                                           defaults["p_limite"] / 1e5, 0.1)
+
+        with st.expander("Dinâmica temporal — sintonia (aba 2)"):
+            tau_vsd = st.slider(
+                "Constante de tempo de rampa do VSD τ [s] (assumido)",
+                1.0, 30.0, dinamica.TAU_VSD, 1.0)
+            dp_db_bar = st.slider("Banda carga/alívio ΔP_db [bar]", 0.1, 1.5,
+                                  dinamica.DP_DB / 1e5, 0.1)
+
+        with st.expander("Secagem PSA — topologia e sintonia (aba 3)"):
+            topologia_psa = st.radio(
+                "Topologia do secador PSA",
+                ["N vasos por compressor", "N vasos para o sistema"],
+                help="Por compressor: cada uma das unidades em paralelo tem seu "
+                     "próprio secador dedicado (rodízio idêntico em cada uma). "
+                     "Para o sistema: um único banco de N torres compartilhado, "
+                     "dimensionado para a vazão total da planta.")
+            n_vasos_psa = st.number_input(
+                "Torres em rodízio N (assumido — mínimo do princípio PSA)",
+                2, 6, 2, 1)
+            t_ads_psa = st.slider(
+                "Duração da adsorção por torre [min] (assumido)",
+                2.0, 20.0, 6.0, 0.5)
+            t_regen_psa = st.slider(
+                "Duração da regeneração por torre [min] (assumido)",
+                1.0, 15.0, 4.0, 0.5)
+            t_resfriamento_psa = st.slider(
+                "Resfriamento pós-regeneração [min] (assumido)",
+                0.0, 10.0, 2.0, 0.5,
+                help="Tempo em que a torre já regenerou mas ainda está quente "
+                     "demais para voltar a adsorver com eficiência — sem essa "
+                     "fase o rodízio simularia uma troca instantânea entre "
+                     "regeneração e adsorção que não existe fisicamente.")
+            k_ads_psa = st.slider(
+                "Constante de taxa de adsorção k_ads (Eq. 15.1, Fig. 15.2)",
+                0.3, 4.0, 1.5, 0.1)
+            t_res_psa = st.slider(
+                "Tempo de residência de projeto do leito [min] (assumido)",
+                1.0, 15.0, 4.0, 0.5)
+
+    with cfg2:
+        with st.expander("Gêmeo Digital — EKF (aba 4, Eqs. 21.2-21.8)", expanded=True):
+            st.caption(
+                "Cenário: folga do estágio LP (δ/L) e fouling do intercooler "
+                "(R_f) evoluem de um valor inicial a um final ao longo do "
+                "horizonte — o EKF nunca vê esses valores, só as medições "
+                "ruidosas de ṁ_seco e T_HP,in, e tenta reconstruí-los.")
+            n_passos_ekf = st.slider("Horizonte do EKF [passos]", 20, 150, 60, 10)
+            folga_ini_ekf = st.number_input(
+                "δ/L verdadeira — início (assumido)", 0.0005, 0.02, 0.002, 0.0005,
+                format="%.4f")
+            folga_fim_ekf = st.number_input(
+                "δ/L verdadeira — fim (assumido)", 0.0005, 0.02, 0.009, 0.0005,
+                format="%.4f")
+            r_f_ini_ekf = st.number_input(
+                "R_f verdadeiro — início (assumido)", 0.0, 1e-3, 0.0, 1e-5,
+                format="%.5f")
+            r_f_fim_ekf = st.number_input(
+                "R_f verdadeiro — fim (assumido)", 0.0, 1e-3, 0.0, 1e-5,
+                format="%.5f")
+            sigma_m_dot_ekf = st.number_input(
+                "Ruído do sensor de vazão σ [kg/s] (assumido)",
+                1e-5, 5e-3, 1e-4, 1e-5, format="%.5f")
+            sigma_t_hp_ekf = st.number_input(
+                "Ruído do sensor de T_HP,in σ [°C] (assumido)",
+                0.01, 2.0, 0.05, 0.01)
+            q_folga_ekf = st.number_input(
+                "Ruído de processo Q — δ/L (assumido)",
+                1e-9, 1e-5, 1e-7, 1e-9, format="%.1e")
+            q_rf_ekf = st.number_input(
+                "Ruído de processo Q — R_f (assumido)",
+                1e-12, 1e-7, 1e-10, 1e-12, format="%.1e")
+
+        with st.expander("Gêmeo Digital — EKF com Estado Aumentado (aba 4, Cap. 28, Eqs. 28.1/28.2)"):
+            st.caption(
+                "Estado x_aug = [δ/L, R_f, K] — o coeficiente de vazamento K "
+                "(Eq. 9.3), fixo em todo o resto do app, passa a ser também "
+                "estimado. Cenário próprio (independente do EKF acima, mesmo "
+                "padrão de escopo isolado já usado no PSO/MPC): janela de "
+                "calibração com δ/L conhecida e constante, K partindo de uma "
+                "crença deliberadamente errada; depois, K \"congela\" (Q "
+                "pequeno) e δ/L volta a acompanhar deriva, como no EKF de 2 "
+                "estados.")
+            n_cal_aum = st.slider("Passos na janela de calibração", 15, 50, 30, 5)
+            n_op_aum = st.slider("Passos após a calibração", 15, 60, 40, 5)
+            folga_cal_aum = st.number_input(
+                "δ/L conhecida na janela de calibração (assumido)",
+                0.002, 0.02, 0.010, 0.001, format="%.4f",
+                help="O efeito de K na Eq. 9.3 escala com δ/L — folgas muito "
+                     "baixas (ex. 0,002, condição de máquina nova) tornam K "
+                     "quase inobservável frente ao ruído de medição típico; "
+                     "este valor mais alto dá um sinal mais forte para a "
+                     "calibração convergir.")
+            folga_fim_aum = st.number_input(
+                "δ/L verdadeira ao fim da operação (assumido)",
+                folga_cal_aum, 0.03, 0.018, 0.001, format="%.4f")
+            k_inicial_aum = st.number_input(
+                "Crença inicial de K (assumido, != K real do app)",
+                0.005, 0.15, 0.03, 0.005, format="%.3f",
+                help=f"K real usado no restante do app: {defaults['k_folga']:.3f} "
+                     "(Eq. 9.3) — mantido diferente aqui para que a convergência "
+                     "mostrada seja identificação de verdade.")
+            sigma_m_dot_aum = st.number_input(
+                "Ruído do sensor de vazão σ [kg/s] — janela de calibração (assumido)",
+                1e-6, 5e-4, 3e-5, 1e-6, format="%.1e",
+                help="Precisão de instrumentação de bancada/comissionamento, "
+                     "mais fina que o sensor de campo do EKF acima — o sinal de "
+                     "K na Eq. 9.3 é pequeno mesmo com δ/L elevada, e precisa "
+                     "de um ruído de medição proporcionalmente baixo para ser "
+                     "identificável em poucas dezenas de ciclos.")
+
+        with st.expander("Gêmeo Digital — PSO (aba 4, Eqs. 24.3/24.4)"):
+            st.caption(
+                "Otimiza a pressão de setpoint da rede (π) para minimizar o "
+                "SPC (Eq. 11.11), sujeito a manter a autonomia do vaso acima "
+                "de um mínimo requerido.")
+            autonomia_min_pso = st.slider(
+                "Autonomia mínima exigida [min] (restrição)", 0.0, 30.0, 1.0, 0.5,
+                help="Com os defaults de vaso/demanda, a autonomia real fica "
+                     "abaixo de ~1,5 min em toda a faixa de π pesquisada — uma "
+                     "restrição alta (ex. 5 min) é inatingível em qualquer "
+                     "ponto, e o PSO corretamente converge para a borda "
+                     "superior da busca (menor penalidade possível, não um "
+                     "mínimo interno) já na 1ª iteração, produzindo um "
+                     "gráfico de convergência sem variação visível. O default "
+                     "de 1 min já cruza a curva de autonomia dentro da faixa "
+                     "de π, dando um ótimo interno de verdade para observar.")
+            n_particulas_pso = st.slider("Número de partículas", 10, 60, 25, 5)
+            n_iter_pso = st.slider("Número de iterações", 10, 100, 40, 5)
+            w_ini_pso = st.slider("Peso de inércia inicial w_ini", 0.5, 1.0, 0.9, 0.05)
+            w_fim_pso = st.slider("Peso de inércia final w_fim", 0.1, 0.6, 0.4, 0.05)
+            c1_pso = st.slider("Coeficiente cognitivo c1", 0.5, 3.0, 2.0, 0.1)
+            c2_pso = st.slider("Coeficiente social c2", 0.5, 3.0, 2.0, 0.1)
+
+        with st.expander("Gêmeo Digital — VAE (aba 4, Eqs. 20.4, 22.1-22.7)"):
+            st.caption(
+                "Treinado sobre amostras sintéticas saudáveis (comissionamento, "
+                "δ/L entre 0,0018-0,0022) — não existe dado real de planta "
+                "neste projeto.")
+            n_amostras_vae = st.slider("Amostras de treino (assumido)", 200, 1000, 500, 50,
+                                       key="n_amostras_vae")
+            n_epocas_vae = st.slider("Épocas de treino", 100, 500, 300, 50, key="n_epocas_vae")
+            folga_cenario_vae = st.number_input(
+                "δ/L do cenário de teste (assumido)", 0.0005, 0.03, 0.015, 0.001,
+                format="%.4f",
+                help="Valor bem fora da faixa saudável de treino dispara a "
+                     "anomalia por padrão; reduza para ver o limite de detecção.")
+
+        with st.expander("Gêmeo Digital — PIML (aba 4, Eqs. 23.1-23.4)"):
+            st.caption(
+                "Substituto treinado para [T_LP,out, T_HP,in, ṁ_seco, "
+                "Q̇_intercooler] a partir de [π, T_amb, δ/L, R_f, FAD], com "
+                "resíduo físico do balanço de energia do intercooler "
+                "(Eq. 10.1) avaliado em pontos de colocação sem rótulo.")
+            n_amostras_piml = st.slider("Amostras de treino (assumido)", 200, 800, 400, 50,
+                                        key="n_amostras_piml")
+            n_epocas_piml = st.slider("Épocas de treino", 100, 500, 300, 50, key="n_epocas_piml")
+
+        with st.expander("Gêmeo Digital — PIML, Problema Inverso (aba 4, Cap. 23.8, Eq. 23.5)"):
+            st.caption(
+                "Em vez do balanço de energia do intercooler (Eq. 23.2), o "
+                "resíduo físico aqui é a Equação 9.3 (balanço mássico), com o "
+                "coeficiente de vazamento K tratado como incógnita Ξ — "
+                "otimizada junto aos pesos da rede, não fixa em `params_base` "
+                "como no restante do app.")
+            n_amostras_piml_inv = st.slider("Amostras de treino (assumido)", 200, 800, 400, 50,
+                                            key="n_amostras_piml_inv")
+            n_epocas_piml_inv = st.slider("Épocas de treino", 100, 500, 300, 50,
+                                          key="n_epocas_piml_inv")
+            xi_inicial_piml = st.number_input(
+                "Crença inicial de Ξ (assumido, != K real)",
+                0.005, 0.15, 0.02, 0.005, format="%.3f",
+                help=f"K real usado no restante do app: {defaults['k_folga']:.3f} "
+                     "(Eq. 9.3) — mantido diferente aqui para que a "
+                     "convergência mostrada seja identificação de verdade.")
+
+        with st.expander("Gêmeo Digital — MPC (aba 4, Eqs. 24.1/24.2)"):
+            st.caption(
+                "Compara o MPC (antecipa a demanda futura conhecida) contra o "
+                "controle reativo já usado na aba \"Dinâmica temporal\" "
+                "(só responde à demanda do instante atual).")
+            demanda_base_mpc = st.slider(
+                "Demanda base para o teste [m³/min] (assumido)", 1.0, 8.0, 5.0, 0.5,
+                help="Mantida deliberadamente com folga em relação à capacidade "
+                     "instalada — com demanda muito perto do limite, qualquer "
+                     "controlador (MPC ou reativo) satura igualmente, e a "
+                     "comparação deixa de mostrar diferença.")
+            fator_ev_mpc = st.slider("Fator do pico de demanda", 1.1, 2.0, 1.4, 0.1)
+            horizonte_mpc = st.slider("Horizonte de simulação [min]", 5, 20, 10, 1)
+            dt_mpc = st.slider("Passo de tempo Δt [s] (assumido)", 2.0, 10.0, 5.0, 1.0)
+            n_horizonte_mpc = st.slider("Horizonte de predição H [passos]", 6, 24, 12, 2)
+            rho_mpc = st.number_input(
+                "Peso do esforço de controle ρ (Eq. 24.1)", 0.0, 1.0, 0.05, 0.01,
+                format="%.2f")
+
+# ---------------------------------------------------------------------------
+# Barra lateral — condições de operação (ajustadas com frequência)
 # ---------------------------------------------------------------------------
 with st.sidebar:
     st.header("Condições de operação")
@@ -79,136 +385,31 @@ with st.sidebar:
         p_amb_bar = st.number_input("Pressão atmosférica [bar abs]", 0.9, 1.1,
                                     defaults["p_amb"] / 1e5, 0.005)
 
-    with st.expander("Compressor (estágios LP/HP)", expanded=True):
+    with st.expander("Compressor — ponto de operação", expanded=True):
         pi_total = st.slider("Pressão de rede [bar abs]", 5.0, 12.0,
                              defaults["pi_total"], 0.1)
-        fad = st.number_input(
-            "Vazão FAD por unidade [m³/min] (assumido — não consta no livro)",
-            1.0, 100.0, defaults["fad_m3_min"], 0.5)
-        n_compressores = st.number_input(
-            "Compressores idênticos em paralelo (assumido)",
-            1, 10, defaults["n_compressores"], 1)
-        n_pol = st.slider("Índice politrópico n (Eq. 5.5)", 1.20, 1.40,
-                          defaults["n"], 0.01)
-        v_i = st.slider("Razão volumétrica interna V_i (Eq. 5.6)", 2.0, 7.0,
-                        defaults["v_i"], 0.1)
-        eta_mec = st.slider("Eficiência mecânica η_mec", 0.90, 1.00,
-                            defaults["eta_mec"], 0.005)
         folga_rel = st.number_input("Folga relativa δ/L (Eq. 9.3)", 0.0, 0.02,
                                     defaults["folga_rel"], 0.001,
                                     format="%.3f")
 
-    with st.expander("Carcaça do estágio LP — balanço térmico (Eq. 9.6)"):
-        m_carcaca = st.number_input(
-            "Massa térmica da carcaça M_c [kg] (assumido)",
-            50.0, 2000.0, defaults["m_carcaca"], 10.0)
-        c_carcaca = st.number_input(
-            "Calor específico c_c [J/(kg·K)] (assumido — ferro fundido típico)",
-            300.0, 900.0, defaults["c_carcaca"], 10.0)
-        cond_ext_carcaca = st.number_input(
-            "Condutância de convecção externa carcaça-ambiente [W/K] (assumido)",
-            1.0, 200.0, defaults["cond_ext_carcaca"], 1.0)
-        cond_arref_carcaca = st.number_input(
-            "Condutância do arrefecimento ativo/ventilação forçada [W/K] (assumido)",
-            1.0, 500.0, defaults["cond_arref_carcaca"], 1.0)
-
-    with st.expander("Motor e invólucro (Hood) — Eqs. 4.10-4.12, 2.1, 2.4"):
-        hood_enclausurado = st.checkbox(
-            "Compressor dentro de invólucro acústico (Hood)?",
-            value=defaults["hood_enclausurado"],
-            help="Se marcado, a carcaça do estágio LP (Eq. 9.6) referencia "
-                 "T_hood (Eq. 2.4) em vez da temperatura ambiente externa — "
-                 "arranjo comum offshore, às vezes com o trem inteiro (motor "
-                 "a saída do 2º estágio) no mesmo invólucro por restrição "
-                 "de ruído.")
-        s_motor = st.slider("Escorregamento do motor s (assumido)",
-                            0.005, 0.05, defaults["s_motor"], 0.005,
-                            format="%.3f")
-        p_fixas_motor = st.number_input(
-            "Perdas fixas do motor P_fixas [W] (assumido — ensaio a vazio)",
-            200.0, 10000.0, defaults["p_fixas_motor"], 100.0)
-        m_dot_vent = st.number_input(
-            "Vazão de ventilação forçada do exaustor [kg/s] (assumido)",
-            0.05, 5.0, defaults["m_dot_vent"], 0.05)
-        p_loss_hood_outros = st.number_input(
-            "Perdas de VSD+gearbox no invólucro [W] (assumido — Eqs. 4.3/5.2 "
-            "não decompostas neste app)",
-            0.0, 10000.0, defaults["p_loss_hood_outros"], 100.0)
-
-    with st.expander("Tubulação interestágios (Eq. 5.15)"):
-        f_d_linha = st.number_input(
-            "Fator de atrito de Darcy f_D (assumido)",
-            0.005, 0.08, defaults["f_d_linha"], 0.005, format="%.3f")
-        l_linha = st.number_input(
-            "Comprimento do trecho LP→HP [m] (assumido)",
-            0.5, 30.0, defaults["l_linha"], 0.5)
-        d_linha = st.number_input(
-            "Diâmetro interno da linha [m] (assumido)",
-            0.02, 0.30, defaults["d_linha"], 0.01)
-
-    with st.expander("Resfriamento e tratamento"):
+    with st.expander("Resfriamento e secagem — estado medido/atual"):
         t_agua_c = st.slider("Água de resfriamento [°C]", 5.0, 40.0,
                              defaults["t_agua"] - 273.15, 0.5)
-        ua = st.number_input("UA de projeto [W/K] (assumido)", 500.0, 20000.0,
-                             defaults["ua_projeto"], 100.0)
         r_f = st.number_input("Fouling R_f equivalente (Eq. 10.5)", 0.0, 1e-3,
                               defaults["r_f_equiv"], 1e-5, format="%.5f")
-        eta_sep = st.slider("Eficiência do separador η_sep (Eq. 14.4)",
-                            0.80, 1.00, defaults["eta_sep"], 0.01)
-        purga_pct = st.slider("Purga do secador PSA [%] (:1971)", 5, 25,
-                              int(defaults["fator_purga"] * 100))
 
-    with st.expander("Vaso pulmão e rede"):
-        v_vaso = st.number_input("Volume do vaso [m³] (assumido)", 0.5, 20.0,
-                                 defaults["v_vaso"], 0.5)
+    with st.expander("Vaso pulmão e rede — demanda"):
         demanda = st.number_input("Demanda da rede [m³/min] (assumido)",
                                   0.0, 100.0, defaults["demanda_m3_min"], 0.5)
-        p_limite_bar = st.number_input("Pressão mínima da rede [bar abs]",
-                                       3.0, 8.0,
-                                       defaults["p_limite"] / 1e5, 0.1)
 
     with st.expander("Dinâmica temporal (aba 2)"):
         horizonte = st.slider("Horizonte de simulação [min]", 5, 60, 15)
         modo = st.selectbox("Modo de controle (Cap. 13)",
                             ["VSD", "Carga/Alívio"])
-        tau_vsd = st.slider(
-            "Constante de tempo de rampa do VSD τ [s] (assumido)",
-            1.0, 30.0, dinamica.TAU_VSD, 1.0)
-        dp_db_bar = st.slider("Banda carga/alívio ΔP_db [bar]", 0.1, 1.5,
-                              dinamica.DP_DB / 1e5, 0.1)
         evento = st.checkbox("Evento de pico de demanda", value=True)
         fator_ev = st.slider("Fator do pico (×demanda)", 1.2, 3.0, 2.0, 0.1)
 
-    with st.expander("Secagem PSA — ciclo de torres (aba 3)"):
-        topologia_psa = st.radio(
-            "Topologia do secador PSA",
-            ["N vasos por compressor", "N vasos para o sistema"],
-            help="Por compressor: cada uma das unidades em paralelo tem seu "
-                 "próprio secador dedicado (rodízio idêntico em cada uma). "
-                 "Para o sistema: um único banco de N torres compartilhado, "
-                 "dimensionado para a vazão total da planta.")
-        n_vasos_psa = st.number_input(
-            "Torres em rodízio N (assumido — mínimo do princípio PSA)",
-            2, 6, 2, 1)
-        t_ads_psa = st.slider(
-            "Duração da adsorção por torre [min] (assumido)",
-            2.0, 20.0, 6.0, 0.5)
-        t_regen_psa = st.slider(
-            "Duração da regeneração por torre [min] (assumido)",
-            1.0, 15.0, 4.0, 0.5)
-        t_resfriamento_psa = st.slider(
-            "Resfriamento pós-regeneração [min] (assumido)",
-            0.0, 10.0, 2.0, 0.5,
-            help="Tempo em que a torre já regenerou mas ainda está quente "
-                 "demais para voltar a adsorver com eficiência — sem essa "
-                 "fase o rodízio simularia uma troca instantânea entre "
-                 "regeneração e adsorção que não existe fisicamente.")
-        k_ads_psa = st.slider(
-            "Constante de taxa de adsorção k_ads (Eq. 15.1, Fig. 15.2)",
-            0.3, 4.0, 1.5, 0.1)
-        t_res_psa = st.slider(
-            "Tempo de residência de projeto do leito [min] (assumido)",
-            1.0, 15.0, 4.0, 0.5)
+    with st.expander("Secagem PSA — leitura atual (aba 3)"):
         horizonte_psa = st.slider("Horizonte de simulação PSA [min]", 10, 120, 30)
         st.caption("Saúde do dessecante (Eq. 15.7) — valores medidos/simulados:")
         dp_real_psa_mbar = st.slider(
@@ -217,160 +418,6 @@ with st.sidebar:
         pdp_real_psa_c = st.slider(
             "PDP real [°C] (medido)", -45.0, 10.0,
             float(defaults["pdp_real_c"]), 1.0)
-
-    with st.expander("Gêmeo Digital — EKF (aba 4, Eqs. 21.2-21.8)"):
-        st.caption(
-            "Cenário: folga do estágio LP (δ/L) e fouling do intercooler "
-            "(R_f) evoluem de um valor inicial a um final ao longo do "
-            "horizonte — o EKF nunca vê esses valores, só as medições "
-            "ruidosas de ṁ_seco e T_HP,in, e tenta reconstruí-los.")
-        n_passos_ekf = st.slider("Horizonte do EKF [passos]", 20, 150, 60, 10)
-        folga_ini_ekf = st.number_input(
-            "δ/L verdadeira — início (assumido)", 0.0005, 0.02, 0.002, 0.0005,
-            format="%.4f")
-        folga_fim_ekf = st.number_input(
-            "δ/L verdadeira — fim (assumido)", 0.0005, 0.02, 0.009, 0.0005,
-            format="%.4f")
-        r_f_ini_ekf = st.number_input(
-            "R_f verdadeiro — início (assumido)", 0.0, 1e-3, 0.0, 1e-5,
-            format="%.5f")
-        r_f_fim_ekf = st.number_input(
-            "R_f verdadeiro — fim (assumido)", 0.0, 1e-3, 0.0, 1e-5,
-            format="%.5f")
-        sigma_m_dot_ekf = st.number_input(
-            "Ruído do sensor de vazão σ [kg/s] (assumido)",
-            1e-5, 5e-3, 1e-4, 1e-5, format="%.5f")
-        sigma_t_hp_ekf = st.number_input(
-            "Ruído do sensor de T_HP,in σ [°C] (assumido)",
-            0.01, 2.0, 0.05, 0.01)
-        q_folga_ekf = st.number_input(
-            "Ruído de processo Q — δ/L (assumido)",
-            1e-9, 1e-5, 1e-7, 1e-9, format="%.1e")
-        q_rf_ekf = st.number_input(
-            "Ruído de processo Q — R_f (assumido)",
-            1e-12, 1e-7, 1e-10, 1e-12, format="%.1e")
-
-    with st.expander("Gêmeo Digital — EKF com Estado Aumentado (aba 4, Cap. 28, Eqs. 28.1/28.2)"):
-        st.caption(
-            "Estado x_aug = [δ/L, R_f, K] — o coeficiente de vazamento K "
-            "(Eq. 9.3), fixo em todo o resto do app, passa a ser também "
-            "estimado. Cenário próprio (independente do EKF acima, mesmo "
-            "padrão de escopo isolado já usado no PSO/MPC): janela de "
-            "calibração com δ/L conhecida e constante, K partindo de uma "
-            "crença deliberadamente errada; depois, K \"congela\" (Q "
-            "pequeno) e δ/L volta a acompanhar deriva, como no EKF de 2 "
-            "estados.")
-        n_cal_aum = st.slider("Passos na janela de calibração", 15, 50, 30, 5)
-        n_op_aum = st.slider("Passos após a calibração", 15, 60, 40, 5)
-        folga_cal_aum = st.number_input(
-            "δ/L conhecida na janela de calibração (assumido)",
-            0.002, 0.02, 0.010, 0.001, format="%.4f",
-            help="O efeito de K na Eq. 9.3 escala com δ/L — folgas muito "
-                 "baixas (ex. 0,002, condição de máquina nova) tornam K "
-                 "quase inobservável frente ao ruído de medição típico; "
-                 "este valor mais alto dá um sinal mais forte para a "
-                 "calibração convergir.")
-        folga_fim_aum = st.number_input(
-            "δ/L verdadeira ao fim da operação (assumido)",
-            folga_cal_aum, 0.03, 0.018, 0.001, format="%.4f")
-        k_inicial_aum = st.number_input(
-            "Crença inicial de K (assumido, != K real do app)",
-            0.005, 0.15, 0.03, 0.005, format="%.3f",
-            help=f"K real usado no restante do app: {defaults['k_folga']:.3f} "
-                 "(Eq. 9.3) — mantido diferente aqui para que a convergência "
-                 "mostrada seja identificação de verdade.")
-        sigma_m_dot_aum = st.number_input(
-            "Ruído do sensor de vazão σ [kg/s] — janela de calibração (assumido)",
-            1e-6, 5e-4, 3e-5, 1e-6, format="%.1e",
-            help="Precisão de instrumentação de bancada/comissionamento, "
-                 "mais fina que o sensor de campo do EKF acima — o sinal de "
-                 "K na Eq. 9.3 é pequeno mesmo com δ/L elevada, e precisa "
-                 "de um ruído de medição proporcionalmente baixo para ser "
-                 "identificável em poucas dezenas de ciclos.")
-
-    with st.expander("Gêmeo Digital — PSO (aba 4, Eqs. 24.3/24.4)"):
-        st.caption(
-            "Otimiza a pressão de setpoint da rede (π) para minimizar o "
-            "SPC (Eq. 11.11), sujeito a manter a autonomia do vaso acima "
-            "de um mínimo requerido.")
-        autonomia_min_pso = st.slider(
-            "Autonomia mínima exigida [min] (restrição)", 0.0, 30.0, 1.0, 0.5,
-            help="Com os defaults de vaso/demanda, a autonomia real fica "
-                 "abaixo de ~1,5 min em toda a faixa de π pesquisada — uma "
-                 "restrição alta (ex. 5 min) é inatingível em qualquer "
-                 "ponto, e o PSO corretamente converge para a borda "
-                 "superior da busca (menor penalidade possível, não um "
-                 "mínimo interno) já na 1ª iteração, produzindo um "
-                 "gráfico de convergência sem variação visível. O default "
-                 "de 1 min já cruza a curva de autonomia dentro da faixa "
-                 "de π, dando um ótimo interno de verdade para observar.")
-        n_particulas_pso = st.slider("Número de partículas", 10, 60, 25, 5)
-        n_iter_pso = st.slider("Número de iterações", 10, 100, 40, 5)
-        w_ini_pso = st.slider("Peso de inércia inicial w_ini", 0.5, 1.0, 0.9, 0.05)
-        w_fim_pso = st.slider("Peso de inércia final w_fim", 0.1, 0.6, 0.4, 0.05)
-        c1_pso = st.slider("Coeficiente cognitivo c1", 0.5, 3.0, 2.0, 0.1)
-        c2_pso = st.slider("Coeficiente social c2", 0.5, 3.0, 2.0, 0.1)
-
-    with st.expander("Gêmeo Digital — VAE (aba 4, Eqs. 20.4, 22.1-22.7)"):
-        st.caption(
-            "Treinado sobre amostras sintéticas saudáveis (comissionamento, "
-            "δ/L entre 0,0018-0,0022) — não existe dado real de planta "
-            "neste projeto.")
-        n_amostras_vae = st.slider("Amostras de treino (assumido)", 200, 1000, 500, 50,
-                                   key="n_amostras_vae")
-        n_epocas_vae = st.slider("Épocas de treino", 100, 500, 300, 50, key="n_epocas_vae")
-        folga_cenario_vae = st.number_input(
-            "δ/L do cenário de teste (assumido)", 0.0005, 0.03, 0.015, 0.001,
-            format="%.4f",
-            help="Valor bem fora da faixa saudável de treino dispara a "
-                 "anomalia por padrão; reduza para ver o limite de detecção.")
-
-    with st.expander("Gêmeo Digital — PIML (aba 4, Eqs. 23.1-23.4)"):
-        st.caption(
-            "Substituto treinado para [T_LP,out, T_HP,in, ṁ_seco, "
-            "Q̇_intercooler] a partir de [π, T_amb, δ/L, R_f, FAD], com "
-            "resíduo físico do balanço de energia do intercooler "
-            "(Eq. 10.1) avaliado em pontos de colocação sem rótulo.")
-        n_amostras_piml = st.slider("Amostras de treino (assumido)", 200, 800, 400, 50,
-                                    key="n_amostras_piml")
-        n_epocas_piml = st.slider("Épocas de treino", 100, 500, 300, 50, key="n_epocas_piml")
-
-    with st.expander("Gêmeo Digital — PIML, Problema Inverso (aba 4, Cap. 23.8, Eq. 23.5)"):
-        st.caption(
-            "Em vez do balanço de energia do intercooler (Eq. 23.2), o "
-            "resíduo físico aqui é a Equação 9.3 (balanço mássico), com o "
-            "coeficiente de vazamento K tratado como incógnita Ξ — "
-            "otimizada junto aos pesos da rede, não fixa em `params_base` "
-            "como no restante do app.")
-        n_amostras_piml_inv = st.slider("Amostras de treino (assumido)", 200, 800, 400, 50,
-                                        key="n_amostras_piml_inv")
-        n_epocas_piml_inv = st.slider("Épocas de treino", 100, 500, 300, 50,
-                                      key="n_epocas_piml_inv")
-        xi_inicial_piml = st.number_input(
-            "Crença inicial de Ξ (assumido, != K real)",
-            0.005, 0.15, 0.02, 0.005, format="%.3f",
-            help=f"K real usado no restante do app: {defaults['k_folga']:.3f} "
-                 "(Eq. 9.3) — mantido diferente aqui para que a "
-                 "convergência mostrada seja identificação de verdade.")
-
-    with st.expander("Gêmeo Digital — MPC (aba 4, Eqs. 24.1/24.2)"):
-        st.caption(
-            "Compara o MPC (antecipa a demanda futura conhecida) contra o "
-            "controle reativo já usado na aba \"Dinâmica temporal\" "
-            "(só responde à demanda do instante atual).")
-        demanda_base_mpc = st.slider(
-            "Demanda base para o teste [m³/min] (assumido)", 1.0, 8.0, 5.0, 0.5,
-            help="Mantida deliberadamente com folga em relação à capacidade "
-                 "instalada — com demanda muito perto do limite, qualquer "
-                 "controlador (MPC ou reativo) satura igualmente, e a "
-                 "comparação deixa de mostrar diferença.")
-        fator_ev_mpc = st.slider("Fator do pico de demanda", 1.1, 2.0, 1.4, 0.1)
-        horizonte_mpc = st.slider("Horizonte de simulação [min]", 5, 20, 10, 1)
-        dt_mpc = st.slider("Passo de tempo Δt [s] (assumido)", 2.0, 10.0, 5.0, 1.0)
-        n_horizonte_mpc = st.slider("Horizonte de predição H [passos]", 6, 24, 12, 2)
-        rho_mpc = st.number_input(
-            "Peso do esforço de controle ρ (Eq. 24.1)", 0.0, 1.0, 0.05, 0.01,
-            format="%.2f")
 
 params = {
     **defaults,
@@ -414,10 +461,6 @@ pw = res["potencias"]
 
 for aviso in res["avisos"]:
     st.warning(aviso)
-
-tab_est, tab_din, tab_psa, tab_gd = st.tabs(
-    ["⚙️ Operação estática", "📈 Dinâmica temporal", "🌀 Secagem PSA",
-     "🧠 Gêmeo Digital (EKF/PSO)"])
 
 # ===========================================================================
 # Aba 1 — Operação estática
@@ -568,7 +611,7 @@ with tab_est:
         "reconstruir o circuito equivalente completo (Eqs. 4.4/4.5), sem "
         "parâmetros de placa neste app. Q̇_gerado (Eq. 2.1) soma as perdas "
         "do motor, do VSD+gearbox (não decompostas aqui — ver ASSUMIDO na "
-        "barra lateral) e da própria carcaça; T_hood (Eq. 2.4) fecha a "
+        "aba Configurações) e da própria carcaça; T_hood (Eq. 2.4) fecha a "
         "temperatura de regime do ar confinado a partir da vazão de "
         "ventilação forçada."
     )
@@ -579,7 +622,7 @@ with tab_est:
     h2.metric("T_referência (Eq. 9.16)",
              f"{k['t_ref_carcaca_c']:.1f} °C",
              help="T_hood se enclausurado (Eq. 2.4), T_amb se a céu aberto — "
-                  "ver caixa de seleção na barra lateral.")
+                  "ver caixa de seleção na aba Configurações.")
     h3.metric("T_carcaça (regime permanente)", f"{k['t_carcaca_c']:.1f} °C")
     h4.metric("Constante de tempo τ_c", f"{k['tau_carcaca_min']:.0f} min")
     st.caption(
@@ -922,7 +965,7 @@ with tab_gd:
         "Eq. 10.5). Medição z = [ṁ_seco, T_HP,in], com ruído gaussiano "
         "simulado. O filtro parte sempre de uma crença de comissionamento "
         "(δ/L=0,002, R_f=0 — \"como novo\"), independente dos valores "
-        "verdadeiros configurados na barra lateral, para que a convergência "
+        "verdadeiros configurados na aba Configurações, para que a convergência "
         "abaixo seja estimação de verdade, não o filtro \"sabendo\" a resposta."
     )
 
@@ -1079,7 +1122,7 @@ with tab_gd:
     st.caption(
         "Minimiza o SPC (Eq. 11.11) variando a pressão de setpoint da rede "
         "π, sujeito a manter a autonomia do vaso (Eq. 16.5) acima do "
-        "mínimo definido na barra lateral — restrição imposta por "
+        "mínimo definido na aba Configurações — restrição imposta por "
         "penalidade, já que o PSO básico não trata restrições nativamente."
     )
 
@@ -1367,6 +1410,101 @@ with tab_gd:
         "atual; o MPC otimiza a sequência de x_c ao longo do horizonte H "
         "com a demanda futura conhecida (Eq. 24.1) e por isso antecipa o "
         "evento em vez de correr atrás dele. Demanda base mantida com "
-        "folga (barra lateral) — perto da capacidade máxima, qualquer "
+        "folga (aba Configurações) — perto da capacidade máxima, qualquer "
         "controlador satura igualmente e a comparação perde sentido."
     )
+
+# ===========================================================================
+# Aba "Dados Medidos" — inventário de instrumentação real da planta
+# ===========================================================================
+with tab_dados:
+    st.subheader("Inventário de instrumentação medida")
+    st.caption(
+        "Envie a planilha de instrumentação da sua instalação — pontos "
+        "efetivamente medidos em campo — para comparar contra a matriz de "
+        "referência do livro (Tabela 18.1): mostra quais dos 9 pontos "
+        "padrão (A-I) já têm sensor físico nesta planta e quais dependem "
+        "de inferência por modelo (soft-sensor). Este upload é só "
+        "referência/documentação — não altera a simulação nas outras abas."
+    )
+
+    _REFERENCIA_TAB18_1 = [
+        {"Ponto": "A", "Localização": "MCC / Relé", "Variável": "Tensão de Linha", "Tag": "V_L", "Unidade": "V"},
+        {"Ponto": "A", "Localização": "MCC / Relé", "Variável": "Corrente de Fase", "Tag": "I", "Unidade": "A"},
+        {"Ponto": "A", "Localização": "MCC / Relé", "Variável": "Frequência", "Tag": "f", "Unidade": "Hz"},
+        {"Ponto": "A", "Localização": "MCC / Relé", "Variável": "Fator de Potência", "Tag": "cos φ", "Unidade": "-"},
+        {"Ponto": "B", "Localização": "Transmissão", "Variável": "Velocidade Angular", "Tag": "ω", "Unidade": "rad/s"},
+        {"Ponto": "B", "Localização": "Transmissão", "Variável": "Torque no Eixo", "Tag": "τ", "Unidade": "N·m"},
+        {"Ponto": "B", "Localização": "Transmissão", "Variável": "Vibração Global", "Tag": "v_rms", "Unidade": "mm/s"},
+        {"Ponto": "B", "Localização": "Transmissão", "Variável": "Tensão no Dente", "Tag": "σ_b", "Unidade": "MPa"},
+        {"Ponto": "C", "Localização": "Estágio LP", "Variável": "Pressão Sucção", "Tag": "P_s,lp", "Unidade": "bar"},
+        {"Ponto": "C", "Localização": "Estágio LP", "Variável": "Temp. Descarga", "Tag": "T_d,lp", "Unidade": "°C"},
+        {"Ponto": "C", "Localização": "Estágio LP", "Variável": "Folga Interna", "Tag": "δ_lp", "Unidade": "μm"},
+        {"Ponto": "D", "Localização": "Intercooler", "Variável": "Temp. Água In", "Tag": "T_w,in", "Unidade": "°C"},
+        {"Ponto": "D", "Localização": "Intercooler", "Variável": "Delta Pressão", "Tag": "ΔP_ic", "Unidade": "bar"},
+        {"Ponto": "D", "Localização": "Intercooler", "Variável": "Vazão Condensado", "Tag": "ṁ_c", "Unidade": "kg/h"},
+        {"Ponto": "E", "Localização": "Estágio HP", "Variável": "Pressão Descarga", "Tag": "P_d,hp", "Unidade": "bar"},
+        {"Ponto": "E", "Localização": "Estágio HP", "Variável": "Temp. Descarga", "Tag": "T_d,hp", "Unidade": "°C"},
+        {"Ponto": "E", "Localização": "Estágio HP", "Variável": "Folga Interna", "Tag": "δ_hp", "Unidade": "μm"},
+        {"Ponto": "E", "Localização": "Estágio HP", "Variável": "Posição Axial", "Tag": "δ_ax", "Unidade": "μm"},
+        {"Ponto": "F", "Localização": "Aftercooler", "Variável": "Temp. Saída", "Tag": "T_ac,out", "Unidade": "°C"},
+        {"Ponto": "G", "Localização": "Secador PSA", "Variável": "Ponto de Orvalho", "Tag": "T_dp", "Unidade": "°C"},
+        {"Ponto": "G", "Localização": "Secador PSA", "Variável": "Vazão de Purga", "Tag": "ṁ_p", "Unidade": "kg/s"},
+        {"Ponto": "H", "Localização": "Vaso Pulmão", "Variável": "Pressão Vaso", "Tag": "P_tk", "Unidade": "bar"},
+        {"Ponto": "H", "Localização": "Vaso Pulmão", "Variável": "Nível Condensado", "Tag": "L_tk", "Unidade": "%"},
+        {"Ponto": "I", "Localização": "Header", "Variável": "Vazão de Demanda", "Tag": "ṁ_tot", "Unidade": "kg/s"},
+        {"Ponto": "I", "Localização": "Header", "Variável": "Status Ramal", "Tag": "δ_i", "Unidade": "bin"},
+    ]
+
+    with st.expander("Matriz de referência do livro — Tabela 18.1 (9 pontos, A-I)"):
+        st.dataframe(_REFERENCIA_TAB18_1, width="stretch", hide_index=True)
+
+    arquivo_medidas = st.file_uploader(
+        "Planilha de instrumentação desta planta (.xlsx ou .csv)",
+        type=["xlsx", "csv"],
+        help="Colunas esperadas: Ponto, Localização, Variável, Tag, Unidade "
+             "(Função é opcional) — mesmo layout da Tabela 18.1 do livro.")
+
+    if arquivo_medidas is not None:
+        df_medidas = None
+        try:
+            if arquivo_medidas.name.lower().endswith(".csv"):
+                df_medidas = pd.read_csv(arquivo_medidas)
+            else:
+                df_medidas = pd.read_excel(arquivo_medidas)
+        except Exception as e:
+            st.error(f"Não foi possível ler o arquivo: {e}")
+
+        if df_medidas is not None:
+            st.subheader(f"{len(df_medidas)} variáveis carregadas")
+            st.dataframe(df_medidas, width="stretch", hide_index=True)
+
+            colunas_norm = {str(c).strip().lower(): c for c in df_medidas.columns}
+            col_ponto = colunas_norm.get("ponto")
+            if col_ponto is not None:
+                pontos_cobertos = {
+                    str(p).strip().upper() for p in df_medidas[col_ponto].dropna()}
+                pontos_ref = "ABCDEFGHI"
+                faltando = [p for p in pontos_ref if p not in pontos_cobertos]
+
+                cob1, cob2 = st.columns(2)
+                cob1.metric("Pontos cobertos",
+                           f"{len(set(pontos_ref) & pontos_cobertos)}/9")
+                cob2.metric("Pontos sem sensor nesta planilha", len(faltando))
+
+                if faltando:
+                    st.warning(
+                        "Sem cobertura nesta planilha: " + ", ".join(faltando) +
+                        " — o Gêmeo Digital depende de inferência por modelo "
+                        "(soft-sensor) nesses pontos, não de leitura direta "
+                        "(mesma lógica de lacunas de observabilidade da "
+                        "Tabela 18.1 do livro).")
+                else:
+                    st.success(
+                        "Todos os 9 pontos de referência (A-I) têm ao menos "
+                        "uma variável coberta nesta planilha.")
+            else:
+                st.info(
+                    "Coluna \"Ponto\" não encontrada — mostrando a planilha "
+                    "como enviada, sem comparação de cobertura contra a "
+                    "Tabela 18.1.")

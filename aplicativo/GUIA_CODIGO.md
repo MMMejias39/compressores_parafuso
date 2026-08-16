@@ -226,15 +226,28 @@ penalidade (PSO básico não trata restrições nativamente).
 
 ## `app.py` — interface Streamlit
 
-Ponto de entrada. Estrutura: `defaults = parametros_default()` primeiro,
-depois a barra lateral inteira (todos os `st.slider`/`st.number_input`,
-organizados em `st.expander`s por assunto — um por subsistema/algoritmo),
-depois `params = {...}` reunindo tudo num único dicionário passado a
-`sistema.simular()`, depois as 4 abas (`st.tabs`), cada uma num bloco
+Ponto de entrada. Estrutura, desde 16/08/2026 (reorganização em 6 abas —
+ver `CONTEXTO_app.md`): `defaults = parametros_default()` primeiro, depois
+`st.tabs([...])` já criado cedo (retorna 6 objetos de aba, incluindo
+`tab_config`), depois `with tab_config:` reunindo geometria de equipamento
+e hiperparâmetros de algoritmo (tudo que **não muda com frequência** — o
+oposto da barra lateral), depois `with st.sidebar:` só com as condições de
+operação do momento (ambiente, pressão de rede, demanda, estado
+medido/atual), depois `params = {...}` reunindo tudo num único dicionário
+passado a `sistema.simular()`, depois os corpos de
+`tab_est`/`tab_din`/`tab_psa`/`tab_gd`/`tab_dados`, cada um num bloco
 `with tab_x:` que executa a cada rerun do Streamlit independente de qual
 aba está visualmente selecionada (relevante para testar via `AppTest` — ver
-`MANUTENCAO.md`). Seções caras (treino de VAE/PIML) usam
-`@st.cache_resource` chaveado pelos parâmetros relevantes.
+`MANUTENCAO.md`). A ordem importa: `tab_config` precisa renderizar (e
+atribuir suas variáveis Python) **antes** de `params = {...}` ser montado,
+porque alimenta parte dele — mover um widget de volta para a barra lateral
+ou para uma aba não muda o escopo Python (o script inteiro roda top-a-
+baixo a cada rerun), só onde ele aparece na UI. `tab_dados` (upload de
+planilha de instrumentação) é só leitura/comparação contra a Tabela 18.1
+do livro — não escreve em `params`. Seções caras (treino de VAE/PIML)
+usam `@st.cache_resource` chaveado pelos parâmetros relevantes. Tema
+visual em `.streamlit/config.toml` (paleta igual à de
+`scripts/gen_figuras.py`).
 
 ## `tests/test_simulador.py`
 

@@ -1,0 +1,13 @@
+# Tema visual do app — paleta consistente com scripts/gen_figuras.py
+# (NAVY #1f3b57, BLUE #2b6cb0, já usadas em todos os gráficos matplotlib).
+
+[theme]
+base = "light"
+primaryColor = "#2b6cb0"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f4f8"
+textColor = "#1f3b57"
+font = "sans serif"
+
+[client]
+toolbarMode = "minimal"

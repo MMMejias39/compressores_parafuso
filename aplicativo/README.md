@@ -45,7 +45,7 @@ venv/bin/pytest tests/
 
 ```
 aplicativo/
-├── app.py                  # interface Streamlit (4 abas — ver GUIA_CODIGO.md)
+├── app.py                  # interface Streamlit (6 abas — ver GUIA_CODIGO.md)
 ├── compressor_sim/
 │   ├── constantes.py       # propriedades do ar e defaults (origem citada)
 │   ├── nucleo.py           # estágios de compressão, motor, hood, carcaça, psicrometria

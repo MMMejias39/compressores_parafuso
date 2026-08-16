@@ -85,8 +85,12 @@ cada um — resumo aqui):
 
 ## Dependências
 
-- `streamlit`, `numpy`, `matplotlib`, `pytest`, `scipy`, `torch`: todas
-  instaladas via `pip install -r requirements.txt`, sem cuidado especial.
+- `streamlit`, `numpy`, `matplotlib`, `pytest`, `scipy`, `torch`, `pandas`,
+  `openpyxl`: todas instaladas via `pip install -r requirements.txt`, sem
+  cuidado especial. `pandas`/`openpyxl` (16/08/2026) servem só a aba "Dados
+  Medidos" (`pd.read_csv`/`pd.read_excel` do upload de instrumentação) —
+  `openpyxl` é o *engine* que o pandas exige para ler `.xlsx`, não usado
+  diretamente no código.
   `torch` vem do índice padrão do PyPI (build com CUDA embutido, ~2GB a
   mais que um build CPU-only, mas funciona em máquinas com ou sem GPU
   NVIDIA sem precisar escolher índice manualmente) — **até 15/08/2026** o
@@ -127,7 +131,7 @@ Em ordem de preferência:
    assert not at.exception
    # inspecionar at.metric, at.subheader, etc. por valores plausíveis
    ```
-   Roda as 4 abas inteiras a cada execução (todo `with tab_x:` executa,
+   Roda as 6 abas inteiras a cada execução (todo `with tab_x:` executa,
    independente de qual aba estaria visualmente selecionada) — pega
    exceções de import, `KeyError` de `session_state` e colisão de `key=`
    entre widgets (já aconteceu uma vez, dois `st.slider` com o mesmo

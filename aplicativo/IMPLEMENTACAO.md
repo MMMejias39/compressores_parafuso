@@ -116,8 +116,9 @@ simulada.
    │  pso.py  │  (otimiza sobre `sistema.simular`, função de custo genérica)
    └─────────┘
 
-  Todos os módulos acima são consumidos por app.py (interface Streamlit,
-  4 abas: Operação estática / Dinâmica temporal / Secagem PSA / Gêmeo Digital)
+  Todos os módulos acima são consumidos por app.py (interface Streamlit, 6
+  abas: Operação estática / Dinâmica temporal / Secagem PSA / Gêmeo Digital
+  / Configurações / Dados Medidos)
 ```
 
 `sistema.py` é o único módulo que TODOS os outros (exceto `constantes.py`)
@@ -128,7 +129,7 @@ chamam `sistema.simular()` (ou, no caso do PIML, replicam uma fração mínima
 e explicitamente documentada da física em forma diferenciável, ver
 `GUIA_CODIGO.md` § `piml.py`).
 
-## As quatro abas da interface
+## As seis abas da interface
 
 1. **Operação estática** — um único ponto de operação, calculado por
    `sistema.simular()`: KPIs, tabela de estados nos 6 pontos do trem,
@@ -141,7 +142,19 @@ e explicitamente documentada da física em forma diferenciável, ver
    Capítulo 15.
 4. **Gêmeo Digital (EKF/PSO)** — os cinco algoritmos da Parte II mais os
    dois mecanismos de identificação por problema inverso, cada um em sua
-   própria seção, com cenário e parâmetros configuráveis na barra lateral.
+   própria seção, com cenário e parâmetros configuráveis na aba
+   Configurações.
+5. **Configurações** (16/08/2026) — geometria de equipamento e
+   hiperparâmetros de algoritmo que não mudam de uma sessão de análise
+   para a outra: tudo que antes vivia numa única barra lateral longa,
+   exceto as condições de operação do momento (essas continuam na barra
+   lateral, sempre visíveis). Ver `GUIA_CODIGO.md` § `app.py` para a
+   ordem de execução.
+6. **Dados Medidos** (16/08/2026) — upload de referência (.xlsx/.csv) com
+   a instrumentação real de uma planta, comparada contra a Tabela 18.1 do
+   livro (quais dos 9 pontos A-I têm sensor físico vs. dependem de
+   inferência por modelo). Só documentação — não altera `params` nem a
+   simulação das outras abas.
 
 ## Por que os algoritmos de IA têm escopo reduzido frente ao livro
 

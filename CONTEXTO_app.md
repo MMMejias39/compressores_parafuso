@@ -956,6 +956,75 @@ lerem o `CONTEXTO.md` principal não vão saber que este arquivo existe;
 confira sempre se `aplicativo/` foi tocado antes de assumir que não há
 contexto para ele.
 
+## Reorganização visual: 6 abas, tema profissional, upload de instrumentação (16/08/2026)
+
+Pedido do autor: "melhorar a aparência do aplicativo, com uma visão mais
+profissional e abas superiores ou laterais com ícones ou abreviaturas e
+uma aba configurações para definição de diversos parâmetros que não devem
+mudar frequentemente. Também preciso de uma área para incluir um arquivo
+excel ou csv com as variáveis disponíveis medidas e o layout e locais onde
+ficam as variáveis." Duas perguntas de escopo resolvidas antes de
+implementar (via pergunta direta ao autor): abas continuam no topo (não
+lateral — a barra lateral já é usada para parâmetros, virar navegação
+colidiria); o upload de instrumentação é só referência/documentação
+(não alimenta a simulação) e espelha as colunas da Tabela 18.1 do livro.
+
+**Mudanças em `app.py`** (reorganização grande, ~1470 linhas):
+- `st.tabs([...])` passou a ser criado **antes** de `params = {...}` (não
+  depois, como era) — necessário porque a nova aba "Configurações" precisa
+  renderizar e atribuir suas variáveis Python antes de `params` ser
+  montado. Os corpos de `tab_est`/`tab_din`/`tab_psa`/`tab_gd` continuam
+  onde estavam, só a criação dos objetos de aba subiu. Ver `GUIA_CODIGO.md`
+  § `app.py` para a ordem completa.
+- Nova aba **🎛️ Configurações**: todo parâmetro de geometria de
+  equipamento (massa térmica da carcaça, tubulação, motor/Hood, PSA
+  topologia/sintonia) e todo hiperparâmetro de algoritmo (épocas, amostras,
+  σ de ruído, Q de processo, enxame do PSO) — a maior parte do que antes
+  vivia numa única barra lateral de ~90 controles. Organizada em 2 colunas
+  de `st.expander`s.
+- Barra lateral **reduzida a 6 expanders**: Ambiente, Compressor (só π e
+  δ/L — ponto de operação), Resfriamento/secagem (só T_água e R_f —
+  estado medido/atual), Vaso pulmão/rede (só demanda), Dinâmica temporal
+  (só horizonte/modo/evento/fator), Secagem PSA (só horizonte + ΔP/PDP
+  reais medidos). Critério de corte: fica na barra lateral o que descreve
+  a *condição do momento*; vai para Configurações o que descreve *esta
+  máquina* ou *este experimento*.
+- Nova aba **📂 Dados Medidos**: `st.file_uploader` (.xlsx/.csv) +
+  `pd.read_csv`/`pd.read_excel`, comparado contra uma tabela de referência
+  embutida (cópia literal da Tabela 18.1 do livro, 24 linhas, 9 pontos
+  A-I — conferida via `Read` direto do `compressores.tex` antes de
+  transcrever, não de memória). Calcula cobertura (quantos dos 9 pontos
+  aparecem na coluna "Ponto" do arquivo enviado) e lista os que faltam.
+  Testado ao vivo via Claude-in-Chrome com um CSV de 4 linhas (pontos A,
+  B, C, H) — reportou corretamente "4/9" cobertos e "D, E, F, G, I"
+  faltando.
+- **7 captions com referência stale a "barra lateral"** corrigidas para
+  apontar à aba Configurações, depois que os widgets correspondentes
+  foram movidos (`grep -n "barra lateral" app.py` antes e depois da
+  mudança, um por um) — inclui os captions do motor/Hood, carcaça, EKF,
+  PSO, e MPC. Um caso (`_FAIXAS_PIML_APP`, faixa de δ/L de treino do PIML
+  inverso) **não** foi corrigido por não ser widget nenhum, sempre foi uma
+  constante hardcoded — texto já estava impreciso antes desta sessão,
+  fora do escopo desta mudança.
+- `.streamlit/config.toml` novo: tema com a mesma paleta de
+  `scripts/gen_figuras.py` (NAVY `#1f3b57`, BLUE `#2b6cb0`) e
+  `toolbarMode = "minimal"` (esconde o menu de deploy do Streamlit).
+- `pandas`/`openpyxl` adicionados a `requirements.txt` (pandas já vinha
+  como dependência transitiva do Streamlit, mas não estava declarado
+  explicitamente; openpyxl não estava instalado — sem ele, `pd.read_excel`
+  falha em arquivos `.xlsx`).
+
+**Verificação**: `venv/bin/pytest tests/ -q` — 71/71 (módulos de cálculo
+não foram tocados, só `app.py`). `streamlit.testing.v1.AppTest` — 6 abas
+detectadas, sem exceção. Servidor reiniciado e testado ao vivo via
+Claude-in-Chrome: tema visual aplicado, aba Configurações com os
+expanders corretos, upload de CSV funcionando fim a fim (ver acima).
+
+**Documentação atualizada**: `GUIA_CODIGO.md` (§ `app.py`, ordem de
+execução), `IMPLEMENTACAO.md` ("As seis abas da interface"), `README.md`
+(árvore de arquivos), `MANUTENCAO.md` (contagem de abas no AppTest,
+dependências novas).
+
 ## Pendências conhecidas
 
 1. O app cobre os Capítulos 5, 9, 10, 11, 12, 13, 14, 15, 16 do livro
