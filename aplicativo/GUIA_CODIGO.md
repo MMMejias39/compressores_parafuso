@@ -140,6 +140,17 @@ Duas gerações de funções, lado a lado:
   quase nulo (tratados como conhecidos) para que K convirja; depois, K
   "congela" (`Q` pequeno) e δ/L volta a acompanhar deriva livre.
 
+## `compressor_sim/torch_device.py`
+
+Módulo minúsculo, uma função só: `obter_device()` devolve `cuda` se uma GPU
+NVIDIA estiver disponível (`torch.cuda.is_available()`), senão `cpu` —
+resultado cacheado. `vae.py` e `piml.py` chamam essa função em vez de cada
+um decidir por conta própria, e movem modelo + todo tensor do laço de
+treino para o device retornado (`.to(device)`/`device=device`). Não exige
+nenhuma configuração manual: `requirements.txt` instala o build padrão do
+PyTorch (já com suporte a CUDA embutido), e este módulo decide em tempo de
+execução se ele é de fato usado.
+
 ## `compressor_sim/vae.py` — Autoencoder Variacional
 
 `extrair_features()` reduz o resultado de `sistema.simular()` a 12
@@ -151,7 +162,8 @@ fixo). `gerar_dataset_saudavel()` sintetiza amostras em torno da condição
 de comissionamento com ruído de sensor simulado — não há dado de planta
 real. A classe `VAE` implementa o gargalo probabilístico (reparametrização,
 Eq. 22.1); `treinar()` otimiza o ELBO invertido (erro de reconstrução +
-β·KL, Eq. 22.3); `erro_reconstrucao()` é o sensor virtual de anomalia (Eq.
+β·KL, Eq. 22.3) e roda em GPU quando disponível (ver `torch_device.py`
+acima); `erro_reconstrucao()` é o sensor virtual de anomalia (Eq.
 20.4/22.5); `calibrar_limiar()` fixa o gatilho estatisticamente (média + 3σ
 sobre validação saudável, Eq. 22.6) — nunca um valor escolhido à mão.
 
@@ -181,7 +193,11 @@ Ambas as funções normalizam o resíduo físico pela própria escala da saída
 (`escala_residuo`) antes de elevar ao quadrado — sem isso, o primeiro passo
 de treino satura as unidades `tanh` da rede de forma irrecuperável (o
 resíduo em unidades reais é ordens de grandeza maior que o erro de dados já
-padronizado).
+padronizado). Ambas também rodam em GPU quando disponível (`torch_device.py`
+acima) — `_residuo_inverso()` recebe o `device` explicitamente, propagado
+pelos dois pontos onde `treinar_com_identificacao()` a chama, para que os
+tensores que ela cria internamente (a partir de arrays NumPy) fiquem no
+mesmo device do resto do grafo.
 
 ## `compressor_sim/mpc.py` — Controle Preditivo
 

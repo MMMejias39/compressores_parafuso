@@ -85,17 +85,25 @@ cada um — resumo aqui):
 
 ## Dependências
 
-- `streamlit`, `numpy`, `matplotlib`, `pytest`, `scipy`: instaladas via
-  `pip install -r requirements.txt`, sem cuidado especial.
-- `torch`: **fora** de `requirements.txt` de propósito — o índice padrão
-  do PyPI publica a build com CUDA (vários GB desnecessários para este
-  app). Instalar à parte, uma vez:
-  ```bash
-  pip install torch --index-url https://download.pytorch.org/whl/cpu
-  ```
-  Se `requirements.txt` for regenerado por alguma ferramenta automática
-  (`pip freeze`, etc.), **não** deixar `torch` entrar na lista automática —
-  restaurar o comentário explicando o índice CPU dedicado.
+- `streamlit`, `numpy`, `matplotlib`, `pytest`, `scipy`, `torch`: todas
+  instaladas via `pip install -r requirements.txt`, sem cuidado especial.
+  `torch` vem do índice padrão do PyPI (build com CUDA embutido, ~2GB a
+  mais que um build CPU-only, mas funciona em máquinas com ou sem GPU
+  NVIDIA sem precisar escolher índice manualmente) — **até 15/08/2026** o
+  projeto usava deliberadamente um build CPU-only à parte (índice dedicado,
+  `pip install torch --index-url .../cpu`), decisão revertida em
+  16/08/2026 a pedido do autor para aproveitar a GPU quando disponível (ver
+  `../CONTEXTO_app.md`, "Uso de GPU (CUDA) quando disponível"). Se algum
+  dia for preciso voltar ao build CPU-only (ex.: ambiente de CI sem GPU e
+  sensível a tamanho de imagem), o índice dedicado continua a forma
+  correta de instalar — não é preciso reintroduzir isso no
+  `requirements.txt` a menos que vire a prática padrão de novo.
+- **Qualquer módulo novo que use PyTorch deve chamar
+  `torch_device.obter_device()`** para escolher o device, em vez de deixar
+  tensores no default implícito — ver `vae.py`/`piml.py` para o padrão
+  (modelo e todo tensor do laço de treino movidos para `device`; saída de
+  volta para NumPy sempre via `.cpu().numpy()`, nunca `.numpy()` direto,
+  que falha se o tensor estiver em GPU).
 - Ao atualizar qualquer dependência, rodar a suíte de testes completa
   depois — `numpy`/`torch` têm histórico de mudanças de API que quebram
   código numérico silenciosamente (sem erro, resultado diferente).

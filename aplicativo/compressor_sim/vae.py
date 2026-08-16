@@ -22,6 +22,7 @@ import torch
 from torch import nn
 
 from . import sistema
+from .torch_device import obter_device
 
 NOMES_FEATURES = [
     "t_admissao", "m_dot_seco", "t_desc_lp", "t_ent_hp", "t_desc_hp",
@@ -120,13 +121,14 @@ def treinar(dataset: np.ndarray, dim_latente: int = 3, dim_oculta: int = 32,
     devolve o modelo treinado junto com os parâmetros de padronização.
     """
     torch.manual_seed(seed)
+    device = obter_device()
     media = dataset.mean(axis=0)
     desvio = dataset.std(axis=0) + 1e-8
     x_norm = (dataset - media) / desvio
-    x_tensor = torch.tensor(x_norm, dtype=torch.float32)
+    x_tensor = torch.tensor(x_norm, dtype=torch.float32, device=device)
 
     modelo = VAE(dim_entrada=dataset.shape[1], dim_latente=dim_latente,
-                dim_oculta=dim_oculta)
+                dim_oculta=dim_oculta).to(device)
     otimizador = torch.optim.Adam(modelo.parameters(), lr=lr)
 
     historico_loss = np.zeros(n_epocas)
@@ -143,7 +145,7 @@ def treinar(dataset: np.ndarray, dim_latente: int = 3, dim_oculta: int = 32,
     modelo.eval()
     return {
         "modelo": modelo, "media": media, "desvio": desvio,
-        "historico_loss": historico_loss,
+        "historico_loss": historico_loss, "device": device,
     }
 
 
@@ -153,14 +155,15 @@ def erro_reconstrucao(modelo_info: dict, amostras: np.ndarray) -> np.ndarray:
     """
     modelo = modelo_info["modelo"]
     media, desvio = modelo_info["media"], modelo_info["desvio"]
+    device = modelo_info.get("device", obter_device())
     x_norm = (amostras - media) / desvio
-    x_tensor = torch.tensor(x_norm, dtype=torch.float32)
+    x_tensor = torch.tensor(x_norm, dtype=torch.float32, device=device)
     modelo.eval()
     with torch.no_grad():
         x_hat, _, _ = modelo(x_tensor)
         erro2 = (x_tensor - x_hat) ** 2  # já normalizado por desvio-padrão (Eq. 20.4)
         e_rec = erro2.sum(dim=1)
-    return e_rec.numpy()
+    return e_rec.cpu().numpy()
 
 
 def calibrar_limiar(modelo_info: dict, dataset_validacao: np.ndarray,

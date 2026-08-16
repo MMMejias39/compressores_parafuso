@@ -4,8 +4,12 @@ matplotlib>=3.9
 pytest>=8.0
 scipy>=1.16
 
-# torch (VAE/PIML, Caps. 22/23) fica de fora deste arquivo de propósito: o
-# índice padrão do PyPI publica a build com CUDA (vários GB); a build CPU,
-# muito menor e suficiente para este app, exige o índice dedicado. Instale
-# à parte, uma vez, antes de rodar o app:
-#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+# torch (VAE/PIML, Caps. 22/23): build padrão do índice oficial do PyPI, com
+# suporte a CUDA embutido — funciona tanto em máquinas com GPU NVIDIA quanto
+# sem (a parte CUDA simplesmente fica sem uso). O download é maior que o
+# build CPU-only usado até 15/08/2026 (alguns GB a mais, por causa das
+# dependências nvidia-cuda-*), mas dispensa escolher manualmente entre
+# índices — e o próprio código (`compressor_sim/torch_device.py`) decide em
+# tempo de execução se usa GPU ou CPU (`torch.cuda.is_available()`), então
+# não há nenhuma configuração extra a fazer depois de instalar.
+torch>=2.4

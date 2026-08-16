@@ -27,6 +27,7 @@ from torch import nn
 
 from .constantes import CP_AR, R_AR
 from . import sistema
+from .torch_device import obter_device
 
 NOMES_ENTRADA = ["pi_total", "t_amb_c", "folga_rel", "r_f_equiv", "fad_m3_min"]
 NOMES_SAIDA = ["t_lp_out_c", "t_hp_in_c", "m_dot_seco", "q_intercooler_w"]
@@ -109,15 +110,18 @@ def treinar(entradas: np.ndarray, saidas: np.ndarray, faixas_colocacao: dict,
     métrica de aceitação.
     """
     torch.manual_seed(seed)
+    device = obter_device()
     rng = np.random.default_rng(seed + 1)
 
     media_x, desvio_x = entradas.mean(axis=0), entradas.std(axis=0) + 1e-8
     media_y, desvio_y = saidas.mean(axis=0), saidas.std(axis=0) + 1e-8
     escala_residuo = float(desvio_y[NOMES_SAIDA.index("q_intercooler_w")])
-    x_norm = torch.tensor((entradas - media_x) / desvio_x, dtype=torch.float32)
-    y_norm = torch.tensor((saidas - media_y) / desvio_y, dtype=torch.float32)
+    x_norm = torch.tensor((entradas - media_x) / desvio_x, dtype=torch.float32, device=device)
+    y_norm = torch.tensor((saidas - media_y) / desvio_y, dtype=torch.float32, device=device)
+    desvio_y_t = torch.tensor(desvio_y, dtype=torch.float32, device=device)
+    media_y_t = torch.tensor(media_y, dtype=torch.float32, device=device)
 
-    modelo = SubstitutoPIML()
+    modelo = SubstitutoPIML().to(device)
     otimizador = torch.optim.Adam(modelo.parameters(), lr=lr)
     params_treinaveis = list(modelo.parameters())
 
@@ -130,13 +134,12 @@ def treinar(entradas: np.ndarray, saidas: np.ndarray, faixas_colocacao: dict,
         perda_dados = torch.mean((pred_dados - y_norm) ** 2)  # L_data
 
         entradas_coloc = _amostrar_entradas(n_colocacao, faixas_colocacao, rng)
-        x_coloc = torch.tensor((entradas_coloc - media_x) / desvio_x, dtype=torch.float32)
+        x_coloc = torch.tensor((entradas_coloc - media_x) / desvio_x, dtype=torch.float32, device=device)
         pred_coloc_norm = modelo(x_coloc)
         # desfaz a padronização das SAÍDAS para avaliar o resíduo físico em
         # unidades reais (K, kg/s, W) — a padronização por si só violaria
         # a Eq. 10.1, que soma grandezas com unidades físicas concretas
-        pred_coloc = pred_coloc_norm * torch.tensor(desvio_y, dtype=torch.float32) \
-            + torch.tensor(media_y, dtype=torch.float32)
+        pred_coloc = pred_coloc_norm * desvio_y_t + media_y_t
         residuo = _residuo_fisico(pred_coloc) / escala_residuo
         perda_fisica = torch.mean(residuo ** 2)  # L_physics
 
@@ -154,9 +157,8 @@ def treinar(entradas: np.ndarray, saidas: np.ndarray, faixas_colocacao: dict,
             mag_dados = np.mean([g.abs().mean().item() for g in grad_dados if g is not None])
 
             entradas_coloc2 = _amostrar_entradas(n_colocacao, faixas_colocacao, rng)
-            x_coloc2 = torch.tensor((entradas_coloc2 - media_x) / desvio_x, dtype=torch.float32)
-            pred_coloc2 = modelo(x_coloc2) * torch.tensor(desvio_y, dtype=torch.float32) \
-                + torch.tensor(media_y, dtype=torch.float32)
+            x_coloc2 = torch.tensor((entradas_coloc2 - media_x) / desvio_x, dtype=torch.float32, device=device)
+            pred_coloc2 = modelo(x_coloc2) * desvio_y_t + media_y_t
             perda_fisica2 = torch.mean((_residuo_fisico(pred_coloc2) / escala_residuo) ** 2)
             grad_fisica = torch.autograd.grad(perda_fisica2, params_treinaveis,
                                               retain_graph=False, allow_unused=True)
@@ -174,17 +176,19 @@ def treinar(entradas: np.ndarray, saidas: np.ndarray, faixas_colocacao: dict,
         "modelo": modelo, "media_x": media_x, "desvio_x": desvio_x,
         "media_y": media_y, "desvio_y": desvio_y,
         "hist_data": hist_data, "hist_fisica": hist_fisica, "hist_lambda": hist_lambda,
+        "device": device,
     }
 
 
 def prever(modelo_info: dict, entradas: np.ndarray) -> np.ndarray:
     """Avalia o substituto treinado sobre novas entradas, em unidades reais."""
     modelo = modelo_info["modelo"]
+    device = modelo_info.get("device", obter_device())
     x_norm = (entradas - modelo_info["media_x"]) / modelo_info["desvio_x"]
-    x_tensor = torch.tensor(x_norm, dtype=torch.float32)
+    x_tensor = torch.tensor(x_norm, dtype=torch.float32, device=device)
     modelo.eval()
     with torch.no_grad():
-        y_norm = modelo(x_tensor).numpy()
+        y_norm = modelo(x_tensor).cpu().numpy()
     return y_norm * modelo_info["desvio_y"] + modelo_info["media_y"]
 
 
@@ -201,7 +205,8 @@ def residuo_fisico_real(modelo_info: dict, entradas: np.ndarray) -> np.ndarray:
 
 
 def _residuo_inverso(pred_coloc: torch.Tensor, entradas_coloc: np.ndarray,
-                     xi: torch.Tensor, params_base: dict) -> torch.Tensor:
+                     xi: torch.Tensor, params_base: dict,
+                     device: torch.device | None = None) -> torch.Tensor:
     """F(ŷ; Ξ) = ṁ_seco_pred − ṁ_seco,eq93(Ξ) — Eq. 23.5 (Seção 23.8), forma
     do problema inverso sobre a Equação 9.3: em vez de K fixo em
     `params_base` (como em `_rotular`, que gerou os dados rotulados), ele é
@@ -218,15 +223,16 @@ def _residuo_inverso(pred_coloc: torch.Tensor, entradas_coloc: np.ndarray,
     compensar incorretamente, dominando o termo real de Ξ na Eq. 9.3 (cujo
     efeito, em folgas típicas, é da ordem de décimos de %).
     """
-    pi_total = torch.tensor(entradas_coloc[:, NOMES_ENTRADA.index("pi_total")], dtype=torch.float32)
+    device = device if device is not None else pred_coloc.device
+    pi_total = torch.tensor(entradas_coloc[:, NOMES_ENTRADA.index("pi_total")], dtype=torch.float32, device=device)
     t_amb_c = entradas_coloc[:, NOMES_ENTRADA.index("t_amb_c")]
-    t_amb_k = torch.tensor(t_amb_c, dtype=torch.float32) + 273.15
-    folga_rel = torch.tensor(entradas_coloc[:, NOMES_ENTRADA.index("folga_rel")], dtype=torch.float32)
-    fad = torch.tensor(entradas_coloc[:, NOMES_ENTRADA.index("fad_m3_min")], dtype=torch.float32)
+    t_amb_k = torch.tensor(t_amb_c, dtype=torch.float32, device=device) + 273.15
+    folga_rel = torch.tensor(entradas_coloc[:, NOMES_ENTRADA.index("folga_rel")], dtype=torch.float32, device=device)
+    fad = torch.tensor(entradas_coloc[:, NOMES_ENTRADA.index("fad_m3_min")], dtype=torch.float32, device=device)
 
     w_amb = np.array([sistema.nucleo.razao_umidade(t_c + 273.15, params_base["p_amb"], params_base["ur_amb"])
                       for t_c in t_amb_c])
-    w_amb_t = torch.tensor(w_amb, dtype=torch.float32)
+    w_amb_t = torch.tensor(w_amb, dtype=torch.float32, device=device)
 
     rho_amb = params_base["p_amb"] / (R_AR * t_amb_k)
     v_dot_fad = fad / 60.0
@@ -260,16 +266,19 @@ def treinar_com_identificacao(entradas: np.ndarray, saidas: np.ndarray, faixas_c
     verdade, mesmo espírito do EKF em `simular_ekf`/`simular_ekf_aumentado`.
     """
     torch.manual_seed(seed)
+    device = obter_device()
     rng = np.random.default_rng(seed + 1)
 
     media_x, desvio_x = entradas.mean(axis=0), entradas.std(axis=0) + 1e-8
     media_y, desvio_y = saidas.mean(axis=0), saidas.std(axis=0) + 1e-8
     escala_residuo = float(desvio_y[NOMES_SAIDA.index("m_dot_seco")])
-    x_norm = torch.tensor((entradas - media_x) / desvio_x, dtype=torch.float32)
-    y_norm = torch.tensor((saidas - media_y) / desvio_y, dtype=torch.float32)
+    x_norm = torch.tensor((entradas - media_x) / desvio_x, dtype=torch.float32, device=device)
+    y_norm = torch.tensor((saidas - media_y) / desvio_y, dtype=torch.float32, device=device)
+    desvio_y_t = torch.tensor(desvio_y, dtype=torch.float32, device=device)
+    media_y_t = torch.tensor(media_y, dtype=torch.float32, device=device)
 
-    modelo = SubstitutoPIML()
-    xi = torch.nn.Parameter(torch.tensor(float(xi_inicial), dtype=torch.float32))
+    modelo = SubstitutoPIML().to(device)
+    xi = torch.nn.Parameter(torch.tensor(float(xi_inicial), dtype=torch.float32, device=device))
     otimizador = torch.optim.Adam(list(modelo.parameters()) + [xi], lr=lr)
     params_treinaveis = list(modelo.parameters())  # balanceamento de λ só sobre pesos da rede
 
@@ -282,11 +291,10 @@ def treinar_com_identificacao(entradas: np.ndarray, saidas: np.ndarray, faixas_c
         perda_dados = torch.mean((pred_dados - y_norm) ** 2)  # L_data
 
         entradas_coloc = _amostrar_entradas(n_colocacao, faixas_colocacao, rng)
-        x_coloc = torch.tensor((entradas_coloc - media_x) / desvio_x, dtype=torch.float32)
+        x_coloc = torch.tensor((entradas_coloc - media_x) / desvio_x, dtype=torch.float32, device=device)
         pred_coloc_norm = modelo(x_coloc)
-        pred_coloc = pred_coloc_norm * torch.tensor(desvio_y, dtype=torch.float32) \
-            + torch.tensor(media_y, dtype=torch.float32)
-        residuo = _residuo_inverso(pred_coloc, entradas_coloc, xi, params_base) / escala_residuo
+        pred_coloc = pred_coloc_norm * desvio_y_t + media_y_t
+        residuo = _residuo_inverso(pred_coloc, entradas_coloc, xi, params_base, device) / escala_residuo
         perda_fisica = torch.mean(residuo ** 2)  # L_physics(θ, Ξ) — Eq. 23.5
 
         perda_total = perda_dados + lam * perda_fisica
@@ -302,10 +310,9 @@ def treinar_com_identificacao(entradas: np.ndarray, saidas: np.ndarray, faixas_c
             mag_dados = np.mean([g.abs().mean().item() for g in grad_dados if g is not None])
 
             entradas_coloc2 = _amostrar_entradas(n_colocacao, faixas_colocacao, rng)
-            x_coloc2 = torch.tensor((entradas_coloc2 - media_x) / desvio_x, dtype=torch.float32)
-            pred_coloc2 = modelo(x_coloc2) * torch.tensor(desvio_y, dtype=torch.float32) \
-                + torch.tensor(media_y, dtype=torch.float32)
-            residuo2 = _residuo_inverso(pred_coloc2, entradas_coloc2, xi, params_base) / escala_residuo
+            x_coloc2 = torch.tensor((entradas_coloc2 - media_x) / desvio_x, dtype=torch.float32, device=device)
+            pred_coloc2 = modelo(x_coloc2) * desvio_y_t + media_y_t
+            residuo2 = _residuo_inverso(pred_coloc2, entradas_coloc2, xi, params_base, device) / escala_residuo
             perda_fisica2 = torch.mean(residuo2 ** 2)
             grad_fisica = torch.autograd.grad(perda_fisica2, params_treinaveis,
                                               retain_graph=False, allow_unused=True)
@@ -324,7 +331,7 @@ def treinar_com_identificacao(entradas: np.ndarray, saidas: np.ndarray, faixas_c
         "modelo": modelo, "media_x": media_x, "desvio_x": desvio_x,
         "media_y": media_y, "desvio_y": desvio_y,
         "hist_data": hist_data, "hist_fisica": hist_fisica, "hist_lambda": hist_lambda,
-        "hist_xi": hist_xi, "xi_estimado": float(xi.item()),
+        "hist_xi": hist_xi, "xi_estimado": float(xi.item()), "device": device,
     }
 
 

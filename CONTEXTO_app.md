@@ -855,6 +855,66 @@ anteriores) mas os gráficos de convergência de K (EKF aumentado, ~0,054) e
 de Ξ (PIML, ~0,047) renderizaram corretamente, ambos perto do K real
 (0,05). Servidor encerrado ao final.
 
+## Uso de GPU (CUDA) quando disponível (16/08/2026)
+
+O autor notou, testando ao vivo, que o app roda mas a GPU (RTX 4070 Laptop,
+visível via `nvidia-smi`) não é usada, e pediu para ajustar o
+`requirements.txt` para "optar pelo melhor build de acordo com a
+configuração do computador" e remover a restrição CPU-only.
+
+**`compressor_sim/torch_device.py` (novo módulo)**: um único ponto de
+decisão, `obter_device()`, que devolve `torch.device("cuda")` se
+`torch.cuda.is_available()`, senão `"cpu"` — resultado cacheado (consultar
+o driver não é gratuito). Reaproveitado por `vae.py` e `piml.py`, em vez de
+cada um decidir por conta própria.
+
+**`vae.py`/`piml.py`**: todo `torch.tensor(...)` que entra no laço de
+treino ganhou `device=device`; os dois modelos (`VAE`, `SubstitutoPIML`) e
+o parâmetro treinável `xi` (problema inverso, Eq. 23.5) são criados/movidos
+para `device` antes do otimizador; toda leitura de volta para NumPy
+(`prever()`, `erro_reconstrucao()`) passou a usar `.cpu().numpy()` em vez
+de `.numpy()` — necessário porque um tensor em GPU não converte direto
+para NumPy. `_residuo_inverso()` (problema inverso do PIML) ganhou um
+parâmetro `device` explícito, propagado dos dois pontos onde é chamada
+dentro de `treinar_com_identificacao()`; sem isso, os tensores que a
+função cria internamente (a partir de `entradas_coloc`, um array NumPy)
+ficariam na CPU enquanto o resto do grafo está na GPU, e o PyTorch levanta
+`RuntimeError` por tensores em devices diferentes na mesma operação — essa
+foi a única armadilha real desta mudança, pega e corrigida antes de rodar
+o treino completo.
+
+**`requirements.txt`**: a restrição CPU-only removida — `torch` volta a
+ser instalado do índice padrão do PyPI (build com CUDA embutido,
+funciona em máquinas com ou sem GPU NVIDIA; a parte CUDA só fica sem uso
+se não houver GPU). Comentário atualizado explicando a troca.
+
+**Instalação de fato refeita nesta sessão** (não só o `requirements.txt`
+editado): `pip uninstall torch` seguido de `pip install "torch>=2.4"` no
+venv do autor — build CPU (`2.13.0+cpu`) trocado por build CUDA
+(`2.13.0+cu130`), download de ~2GB de pacotes `nvidia-*`/`cuda-*`
+adicionais. `torch.cuda.is_available()` confirmado `True`, GPU identificada
+corretamente como "NVIDIA GeForce RTX 4070 Laptop GPU".
+
+**Verificação em três camadas**: (1) `pytest` — 71/71 continuam passando
+sem nenhuma mudança de tolerância; (2) checagem direta de que os modelos
+treinados ficam de fato em `cuda:0` (`next(modelo.parameters()).device`),
+não só que `torch.cuda.is_available()` retorna `True`; (3) `nvidia-smi`
+amostrado durante um treino real (2000 amostras, 1500 épocas) — utilização
+de GPU saiu de 0% para 10% e memória alocada subiu de 296 para 354 MiB,
+confirmando atividade real na GPU, não só detecção. `AppTest` confirmado
+sem exceções depois da reinstalação do torch.
+
+**Achado honesto, registrado para não gerar expectativa errada**: para o
+tamanho atual de rede (5→48→48→4 no PIML, 12→32→32→~12 no VAE) e dataset
+(centenas a poucos milhares de amostras), o ganho de velocidade da GPU é
+modesto — 10% de utilização não é uma carga que satura o hardware. A GPU
+está genuinamente em uso agora, mas o benefício prático maior viria se o
+escopo crescer (redes maiores, mais amostras, treino repetido em lote) —
+exatamente o cenário da pendência de "treino sobre múltiplos mecanismos de
+falha simultaneamente" registrada em `../CONTEXTO.md`.
+
+**Nada foi commitado ainda** — aguardando revisão do autor.
+
 ## Estado atual
 
 Código compila sem erro de sintaxe, **66/66 testes passam**
@@ -919,3 +979,6 @@ contexto para ele.
    unidade liga/desliga (ex.: rodízio para igualar horas de operação,
    comum em plantas reais com N+1). Se um cenário desses for pedido,
    `dinamica.py` precisa de um estado por unidade, não um `x_c` agregado.
+3. ~~GPU disponível na máquina do autor (RTX 4070) não é usada~~ —
+   **resolvido em 16/08/2026**, ver "Uso de GPU (CUDA) quando disponível"
+   abaixo.
