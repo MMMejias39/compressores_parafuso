@@ -1851,6 +1851,31 @@ Tabelas 28.1/28.2/29.1/29.2 todas listadas.
 
 **Nada foi commitado ainda** — aguardando revisão do autor.
 
+## Slides da Parte III adicionados ao Beamer (16/08/2026)
+
+Item 5 (opcional) do `dicas_kimi.md` de 16/08 implementado a pedido do autor:
+`apresentacao_compressores.tex` ganhou 2 slides novos, entre "Evolução do
+Gêmeo Digital" e "Síntese" — um resumindo a metodologia do Capítulo 28
+(estado aumentado do EKF, protocolo de 4 categorias, catálogo de ~57
+mecanismos) e outro com a demonstração numérica do Capítulo 29 (cenário
+$\delta$/L, EKF→VAE→PIML→MPC, $RUL_\delta\approx9$ semanas). Seguem o estilo já
+estabelecido do deck (bullets curtos, equações quando ajudam, sem tabela —
+nenhum slide do deck usa `tabular`, então não introduzi uma). A Agenda ganhou
+uma linha para a Parte III, e a contagem de páginas do slide de Síntese
+("84 p.") — desatualizada desde a criação do deck em 26/07/2026 — foi
+corrigida para 158. Deck foi de 21 para 23 slides.
+
+**Ajuste feito durante a verificação**: a primeira versão do slide do
+Capítulo 28 estourava a moldura do frame (texto cortado embaixo) —
+encurtado (frase de abertura e os 3 bullets) até caber sem overflow,
+conferido via `pdftoppm`. O slide do Capítulo 29 coube de primeira.
+
+**Verificação**: compilação limpa em 2 passagens, sem erros nem referências
+indefinidas, 23 páginas. Renderização visual conferida em 4 slides (Agenda,
+os dois novos, Síntese).
+
+**Nada foi commitado ainda** — aguardando revisão do autor.
+
 ## Pendências conhecidas (candidatos para a próxima sessão)
 
 Nada está quebrado — o documento compila limpo e não há dívida técnica em

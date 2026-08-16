@@ -40,6 +40,8 @@
 			\item Diretrizes de implementação e evolução
 		\end{itemize}
 	\end{columns}
+	\vspace{0.5em}
+	\textbf{Parte III — Estudo de Caso Integrado (Cap.\ 28--29):} metodologia de calibração de parâmetros + demonstração numérica ponta a ponta.
 \end{frame}
 
 \begin{frame}{O que é um Gêmeo Digital?}
@@ -319,6 +321,31 @@
 	\end{alertblock}
 \end{frame}
 
+\begin{frame}{Parte III: calibrar antes de detectar (Cap.\ 28)}
+	Parâmetros nunca medidos nesta máquina ($K$, $\eta_{\text{mec}}$, $\zeta_{\text{ref}}$) entram no vetor de estado do EKF:
+	\begin{equation*}
+		x_{\text{aug}} = \begin{bmatrix} x \\ \Lambda \end{bmatrix}, \qquad \Lambda = \begin{bmatrix} K \\ \eta_{\text{mec}} \\ \zeta_{\text{ref}} \end{bmatrix}
+	\end{equation*}
+	\begin{itemize}
+		\item Calibrados numa \textbf{janela saudável}; depois, deriva lenta rastreada com $Q_\Lambda$ pequeno.
+		\item Protocolo de 4 categorias classifica todo parâmetro: medido, inferível, calibrável ou desconhecido.
+		\item Catálogo: $\sim$57 mecanismos de falha $\to$ algoritmo mais indicado — sem inflar a IA onde um limiar já basta.
+	\end{itemize}
+\end{frame}
+
+\begin{frame}{Parte III: o cenário integrado em ação (Cap.\ 29)}
+	Desgaste gradual da folga $\delta$ do estágio LP ao longo de 6 semanas — cada sintoma isolado \textbf{abaixo} do limiar H/HH individual:
+	\begin{itemize}
+		\item \textbf{EKF}: $\hat\delta/L$ converge de $0{,}0020$ para $\approx 0{,}0091$.
+		\item \textbf{VAE}: $E_{\text{rec}}$ cruza o limiar na 5ª semana — mesmo sem nenhuma variável isolada fora de faixa.
+		\item \textbf{PIML}: testado contra hipóteses alternativas (incrustação, viés de $T_{amb}$) — isola a causa-raiz.
+		\item \textbf{MPC}: decide entre antecipar manutenção ou reduzir setpoint, com os dois custos lado a lado.
+	\end{itemize}
+	\begin{alertblock}{Prognóstico}
+		$RUL_\delta \approx 9$ semanas (IC 95\%: 6--14) — um alarme convencional, linha por linha, não veria nada.
+	\end{alertblock}
+\end{frame}
+
 \begin{frame}{Síntese}
 	\begin{equation*}
 		\boxed{\;y_{\text{real}} = f_{\text{física}}(x) + \epsilon_{\text{IA}}(x) \quad \text{via EKF, VAE, PIML e MPC}\;}
@@ -331,7 +358,7 @@
 	\end{itemize}
 	\vfill
 	\centering
-	\small Documento completo: \textit{Gêmeo Digital de Sistemas de Compressão Offshore — Diretrizes Técnicas, Modelagem e Implementação} (84 p.)
+	\small Documento completo: \textit{Gêmeo Digital de Sistemas de Compressão Offshore — Diretrizes Técnicas, Modelagem e Implementação} (158 p.)
 \end{frame}
 
 \end{document}
