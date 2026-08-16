@@ -1025,6 +1025,34 @@ execução), `IMPLEMENTACAO.md` ("As seis abas da interface"), `README.md`
 (árvore de arquivos), `MANUTENCAO.md` (contagem de abas no AppTest,
 dependências novas).
 
+## README.md na raiz do repositório (16/08/2026)
+
+Pedido do autor: "colocar um resumo do aplicativo no GitHub explicando
+como funciona, pra que serve e qual a forma de preparar para rodar em
+Linux e em Windows". Até esta sessão, a raiz do repositório **não tinha
+nenhum `README.md`** — o GitHub não renderizava nada na página principal
+do projeto, só a listagem de arquivos.
+
+**Novo `README.md` na raiz**: resumo do livro (1 parágrafo) seguido de um
+resumo focado no app — o que ele simula, os 5 algoritmos da Parte II
+(EKF, VAE, PIML, MPC, PSO) com uma frase cada, a estrutura das 6 abas, e
+instruções de preparo/execução/teste **duplicadas para Linux/macOS e
+Windows (PowerShell)** lado a lado, incluindo as duas armadilhas comuns
+do Windows: comando `python` não reconhecido (usar o launcher `py`) e
+política de execução do PowerShell bloqueando a ativação do venv
+(`Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`).
+
+**`aplicativo/README.md` também atualizado**: as seções "Instalação",
+"Execução" e "Testes" ganharam o comando equivalente para Windows ao lado
+do de Linux/macOS (`venv\Scripts\...` vs. `venv/bin/...`), para quem
+entra direto nessa pasta sem passar pelo README da raiz.
+
+Nenhum comando foi testado de fato em Windows nesta sessão (ambiente de
+desenvolvimento é Linux) — a sintaxe segue a convenção padrão do `venv`
+do Python para PowerShell, não uma verificação empírica neste projeto.
+Se algum comando falhar num Windows real, é o primeiro lugar a
+conferir.
+
 ## Pendências conhecidas
 
 1. O app cobre os Capítulos 5, 9, 10, 11, 12, 13, 14, 15, 16 do livro
