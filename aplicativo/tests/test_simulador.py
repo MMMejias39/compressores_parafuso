@@ -493,6 +493,56 @@ def test_ekf_nis_proximo_dos_graus_de_liberdade_quando_bem_calibrado():
     assert 0.3 < nis_medio < 8.0  # faixa larga e tolerante em torno de n_z=2
 
 
+# --- EKF com estado aumentado (Eqs. 28.1/28.2, Cap. 28) --------------------------
+
+def test_ekf_aumentado_medicao_responde_a_k():
+    p = parametros_default()
+    z_k_baixo = ekf.medicao_aumentada(np.array([0.010, 0.0, 0.02]), p)
+    z_k_alto = ekf.medicao_aumentada(np.array([0.010, 0.0, 0.08]), p)
+    # K maior -> mais vazamento (Eq. 9.3) -> menos eficiência volumétrica -> menos ar seco
+    assert z_k_alto[0] < z_k_baixo[0]
+
+
+def test_ekf_aumentado_identifica_k_na_janela_de_calibracao():
+    # janela de calibração: folga/fouling tratados como conhecidos (Q quase
+    # nulo), só K é livre para convergir -- mesma lógica da Seção 28.1
+    p = parametros_default()
+    n_cal = 30
+    folga_true = np.full(n_cal, 0.010)
+    r_f_true = np.zeros(n_cal)
+    k_true = np.full(n_cal, p["k_folga"])
+    r = ekf.simular_ekf_aumentado(
+        p, folga_true, r_f_true, k_true,
+        sigma_m_dot=3e-5, sigma_t_hp=0.05,
+        q_proc_calibracao=(1e-10, 1e-10, 1e-5),
+        q_proc_operacao=(1e-7, 1e-10, 1e-10),
+        x0=(0.010, 0.0, 0.03),  # crença inicial de K deliberadamente != K real
+        p0_diag=(1e-10, 1e-6, 1e-3),
+        n_passos_calibracao=n_cal, seed=3)
+    assert r["x_hat"][-1, 2] == pytest.approx(p["k_folga"], abs=0.015)
+
+
+def test_ekf_aumentado_congela_k_apos_calibracao_e_folga_acompanha_deriva():
+    # depois da janela de calibração, K deve ficar ~congelado (Q pequeno) e
+    # folga_rel volta a acompanhar deriva, como o EKF de 2 estados original
+    p = parametros_default()
+    n_cal, n_total = 30, 70
+    folga_true = np.concatenate([
+        np.full(n_cal, 0.010), np.linspace(0.010, 0.018, n_total - n_cal)])
+    r_f_true = np.zeros(n_total)
+    k_true = np.full(n_total, p["k_folga"])
+    r = ekf.simular_ekf_aumentado(
+        p, folga_true, r_f_true, k_true,
+        sigma_m_dot=3e-5, sigma_t_hp=0.05,
+        q_proc_calibracao=(1e-10, 1e-10, 1e-5),
+        q_proc_operacao=(1e-6, 1e-10, 1e-11),
+        x0=(0.010, 0.0, 0.03),
+        p0_diag=(1e-10, 1e-6, 1e-3),
+        n_passos_calibracao=n_cal, seed=3)
+    assert r["x_hat"][-1, 2] == pytest.approx(p["k_folga"], abs=0.02)
+    assert r["x_hat"][-1, 0] > 0.013  # acompanhou a deriva, não ficou em 0,010
+
+
 # --- PSO (Eqs. 24.3/24.4) -------------------------------------------------------
 
 def test_pso_minimiza_funcao_quadratica_simples():
@@ -614,6 +664,31 @@ def test_piml_residuo_fisico_pequeno_apos_treino():
     # resíduo médio bem abaixo da escala típica de Q̇ — o livro é explícito que a
     # penalização física é fraca (não nula), então a tolerância aqui é generosa
     assert np.abs(residuo).mean() < 0.05 * q_medio
+
+
+# --- PIML: identificação por problema inverso (Eq. 23.5, Seção 23.8) -------------
+
+def test_piml_residuo_inverso_zera_no_k_real():
+    # sanity direta da fórmula: com "rede perfeita" (rótulos reais no lugar
+    # da previsão), o resíduo deve ser ~0 exatamente no K usado para gerar os
+    # dados, e crescer para qualquer Ξ diferente
+    p = parametros_default()
+    entradas, saidas = piml.gerar_dataset(200, p, _FAIXAS_PIML_TESTE, seed=0)
+    pred_fake = piml.torch.tensor(saidas, dtype=piml.torch.float32)
+    r_certo = piml._residuo_inverso(pred_fake, entradas, piml.torch.tensor(p["k_folga"]), p)
+    r_errado = piml._residuo_inverso(pred_fake, entradas, piml.torch.tensor(p["k_folga"] + 0.05), p)
+    assert r_certo.abs().mean().item() < 1e-5
+    assert r_errado.abs().mean().item() > r_certo.abs().mean().item()
+
+
+def test_piml_identifica_xi_proximo_do_k_real():
+    p = parametros_default()
+    entradas, saidas = piml.gerar_dataset(400, p, _FAIXAS_PIML_TESTE, seed=0)
+    info = piml.treinar_com_identificacao(
+        entradas, saidas, _FAIXAS_PIML_TESTE, params_base=p,
+        xi_inicial=0.02, n_epocas=300, lr=1e-2)  # xi_inicial != K real (0,05)
+    assert info["xi_estimado"] == pytest.approx(p["k_folga"], abs=0.015)
+    assert info["hist_data"][-1] < info["hist_data"][0]
 
 
 # --- MPC (Eqs. 24.1/24.2) --------------------------------------------------------

@@ -25,7 +25,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from .constantes import CP_AR
+from .constantes import CP_AR, R_AR
 from . import sistema
 
 NOMES_ENTRADA = ["pi_total", "t_amb_c", "folga_rel", "r_f_equiv", "fad_m3_min"]
@@ -200,7 +200,136 @@ def residuo_fisico_real(modelo_info: dict, entradas: np.ndarray) -> np.ndarray:
     return q_pred - q_balanco
 
 
+def _residuo_inverso(pred_coloc: torch.Tensor, entradas_coloc: np.ndarray,
+                     xi: torch.Tensor, params_base: dict) -> torch.Tensor:
+    """F(ŷ; Ξ) = ṁ_seco_pred − ṁ_seco,eq93(Ξ) — Eq. 23.5 (Seção 23.8), forma
+    do problema inverso sobre a Equação 9.3: em vez de K fixo em
+    `params_base` (como em `_rotular`, que gerou os dados rotulados), ele é
+    a incógnita Ξ, otimizada junto aos pesos da rede.
+
+    `entradas_coloc` são os pontos de colocação em unidades reais (mesma
+    convenção de `treinar()`), na ordem de `NOMES_ENTRADA`. A razão de
+    umidade `w_amb` (Eq. 10.6) é recalculada ponto a ponto com a própria
+    `nucleo.razao_umidade()` — fora do grafo do PyTorch, pois depende só de
+    `t_amb`/`ur_amb`/`p_amb`, não de Ξ nem dos pesos da rede — porque
+    `sistema.py` corrige `m_dot` por `(1+1,6078·w_amb)` para chegar em
+    `m_dot_seco` (a mesma grandeza que a rede prevê); ignorar essa correção
+    introduziria um viés sistemático de alguns % que o ajuste de Ξ tentaria
+    compensar incorretamente, dominando o termo real de Ξ na Eq. 9.3 (cujo
+    efeito, em folgas típicas, é da ordem de décimos de %).
+    """
+    pi_total = torch.tensor(entradas_coloc[:, NOMES_ENTRADA.index("pi_total")], dtype=torch.float32)
+    t_amb_c = entradas_coloc[:, NOMES_ENTRADA.index("t_amb_c")]
+    t_amb_k = torch.tensor(t_amb_c, dtype=torch.float32) + 273.15
+    folga_rel = torch.tensor(entradas_coloc[:, NOMES_ENTRADA.index("folga_rel")], dtype=torch.float32)
+    fad = torch.tensor(entradas_coloc[:, NOMES_ENTRADA.index("fad_m3_min")], dtype=torch.float32)
+
+    w_amb = np.array([sistema.nucleo.razao_umidade(t_c + 273.15, params_base["p_amb"], params_base["ur_amb"])
+                      for t_c in t_amb_c])
+    w_amb_t = torch.tensor(w_amb, dtype=torch.float32)
+
+    rho_amb = params_base["p_amb"] / (R_AR * t_amb_k)
+    v_dot_fad = fad / 60.0
+    # nucleo.eficiencia_volumetrica(k, folga_rel, pi) é chamada em sistema.py
+    # com pi=sqrt(pi_total) (razão do estágio, Eq. 5.7) e aplica sqrt(pi) de
+    # novo internamente (Eq. 9.3, √(P2/P1)) — equivalente a pi_total**0.25.
+    eta_v = 1.0 - xi * folga_rel * pi_total**0.25
+    m_dot_seco_eq93 = (rho_amb * v_dot_fad * eta_v) / (1.0 + 1.6078 * w_amb_t)
+
+    m_dot_pred = pred_coloc[:, NOMES_SAIDA.index("m_dot_seco")]
+    return m_dot_pred - m_dot_seco_eq93
+
+
+def treinar_com_identificacao(entradas: np.ndarray, saidas: np.ndarray, faixas_colocacao: dict,
+                              params_base: dict, xi_inicial: float,
+                              n_epocas: int = 300, lr: float = 5e-3, n_colocacao: int = 256,
+                              kappa: float = 0.1, lambda_inicial: float = 0.1,
+                              seed: int = 0) -> dict:
+    """Identificação de parâmetro por problema inverso (Eq. 23.5, Seção 23.8):
+    treina o substituto PIML e, simultaneamente, otimiza Ξ — o coeficiente de
+    vazamento K da Equação 9.3 — como incógnita, a partir do resíduo de
+    `_residuo_inverso`. Mesma perda híbrida e mesmo balanceamento adaptativo
+    de λ (Eq. 23.4) de `treinar()`, mas o resíduo físico é o da Eq. 9.3
+    (mássico) em vez do balanço de energia do intercooler (Eq. 23.2) — o
+    ponto da Seção 23.8 é que o mecanismo é genérico, não específico de um
+    único resíduo.
+
+    `xi_inicial` é a crença de partida para Ξ — deliberadamente diferente do
+    K real usado para rotular os dados (`params_base["k_folga"]` dentro de
+    `gerar_dataset`), para que a convergência mostrada seja identificação de
+    verdade, mesmo espírito do EKF em `simular_ekf`/`simular_ekf_aumentado`.
+    """
+    torch.manual_seed(seed)
+    rng = np.random.default_rng(seed + 1)
+
+    media_x, desvio_x = entradas.mean(axis=0), entradas.std(axis=0) + 1e-8
+    media_y, desvio_y = saidas.mean(axis=0), saidas.std(axis=0) + 1e-8
+    escala_residuo = float(desvio_y[NOMES_SAIDA.index("m_dot_seco")])
+    x_norm = torch.tensor((entradas - media_x) / desvio_x, dtype=torch.float32)
+    y_norm = torch.tensor((saidas - media_y) / desvio_y, dtype=torch.float32)
+
+    modelo = SubstitutoPIML()
+    xi = torch.nn.Parameter(torch.tensor(float(xi_inicial), dtype=torch.float32))
+    otimizador = torch.optim.Adam(list(modelo.parameters()) + [xi], lr=lr)
+    params_treinaveis = list(modelo.parameters())  # balanceamento de λ só sobre pesos da rede
+
+    lam = lambda_inicial
+    hist_data, hist_fisica, hist_lambda, hist_xi = (np.zeros(n_epocas) for _ in range(4))
+
+    for epoca in range(n_epocas):
+        otimizador.zero_grad()
+        pred_dados = modelo(x_norm)
+        perda_dados = torch.mean((pred_dados - y_norm) ** 2)  # L_data
+
+        entradas_coloc = _amostrar_entradas(n_colocacao, faixas_colocacao, rng)
+        x_coloc = torch.tensor((entradas_coloc - media_x) / desvio_x, dtype=torch.float32)
+        pred_coloc_norm = modelo(x_coloc)
+        pred_coloc = pred_coloc_norm * torch.tensor(desvio_y, dtype=torch.float32) \
+            + torch.tensor(media_y, dtype=torch.float32)
+        residuo = _residuo_inverso(pred_coloc, entradas_coloc, xi, params_base) / escala_residuo
+        perda_fisica = torch.mean(residuo ** 2)  # L_physics(θ, Ξ) — Eq. 23.5
+
+        perda_total = perda_dados + lam * perda_fisica
+        perda_total.backward()
+        otimizador.step()
+
+        if epoca % 5 == 0:
+            otimizador.zero_grad()
+            pred_dados2 = modelo(x_norm)
+            perda_dados2 = torch.mean((pred_dados2 - y_norm) ** 2)
+            grad_dados = torch.autograd.grad(perda_dados2, params_treinaveis,
+                                             retain_graph=True, allow_unused=True)
+            mag_dados = np.mean([g.abs().mean().item() for g in grad_dados if g is not None])
+
+            entradas_coloc2 = _amostrar_entradas(n_colocacao, faixas_colocacao, rng)
+            x_coloc2 = torch.tensor((entradas_coloc2 - media_x) / desvio_x, dtype=torch.float32)
+            pred_coloc2 = modelo(x_coloc2) * torch.tensor(desvio_y, dtype=torch.float32) \
+                + torch.tensor(media_y, dtype=torch.float32)
+            residuo2 = _residuo_inverso(pred_coloc2, entradas_coloc2, xi, params_base) / escala_residuo
+            perda_fisica2 = torch.mean(residuo2 ** 2)
+            grad_fisica = torch.autograd.grad(perda_fisica2, params_treinaveis,
+                                              retain_graph=False, allow_unused=True)
+            mag_fisica = np.mean([g.abs().mean().item() for g in grad_fisica if g is not None])
+
+            razao = mag_dados / max(mag_fisica, 1e-12)
+            lam = (1.0 - kappa) * lam + kappa * razao
+
+        hist_data[epoca] = float(perda_dados.item())
+        hist_fisica[epoca] = float(perda_fisica.item())
+        hist_lambda[epoca] = lam
+        hist_xi[epoca] = float(xi.item())
+
+    modelo.eval()
+    return {
+        "modelo": modelo, "media_x": media_x, "desvio_x": desvio_x,
+        "media_y": media_y, "desvio_y": desvio_y,
+        "hist_data": hist_data, "hist_fisica": hist_fisica, "hist_lambda": hist_lambda,
+        "hist_xi": hist_xi, "xi_estimado": float(xi.item()),
+    }
+
+
 __all__ = [
     "NOMES_ENTRADA", "NOMES_SAIDA", "gerar_dataset", "SubstitutoPIML",
     "treinar", "prever", "residuo_fisico_real",
+    "treinar_com_identificacao",
 ]

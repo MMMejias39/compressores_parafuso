@@ -250,6 +250,44 @@ with st.sidebar:
             "Ruído de processo Q — R_f (assumido)",
             1e-12, 1e-7, 1e-10, 1e-12, format="%.1e")
 
+    with st.expander("Gêmeo Digital — EKF com Estado Aumentado (aba 4, Cap. 28, Eqs. 28.1/28.2)"):
+        st.caption(
+            "Estado x_aug = [δ/L, R_f, K] — o coeficiente de vazamento K "
+            "(Eq. 9.3), fixo em todo o resto do app, passa a ser também "
+            "estimado. Cenário próprio (independente do EKF acima, mesmo "
+            "padrão de escopo isolado já usado no PSO/MPC): janela de "
+            "calibração com δ/L conhecida e constante, K partindo de uma "
+            "crença deliberadamente errada; depois, K \"congela\" (Q "
+            "pequeno) e δ/L volta a acompanhar deriva, como no EKF de 2 "
+            "estados.")
+        n_cal_aum = st.slider("Passos na janela de calibração", 15, 50, 30, 5)
+        n_op_aum = st.slider("Passos após a calibração", 15, 60, 40, 5)
+        folga_cal_aum = st.number_input(
+            "δ/L conhecida na janela de calibração (assumido)",
+            0.002, 0.02, 0.010, 0.001, format="%.4f",
+            help="O efeito de K na Eq. 9.3 escala com δ/L — folgas muito "
+                 "baixas (ex. 0,002, condição de máquina nova) tornam K "
+                 "quase inobservável frente ao ruído de medição típico; "
+                 "este valor mais alto dá um sinal mais forte para a "
+                 "calibração convergir.")
+        folga_fim_aum = st.number_input(
+            "δ/L verdadeira ao fim da operação (assumido)",
+            folga_cal_aum, 0.03, 0.018, 0.001, format="%.4f")
+        k_inicial_aum = st.number_input(
+            "Crença inicial de K (assumido, != K real do app)",
+            0.005, 0.15, 0.03, 0.005, format="%.3f",
+            help=f"K real usado no restante do app: {defaults['k_folga']:.3f} "
+                 "(Eq. 9.3) — mantido diferente aqui para que a convergência "
+                 "mostrada seja identificação de verdade.")
+        sigma_m_dot_aum = st.number_input(
+            "Ruído do sensor de vazão σ [kg/s] — janela de calibração (assumido)",
+            1e-6, 5e-4, 3e-5, 1e-6, format="%.1e",
+            help="Precisão de instrumentação de bancada/comissionamento, "
+                 "mais fina que o sensor de campo do EKF acima — o sinal de "
+                 "K na Eq. 9.3 é pequeno mesmo com δ/L elevada, e precisa "
+                 "de um ruído de medição proporcionalmente baixo para ser "
+                 "identificável em poucas dezenas de ciclos.")
+
     with st.expander("Gêmeo Digital — PSO (aba 4, Eqs. 24.3/24.4)"):
         st.caption(
             "Otimiza a pressão de setpoint da rede (π) para minimizar o "
@@ -296,6 +334,24 @@ with st.sidebar:
         n_amostras_piml = st.slider("Amostras de treino (assumido)", 200, 800, 400, 50,
                                     key="n_amostras_piml")
         n_epocas_piml = st.slider("Épocas de treino", 100, 500, 300, 50, key="n_epocas_piml")
+
+    with st.expander("Gêmeo Digital — PIML, Problema Inverso (aba 4, Cap. 23.8, Eq. 23.5)"):
+        st.caption(
+            "Em vez do balanço de energia do intercooler (Eq. 23.2), o "
+            "resíduo físico aqui é a Equação 9.3 (balanço mássico), com o "
+            "coeficiente de vazamento K tratado como incógnita Ξ — "
+            "otimizada junto aos pesos da rede, não fixa em `params_base` "
+            "como no restante do app.")
+        n_amostras_piml_inv = st.slider("Amostras de treino (assumido)", 200, 800, 400, 50,
+                                        key="n_amostras_piml_inv")
+        n_epocas_piml_inv = st.slider("Épocas de treino", 100, 500, 300, 50,
+                                      key="n_epocas_piml_inv")
+        xi_inicial_piml = st.number_input(
+            "Crença inicial de Ξ (assumido, != K real)",
+            0.005, 0.15, 0.02, 0.005, format="%.3f",
+            help=f"K real usado no restante do app: {defaults['k_folga']:.3f} "
+                 "(Eq. 9.3) — mantido diferente aqui para que a "
+                 "convergência mostrada seja identificação de verdade.")
 
     with st.expander("Gêmeo Digital — MPC (aba 4, Eqs. 24.1/24.2)"):
         st.caption(
@@ -946,6 +1002,79 @@ with tab_gd:
     )
 
     st.divider()
+    st.subheader("EKF com Estado Aumentado — Calibração de K (Cap. 28, Eqs. 28.1/28.2)")
+    st.caption(
+        "Problema inverso resolvido online: o coeficiente de vazamento K "
+        "(Eq. 9.3), fixo em todo o resto deste app, entra no próprio vetor "
+        "de estado do EKF. Na janela de calibração (fundo cinza), δ/L é "
+        "tratada como conhecida (Q quase nulo) para que K convirja; depois, "
+        "K \"congela\" (Q pequeno) e δ/L volta a acompanhar deriva livre."
+    )
+
+    folga_true_aum = np.concatenate([
+        np.full(n_cal_aum, folga_cal_aum),
+        np.linspace(folga_cal_aum, folga_fim_aum, n_op_aum),
+    ])
+    n_total_aum = n_cal_aum + n_op_aum
+    r_f_true_aum = np.zeros(n_total_aum)
+    k_true_aum = np.full(n_total_aum, defaults["k_folga"])
+    r_aum = ekf.simular_ekf_aumentado(
+        params_base=params,
+        folga_true=folga_true_aum,
+        r_f_true=r_f_true_aum,
+        k_true=k_true_aum,
+        sigma_m_dot=sigma_m_dot_aum,
+        sigma_t_hp=sigma_t_hp_ekf,
+        q_proc_calibracao=(1e-10, 1e-10, 1e-5),
+        q_proc_operacao=(1e-6, 1e-10, 1e-11),
+        x0=(folga_cal_aum, 0.0, k_inicial_aum),
+        p0_diag=(1e-10, 1e-6, 1e-3),
+        n_passos_calibracao=n_cal_aum,
+    )
+    passos_aum = np.arange(n_total_aum)
+
+    a1, a2 = st.columns(2)
+    with a1:
+        figaum1, axaum1 = plt.subplots(figsize=(6.2, 3.4))
+        axaum1.axvspan(0, n_cal_aum, color="#dddddd", alpha=0.5, label="Janela de calibração")
+        axaum1.axhline(defaults["k_folga"], color=GREEN, ls="--", label="K real")
+        axaum1.plot(passos_aum, r_aum["x_hat"][:, 2], color=BLUE, label="K estimado (EKF)")
+        banda_k = r_aum["std"][:, 2]
+        axaum1.fill_between(passos_aum, r_aum["x_hat"][:, 2] - banda_k,
+                            r_aum["x_hat"][:, 2] + banda_k, color=BLUE, alpha=0.2)
+        axaum1.set_xlabel("Passo de tempo")
+        axaum1.set_ylabel("K (Eq. 9.3)")
+        axaum1.legend(fontsize=8)
+        figaum1.tight_layout()
+        st.pyplot(figaum1)
+
+    with a2:
+        figaum2, axaum2 = plt.subplots(figsize=(6.2, 3.4))
+        axaum2.axvspan(0, n_cal_aum, color="#dddddd", alpha=0.5)
+        axaum2.plot(passos_aum, r_aum["folga_true"], color=GREEN, ls="--", label="δ/L verdadeira")
+        axaum2.plot(passos_aum, r_aum["x_hat"][:, 0], color=BLUE, label="δ/L estimada")
+        axaum2.set_xlabel("Passo de tempo")
+        axaum2.set_ylabel("δ/L")
+        axaum2.legend(fontsize=8)
+        figaum2.tight_layout()
+        st.pyplot(figaum2)
+
+    b1, b2, b3 = st.columns(3)
+    b1.metric("K estimado (fim da calibração)", f"{r_aum['x_hat'][n_cal_aum - 1, 2]:.4f}",
+             help=f"K real: {defaults['k_folga']:.4f} — crença inicial: {k_inicial_aum:.4f}")
+    b2.metric("K estimado (fim da operação)", f"{r_aum['x_hat'][-1, 2]:.4f}",
+             help="Deve continuar perto do valor calibrado, mesmo com δ/L "
+                  "variando livremente depois.")
+    b3.metric("δ/L estimada (fim)", f"{r_aum['x_hat'][-1, 0]:.4f}",
+             help=f"Verdadeira: {r_aum['folga_true'][-1]:.4f}")
+    st.caption(
+        "Tabela 28.1 do livro (Seção 28.2): antes desta calibração, K estava "
+        "na categoria (iv) — desconhecido/valor de catálogo. Depois, passa "
+        "para a categoria (iii) — calibrável na janela saudável — com a "
+        "proveniência explícita registrada, em vez de herdado implicitamente."
+    )
+
+    st.divider()
     st.subheader("Otimização de Setpoint via PSO (Eqs. 24.3/24.4)")
     st.caption(
         "Minimiza o SPC (Eq. 11.11) variando a pressão de setpoint da rede "
@@ -1136,6 +1265,57 @@ with tab_gd:
         "resíduo físico (medido em watts, ordens de grandeza acima do "
         "erro de dados já padronizado) satura a rede logo no 1º passo de "
         "treino (ver CONTEXTO_app.md para o diagnóstico completo)."
+    )
+
+    st.divider()
+    st.subheader("PIML — Identificação por Problema Inverso (Cap. 23.8, Eq. 23.5)")
+    st.caption(
+        "Em vez do resíduo de energia do intercooler acima, aqui o resíduo "
+        "físico é a Equação 9.3 (balanço mássico), e o coeficiente de "
+        "vazamento Ξ é otimizado junto aos pesos da rede — não fixo em "
+        "`params_base`. Mesmo mecanismo de identificação da Seção 28.1 do "
+        "livro (EKF aumentado), por um caminho offline: um treino em lote "
+        "sobre dados dispersos, em vez de um ciclo sequencial online."
+    )
+
+    @st.cache_resource(show_spinner="Identificando Ξ via problema inverso...")
+    def _treinar_piml_inv_cache(_params_base, chave, n_amostras, n_epocas, xi0):
+        entradas_tr, saidas_tr = piml.gerar_dataset(
+            n_amostras, _params_base, _FAIXAS_PIML_APP, seed=0)
+        return piml.treinar_com_identificacao(
+            entradas_tr, saidas_tr, _FAIXAS_PIML_APP, params_base=_params_base,
+            xi_inicial=xi0, n_epocas=n_epocas, lr=1e-2)
+
+    chave_piml_inv = (round(params["t_amb"], 1), n_amostras_piml_inv,
+                      n_epocas_piml_inv, xi_inicial_piml)
+    info_piml_inv = _treinar_piml_inv_cache(
+        params, chave_piml_inv, n_amostras_piml_inv, n_epocas_piml_inv, xi_inicial_piml)
+
+    pv1, pv2, pv3 = st.columns(3)
+    pv1.metric("Ξ estimado", f"{info_piml_inv['xi_estimado']:.4f}",
+              help=f"K real usado no restante do app: {defaults['k_folga']:.4f}")
+    pv2.metric("Crença inicial de Ξ", f"{xi_inicial_piml:.4f}")
+    pv3.metric("Erro |Ξ_estimado − K_real|",
+              f"{abs(info_piml_inv['xi_estimado'] - defaults['k_folga']):.4f}")
+
+    figpimlinv, axpi = plt.subplots(figsize=(9.0, 2.8))
+    axpi.axhline(defaults["k_folga"], color=GREEN, ls="--", label="K real")
+    axpi.axhline(xi_inicial_piml, color="#999999", ls=":", label="Ξ inicial")
+    axpi.plot(info_piml_inv["hist_xi"], color=BLUE, label="Ξ (durante o treino)")
+    axpi.set_xlabel("Época")
+    axpi.set_ylabel("Ξ")
+    axpi.legend(fontsize=8)
+    figpimlinv.tight_layout()
+    st.pyplot(figpimlinv)
+    st.caption(
+        "O efeito de K/Ξ na Equação 9.3 é pequeno frente às demais "
+        "variações do ponto de operação — identificação por problema "
+        "inverso é um problema mais mal-condicionado que o EKF sequencial "
+        "acima, e a estimativa converge para perto do valor real, mas com "
+        "ruído residual maior. Reduzir o ruído sintético de rotulagem ou "
+        "aumentar a faixa de δ/L amostrada (barra lateral) melhora a "
+        "identificação, pelo mesmo motivo do slider de δ/L de calibração "
+        "do EKF aumentado acima."
     )
 
     st.divider()

@@ -52,7 +52,8 @@ def medicao(x: np.ndarray, params_base: dict) -> np.ndarray:
 
 
 def passo_ekf(x_hat: np.ndarray, p_cov: np.ndarray, z: np.ndarray,
-             params_base: dict, q_proc: np.ndarray, r_meas: np.ndarray):
+             params_base: dict, q_proc: np.ndarray, r_meas: np.ndarray,
+             medicao_fn=medicao):
     """Um ciclo de predição-correção do EKF — Eq. 21.4.
 
     Modelo de transição f(x) = x (passeio aleatório): o livro não fecha uma
@@ -60,13 +61,18 @@ def passo_ekf(x_hat: np.ndarray, p_cov: np.ndarray, z: np.ndarray,
     quase-constante entre ciclos, com a incerteza de processo Q absorvendo
     a deriva lenta esperada. Covariância atualizada pela forma de Joseph
     (Eq. 21.8, numericamente estável); NIS pela Eq. 21.7.
+
+    `medicao_fn` é injetável (default: `medicao`, estado de 2 elementos) para
+    que `passo_ekf_aumentado` reutilize este mesmo ciclo com o estado de 3
+    elementos de `medicao_aumentada` — Eq. 28.1/28.2 (Cap. 28), sem duplicar
+    a lógica de predição-correção.
     """
     n = len(x_hat)
     x_pred = np.array(x_hat, dtype=float)  # f(x) = x
     jac_f = _jacobiana_numerica(lambda xx: xx, x_pred)
     p_pred = jac_f @ p_cov @ jac_f.T + q_proc
 
-    g_func = lambda xx: medicao(xx, params_base)
+    g_func = lambda xx: medicao_fn(xx, params_base)
     z_pred = g_func(x_pred)
     jac_g = _jacobiana_numerica(g_func, x_pred)
     s_cov = jac_g @ p_pred @ jac_g.T + r_meas
@@ -126,4 +132,87 @@ def simular_ekf(params_base: dict, folga_true: np.ndarray, r_f_true: np.ndarray,
     }
 
 
-__all__ = ["medicao", "passo_ekf", "simular_ekf"]
+def medicao_aumentada(x_aug: np.ndarray, params_base: dict) -> np.ndarray:
+    """g(x_aug) — mesma medição de `medicao()`, mas com o coeficiente de
+    vazamento K (Eq. 9.3) também vindo do estado, em vez de fixo em
+    `params_base` — Equação 28.1 (Cap. 28): x_aug = [folga_rel, r_f_equiv, K].
+
+    K entra na mesma Equação 9.3 que já determina ṁ_seco a partir de
+    folga_rel, então os dois só são conjuntamente identificáveis com alguma
+    fonte de informação adicional — aqui, a janela de calibração de
+    `simular_ekf_aumentado()`, onde folga_rel é tratada como conhecida
+    (comissionamento) para que K converja primeiro.
+    """
+    folga_rel, r_f_equiv, k_folga = x_aug
+    p = {**params_base,
+         "folga_rel": max(float(folga_rel), 0.0),
+         "r_f_equiv": max(float(r_f_equiv), 0.0),
+         "k_folga": max(float(k_folga), 0.0)}
+    res = sistema.simular(p)
+    m_dot_seco = res["nos"][0]["m_dot"]
+    t_hp_in = res["nos"][2]["t_c"]
+    return np.array([m_dot_seco, t_hp_in])
+
+
+def simular_ekf_aumentado(params_base: dict, folga_true: np.ndarray, r_f_true: np.ndarray,
+                          k_true: np.ndarray, sigma_m_dot: float, sigma_t_hp: float,
+                          q_proc_calibracao: tuple[float, float, float],
+                          q_proc_operacao: tuple[float, float, float],
+                          x0: tuple[float, float, float], p0_diag: tuple[float, float, float],
+                          n_passos_calibracao: int, seed: int = 42) -> dict:
+    """EKF com estado aumentado x_aug = [folga_rel, r_f_equiv, K] — Eqs. 28.1/28.2.
+
+    Implementa a estratégia de `Q_Λ` em dois regimes descrita na Seção 28.1
+    do livro: durante os primeiros `n_passos_calibracao` passos (janela de
+    calibração — comissionamento, folga/fouling sabidamente na condição de
+    referência), usa `q_proc_calibracao` — tipicamente com Q quase nulo para
+    folga_rel/r_f_equiv (tratados como constantes conhecidas) e Q normal
+    para K (convergência agressiva). Depois, usa `q_proc_operacao` —
+    tipicamente o inverso: Q quase nulo para K (calibração "congelada", só
+    deriva lenta) e Q normal para folga_rel/r_f_equiv, que voltam a evoluir
+    como no EKF de 2 estados de `simular_ekf()`.
+    """
+    rng = np.random.default_rng(seed)
+    n_passos = len(folga_true)
+    x_hat = np.array(x0, dtype=float)
+    p_cov = np.diag(p0_diag).astype(float)
+    q_calibracao = np.diag(q_proc_calibracao)
+    q_operacao = np.diag(q_proc_operacao)
+    r_meas = np.diag([sigma_m_dot**2, sigma_t_hp**2])
+
+    x_hist = np.zeros((n_passos, 3))
+    std_hist = np.zeros((n_passos, 3))
+    nis_hist = np.zeros(n_passos)
+    z_hist = np.zeros((n_passos, 2))
+
+    for k in range(n_passos):
+        x_true_k = np.array([folga_true[k], r_f_true[k], k_true[k]])
+        z_true = medicao_aumentada(x_true_k, params_base)
+        ruido = rng.normal(0.0, [sigma_m_dot, sigma_t_hp])
+        z_k = z_true + ruido
+
+        q_proc = q_calibracao if k < n_passos_calibracao else q_operacao
+        x_hat, p_cov, _, nis = passo_ekf(x_hat, p_cov, z_k, params_base, q_proc, r_meas,
+                                         medicao_fn=medicao_aumentada)
+
+        x_hist[k] = x_hat
+        std_hist[k] = np.sqrt(np.maximum(np.diag(p_cov), 0.0))
+        nis_hist[k] = nis
+        z_hist[k] = z_k
+
+    return {
+        "x_hat": x_hist,
+        "std": std_hist,
+        "nis": nis_hist,
+        "z": z_hist,
+        "folga_true": np.asarray(folga_true, dtype=float),
+        "r_f_true": np.asarray(r_f_true, dtype=float),
+        "k_true": np.asarray(k_true, dtype=float),
+        "n_passos_calibracao": n_passos_calibracao,
+    }
+
+
+__all__ = [
+    "medicao", "passo_ekf", "simular_ekf",
+    "medicao_aumentada", "simular_ekf_aumentado",
+]
