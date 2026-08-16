@@ -38,6 +38,7 @@ import pandas as pd
 import streamlit as st
 
 from compressor_sim import (
+    calib_lm,
     dinamica,
     ekf,
     mpc,
@@ -225,7 +226,19 @@ with tab_config:
                 "(R_f) evoluem de um valor inicial a um final ao longo do "
                 "horizonte — o EKF nunca vê esses valores, só as medições "
                 "ruidosas de ṁ_seco e T_HP,in, e tenta reconstruí-los.")
-            n_passos_ekf = st.slider("Horizonte do EKF [passos]", 20, 150, 60, 10)
+            n_passos_ekf = st.slider("Horizonte do EKF [passos]", 20, 2000, 60, 10,
+                                     help="Cada passo é um ciclo de varredura — o "
+                                          "intervalo real entre eles é o "
+                                          "\"Δt entre medições\" abaixo. Mecanismos "
+                                          "de falha reais (folga, incrustação) se "
+                                          "desenvolvem em semanas, não minutos — "
+                                          "aumente este valor junto com o Δt para "
+                                          "acompanhar um horizonte de dias.")
+            dt_horas_ekf = st.number_input(
+                "Δt entre medições [horas] (assumido)", 0.1, 24.0, 1.0, 0.1,
+                help="Intervalo real de tempo entre dois passos do EKF — só "
+                     "converte o eixo dos gráficos abaixo para dias, não afeta "
+                     "o cálculo do filtro (Q/R já são por-passo, não por-hora).")
             folga_ini_ekf = st.number_input(
                 "δ/L verdadeira — início (assumido)", 0.0005, 0.02, 0.002, 0.0005,
                 format="%.4f")
@@ -262,7 +275,11 @@ with tab_config:
                 "pequeno) e δ/L volta a acompanhar deriva, como no EKF de 2 "
                 "estados.")
             n_cal_aum = st.slider("Passos na janela de calibração", 15, 50, 30, 5)
-            n_op_aum = st.slider("Passos após a calibração", 15, 60, 40, 5)
+            n_op_aum = st.slider("Passos após a calibração", 15, 2000, 40, 10,
+                                 help="Mesmo Δt entre medições do EKF de 2 "
+                                      "estados acima — aumente para acompanhar "
+                                      "deriva de K/δ/L por vários dias após a "
+                                      "calibração.")
             folga_cal_aum = st.number_input(
                 "δ/L conhecida na janela de calibração (assumido)",
                 0.002, 0.02, 0.010, 0.001, format="%.4f",
@@ -353,6 +370,25 @@ with tab_config:
                 help=f"K real usado no restante do app: {defaults['k_folga']:.3f} "
                      "(Eq. 9.3) — mantido diferente aqui para que a "
                      "convergência mostrada seja identificação de verdade.")
+
+        with st.expander("Gêmeo Digital — Calibração LM (aba 4, Cap. 28.1)"):
+            st.caption(
+                "Terceiro caminho para o mesmo K: mínimos quadrados não "
+                "lineares em lote (scipy, Levenberg-Marquardt), sem filtro "
+                "nem rede neural.")
+            n_amostras_lm = st.slider("Amostras de calibração (assumido)", 20, 200, 60, 10)
+            k_inicial_lm = st.number_input(
+                "Crença inicial de K (assumido, != K real)",
+                0.005, 0.15, 0.10, 0.005, format="%.3f", key="k_inicial_lm",
+                help=f"K real usado no restante do app: {defaults['k_folga']:.3f} "
+                     "(Eq. 9.3) — mantido diferente aqui para que a "
+                     "convergência mostrada seja identificação de verdade.")
+            sigma_m_dot_lm = st.number_input(
+                "Ruído do sensor de vazão σ [kg/s] (assumido)",
+                1e-5, 5e-3, 1e-4, 1e-5, format="%.5f", key="sigma_m_dot_lm")
+            sigma_t_hp_lm = st.number_input(
+                "Ruído do sensor de T_HP,in σ [°C] (assumido)",
+                0.01, 2.0, 0.05, 0.01, key="sigma_t_hp_lm")
 
         with st.expander("Gêmeo Digital — MPC (aba 4, Eqs. 24.1/24.2)"):
             st.caption(
@@ -841,6 +877,7 @@ with tab_psa:
         fator_purga=params["fator_purga"],
         t_entrada_c=res["nos"][4]["t_c"],
         delta_t_regen=params["delta_t_regen"],
+        pdp_entrada_c=res["nos"][4]["pdp_c"],
     )
     kp = r_psa["kpis"]
 
@@ -924,6 +961,30 @@ with tab_psa:
         "bar abs (purga, à pressão ambiente)."
     )
 
+    st.subheader("Ponto de orvalho na saída do secador ao longo do tempo")
+    fig_pdp, ax_pdp = plt.subplots(figsize=(9.0, 3.0))
+    ax_pdp.plot(r_psa["t_min"], r_psa["pdp_saida_c"], color=NAVY, lw=1.6,
+               label="PDP de saída (estimado)")
+    ax_pdp.axhline(defaults["pdp_real_c"], color=GREEN, ls=":",
+                   label=f"Alvo ISO 8573-1 Classe 2 ({defaults['pdp_real_c']:.0f} °C)")
+    ax_pdp.set_xlabel("Tempo [min]")
+    ax_pdp.set_ylabel("PDP de saída [°C]")
+    ax_pdp.legend(fontsize=8, loc="upper right")
+    fig_pdp.tight_layout()
+    st.pyplot(fig_pdp)
+    st.caption(
+        "Simplificação de modelagem, não uma equação do livro (o Cap. 15 "
+        "só fecha o KPI estático HI_des, Eq. 15.7 — não uma série temporal "
+        "de PDP): a cada instante, a torre relevante é a que está "
+        "adsorvendo com a menor capacidade normalizada restante — "
+        "interpolação linear entre o PDP alvo (leito \"novo\") e o PDP de "
+        "entrada do secador (nenhuma remoção, o mesmo limite de um "
+        "*breakthrough* total ou de um intervalo sem nenhuma torre "
+        "disponível). Serrilhado esperado: cada troca de torre reinicia a "
+        "curva de degradação daquele leito. Pico máximo neste horizonte: "
+        f"{kp['pdp_saida_max_c']:.1f} °C."
+    )
+
     st.subheader("Chaveamento entre torres")
     # 0 = Adsorvendo, 1 = Regenerando, 2 = Resfriando
     mapa_estado = {"Adsorvendo": 0, "Regenerando": 1, "Resfriando": 2}
@@ -984,19 +1045,20 @@ with tab_gd:
         p0_diag=(1e-4, 1e-6),
     )
     passos_ekf = np.arange(n_passos_ekf)
+    t_dias_ekf = passos_ekf * dt_horas_ekf / 24.0
 
     f1, f2 = st.columns(2)
     with f1:
         figekf1, axekf1 = plt.subplots(figsize=(6.2, 3.4))
-        axekf1.plot(passos_ekf, r_ekf["folga_true"], color=GREEN, ls="--",
+        axekf1.plot(t_dias_ekf, r_ekf["folga_true"], color=GREEN, ls="--",
                     label="δ/L verdadeira")
-        axekf1.plot(passos_ekf, r_ekf["x_hat"][:, 0], color=BLUE,
+        axekf1.plot(t_dias_ekf, r_ekf["x_hat"][:, 0], color=BLUE,
                     label="δ/L estimada (EKF)")
         banda_inf = r_ekf["x_hat"][:, 0] - r_ekf["std"][:, 0]
         banda_sup = r_ekf["x_hat"][:, 0] + r_ekf["std"][:, 0]
-        axekf1.fill_between(passos_ekf, banda_inf, banda_sup, color=BLUE,
+        axekf1.fill_between(t_dias_ekf, banda_inf, banda_sup, color=BLUE,
                             alpha=0.2, label="±1σ (P_k|k)")
-        axekf1.set_xlabel("Passo de tempo")
+        axekf1.set_xlabel("Tempo [dias]")
         axekf1.set_ylabel("δ/L")
         axekf1.legend(fontsize=8)
         figekf1.tight_layout()
@@ -1004,19 +1066,26 @@ with tab_gd:
 
     with f2:
         figekf2, axekf2 = plt.subplots(figsize=(6.2, 3.4))
-        axekf2.plot(passos_ekf, r_ekf["r_f_true"], color=GREEN, ls="--",
+        axekf2.plot(t_dias_ekf, r_ekf["r_f_true"], color=GREEN, ls="--",
                     label="R_f verdadeiro")
-        axekf2.plot(passos_ekf, r_ekf["x_hat"][:, 1], color=BLUE,
+        axekf2.plot(t_dias_ekf, r_ekf["x_hat"][:, 1], color=BLUE,
                     label="R_f estimado (EKF)")
         banda_inf_rf = r_ekf["x_hat"][:, 1] - r_ekf["std"][:, 1]
         banda_sup_rf = r_ekf["x_hat"][:, 1] + r_ekf["std"][:, 1]
-        axekf2.fill_between(passos_ekf, banda_inf_rf, banda_sup_rf, color=BLUE,
+        axekf2.fill_between(t_dias_ekf, banda_inf_rf, banda_sup_rf, color=BLUE,
                             alpha=0.2, label="±1σ (P_k|k)")
-        axekf2.set_xlabel("Passo de tempo")
+        axekf2.set_xlabel("Tempo [dias]")
         axekf2.set_ylabel("R_f [m²K/W]")
         axekf2.legend(fontsize=8)
         figekf2.tight_layout()
         st.pyplot(figekf2)
+
+    st.caption(
+        f"Horizonte total simulado: {n_passos_ekf} passos × "
+        f"{dt_horas_ekf:.1f} h/passo ≈ **{t_dias_ekf[-1]:.1f} dias** — a "
+        "mesma escala de tempo (semanas) usada no cenário do Capítulo 29 "
+        "para desgaste gradual de folga."
+    )
 
     g1, g2, g3 = st.columns(3)
     g1.metric("δ/L estimada (final)", f"{r_ekf['x_hat'][-1, 0]:.4f}",
@@ -1030,9 +1099,9 @@ with tab_gd:
                   "demais.")
 
     figekf3, axekf3 = plt.subplots(figsize=(9.0, 2.4))
-    axekf3.plot(passos_ekf, r_ekf["nis"], color=NAVY, lw=1.2)
+    axekf3.plot(t_dias_ekf, r_ekf["nis"], color=NAVY, lw=1.2)
     axekf3.axhline(2.0, color=RED, ls=":", label="n_z = 2 (esperado)")
-    axekf3.set_xlabel("Passo de tempo")
+    axekf3.set_xlabel("Tempo [dias]")
     axekf3.set_ylabel("NIS")
     axekf3.legend(fontsize=8)
     figekf3.tight_layout()
@@ -1077,17 +1146,19 @@ with tab_gd:
         n_passos_calibracao=n_cal_aum,
     )
     passos_aum = np.arange(n_total_aum)
+    t_dias_aum = passos_aum * dt_horas_ekf / 24.0
+    fim_cal_dias = n_cal_aum * dt_horas_ekf / 24.0
 
     a1, a2 = st.columns(2)
     with a1:
         figaum1, axaum1 = plt.subplots(figsize=(6.2, 3.4))
-        axaum1.axvspan(0, n_cal_aum, color="#dddddd", alpha=0.5, label="Janela de calibração")
+        axaum1.axvspan(0, fim_cal_dias, color="#dddddd", alpha=0.5, label="Janela de calibração")
         axaum1.axhline(defaults["k_folga"], color=GREEN, ls="--", label="K real")
-        axaum1.plot(passos_aum, r_aum["x_hat"][:, 2], color=BLUE, label="K estimado (EKF)")
+        axaum1.plot(t_dias_aum, r_aum["x_hat"][:, 2], color=BLUE, label="K estimado (EKF)")
         banda_k = r_aum["std"][:, 2]
-        axaum1.fill_between(passos_aum, r_aum["x_hat"][:, 2] - banda_k,
+        axaum1.fill_between(t_dias_aum, r_aum["x_hat"][:, 2] - banda_k,
                             r_aum["x_hat"][:, 2] + banda_k, color=BLUE, alpha=0.2)
-        axaum1.set_xlabel("Passo de tempo")
+        axaum1.set_xlabel("Tempo [dias]")
         axaum1.set_ylabel("K (Eq. 9.3)")
         axaum1.legend(fontsize=8)
         figaum1.tight_layout()
@@ -1095,14 +1166,21 @@ with tab_gd:
 
     with a2:
         figaum2, axaum2 = plt.subplots(figsize=(6.2, 3.4))
-        axaum2.axvspan(0, n_cal_aum, color="#dddddd", alpha=0.5)
-        axaum2.plot(passos_aum, r_aum["folga_true"], color=GREEN, ls="--", label="δ/L verdadeira")
-        axaum2.plot(passos_aum, r_aum["x_hat"][:, 0], color=BLUE, label="δ/L estimada")
-        axaum2.set_xlabel("Passo de tempo")
+        axaum2.axvspan(0, fim_cal_dias, color="#dddddd", alpha=0.5)
+        axaum2.plot(t_dias_aum, r_aum["folga_true"], color=GREEN, ls="--", label="δ/L verdadeira")
+        axaum2.plot(t_dias_aum, r_aum["x_hat"][:, 0], color=BLUE, label="δ/L estimada")
+        axaum2.set_xlabel("Tempo [dias]")
         axaum2.set_ylabel("δ/L")
         axaum2.legend(fontsize=8)
         figaum2.tight_layout()
         st.pyplot(figaum2)
+
+    st.caption(
+        f"Δt entre medições: {dt_horas_ekf:.1f} h (mesmo valor do EKF de 2 "
+        f"estados acima) — janela de calibração de {fim_cal_dias:.1f} dias, "
+        f"operação acompanhada por mais {t_dias_aum[-1] - fim_cal_dias:.1f} "
+        "dias depois."
+    )
 
     b1, b2, b3 = st.columns(3)
     b1.metric("K estimado (fim da calibração)", f"{r_aum['x_hat'][n_cal_aum - 1, 2]:.4f}",
@@ -1361,6 +1439,52 @@ with tab_gd:
         "aumentar a faixa de δ/L amostrada (barra lateral) melhora a "
         "identificação, pelo mesmo motivo do slider de δ/L de calibração "
         "do EKF aumentado acima."
+    )
+
+    st.divider()
+    st.subheader("Calibração em Lote via Levenberg-Marquardt (Cap. 28.1, scipy)")
+    st.caption(
+        "Terceiro caminho para o mesmo K — sem filtro, sem rede neural: "
+        "mínimos quadrados não lineares em lote (`scipy.optimize."
+        "least_squares(method='lm')`), direto contra o modelo físico "
+        "`sistema.simular()`, pelos mesmos dois canais do EKF aumentado "
+        "(ṁ_seco, T_HP,in). Viável aqui porque a incógnita é só K — 1 "
+        "parâmetro; inviável para o PIML acima, cujas incógnitas são os "
+        "pesos da rede inteira, não 1 escalar."
+    )
+
+    @st.cache_resource(show_spinner="Calibrando K via Levenberg-Marquardt...")
+    def _calibrar_lm_cache(_params_base, chave, n_amostras, k0, sigma_m, sigma_t):
+        entradas_lm, saidas4_lm = piml.gerar_dataset(
+            n_amostras, _params_base, _FAIXAS_PIML_APP, seed=7)
+        saidas2_lm = saidas4_lm[:, [2, 1]]  # [m_dot_seco, t_hp_in]
+        rng_lm = np.random.default_rng(11)
+        ruido_lm = np.stack([
+            rng_lm.normal(0.0, sigma_m, size=len(saidas2_lm)),
+            rng_lm.normal(0.0, sigma_t, size=len(saidas2_lm)),
+        ], axis=1)
+        return calib_lm.calibrar_k_lm(
+            entradas_lm, saidas2_lm + ruido_lm, _params_base, k_inicial=k0)
+
+    chave_lm = (round(params["t_amb"], 1), n_amostras_lm, k_inicial_lm,
+               sigma_m_dot_lm, sigma_t_hp_lm)
+    info_lm = _calibrar_lm_cache(
+        params, chave_lm, n_amostras_lm, k_inicial_lm, sigma_m_dot_lm, sigma_t_hp_lm)
+
+    lm1, lm2, lm3, lm4 = st.columns(4)
+    lm1.metric("K estimado", f"{info_lm['k_estimado']:.4f}",
+              help=f"K real usado no restante do app: {defaults['k_folga']:.4f}")
+    lm2.metric("Erro |K_estimado − K_real|",
+              f"{abs(info_lm['k_estimado'] - defaults['k_folga']):.4f}")
+    lm3.metric("Avaliações do modelo físico", info_lm["n_avaliacoes"])
+    lm4.metric("Convergiu?", "Sim" if info_lm["sucesso"] else "Não")
+    st.caption(
+        f"scipy: \"{info_lm['mensagem']}\" — compare o número de avaliações "
+        "acima contra épocas × amostras dos dois treinos PIML mais acima: "
+        "para 1 parâmetro só, LM converge em poucas dezenas de avaliações "
+        "do modelo físico, ordens de grandeza mais barato que treinar uma "
+        "rede — o preço é não escalar: o mesmo método não serve para "
+        "calibrar os pesos de uma rede neural."
     )
 
     st.divider()

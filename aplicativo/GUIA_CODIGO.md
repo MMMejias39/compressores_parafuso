@@ -118,6 +118,30 @@ eficaz). A cobertura contínua (≥1 torre sempre adsorvendo) **não é
 garantida por construção** — o módulo calcula e expõe
 `tempo_sem_secagem_min`, e a UI alerta se for maior que zero.
 
+`pdp_saida_c` (16/08/2026, série temporal do PDP na saída do secador —
+mais uma simplificação de modelagem, não equação do livro): a cada
+instante, identifica a torre **adsorvendo** com **menor** `q_norm`
+(mais perto do *breakthrough*) e interpola linearmente entre `PDP_ALVO_C`
+(leito "novo") e `pdp_entrada_c` (parâmetro novo da função — nenhuma
+remoção). Quando nenhuma torre adsorve, usa o mesmo limite de
+`pdp_entrada_c` (ar passa sem secar). Produz o serrilhado esperado: cada
+troca de torre reinicia a curva de degradação daquele leito.
+
+## `compressor_sim/calib_lm.py` — Calibração em Lote via Levenberg-Marquardt
+
+Terceiro caminho de identificação de K (Eq. 9.3), ao lado do EKF com
+estado aumentado (online/recursivo) e do PIML (offline, junto ao treino
+de uma rede). Aqui não há filtro nem rede: `calibrar_k_lm()` chama
+`scipy.optimize.least_squares(method="lm")` direto contra
+`sistema.simular()`, pelos mesmos 2 canais medidos do EKF aumentado
+(ṁ_seco, T_HP,in — mesma ordem de saída de `ekf.medicao_aumentada`).
+Viável porque a incógnita é 1 escalar só — LM (Gauss-Newton amortecido)
+formaria uma Hessiana $J^TJ$ impraticável para os milhares de pesos de
+uma rede, e é exatamente por isso que o PIML usa Adam em vez de LM (ver
+`CONTEXTO_app.md`). Converge em poucas avaliações do modelo físico
+(tipicamente < 10), ordens de grandeza mais barato que treinar uma rede,
+e — ao contrário do PIML — o resultado não depende do chute inicial.
+
 ## `compressor_sim/ekf.py` — Filtro de Kalman Estendido
 
 Duas gerações de funções, lado a lado:

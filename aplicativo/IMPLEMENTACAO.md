@@ -13,8 +13,11 @@ Simular o trem de ar comprimido offshore descrito no livro *Gêmeo Digital de
 Sistemas de Compressão Offshore* (`../compressores.tex`) — desde a admissão
 até a rede de distribuição — como aplicativo web interativo, e demonstrar em
 código funcional os cinco algoritmos de Gêmeo Digital da Parte II do livro
-(EKF, VAE, PIML, MPC, PSO), incluindo os dois mecanismos de identificação de
-parâmetro por problema inverso da Parte III (Caps. 23.8 e 28.1).
+(EKF, VAE, PIML, MPC, PSO), incluindo os três caminhos de identificação de
+parâmetro por problema inverso da Parte III (EKF aumentado e PIML, Caps.
+23.8 e 28.1, mais calibração em lote via Levenberg-Marquardt,
+`calib_lm.py`, 16/08/2026 — alternativa clássica aos dois primeiros, sem
+filtro nem rede neural).
 
 Não é um produto de engenharia para uso em campo — é uma implementação de
 referência **pedagógica e de verificação**: toda equação do livro que entra
@@ -139,11 +142,17 @@ e explicitamente documentada da física em forma diferenciável, ver
    modos VSD ou Carga/Alívio.
 3. **Secagem PSA** — `psa_ciclo.simular_ciclo_psa()`, rodízio de N torres
    com as 3 fases (adsorvendo/regenerando/resfriando) e os KPIs do
-   Capítulo 15.
+   Capítulo 15. Inclui (16/08/2026) o ponto de orvalho na saída do secador
+   ao longo do tempo (`pdp_saida_c`) — serrilhado, reiniciando a cada
+   troca de torre.
 4. **Gêmeo Digital (EKF/PSO)** — os cinco algoritmos da Parte II mais os
-   dois mecanismos de identificação por problema inverso, cada um em sua
-   própria seção, com cenário e parâmetros configuráveis na aba
-   Configurações.
+   três caminhos de identificação de K (EKF aumentado, PIML, calibração
+   em lote via Levenberg-Marquardt), cada um em sua própria seção, com
+   cenário e parâmetros configuráveis na aba Configurações. O EKF de 2
+   estados e o EKF aumentado (16/08/2026) rotulam o eixo de tempo em
+   dias, não em passos abstratos — um "Δt entre medições" assumido
+   converte o horizonte de simulação para a mesma escala de semanas do
+   cenário do Capítulo 29.
 5. **Configurações** (16/08/2026) — geometria de equipamento e
    hiperparâmetros de algoritmo que não mudam de uma sessão de análise
    para a outra: tudo que antes vivia numa única barra lateral longa,

@@ -34,6 +34,8 @@ from __future__ import annotations
 
 import numpy as np
 
+from .constantes import PDP_ALVO_C
+
 
 def simular_ciclo_psa(
     horizonte_min: float,
@@ -49,6 +51,7 @@ def simular_ciclo_psa(
     fator_purga: float,
     t_entrada_c: float,
     delta_t_regen: float,
+    pdp_entrada_c: float,
     dt_min: float = 0.05,
 ) -> dict:
     """Simula o rodízio de N torres PSA (3 fases) e devolve séries + KPIs.
@@ -59,7 +62,10 @@ def simular_ciclo_psa(
     t_entrada_c: temperatura do ar na entrada do secador [°C] — mesma leitura
     da "Saída aftercooler" da cascata estática (Cap. 14). delta_t_regen: salto
     de temperatura do aquecedor de regeneração (Eq. 3.3), mesmo parâmetro já
-    usado para dimensionar sua potência.
+    usado para dimensionar sua potência. pdp_entrada_c: ponto de orvalho do
+    ar que chega ao secador [°C] — mesma leitura de "Saída aftercooler"
+    (`pdp_c`) da cascata estática, usada como o pior caso de PDP de saída
+    (ver `pdp_saida_c` abaixo).
     """
     n_vasos = max(2, int(round(n_vasos)))
     t_ciclo = t_ads_min + t_regen_min + t_resfriamento_min
@@ -127,6 +133,24 @@ def simular_ciclo_psa(
 
     tempo_sem_secagem_min = float(np.sum(n_adsorvendo == 0)) * dt_min
 
+    # --- Ponto de orvalho na saída, ao longo do tempo (simplificação de
+    # modelagem — o Cap. 15 não fecha uma relação entre carga do leito e
+    # PDP de saída, só o KPI estático HI_des da Eq. 15.7, alimentado por um
+    # PDP "medido" manual). A cada instante, a torre relevante é a que está
+    # ADSORVENDO com a MENOR capacidade normalizada restante (a mais
+    # próxima do breakthrough) — com N torres em paralelo, é ela que
+    # domina a qualidade do ar combinado. Interpolação linear entre o PDP
+    # alvo (leito "novo", q_norm=1, ISO 8573-1 Classe 2) e o PDP de entrada
+    # (nenhuma remoção, q_norm->0 — o mesmo que aconteceria num
+    # breakthrough total). Quando nenhuma torre está adsorvendo
+    # (`tempo_sem_secagem_min` > 0), o ar passa sem secagem nenhuma —
+    # mesmo limite (q_relevante = 0).
+    adsorvendo_mask = estado == "Adsorvendo"
+    q_norm_adsorvendo = np.where(adsorvendo_mask, q_norm, np.inf)
+    q_relevante = np.min(q_norm_adsorvendo, axis=0)
+    q_relevante[~np.any(adsorvendo_mask, axis=0)] = 0.0
+    pdp_saida_c = PDP_ALVO_C + (pdp_entrada_c - PDP_ALVO_C) * (1.0 - q_relevante)
+
     return {
         "t_min": t,
         "q_norm": q_norm,
@@ -134,6 +158,7 @@ def simular_ciclo_psa(
         "temp_c": temp_c,
         "m_purge_kg_s": m_purge,
         "n_adsorvendo": n_adsorvendo,
+        "pdp_saida_c": pdp_saida_c,
         "kpis": {
             "n_trocas": n_trocas,
             "q_min": q_min,
@@ -141,6 +166,7 @@ def simular_ciclo_psa(
             "t_ciclo_min": t_ciclo,
             "n_adsorvendo_min": int(n_adsorvendo.min()),
             "tempo_sem_secagem_min": tempo_sem_secagem_min,
+            "pdp_saida_max_c": float(np.max(pdp_saida_c)),
         },
     }
 

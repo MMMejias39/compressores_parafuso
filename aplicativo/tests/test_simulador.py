@@ -15,6 +15,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from compressor_sim import (
+    calib_lm,
     dinamica,
     ekf,
     mpc,
@@ -332,7 +333,7 @@ def test_psa_cobertura_continua_quando_bem_dimensionado(n_vasos):
         horizonte_min=30, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
         t_resfriamento_min=2.0, n_vasos=n_vasos, k_ads=1.5, t_res_min=4.0,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
-        t_entrada_c=25.0, delta_t_regen=80.0)
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0)
     assert r["kpis"]["tempo_sem_secagem_min"] == pytest.approx(0.0)
     assert r["kpis"]["n_adsorvendo_min"] >= 1
 
@@ -345,7 +346,7 @@ def test_psa_gap_quando_resfriamento_nao_cabe_no_rodizio():
         horizonte_min=10, m_dot_ar=0.5, t_ads_min=3.0, t_regen_min=4.0,
         t_resfriamento_min=3.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
-        t_entrada_c=25.0, delta_t_regen=80.0)
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0)
     assert r["kpis"]["tempo_sem_secagem_min"] > 0.0
     assert r["kpis"]["n_adsorvendo_min"] == 0
 
@@ -355,7 +356,7 @@ def test_psa_capacidade_decai_regenera_e_mantem_no_resfriamento():
         horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
         t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
-        t_entrada_c=25.0, delta_t_regen=80.0)
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0)
     torre0 = r["q_norm"][0]
     t = r["t_min"]
     # adsorvendo em [0, 6): capacidade cai monotonicamente
@@ -375,7 +376,7 @@ def test_psa_purga_so_durante_regeneracao_e_escala_com_torres_simultaneas():
         horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
         t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
-        t_entrada_c=25.0, delta_t_regen=80.0)
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0)
     n_regenerando = np.sum(r["estado"] == "Regenerando", axis=0)
     esperado_por_torre = 0.5 * (1.05e5 / 8.4e5) * 0.15
     # purga é zero quando ninguém regenera, e escala com quantas regeneram
@@ -388,7 +389,7 @@ def test_psa_temperatura_do_leito_sobe_na_regeneracao_e_desce_no_resfriamento():
         horizonte_min=12, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
         t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
         p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
-        t_entrada_c=25.0, delta_t_regen=80.0)
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=5.0)
     torre0 = r["temp_c"][0]
     t = r["t_min"]
     # adsorvendo em [0, 6): leito na temperatura de entrada
@@ -401,6 +402,42 @@ def test_psa_temperatura_do_leito_sobe_na_regeneracao_e_desce_no_resfriamento():
     fase_resfriamento = torre0[t >= 10.0]
     assert np.all(np.diff(fase_resfriamento) <= 1e-9)
     assert fase_resfriamento[-1] < fase_resfriamento[0]
+
+
+def test_psa_pdp_saida_degrada_com_carga_do_leito_e_satura_no_pdp_entrada():
+    from compressor_sim.constantes import PDP_ALVO_C
+    pdp_entrada = 5.0
+    r = psa_ciclo.simular_ciclo_psa(
+        horizonte_min=12.0, m_dot_ar=0.5, t_ads_min=6.0, t_regen_min=4.0,
+        t_resfriamento_min=2.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=pdp_entrada)
+    pdp_saida = r["pdp_saida_c"]
+    t = r["t_min"]
+    # leito recém-trocado (q_norm=1, t=0): PDP no alvo (leito "novo")
+    assert pdp_saida[0] == pytest.approx(PDP_ALVO_C, abs=1e-6)
+    # dentro de UMA janela de adsorção (antes da 1ª troca de torre, t<6),
+    # o PDP degrada (sobe) monotonicamente — mesma janela usada pelo teste
+    # de capacidade acima (test_psa_capacidade_decai_...)
+    fase_ads_torre0 = pdp_saida[t < 6.0]
+    assert np.all(np.diff(fase_ads_torre0) >= -1e-9)
+    # sempre entre os dois limites físicos: alvo seco e entrada não tratada
+    assert np.all(pdp_saida >= PDP_ALVO_C - 1e-9)
+    assert np.all(pdp_saida <= pdp_entrada + 1e-9)
+
+
+def test_psa_pdp_saida_no_pdp_entrada_quando_nenhuma_torre_adsorve():
+    from compressor_sim.constantes import PDP_ALVO_C
+    pdp_entrada = 5.0
+    r = psa_ciclo.simular_ciclo_psa(
+        horizonte_min=10, m_dot_ar=0.5, t_ads_min=3.0, t_regen_min=4.0,
+        t_resfriamento_min=3.0, n_vasos=2, k_ads=1.5, t_res_min=4.0,
+        p_low=1.05e5, p_high=8.4e5, fator_purga=0.15,
+        t_entrada_c=25.0, delta_t_regen=80.0, pdp_entrada_c=pdp_entrada)
+    sem_secagem = r["n_adsorvendo"] == 0
+    assert sem_secagem.any()  # este cenário tem gap (ver teste do rodízio)
+    assert np.allclose(r["pdp_saida_c"][sem_secagem], pdp_entrada)
+    assert r["kpis"]["pdp_saida_max_c"] == pytest.approx(pdp_entrada, abs=1e-6)
 
 
 def test_umidade_nao_aumenta_ao_longo_do_tratamento():
@@ -689,6 +726,35 @@ def test_piml_identifica_xi_proximo_do_k_real():
         xi_inicial=0.02, n_epocas=300, lr=1e-2)  # xi_inicial != K real (0,05)
     assert info["xi_estimado"] == pytest.approx(p["k_folga"], abs=0.015)
     assert info["hist_data"][-1] < info["hist_data"][0]
+
+
+# --- Calibração em lote via Levenberg-Marquardt (Cap. 28.1) ----------------------
+
+def test_lm_calibra_k_proximo_do_real_com_ruido_baixo():
+    p = parametros_default()
+    entradas, saidas4 = piml.gerar_dataset(60, p, _FAIXAS_PIML_TESTE, seed=1)
+    saidas2 = saidas4[:, [2, 1]]  # [m_dot_seco, t_hp_in], mesma ordem do EKF aumentado
+    rng = np.random.default_rng(2)
+    ruido = np.stack([
+        rng.normal(0.0, 1e-4, size=len(saidas2)),
+        rng.normal(0.0, 0.05, size=len(saidas2)),
+    ], axis=1)
+    info = calib_lm.calibrar_k_lm(entradas, saidas2 + ruido, p, k_inicial=0.10)
+    assert info["sucesso"]
+    assert info["k_estimado"] == pytest.approx(p["k_folga"], abs=0.01)
+
+
+def test_lm_converge_igual_independente_do_chute_inicial():
+    # LM é determinístico dado o mesmo problema — chutes iniciais bem
+    # diferentes devem convergir para (aproximadamente) o mesmo K estimado,
+    # ao contrário do PIML/rede, sensível à inicialização dos pesos.
+    p = parametros_default()
+    entradas, saidas4 = piml.gerar_dataset(60, p, _FAIXAS_PIML_TESTE, seed=1)
+    saidas2 = saidas4[:, [2, 1]]
+    est = [calib_lm.calibrar_k_lm(entradas, saidas2, p, k_inicial=k0)["k_estimado"]
+          for k0 in (0.01, 0.05, 0.14)]
+    assert est[0] == pytest.approx(est[1], abs=1e-3)
+    assert est[1] == pytest.approx(est[2], abs=1e-3)
 
 
 # --- MPC (Eqs. 24.1/24.2) --------------------------------------------------------

@@ -1079,6 +1079,73 @@ Claude-in-Chrome — upload do próprio `instrumentacao_exemplo.csv` mostrou
 corretamente "25 variáveis carregadas" e "9/9 pontos cobertos" (mensagem
 de sucesso, não de aviso).
 
+## Terceiro caminho de calibração (LM), PDP dinâmico e horizonte em dias (16/08/2026)
+
+Pedido do autor em três partes, na sequência de uma pergunta sobre por
+que o problema inverso usa EKF/PIML em vez de Levenberg-Marquardt (LM):
+"pode extender para esta opção?"; "a temperatura de ponto de orvalho ao
+longo do tempo na saída da secadora, consegue fazer isso?"; "aumentar
+para até dias a questão do acompanhamento dos compressores, visto que o
+processo vai demonstrando falhas em tempos mais dilatados". As três
+implementadas nesta sessão, sem pedir esclarecimento adicional (escopo já
+estava claro dos meus próprios comentários anteriores + do pedido em si).
+
+**1. `compressor_sim/calib_lm.py`** (novo módulo): terceiro caminho de
+identificação de K, ao lado do EKF aumentado (online) e do PIML (offline,
+com rede) — `calibrar_k_lm()` via `scipy.optimize.least_squares
+(method="lm")`, batch, direto contra `sistema.simular()`, pelos mesmos 2
+canais do EKF aumentado (ṁ_seco, T_HP,in — mesma ordem de
+`ekf.medicao_aumentada`, para os três caminhos serem comparáveis).
+Verificado por `python -c` antes de integrar na UI: converge para
+K≈0,0476-0,0509 (real 0,05) em 3-4 avaliações do modelo físico,
+**independente do chute inicial** (testado com k0 ∈ {0,02; 0,05; 0,10} —
+mesmo resultado nos três, ao contrário do PIML, sensível à inicialização
+dos pesos). Nova subseção na aba "🧠 Gêmeo Digital" entre PIML-inverso e
+MPC; novos hiperparâmetros (amostras, K inicial, ruído) na aba
+Configurações.
+
+**2. `pdp_saida_c` em `psa_ciclo.py`**: série temporal do ponto de
+orvalho na saída do secador — o Cap. 15 não fecha essa relação (só o KPI
+estático HI_des, Eq. 15.7), então é uma simplificação de modelagem nova,
+documentada como tal: a cada instante, a torre relevante é a que está
+adsorvendo com menor `q_norm` (mais perto do *breakthrough*), interpolada
+linearmente entre `PDP_ALVO_C` (leito novo) e `pdp_entrada_c` (nenhuma
+remoção — mesmo limite usado quando nenhuma torre está adsorvendo). Novo
+gráfico na aba "Secagem PSA", entre a capacidade/temperatura por torre e
+o chaveamento — mostra visualmente o serrilhado esperado (cada troca de
+torre reinicia a degradação daquele leito), confirmado ao vivo via
+Claude-in-Chrome.
+
+**3. Horizonte do EKF em dias, não só "passos"**: novo widget "Δt entre
+medições [horas]" (Configurações, aba EKF) — converte o eixo x dos 3
+gráficos do EKF de 2 estados e dos 2 gráficos do EKF aumentado de
+"passo" para "Tempo [dias]" (`t_dias = passos * dt_horas / 24`), sem
+alterar o cálculo do filtro (Q/R continuam por-passo). Sliders de
+horizonte estendidos de 150→2000 passos (EKF) e 60→2000 passos (EKF
+aumentado, pós-calibração) — testado ao vivo com 2000 passos × 1h ≈ 83,3
+dias, renderizou em segundos (perf verificada antes via `python -c`:
+1000 passos ≈ 0,76 s). Motivação explícita do autor: mecanismos de falha
+reais (a mesma folga/incrustação do Cap. 29) se desenvolvem em semanas,
+não minutos — o eixo em dias torna essa escala visível sem forçar o
+usuário a fazer a conversão de cabeça.
+
+**Testes novos**: `test_lm_calibra_k_proximo_do_real_com_ruido_baixo`,
+`test_lm_converge_igual_independente_do_chute_inicial`,
+`test_psa_pdp_saida_degrada_com_carga_do_leito_e_satura_no_pdp_entrada`,
+`test_psa_pdp_saida_no_pdp_entrada_quando_nenhuma_torre_adsorve` — 75/75
+testes passam (71 antigos + 4 novos, nenhum removido). Os 5 testes
+existentes de `simular_ciclo_psa()` precisaram do novo argumento
+obrigatório `pdp_entrada_c` (breaking change de assinatura, não escondido
+atrás de um default). Um teste de monotonicidade do PDP inicialmente
+falhou por escolher um horizonte que cruzava exatamente uma troca de
+torre — corrigido restringindo a janela de verificação à mesma fase de
+adsorção já usada pelo teste de capacidade vizinho (`t < 6.0`), não um
+bug de implementação.
+
+**Documentação atualizada**: `GUIA_CODIGO.md` (§ `psa_ciclo.py`, nova §
+`calib_lm.py`), `IMPLEMENTACAO.md` ("três caminhos de identificação de K",
+horizonte em dias, PDP dinâmico).
+
 ## Pendências conhecidas
 
 1. O app cobre os Capítulos 5, 9, 10, 11, 12, 13, 14, 15, 16 do livro
