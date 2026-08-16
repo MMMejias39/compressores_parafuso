@@ -327,6 +327,8 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$Q$ & Matriz de covariância do ruído de processo (EKF) & --- & Cap. 20 \\
 	$\mathcal{R}$\dag & Matriz de covariância do ruído de \textbf{medição} (EKF) & --- & Cap. 20 \\
 	$F_k, G_k$ & Jacobianas de transição de estado e de observação (EKF) & --- & Cap. 20 \\
+	$\Lambda$ & Vetor de parâmetros estáticos calibráveis, aumentado ao estado do EKF & --- & Cap. 28 \\
+	$Q_\Lambda$\dag & Covariância de processo dos parâmetros estáticos aumentados — próxima de zero na janela de calibração, pequena para acompanhar deriva lenta depois (distingue-se de $Q$, a covariância do estado dinâmico original) & --- & Cap. 28 \\
 	$u$ & Vetor de entradas conhecidas (comandos ao VSD, demanda) & --- & Cap. 21 \\
 	$n_x, n_z$\dag & Dimensões dos vetores de estado e de medição (subscritos evitam colisão com o índice politrópico $n$ e o módulo de engrenagem $m$) & --- & Cap. 21 \\
 	$\mathcal{O}$ & Matriz de observabilidade do sistema linearizado & --- & Cap. 21 \\
@@ -356,7 +358,7 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$J$ & Função de custo/objetivo (MPC, PSO) & --- & Cap. 15, 20 \\
 	$H$ & Horizonte de predição (MPC) & passos & Cap. 15, 20 \\
 	$k$ & Índice de tempo discreto (sempre como subscrito: $x_k$, $z_k$) & --- & Cap. 15, 20 \\
-	$RUL$ & \textit{Remaining Useful Life} — vida útil remanescente projetada (base: dano acumulado, Eq. 19.9; com subscrito, projeção sobre outra variável de estado, ex. $RUL_\delta$ no Cap. 28) & tempo/ciclos & Cap. 19, 28 \\ \bottomrule
+	$RUL$ & \textit{Remaining Useful Life} — vida útil remanescente projetada (base: dano acumulado, Eq. 19.9; com subscrito, projeção sobre outra variável de estado, ex. $RUL_\delta$ no Cap. 29) & tempo/ciclos & Cap. 19, 29 \\ \bottomrule
 \end{longtable}
 }
 
@@ -3394,6 +3396,136 @@ domain.add_constraint(PointwiseProbabilityConstraint(
 \vspace*{\fill}
 \clearpage
 
+% --- Início do Capítulo 28: Metodologia de Calibração de Parâmetros e Catálogo de Detecção ---
+
+\clearpage
+\section{Metodologia de Calibração de Parâmetros e Catálogo de Detecção}
+\markboth{Metodologia de Calibração e Catálogo de Detecção}{}
+
+Os Capítulos 21 a 27 descreveram como o Gêmeo Digital estima \textbf{estados} que variam com o tempo — folga, incrustação, eficiência isentrópica — a partir de um modelo físico que, até aqui, tratou seus próprios parâmetros como constantes conhecidas. Na prática de campo isso raramente é verdade: a Equação~\eqref{eq:s9-3} já qualifica o coeficiente de vazamento $K$ como algo ``calibrado por ensaio de desempenho da máquina'', mas nenhum capítulo anterior descreveu como fazer esse ensaio de forma sistemática, nem o que fazer quando ele não é possível. Este capítulo fecha essa lacuna metodológica em três passos, na ordem em que um comissionamento real os enfrentaria: primeiro, como calibrar os parâmetros estáticos do modelo a partir de dados de uma janela de operação sabidamente saudável (Seção~28.1); segundo, como registrar de forma explícita e auditável o que continua desconhecido depois dessa calibração, em vez de deixar essa lacuna implícita (Seção~28.2); e terceiro, um catálogo consolidado ligando cada mecanismo de falha já descrito na Parte I ao algoritmo da Parte II mais adequado para detectá-lo (Seção~28.3). O Capítulo 29 aplica as três peças em conjunto, num cenário numérico único.
+
+\subsection{Estimação Conjunta de Estado e Parâmetro (EKF com Estado Aumentado)}
+
+Além de $K$, outros parâmetros do modelo físico da Parte I nunca foram medidos nesta máquina específica: $\eta_{\text{mec}}$ (eficiência mecânica do elemento compressor, Equação~\eqref{eq:s5-5}) e o coeficiente de perda de filtro em condição limpa, $\zeta_{\text{ref}}$ (Equações~\eqref{eq:s3-4}/\eqref{eq:s5-4}), entram no equacionamento como valores de catálogo ou de literatura, quando deveriam refletir a unidade real instalada em campo. Esta seção fecha essa lacuna com a técnica padrão de \textbf{estimação conjunta de estado e parâmetro} (\textit{joint/dual state-parameter estimation}) \cite{simon}: em vez de tratar esses parâmetros como constantes externas ao filtro, eles passam a integrar o próprio vetor de estado do EKF, na Equação~\eqref{eq:s28-1}:
+
+\begin{equation}\label{eq:s28-1}
+x_{\text{aug}} = \begin{bmatrix} x \\ \Lambda \end{bmatrix}, \qquad \Lambda = \begin{bmatrix} K \\ \eta_{\text{mec}} \\ \zeta_{\text{ref}} \end{bmatrix}
+\end{equation}
+
+Onde $x$ é o mesmo vetor de estado dinâmico da Equação~\eqref{eq:s21-2} — as variáveis de degradação, que continuam a variar com o tempo — e $\Lambda$ é o vetor dos parâmetros estáticos escolhidos como exemplo para este trem de compressão; a lista não é exaustiva, e qualquer outro parâmetro de catálogo do modelo físico pode ser aumentado da mesma forma, seguindo o protocolo da Seção~28.2 para decidir quais valem a pena. O modelo de transição do estado aumentado, Equação~\eqref{eq:s28-2}, propaga $x$ pela mesma dinâmica não linear $f$ da Equação~\eqref{eq:s21-1} — agora explicitamente parametrizada por $\Lambda$ — e trata os parâmetros estáticos como um passeio aleatório de covariância controlável:
+
+\begin{equation}\label{eq:s28-2}
+\begin{bmatrix} x_k \\ \Lambda_k \end{bmatrix} = \begin{bmatrix} f(x_{k-1}, \Lambda_{k-1}, u_{k-1}) \\ \Lambda_{k-1} \end{bmatrix} + w_{\text{aug},k-1}, \qquad Q_{\text{aug}} = \begin{bmatrix} Q & 0 \\ 0 & Q_\Lambda \end{bmatrix}
+\end{equation}
+
+O ganho da técnica está inteiramente em como $Q_\Lambda$ é escolhido ao longo do tempo, não numa equação nova: o ciclo de predição-correção em si continua sendo exatamente o da Equação~\eqref{eq:s21-4}, aplicado ao vetor aumentado $x_{\text{aug}}$ no lugar de $x$. Durante uma \textbf{janela de calibração} — comissionamento, ou o período imediatamente após uma manutenção confirmada, quando se sabe por outros meios (inspeção, relatório de serviço) que a máquina está numa condição de referência conhecida — $Q_\Lambda$ é fixado próximo de zero: o filtro trata $\Lambda$ como verdadeiramente constante, o que acelera a convergência e produz a melhor estimativa possível dos parâmetros com os dados daquela janela. Terminada a calibração, $Q_\Lambda$ passa a um valor pequeno mas não nulo, permitindo que o filtro acompanhe deriva lenta genuína — o próprio $K$ tende a crescer ao longo de anos por desgaste do perfil do rotor — sem descartar de uma vez a informação acumulada na janela de calibração.
+
+Essa mecânica de convergência — uma crença inicial pouco informativa que se estreita ao longo de vários ciclos até um valor sustentado pelos dados — já tem precedente de implementação prática na ferramenta de referência que acompanha este documento: o módulo EKF do simulador (\texttt{aplicativo/compressor\_sim/ekf.py}) implementa o mesmo ciclo de predição-correção da Equação~\eqref{eq:s21-4} para dois dos estados dinâmicos com contraparte calculável no simulador (folga relativa e incrustação equivalente do intercooler), partindo de uma condição inicial pouco informativa e convergindo para o valor real conforme medições ruidosas chegam — o mesmo mecanismo bayesiano que a Equação~\eqref{eq:s28-2} estende ao vetor de parâmetros estáticos $\Lambda$. A estimação conjunta de $\Lambda$ em si, por sua vez, é uma extensão proposta nesta seção, sem implementação de referência no simulador até o momento.
+
+\subsection{Protocolo de Registro de Parâmetros Desconhecidos e Lacunas de Instrumentação}
+
+A Tabela~\ref{tab:18-1} já expõe as \textbf{lacunas de observabilidade} do trem de compressão: pontos onde o Gêmeo Digital depende inteiramente de inferência por modelo porque não há sensor físico disponível (Capítulo 18). Esta seção formaliza uma classificação equivalente para os \textbf{parâmetros} do modelo, não apenas para as variáveis de estado. Todo parâmetro que o equacionamento da Parte I usa — folga de referência, coeficientes de perda, eficiências agregadas — se enquadra numa de quatro categorias de proveniência, na Tabela~\ref{tab:28-1}, que determina o nível de confiança que o Gêmeo Digital pode depositar naquele valor.
+
+\begin{table}[h!tbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{>{\raggedright\arraybackslash}p{3.6cm} >{\raggedright\arraybackslash}p{5.8cm} >{\raggedright\arraybackslash}p{5.2cm} >{\raggedright\arraybackslash}p{5.0cm}}
+\toprule
+\textbf{Categoria} & \textbf{Definição} & \textbf{Exemplo(s)} & \textbf{Ação Recomendada} \\ \midrule
+(i) Medido & Sensor de campo existe, listado na Tabela~\ref{tab:18-1} & $P$, $T$, $I$, $v_{\text{rms}}$ (pontos A--I) & Usar diretamente, sem inferência \\
+(ii) Inferível via \textit{Soft-Sensor} & Sem sensor dedicado, mas calculável por relação física a partir de outra grandeza já medida & $\dot{m}_w$ (Equação~\eqref{eq:s12-8}), $T_{\text{hood}}$ (Equação~\eqref{eq:s2-4}) & Validar a relação física periodicamente contra o comissionamento \\
+(iii) Calibrável na Janela Saudável & Sem sensor nem relação inferível direta, mas identificável por estimação conjunta (Seção~28.1) numa janela de operação confirmadamente saudável & $K$ (Equação~\eqref{eq:s9-3}), $\eta_{\text{mec}}$ (Equação~\eqref{eq:s5-5}), $\zeta_{\text{ref}}$ (Equações~\eqref{eq:s3-4}/\eqref{eq:s5-4}) & Recalibrar após toda manutenção confirmada; documentar a janela usada \\
+(iv) Desconhecido / Valor de Literatura & Nem medido, nem inferível, nem calibrável em campo — fixado por folha de dados do fabricante ou literatura, sem via de verificação & Propriedade de material não instrumentada (ex.: módulo de cisalhamento $G$ do eixo, Equação~\eqref{eq:s6-5}) & Análise de sensibilidade obrigatória antes de qualquer decisão crítica baseada nele; marcar explicitamente como tal na documentação do modelo \\ \bottomrule
+\end{tabular}
+}
+\caption[Protocolo de classificação de parâmetros por proveniência]{Protocolo de classificação de parâmetros do modelo por proveniência, do mais ao menos confiável.}
+\label{tab:28-1}
+\end{table}
+
+A quarta categoria não é uma falha de projeto do Gêmeo Digital — assim como as lacunas de observabilidade da Tabela~\ref{tab:18-1}, ela precisa apenas estar \textbf{explícita}. Um parâmetro nela carrega incerteza que nenhuma das outras três categorias reduz, e qualquer decisão crítica que dependa fortemente dele — por exemplo, uma restrição estrutural do MPC (Equação~\eqref{eq:s24-1}) — deveria vir acompanhada de uma análise de sensibilidade explícita: variar o parâmetro dentro da faixa plausível da literatura e verificar se a decisão recomendada muda, antes de tratá-la como confiável.
+
+\subsection{Catálogo de Mecanismos de Falha Simuláveis para Detecção via Gêmeo Digital}
+
+As Partes I e II deste documento foram escritas em capítulos separados — física e mecanismos de falha primeiro, algoritmos de detecção depois — o que nunca produziu, até aqui, uma vista consolidada ligando cada mecanismo catalogado ao algoritmo mais adequado para detectá-lo. A Tabela~\ref{tab:28-2} fecha essa vista: cada linha reproduz um mecanismo já descrito em algum capítulo da Parte I (nenhum é novo desta seção), com a variável ou estado que o Gêmeo Digital já usa como indicador e o algoritmo mais indicado para essa detecção. Nem todo mecanismo se beneficia de EKF, VAE ou PIML — muitos já têm um indicador de limiar direto, estabelecido e suficiente, listado como tal na coluna final; reservar a arquitetura combinada da Parte II para os casos silenciosos, ambíguos ou multivariáveis (o mesmo critério que motivou o cenário do Capítulo 29) é mais honesto do que atribuir um algoritmo sofisticado a cada linha por uniformidade.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{3.6cm} >{\centering\arraybackslash}p{1.0cm} >{\raggedright\arraybackslash}p{5.2cm} >{\raggedright\arraybackslash}p{4.4cm}}
+\caption[Catálogo de mecanismos de falha e algoritmo de detecção primário]{Catálogo de mecanismos de falha da Parte I e o algoritmo de detecção primário mais adequado para cada um.}
+\label{tab:28-2}\\
+\toprule
+\textbf{Mecanismo de Falha} & \textbf{Cap.} & \textbf{Variável/Estado Associado} & \textbf{Detecção Primária} \\ \midrule
+\endfirsthead
+\multicolumn{4}{l}{\textit{(continuação da Tabela~\ref{tab:28-2})}} \\
+\toprule
+\textbf{Mecanismo de Falha} & \textbf{Cap.} & \textbf{Variável/Estado Associado} & \textbf{Detecção Primária} \\ \midrule
+\endhead
+Falha do exaustor (filtro, pá, motor, venezianas) & 2 & $\dot m_{\text{vent}}$, $T_{\text{hood}}$ (Eq.~\eqref{eq:s2-2}/\eqref{eq:s2-4}) & PIML (ambíguo com outras fontes de calor do invólucro) \\
+Quebra de barras do rotor & 4 & Bandas laterais espectrais (Eq.~\eqref{eq:s4-6}) & Limiar direto (MCSA) \\
+Desbalanço de tensão/corrente entre fases & 4 & $VU$, $IU$, $\Delta T_{\text{fases}}$ (Eq.~\eqref{eq:s4-8}) & Limiar direto (NEMA MG1) \\
+Correntes de eixo por EDM & 4 & Erosão progressiva de pista, sem sensor direto de tensão de eixo & VAE (padrão indireto de vibração e temperatura) \\
+Desalinhamento (acoplamento) & 6 & Pico em $2\times\text{RPM}$ & Limiar direto \\
+Fadiga do elemento (acoplamento) & 6 & Resíduo mecânico $r_{\text{mec}}$ (Eq.~\eqref{eq:s6-6}) & Limiar direto (residual recalculado a cada ciclo) \\
+\textit{Pitting} (engrenagens) & 6 & Bandas laterais em $GMF$ & Limiar direto \\
+\textit{Scuffing} (engrenagens) & 6 & $\uparrow T$ óleo de retorno & Limiar direto \\
+Desgaste de metal (mancais, gearbox) & 6 & $\downarrow P_{\text{óleo}}$ e vibração & Limiar direto \\
+Desgaste labirinto (selos, gearbox) & 6 & $\downarrow \eta_{\text{vol}}$ e $\uparrow T_{\text{suc}}$ & Limiar direto \\
+Sobrecarga/curto (motor da bomba de óleo) & 7 & $\uparrow I_{\text{pump}}$ & Limiar direto \\
+Cavitação/desgaste (bomba de óleo) & 7 & $\downarrow P_{\text{óleo}}$ vs. $\uparrow$RPM & Limiar direto \\
+Colmatagem (filtro de óleo) & 7 & $\uparrow \Delta P_{\text{filt}}$ normalizado & Limiar direto \\
+Incrustação (resfriador de óleo) & 7, 12 & $\downarrow \epsilon$, $\eta_{UA}$ (Eq.~\eqref{eq:s12-5}) & PIML (mesmo mecanismo da Tabela~\ref{tab:12-1}) \\
+Desgaste de metal patente (mancais) & 7 & $\uparrow T_{\text{brg}}$ e vibração HF & Limiar direto \\
+Desgaste de rolamento & 8 & Picos BPFO/BPFI, curtose & Limiar direto \\
+\textit{Pitting} nos dentes & 8 & Bandas laterais em $GMF$ & Limiar direto \\
+Quebra de dente & 8 & Fadiga de raiz (Lewis) & EKF ($\sigma_b$) \\
+Desalinhamento (trem de transmissão) & 8 & Vibração $2\times\text{RPM}$, $\uparrow K_m$ & Limiar direto \\
+\textit{Scuffing} (trem de transmissão) & 8 & $\uparrow T$ de \textit{flash}, partículas no óleo & Limiar direto \\
+Erro de sincronismo (\textit{timing gears}) & 8 & Desvio de fase $\Delta\phi$ & Limiar direto \\
+Desgaste de folgas (estágio LP) & 9 & $\delta$ (Eq.~\eqref{eq:s9-3}) & EKF ($\delta$) \\
+Superaquecimento (estágio LP) & 9 & $\uparrow T_c$, $\uparrow T_2$ & PIML (ambíguo com falha de invólucro, Cap. 2) \\
+Contato/\textit{rubbing} (estágio LP) & 9 & $\uparrow\uparrow T_2$ súbito & PIML (mesma família ambígua do superaquecimento) \\
+Perda de revestimento (\textit{coating}) & 9 & $\uparrow n$ politrópico & VAE (deriva gradual, sem limiar estabelecido) \\
+Erosão do perfil (rotor) & 9 & $\uparrow A_{\text{leak}}$ calculado & EKF ($\delta$, mesma família física) \\
+Desalinhamento (estágio LP) & 9 & Oscilação de torque, $1\times$/$2\times$RPM & Limiar direto \\
+\textit{Offloading} (intercooler) & 10 & $\uparrow T_{w,\text{in}}$, $\epsilon\approx$ constante & PIML (ambíguo com condição externa de rede) \\
+\textit{Fouling} (intercooler) & 10 & $\downarrow\epsilon$, $\uparrow R_f$ & EKF ($R_f$) \\
+Baixo fluxo de água (intercooler) & 10 & $\downarrow \Delta P_w$ & Limiar direto \\
+Falha de drenagem (intercooler) & 10 & $\uparrow \Delta P_{\text{ar}}$, vibração HF & Limiar direto \\
+\textit{Rubbing} térmico (estágio HP) & 11 & $\uparrow$ vibração global, $T_{HP,\text{out}}$ & PIML (mesma família ambígua do Cap. 9) \\
+Desgaste de engrenagens (estágio HP) & 11 & Harmônicos $f_{gmf}$, erro de fase & Limiar direto \\
+Fadiga de rolamento (estágio HP) & 11 & $\uparrow T_{\text{mancal}}$, $L_{10h}\to 0$ & Limiar direto \\
+Vazamento de selos (estágio HP) & 11 & $\downarrow \eta_{v,HP}$, $\uparrow P_{\text{cárter}}$ (indicador do livro) & EKF ($\eta_{is,HP}$, canal complementar — mesma fuga interna afeta as duas eficiências) \\
+Arraste de líquido (estágio HP) & 11 & Emissão acústica, $\Delta\tau$ & Limiar direto \\
+Trocador obstruído (circuito de óleo) & 12 & $\eta_{UA}\downarrow$ sustentado (Eq.~\eqref{eq:s12-5}) & PIML (confirmação quantitativa exigida pela própria Tabela~\ref{tab:12-1}) \\
+Deaerador saturado & 12 & $\Delta P_{\text{sep}}\uparrow\uparrow$ & Limiar direto \\
+Baixo nível de óleo & 12 & $\tau_{th}\downarrow$ com $UA_{\text{real}}$ nominal (Eq.~\eqref{eq:s12-7}) & PIML (ambíguo em regime permanente, só o transiente resolve) \\
+Válvula termostática presa & 12 & Resíduo de $a_{tv}$ (Eq.~\eqref{eq:s12-6}) & PIML \\
+Vazamento \textit{blow-off} & 13 & $dP/dt$ baixo na carga, $\uparrow$SPC & Limiar direto \\
+Válvula de admissão presa & 13 & $dP/dt \approx 0$, consumo $\downarrow$ & Limiar direto \\
+Filtro de admissão obstruído & 13 & $dP/dt$ lento, $\downarrow$ torque & Limiar direto \\
+Vazamento na rede (externo) & 13 & SPC constante, $dP/dt$ baixo & Limiar direto \\
+Incrustação (aftercooler) & 14 & $\uparrow T$ saída, umidade $\uparrow$ & Limiar direto \\
+Filtro coalescente saturado & 14 & $\uparrow\uparrow \Delta P$ filtros & Limiar direto \\
+Dreno aberto (travado) & 14 & $\downarrow \Delta P$, vazamento de ar & Limiar direto \\
+Dreno fechado (entupido) & 14 & $\Delta P$ oscilante, umidade $\uparrow\uparrow$ & Limiar direto \\
+\textit{Breakthrough} (secador PSA) & 15 & $\uparrow PDP$ & Limiar direto \\
+Falha de chaveamento (PSA) & 15 & $\Delta P$ constante (válvula presa) & Limiar direto \\
+Degradação térmica (regeneração PSA) & 15 & $\downarrow \Delta T$ de regeneração & VAE (envelhecimento gradual) \\
+Desgaste do tambor rotativo & 15 & $\uparrow$ torque do motor & Limiar direto \\
+PSV travada (fechada) & 16 & $P>P_{set}$ sem alívio & Limiar direto \\
+Falha de sequenciamento (frota) & 16 & $\downarrow P_{tank}$ em \textit{standby} & Limiar direto \\
+Vazamento crítico (header) & 16 & $dP/dt \ll 0$ & Limiar direto \\
+Falha de \textit{check valve} & 16 & $\dot m_i < 0$ (refluxo) & Limiar direto \\
+PSV travada (aberta) & 16 & Disparo prematuro & Limiar direto \\
+Perda de carga progressiva (filtros, agregado) & 17 & $\uparrow E_{\text{rec}}$ & VAE (indicador nativo, Eq.~\eqref{eq:s22-5}) \\
+Desvio de curva $P$-$T$ do estágio (agregado) & 17 & Desvio de $\eta_{is}$ esperado & EKF ($\eta_{is,LP}$/$\eta_{is,HP}$) \\
+\bottomrule
+\end{longtable}
+
+\textbf{Diretriz Técnica Final:} As três seções deste capítulo formam uma cadeia de dependência, não três tópicos independentes — a Seção~28.1 calibra os parâmetros estáticos que a Seção~28.2 classifica e documenta, e é exatamente essa documentação de proveniência que determina quanto peso a Seção~28.3 pode depositar em cada detecção do catálogo: um mecanismo cujo indicador depende de um parâmetro da categoria (iv) (desconhecido, Tabela~\ref{tab:28-1}) herda aquela incerteza, mesmo que o algoritmo de detecção em si — EKF, VAE ou PIML — esteja corretamente implementado. Calibração ruim ou não documentada não aparece como erro do algoritmo; aparece como falso alarme ou detecção tardia, silenciosamente. O Capítulo~29 demonstra as três peças em conjunto: uma janela saudável de referência (equivalente ao produto da Seção~28.1), parâmetros e variáveis com proveniência implícita nas suas próprias equações (o mesmo espírito da Seção~28.2), e três mecanismos do catálogo desta seção — desgaste de folgas, e as hipóteses alternativas de incrustação de intercooler e viés de temperatura ambiente — postos em ação sobre um único cenário numérico.
+
+% --- Fim do Capítulo 28 ---
+
+% --- Início do Capítulo 29: Estudo de Caso Integrado ---
+
 \clearpage
 \section{Estudo de Caso Integrado: Diagnóstico Precoce de Desgaste de Folgas via EKF, VAE, PIML e MPC/PSO}
 \markboth{Estudo de Caso Integrado: Diagnóstico Precoce de Desgaste de Folgas}{}
@@ -3408,7 +3540,7 @@ O cenário é o desgaste gradual da folga radial do estágio LP ($\delta$, mesma
 
 \subsection{Ponto de Partida: Linha de Base Saudável}
 
-O ponto de operação de referência usa os mesmos valores já adotados como padrão ao longo deste documento e do aplicativo de referência: pressão de rede $\pi = 8$, índice politrópico $n = 1{,}35$, temperatura ambiente $T_{amb} = 30\,^{\circ}\text{C}$, coeficiente de vazamento $K = 0{,}05$ (Equação~\eqref{eq:s9-3}) e folga relativa nova $\delta/L = 0{,}002$. A razão de pressão por estágio é $\pi_{lp} = \sqrt{\pi} = 2{,}828$ (Equação~\eqref{eq:s5-7} com estágios simétricos). Desses valores, a Equação~\eqref{eq:s9-3} dá a eficiência volumétrica de referência, $\eta_v = 1 - 0{,}05 \times 0{,}002 \times 2{,}828 \approx 99{,}97\,\%$, e a Equação~\eqref{eq:s11-1} dá a temperatura de descarga do LP prevista pelo modelo, $T_{d,lp} = 303{,}15 \times 2{,}828^{\,0{,}35/1{,}35} \approx 396{,}9\,\text{K} = 123{,}8\,^{\circ}\text{C}$. A Tabela~\ref{tab:28-1} consolida esses valores de referência junto com a corrente elétrica e a vibração global saudáveis, ambas ilustrativas (não derivadas de outra equação deste documento, apenas fixadas como ponto de partida do cenário).
+O ponto de operação de referência usa os mesmos valores já adotados como padrão ao longo deste documento e do aplicativo de referência: pressão de rede $\pi = 8$, índice politrópico $n = 1{,}35$, temperatura ambiente $T_{amb} = 30\,^{\circ}\text{C}$, coeficiente de vazamento $K = 0{,}05$ (Equação~\eqref{eq:s9-3}) e folga relativa nova $\delta/L = 0{,}002$. A razão de pressão por estágio é $\pi_{lp} = \sqrt{\pi} = 2{,}828$ (Equação~\eqref{eq:s5-7} com estágios simétricos). Desses valores, a Equação~\eqref{eq:s9-3} dá a eficiência volumétrica de referência, $\eta_v = 1 - 0{,}05 \times 0{,}002 \times 2{,}828 \approx 99{,}97\,\%$, e a Equação~\eqref{eq:s11-1} dá a temperatura de descarga do LP prevista pelo modelo, $T_{d,lp} = 303{,}15 \times 2{,}828^{\,0{,}35/1{,}35} \approx 396{,}9\,\text{K} = 123{,}8\,^{\circ}\text{C}$. A Tabela~\ref{tab:29-1} consolida esses valores de referência junto com a corrente elétrica e a vibração global saudáveis, ambas ilustrativas (não derivadas de outra equação deste documento, apenas fixadas como ponto de partida do cenário).
 
 \begin{table}[h!tbp]
 	\centering
@@ -3423,12 +3555,12 @@ O ponto de operação de referência usa os mesmos valores já adotados como pad
 	\end{tabular}
 	}
 	\caption[Linha de base saudável do cenário]{Linha de base saudável do cenário — valores ilustrativos de comissionamento.}
-	\label{tab:28-1}
+	\label{tab:29-1}
 \end{table}
 
 \subsection{Sintomas Individualmente Sub-liminares}
 
-Seis semanas depois, o Gêmeo Digital coleta a média móvel das três grandezas medidas: $T_{d,lp} = 125{,}4\,^{\circ}\text{C}$ (+$1{,}6\,^{\circ}\text{C}$), $I = 42{,}9\,\text{A}$ (+$2{,}1\,\%$) e $v_{\text{rms}} = 2{,}35\,\text{mm/s}$ (+$12\,\%$ em $f_{bp}$, Equação~\eqref{eq:s9-8}). Comparados à Tabela~\ref{tab:28-1}, nenhum dos três se aproxima do respectivo limiar — um painel de alarmes convencional, olhando linha por linha, não veria nada. É precisamente esse o ponto: as três leituras já carregam a assinatura da mesma causa física, mas só a fusão entre elas revela isso.
+Seis semanas depois, o Gêmeo Digital coleta a média móvel das três grandezas medidas: $T_{d,lp} = 125{,}4\,^{\circ}\text{C}$ (+$1{,}6\,^{\circ}\text{C}$), $I = 42{,}9\,\text{A}$ (+$2{,}1\,\%$) e $v_{\text{rms}} = 2{,}35\,\text{mm/s}$ (+$12\,\%$ em $f_{bp}$, Equação~\eqref{eq:s9-8}). Comparados à Tabela~\ref{tab:29-1}, nenhum dos três se aproxima do respectivo limiar — um painel de alarmes convencional, olhando linha por linha, não veria nada. É precisamente esse o ponto: as três leituras já carregam a assinatura da mesma causa física, mas só a fusão entre elas revela isso.
 
 \subsection{Estimação de Estado via EKF}
 
@@ -3446,8 +3578,8 @@ O EKF e o VAE concordam que algo se desviou; nenhum dos dois, por construção, 
 
 \subsection{Prognóstico: Tempo até o Limiar Crítico}
 
-Com $\hat\delta/L(t)$ estimado pelo EKF a cada ciclo ao longo das seis semanas, o Gêmeo Digital ajusta a mesma regressão por Processo Gaussiano da Equação~\eqref{eq:s19-10} — originalmente aplicada ao dano acumulado $D(t)$ da fadiga de engrenagem, aqui reaproveitada sobre a série $\hat\delta/L(t)$, que evolui com a mesma suavidade (variação lenta e monotônica) que motivou o uso do mesmo \textit{kernel} exponencial quadrático. Definindo o limiar crítico de projeto $(\delta/L)_{\text{crit}} = 0{,}020$ (o dobro do valor estimado atual, ponto a partir do qual a Equação~\eqref{eq:s9-7} projeta risco não desprezível de contato conforme a carcaça aquece), a taxa média de deriva $\overline{\dot{(\delta/L)}}$ prevista pela Equação~\eqref{eq:s19-10} projeta o tempo até esse limiar, na Equação~\eqref{eq:s28-1}:
-\begin{equation}\label{eq:s28-1}
+Com $\hat\delta/L(t)$ estimado pelo EKF a cada ciclo ao longo das seis semanas, o Gêmeo Digital ajusta a mesma regressão por Processo Gaussiano da Equação~\eqref{eq:s19-10} — originalmente aplicada ao dano acumulado $D(t)$ da fadiga de engrenagem, aqui reaproveitada sobre a série $\hat\delta/L(t)$, que evolui com a mesma suavidade (variação lenta e monotônica) que motivou o uso do mesmo \textit{kernel} exponencial quadrático. Definindo o limiar crítico de projeto $(\delta/L)_{\text{crit}} = 0{,}020$ (o dobro do valor estimado atual, ponto a partir do qual a Equação~\eqref{eq:s9-7} projeta risco não desprezível de contato conforme a carcaça aquece), a taxa média de deriva $\overline{\dot{(\delta/L)}}$ prevista pela Equação~\eqref{eq:s19-10} projeta o tempo até esse limiar, na Equação~\eqref{eq:s29-1}:
+\begin{equation}\label{eq:s29-1}
  RUL_\delta = \frac{(\delta/L)_{\text{crit}} - \hat{(\delta/L)}_{k|k}}{\overline{\dot{(\delta/L)}}}
 \end{equation}
 Com os números deste cenário, $RUL_\delta \approx 9$ semanas, com intervalo de confiança de 95\,\% entre 6 e 14 semanas — a largura do intervalo vem diretamente da variância preditiva da Equação~\eqref{eq:s19-10}, e é ela, não só o valor central, que o Gêmeo Digital deve expor: uma janela de manutenção de ``9 semanas'' sem essa incerteza esconde que o limite inferior do intervalo já está a 6.
@@ -3460,7 +3592,7 @@ O PSO não participa dessa decisão em tempo real — o Capítulo 24 já registr
 
 \subsection{Síntese do Fluxo de Dados}
 
-A Tabela~\ref{tab:28-2} percorre o cenário inteiro em ordem, mostrando explicitamente o que cada algoritmo recebeu, o que produziu e quem consumiu essa saída em seguida — a pergunta que os Capítulos 18 e 20, olhados isoladamente, respondem em teoria mas não demonstram em números.
+A Tabela~\ref{tab:29-2} percorre o cenário inteiro em ordem, mostrando explicitamente o que cada algoritmo recebeu, o que produziu e quem consumiu essa saída em seguida — a pergunta que os Capítulos 18 e 20, olhados isoladamente, respondem em teoria mas não demonstram em números.
 
 \begin{table}[h!tbp]
 	\centering
@@ -3478,16 +3610,16 @@ A Tabela~\ref{tab:28-2} percorre o cenário inteiro em ordem, mostrando explicit
 	\end{tabular}
 	}
 	\caption[Fluxo de dados do estudo de caso integrado]{Fluxo de dados do estudo de caso integrado — cada linha alimenta a próxima, do modelo físico à decisão prescritiva.}
-	\label{tab:28-2}
+	\label{tab:29-2}
 \end{table}
 
 \vspace{1em}
 \hrule
 \vspace{1em}
 
-\textbf{Diretriz Técnica Final:} Nenhum dos sete algoritmos da Tabela~\ref{tab:28-2}, isolado, sustentaria o diagnóstico deste capítulo — é a cadeia completa, cada elo consumindo a saída do anterior, que transforma três desvios individualmente irrelevantes numa janela de manutenção quantificada com incerteza. Esse é o argumento central deste documento, e a razão de a Parte I (física verificável) ter precedido a Parte II (algoritmos que dependem inteiramente dessa física para terem qualquer validade): um Gêmeo Digital que pulasse a Parte I e treinasse o EKF, o VAE e o PIML direto sobre dados históricos, sem o modelo físico como espinha dorsal, não teria como distinguir desgaste de folga de incrustação de intercooler no exemplo acima — teria, na melhor das hipóteses, um alarme genérico sem causa-raiz, exatamente o que este documento se propôs a evitar desde o Capítulo 1.
+\textbf{Diretriz Técnica Final:} Nenhum dos sete algoritmos da Tabela~\ref{tab:29-2}, isolado, sustentaria o diagnóstico deste capítulo — é a cadeia completa, cada elo consumindo a saída do anterior, que transforma três desvios individualmente irrelevantes numa janela de manutenção quantificada com incerteza. Esse é o argumento central deste documento, e a razão de a Parte I (física verificável) ter precedido a Parte II (algoritmos que dependem inteiramente dessa física para terem qualquer validade): um Gêmeo Digital que pulasse a Parte I e treinasse o EKF, o VAE e o PIML direto sobre dados históricos, sem o modelo físico como espinha dorsal, não teria como distinguir desgaste de folga de incrustação de intercooler no exemplo acima — teria, na melhor das hipóteses, um alarme genérico sem causa-raiz, exatamente o que este documento se propôs a evitar desde o Capítulo 1.
 
-% --- Fim do Capítulo 28 ---
+% --- Fim do Capítulo 29 ---
 
 \newpage
 \begin{thebibliography}{99}

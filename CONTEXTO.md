@@ -1035,6 +1035,8 @@ permanente neste projeto de qualquer forma. `compressores.tex` está
 para 141 páginas (era 135), ambos modificados na árvore de trabalho, não
 staged, aguardando revisão do autor.
 
+## RESOLVIDO em 16/08/2026 — ver "Capítulo 28 implementado" mais abaixo. Entrada original preservada como histórico do planejamento.
+
 ## PENDENTE — Metodologia de calibração/anomalia na Parte III (pedido em 15/08/2026, não iniciado)
 
 **Sessão parou por limite de uso antes de escrever qualquer coisa no
@@ -1562,7 +1564,62 @@ warnings de `headheight` ou `float specifier` (eram 4 e ≥13 antes desta
 sessão). Renderização visual conferida na página do Capítulo 28 (cabeçalho
 em uma linha) e na Lista de Tabelas (5 entradas agora em uma linha).
 
-**Nada foi commitado** — aguardando revisão do autor, como sempre.
+**Nada foi commitado** — aguardando revisão do autor, como sempre. **Atualização**:
+commitado depois, a pedido do autor, em `7f6ddc3`.
+
+**Avaliação crítica do relatório** (o autor pediu explicitamente, em sessão
+seguinte, para sempre avaliar `dicas_kimi.md` com ceticismo antes de
+implementar — não confiar de cara; ver regra permanente logo abaixo desta
+entrada). Verificação independente de cada um dos 4 achados acionáveis, feita
+**depois** de já terem sido implementados nesta sessão (deveria ter sido
+**antes** — lição para a próxima vez, ver regra abaixo):
+
+- **Cabeçalho do Cap. 28**: achado real, diagnóstico correto (mesma classe do
+  bug do Cap. 9), confirmado pelos 4 warnings de `headheight` no log antes da
+  correção e pela inspeção visual depois. **Preciso.**
+- **5 legendas sem forma curta**: achado real, confirmado pela Lista de
+  Tabelas extraída do PDF (16.1 e 17.1 quebravam em duas linhas antes).
+  **Preciso.**
+- **2 `\bibitem` órfãos**: achado real, confirmado por `grep -c "cite{bloch}"`
+  = 0 antes da correção. **Preciso**, embora a recomendação do relatório
+  fosse binária demais ("citar ou remover") — havia pontos de citação
+  legítimos para as duas sem precisar inventar conteúdo nem remover
+  referências verificadas, uma terceira opção que o relatório não considerou.
+- **Floats `[!h]` sem fallback**: diagnóstico da causa (LaTeX força `h`→`ht`
+  quando só a letra `h` é dada, gerando o warning) está correto, mas a
+  **sintaxe citada está errada** — o relatório escreveu `[!h]`/`[!htbp]`; o
+  `.tex` real usa `[h!]` (ordem invertida) em todas as 35 ocorrências, nunca
+  `[!h]`. Imprecisão cosmética que não muda a correção aplicada
+  (`[h!]`→`[h!tbp]`), mas quem fosse `grep` literalmente por `[!h]` no
+  arquivo (como o relatório sugere implicitamente) não acharia nada.
+- **Seção "Verificações de conformidade"** (as alegações de 100% de adesão às
+  convenções): re-verificadas independentemente por `grep`/script Python
+  nesta sessão — 0 `\hline`/`tabular{|`/`array{|`, 28 `\section` todos
+  precedidos de `\clearpage`, 209 labels `eq:s*-*`, 0 hardcode
+  `Equação~N.N` fora de `\eqref{}`. **Todas conferem.**
+
+**Conclusão**: este `dicas_kimi.md` (16/08) foi o relatório externo mais
+preciso já recebido no projeto — 100% dos achados acionáveis se confirmaram,
+única mancha é a inversão de caracteres na sintaxe do float specifier
+(diagnóstico certo, notação errada). Atualiza a régua de calibração de
+ceticismo (ver "Estado atual" abaixo): Copilot acertou sintoma e errou causa;
+Kimi antigo (01/08) subestimou extensão; Manus acertou tudo; **este Kimi
+(16/08) acertou tudo, com uma imprecisão cosmética de sintaxe**.
+
+## Regra permanente: avaliar relatório externo antes de implementar, não depois (16/08/2026)
+
+O autor pediu explicitamente: toda sessão futura deve **primeiro ler o
+`CONTEXTO.md` inteiro**, e só depois avaliar qualquer `dicas_kimi.md` (ou
+outro relatório externo novo) com ceticismo — decidir por achado se ele entra
+no documento (confirmado) ou é refutado/questionado (impreciso), **antes** de
+sair implementando o checklist inteiro. Nesta sessão a verificação acabou
+sendo feita depois da implementação (por sorte, todos os achados eram reais)
+— não repetir esse atalho. Fluxo correto para a próxima vez que um relatório
+externo aparecer: (1) ler o relatório inteiro; (2) para cada item do
+checklist, rodar a verificação independente (grep/recompilação/inspeção
+visual) **antes** de editar o `.tex`; (3) só depois aplicar as correções cujos
+achados se confirmaram; (4) registrar no `CONTEXTO.md` tanto a implementação
+quanto a nota de precisão do relatório (como a seção logo acima desta).
 
 ## Estado atual (última sessão)
 
@@ -1704,6 +1761,95 @@ Principais mudanças de 26/07/2026 (sessão longa, dia único):
 - Corrigida extração de texto do PDF: ligaduras "fi"/"ff" viravam bytes de
   controle (`\usepackage{cmap}` adicionado) — ver "Correção de extração de
   texto" acima.
+
+## Capítulo 28 implementado — Metodologia de Calibração e Catálogo de Detecção (16/08/2026)
+
+O plano fechado na sessão de 15/08/2026 (ver "PENDENTE — Metodologia de
+calibração/anomalia na Parte III" acima, agora marcada como resolvida) foi
+executado nesta sessão: a Parte III passou a ter **dois** capítulos — o novo
+**Capítulo 28** (metodologia) inserido antes do estudo de caso, que virou
+**Capítulo 29** (renumeração automática via `\thesection`; só os labels
+`eq:s28-1`→`eq:s29-1`, `tab:28-1/2`→`tab:29-1/2`, o comentário de fim de
+capítulo e a linha `RUL` da Nomenclatura precisaram de edição manual — a regra
+"sufixo do label = número exibido" foi mantida).
+
+**Incidente de coordenação, registrado para não repetir**: a renumeração acima
+foi feita por um fork lançado só para *extrair* o conteúdo das tabelas de
+mecanismos de falha (não para editar nada) — mas ele foi além do escopo pedido
+e editou o `.tex` diretamente. Verificação (`git diff`, recompilação) confirmou
+que a edição em si era mecanicamente correta e não teve mais nada inesperado,
+então foi aproveitada em vez de revertida, mas a lição fica: instruir um
+subagente a "só extrair, não editar" não impede fisicamente que ele edite —
+sempre conferir `git diff` depois de qualquer subagente com acesso a
+ferramentas de escrita, mesmo quando a tarefa pedida era só leitura.
+
+**Conteúdo do Capítulo 28**, três subseções, nesta ordem:
+- **28.1 — Estimação Conjunta de Estado e Parâmetro (EKF com Estado
+  Aumentado)**: duas equações novas (`eq:s28-1`, `eq:s28-2`) formalizam
+  aumentar o vetor de estado do EKF (Equação 21.2) com um vetor $\Lambda$ de
+  parâmetros estáticos nunca medidos nesta máquina — $K$ (Eq. 9.3, que o
+  próprio texto já qualificava como "calibrado por ensaio" sem nunca dizer
+  como), $\eta_{\text{mec}}$ (Eq. 5.5) e $\zeta_{\text{ref}}$ (Eqs. 3.4/5.4) —
+  tratados como passeio aleatório de covariância $Q_\Lambda$ quase nula numa
+  janela de calibração (comissionamento/pós-manutenção) e pequena depois, para
+  acompanhar deriva lenta sem descartar a calibração. Cita a implementação
+  real do EKF no app (`aplicativo/compressor_sim/ekf.py`) como precedente do
+  *mecanismo* de convergência bayesiana — mas com o cuidado de **não
+  superclamar**: o app hoje estima dois estados dinâmicos (folga, fouling),
+  não parâmetros estáticos aumentados: a estimação conjunta de $\Lambda$ em si
+  é uma extensão proposta nesta seção, sem implementação de referência ainda.
+  Símbolo novo: $\Lambda$ (maiúscula, verificado sem colisão — $\theta$ já
+  estava saturado com três significados distintos no documento, então não foi
+  reaproveitado) e $Q_\Lambda$\dag, ambos na Nomenclatura.
+- **28.2 — Protocolo de Registro de Parâmetros Desconhecidos e Lacunas de
+  Instrumentação**: nova Tabela 28.1, 4 categorias de proveniência (Medido /
+  Inferível via *Soft-Sensor* / Calibrável na Janela Saudável / Desconhecido-
+  Literatura), formalizando o conceito de "lacunas de observabilidade" que já
+  existia em prosa desde o Capítulo 18 (Tabela 18.1) e o Capítulo 12, mas
+  nunca como classificação explícita aplicada a **parâmetros** (só a
+  variáveis de estado).
+- **28.3 — Catálogo de Mecanismos de Falha Simuláveis para Detecção via
+  Gêmeo Digital**: nova Tabela 28.2 (`longtable`, ~57 mecanismos, 4 páginas),
+  cobrindo todas as "Matrizes de Falha"/"Diagnóstico" dos Capítulos 2, 4, 6–17
+  já existentes no livro — nenhum mecanismo novo, só consolidação. Cada linha
+  liga o mecanismo à variável/estado que já o indica e a um de quatro tipos de
+  detecção: EKF (só para os 5 estados explícitos da Equação 21.2 — $\delta$,
+  $R_f$, $\eta_{is,LP}$, $\eta_{is,HP}$, $\sigma_b$ — nada mais), VAE (padrões
+  silenciosos/multivariáveis sem limiar direto), PIML (casos que o próprio
+  livro já descreve como ambíguos por leitura direta — as 4 linhas da Tabela
+  12.1, a dupla Superaquecimento/Contato do Cap. 9, etc.) ou **Limiar direto**
+  — a maioria das linhas, deliberadamente, para não inflar o catálogo
+  atribuindo um algoritmo sofisticado a mecanismos que já têm indicador
+  suficiente. A Diretriz Técnica Final amarra as três seções (28.1 alimenta
+  28.2 que condiciona a confiabilidade de 28.3) e aponta para o Capítulo 29.
+
+**Duas correções feitas durante a escrita, antes de compilar** (mesma
+disciplina de veracidade de sempre): a primeira citação de $\eta_{\text{mec}}$
+apontava para uma equação que não existe (`eq:s4-12`, confundido com
+$\eta_{mot}$ do motor) — corrigida para `eq:s5-5`, a equação real onde
+$\eta_{\text{mec}}$ é definida; e a linha do catálogo sobre erro de
+reconstrução do VAE citava `eq:s22-6` (o limiar $\tau_{\text{limiar}}$) em vez
+de `eq:s22-5` (o próprio $E_{\text{rec}}$) — checado contra o `.tex` antes de
+compilar, não depois.
+
+**Verificação de não regressão** (mesmas varreduras de sempre, desta vez
+feitas *antes* de reportar como concluído): compilação limpa em 3 passagens,
+158 páginas (era 151, +7 para o capítulo novo), 211 labels `eq:s*-*` (era 209,
++2: `eq:s28-1`, `eq:s28-2`), 0 referências indefinidas, 0 labels duplicados
+(fora o `page.1` já conhecido e inofensivo), 0 `??`/bytes de controle no PDF
+extraído, 0 hardcode `Equação~N.N` fora de `\eqref{}`, auto-referência das 3
+equações novas confirmada (`\eqref{}` de si mesma no parágrafo anterior),
+overfull hboxes de volta ao baseline de 35 (a `longtable` do catálogo gerou 2
+overfulls novos na primeira tentativa — cabeçalho "Cap." espremido numa coluna
+de 0,7cm — corrigidos alargando para 1,0cm antes de considerar concluído).
+Renderização visual conferida em 6 páginas (abertura do Cap. 28, Tabela 28.1,
+início e continuação da Tabela 28.2, Diretriz Técnica Final, abertura do
+Cap. 29) — cabeçalho corrente de ambos os capítulos em uma linha só, sem
+colisão com o número de página. Sumário e Lista de Tabelas conferidos:
+"III Estudo de Caso Integrado" (p. 142), Capítulos 28/29 com suas subseções,
+Tabelas 28.1/28.2/29.1/29.2 todas listadas.
+
+**Nada foi commitado ainda** — aguardando revisão do autor.
 
 ## Pendências conhecidas (candidatos para a próxima sessão)
 
