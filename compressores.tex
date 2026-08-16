@@ -355,7 +355,8 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$\varpi_j$\dag & Peso do indicador $j$ no $HI$ ($\omega$ está ocupado pela velocidade angular) & --- & Cap. 26 \\
 	$J$ & Função de custo/objetivo (MPC, PSO) & --- & Cap. 15, 20 \\
 	$H$ & Horizonte de predição (MPC) & passos & Cap. 15, 20 \\
-	$k$ & Índice de tempo discreto (sempre como subscrito: $x_k$, $z_k$) & --- & Cap. 15, 20 \\ \bottomrule
+	$k$ & Índice de tempo discreto (sempre como subscrito: $x_k$, $z_k$) & --- & Cap. 15, 20 \\
+	$RUL$ & \textit{Remaining Useful Life} — vida útil remanescente projetada (base: dano acumulado, Eq. 19.9; com subscrito, projeção sobre outra variável de estado, ex. $RUL_\delta$ no Cap. 28) & tempo/ciclos & Cap. 19, 28 \\ \bottomrule
 \end{longtable}
 }
 
@@ -3380,6 +3381,112 @@ domain.add_constraint(PointwiseProbabilityConstraint(
 	\vspace{1em}
 
 	\textbf{Diretriz Técnica Final:} A transição para frameworks como o \textbf{Modulus} e \textbf{do-mpc} permite que o Gêmeo Digital realize simulações ``What-If'' complexas com precisão física e velocidade de resposta instantânea.
+
+\clearpage
+\thispagestyle{empty}
+\phantomsection
+\addcontentsline{toc}{part}{III\hspace{1em}Estudo de Caso Integrado}
+\vspace*{\fill}
+\begin{center}
+	{\Huge\bfseries PARTE III}\\[2em]
+	{\huge\bfseries Estudo de Caso Integrado}
+\end{center}
+\vspace*{\fill}
+\clearpage
+
+\clearpage
+\section{Estudo de Caso Integrado: Diagnóstico Precoce de Desgaste de Folgas via EKF, VAE, PIML e MPC/PSO}
+
+Os capítulos anteriores apresentaram cada peça do Gêmeo Digital isoladamente — a física da Parte I, e os cinco algoritmos da Parte II (EKF, VAE, PIML, MPC, PSO), cada um em seu próprio capítulo, cada um com sua própria Diretriz Técnica Final. O Capítulo 18 unificou as equações num motor de cálculo único, e o Capítulo 20 encadeou os algoritmos num fluxo de trabalho conceitual de quatro etapas. O que falta, e é o que este capítulo entrega, é ver esse fluxo \textbf{atravessado por um cenário só}, com números concretos passando de um algoritmo para o outro — não uma nova física, nem um novo algoritmo, mas a demonstração de que as peças já equacionadas neste documento realmente se encaixam.
+
+\textbf{Advertência sobre os números deste capítulo:} todos os valores a seguir são \textbf{ilustrativos}, escolhidos para exercitar cada equação já numerada nos capítulos anteriores dentro de uma faixa fisicamente plausível — não são medições de uma máquina real, e nenhum deles deve ser tratado como dado de projeto. O objetivo é pedagógico: mostrar a mecânica do fluxo de dados entre os algoritmos, não fornecer um caso de engenharia auditável.
+
+\subsection{O Cenário: uma Falha Invisível a Indicadores Isolados}
+
+O cenário é o desgaste gradual da folga radial do estágio LP ($\delta$, mesma grandeza da Equação~\eqref{eq:s9-3}) ao longo de seis semanas de operação contínua offshore — erosão lenta por partículas residuais no ar de admissão (mecanismo de falha já descrito no Capítulo de Termodinâmica do Estágio LP). Esse tipo de degradação é deliberadamente o mais difícil de diagnosticar por indicadores isolados: ela desloca simultaneamente a eficiência volumétrica (Equação~\eqref{eq:s9-3}), a temperatura efetiva de sucção por realimentação de fuga (Equação~\eqref{eq:s9-4}) e, por consequência, a corrente elétrica consumida — mas o deslocamento em \textbf{cada} grandeza isolada, nas primeiras semanas, é pequeno demais para cruzar qualquer limiar H/HH da Tabela~\ref{tab:18-2}. É exatamente a lacuna que a arquitetura combinada da Parte II foi construída para fechar: correlação entre grandezas medidas e inferidas, não leitura isolada.
+
+\subsection{Ponto de Partida: Linha de Base Saudável}
+
+O ponto de operação de referência usa os mesmos valores já adotados como padrão ao longo deste documento e do aplicativo de referência: pressão de rede $\pi = 8$, índice politrópico $n = 1{,}35$, temperatura ambiente $T_{amb} = 30\,^{\circ}\text{C}$, coeficiente de vazamento $K = 0{,}05$ (Equação~\eqref{eq:s9-3}) e folga relativa nova $\delta/L = 0{,}002$. A razão de pressão por estágio é $\pi_{lp} = \sqrt{\pi} = 2{,}828$ (Equação~\eqref{eq:s5-7} com estágios simétricos). Desses valores, a Equação~\eqref{eq:s9-3} dá a eficiência volumétrica de referência, $\eta_v = 1 - 0{,}05 \times 0{,}002 \times 2{,}828 \approx 99{,}97\,\%$, e a Equação~\eqref{eq:s11-1} dá a temperatura de descarga do LP prevista pelo modelo, $T_{d,lp} = 303{,}15 \times 2{,}828^{\,0{,}35/1{,}35} \approx 396{,}9\,\text{K} = 123{,}8\,^{\circ}\text{C}$. A Tabela~\ref{tab:28-1} consolida esses valores de referência junto com a corrente elétrica e a vibração global saudáveis, ambas ilustrativas (não derivadas de outra equação deste documento, apenas fixadas como ponto de partida do cenário).
+
+\begin{table}[h!]
+	\centering
+	\resizebox{\textwidth}{!}{
+	\begin{tabular}{lccc}
+		\toprule
+		\textbf{Grandeza} & \textbf{Símbolo} & \textbf{Baseline saudável} & \textbf{Limiar de alarme} \\ \midrule
+		Folga relativa LP & $\delta/L$ & $0{,}0020$ & --- (não instrumentado) \\
+		Temp. descarga LP & $T_{d,lp}$ & $123{,}8\,^{\circ}\text{C}$ & $150\,^{\circ}\text{C}$ (H) \\
+		Corrente do motor & $I$ & $42{,}0\,\text{A}$ & $55\,\text{A}$ (H) \\
+		Vibração global & $v_{\text{rms}}$ & $2{,}10\,\text{mm/s}$ & linha de base + tendência (Cap. 18) \\ \bottomrule
+	\end{tabular}
+	}
+	\caption[Linha de base saudável do cenário]{Linha de base saudável do cenário — valores ilustrativos de comissionamento.}
+	\label{tab:28-1}
+\end{table}
+
+\subsection{Sintomas Individualmente Sub-liminares}
+
+Seis semanas depois, o Gêmeo Digital coleta a média móvel das três grandezas medidas: $T_{d,lp} = 125{,}4\,^{\circ}\text{C}$ (+$1{,}6\,^{\circ}\text{C}$), $I = 42{,}9\,\text{A}$ (+$2{,}1\,\%$) e $v_{\text{rms}} = 2{,}35\,\text{mm/s}$ (+$12\,\%$ em $f_{bp}$, Equação~\eqref{eq:s9-8}). Comparados à Tabela~\ref{tab:28-1}, nenhum dos três se aproxima do respectivo limiar — um painel de alarmes convencional, olhando linha por linha, não veria nada. É precisamente esse o ponto: as três leituras já carregam a assinatura da mesma causa física, mas só a fusão entre elas revela isso.
+
+\subsection{Estimação de Estado via EKF}
+
+O EKF do Capítulo 21 recebe o vetor de medições $z = [P_{\text{out}}, T_{\text{out}}, T_{w,\text{out}}, I, v_{\text{rms}}]$ da Equação~\eqref{eq:s21-2} a cada ciclo de varredura e, pelo ciclo de predição-correção da Equação~\eqref{eq:s21-4}, atualiza a estimativa do vetor de estado $x = [\eta_{is,LP}, \eta_{is,HP}, \delta, R_f, \sigma_b]$ — o mesmo vetor não instrumentado da Equação~\eqref{eq:s21-2}. A cada nova medição, o ganho $K_k$ pondera o quanto a correção confia no sensor contra o quanto confia no modelo físico da Parte I; ao longo de várias centenas de ciclos na janela de seis semanas, a estimativa $\hat\delta_{k|k}$ converge de $0{,}0020$ (valor inicial, sem informação) para $\hat\delta_{k|k}/L \approx 0{,}0091$ — o valor de folga que, propagado pelas Equações~\eqref{eq:s9-3} e~\eqref{eq:s9-4}, melhor explica o desvio conjunto observado em $T_{d,lp}$ e $I$, dentro da incerteza $P_{k|k}$ da Equação~\eqref{eq:s21-4}.
+
+Antes de aceitar essa estimativa, o Gêmeo Digital audita o próprio filtro pela estatística NIS da Equação~\eqref{eq:s21-7}: ao longo da janela, $\text{NIS}_k$ oscila em torno de $5{,}1$ — consistente com a distribuição $\chi^2_{n_z=5}$ esperada (média teórica igual a $n_z$) — confirmando que o filtro está calibrado, nem excessivamente confiante nem excessivamente conservador, e que $\hat\delta$ é uma estimativa sustentada pelos dados, não um artefato de covariância mal ajustada (a advertência da Seção de Condição de Observabilidade do Capítulo 21).
+
+\subsection{Confirmação por Detecção de Anomalia via VAE}
+
+Em paralelo, o vetor completo de 28 variáveis monitoradas (não só as cinco do EKF) é padronizado e projetado no espaço latente do VAE (Capítulo 22). O erro de reconstrução $E_{\text{rec}}$ da Equação~\eqref{eq:s20-4} — que soma o desvio quadrático normalizado de cada variável — sobe de uma linha de base de $E_{\text{rec}} \approx 1{,}2$ para $E_{\text{rec}} \approx 4{,}8$ ao longo da mesma janela, cruzando o limiar de disparo $\tau_{\text{limiar}} = 4{,}0$ (Equação~\eqref{eq:s22-6}) na quinta semana. O ponto relevante não é o valor absoluto de $E_{\text{rec}}$, mas \textbf{por que} ele sobe: nenhuma das 28 variáveis, isoladamente, se afasta o suficiente da sua própria faixa normal para disparar um limiar univariado — é a combinação específica de pequenos desvios simultâneos em $T_{d,lp}$, $I$ e $v_{\text{rms}}$, incompatível com a estrutura de correlação que o VAE aprendeu da operação saudável, que o autoencoder reconhece como fora de distribuição. É a mesma leitura, por um caminho estatístico independente do EKF, de que algo mudou.
+
+\subsection{Atribuição de Causa-Raiz via PIML}
+
+O EKF e o VAE concordam que algo se desviou; nenhum dos dois, por construção, diz \textbf{o quê} com certeza física — o EKF assume que a causa está no vetor de estado que ele já monitora, e o VAE não tem noção alguma de causalidade, só de similaridade estatística. É aqui que o modelo substituto treinado por PIML (Capítulo 23) entra: consultado no ponto de operação atual com $\hat\delta/L = 0{,}0091$ (saída do EKF) como uma de suas entradas, o substituto prediz $T_{d,lp}$ e $I$ dentro de $0{,}3\,^{\circ}\text{C}$ e $0{,}15\,\text{A}$ dos valores efetivamente medidos — um resíduo pequeno frente à Equação~\eqref{eq:s23-2}, indicando consistência física. Testando hipóteses alternativas pelo mesmo substituto — incrustação no intercooler (Equação~\eqref{eq:s10-5}) ou viés de calibração do sensor de $T_{amb}$ — nenhuma reproduz o mesmo padrão conjunto nas cinco medições dentro da mesma tolerância: incrustação no intercooler elevaria $T_{HP,\text{in}}$ sem afetar $T_{d,lp}$ (a montante do trocador), e um viés de $T_{amb}$ deslocaria $T_{d,lp}$ mas não a corrente $I$ na mesma proporção observada. O desgaste de folga é, das três hipóteses testadas, a única que a física da Parte I — avaliada pelo substituto treinado — reproduz dentro da tolerância de resíduo em \textbf{todas} as medições simultaneamente. É esse cruzamento, e não a saída isolada de nenhum dos três algoritmos, que sustenta o diagnóstico.
+
+\subsection{Prognóstico: Tempo até o Limiar Crítico}
+
+Com $\hat\delta/L(t)$ estimado pelo EKF a cada ciclo ao longo das seis semanas, o Gêmeo Digital ajusta a mesma regressão por Processo Gaussiano da Equação~\eqref{eq:s19-10} — originalmente aplicada ao dano acumulado $D(t)$ da fadiga de engrenagem, aqui reaproveitada sobre a série $\hat\delta/L(t)$, que evolui com a mesma suavidade (variação lenta e monotônica) que motivou o uso do mesmo \textit{kernel} exponencial quadrático. Definindo o limiar crítico de projeto $(\delta/L)_{\text{crit}} = 0{,}020$ (o dobro do valor estimado atual, ponto a partir do qual a Equação~\eqref{eq:s9-7} projeta risco não desprezível de contato conforme a carcaça aquece), a taxa média de deriva $\overline{\dot{(\delta/L)}}$ prevista pela Equação~\eqref{eq:s19-10} projeta o tempo até esse limiar, na Equação~\eqref{eq:s28-1}:
+\begin{equation}\label{eq:s28-1}
+ RUL_\delta = \frac{(\delta/L)_{\text{crit}} - \hat{(\delta/L)}_{k|k}}{\overline{\dot{(\delta/L)}}}
+\end{equation}
+Com os números deste cenário, $RUL_\delta \approx 9$ semanas, com intervalo de confiança de 95\,\% entre 6 e 14 semanas — a largura do intervalo vem diretamente da variância preditiva da Equação~\eqref{eq:s19-10}, e é ela, não só o valor central, que o Gêmeo Digital deve expor: uma janela de manutenção de ``9 semanas'' sem essa incerteza esconde que o limite inferior do intervalo já está a 6.
+
+\subsection{Decisão Prescritiva via MPC, com PSO como Complemento Offline}
+
+A camada final decide o que fazer com o diagnóstico. A restrição estrutural do MPC (Equação~\eqref{eq:s24-1}, $\sigma_b(k) \le \sigma_{\text{adm}}$) não é violada por este modo de falha — desgaste de folga não é fadiga de dente —, então o MPC tem espaço de decisão livre entre duas ações: manter o setpoint de pressão atual e apenas antecipar a manutenção programada para dentro da janela de $RUL_\delta$, ou reduzir levemente o setpoint de rede (por exemplo, de $\pi = 8{,}0$ para $\pi = 7{,}7$) para reduzir o descasamento entre a razão de pressão operante e a interna do rotor (Equações~\eqref{eq:s5-8}/\eqref{eq:s5-9}), aliviando o carregamento sobre a folga já desgastada às custas de um pequeno aumento no consumo específico (a mesma ``regra dos 7\,\%/bar'' já discutida no Capítulo de Trem de Potência, aqui na direção oposta — reduzir pressão custa, mas estende vida). A restrição branda de qualidade do ar da Equação~\eqref{eq:s24-2} ($T_{dp} \le T_{dp,\text{set}} + \varsigma_k$) segue satisfeita em ambas as opções, então a escolha entre elas é puramente econômica: o MPC resolve a Equação~\eqref{eq:s24-1} com $y_{\text{ref}}$ ajustado para a segunda opção e reporta o novo consumo projetado contra o custo evitado de uma parada não programada, deixando a decisão final — reduzir pressão agora ou só antecipar a manutenção — para o operador, com os dois números lado a lado.
+
+O PSO não participa dessa decisão em tempo real — o Capítulo 24 já registrou por que: latência incompatível com proteção mecânica. Seu papel aqui é offline e posterior: uma vez que a manutenção da folga tenha sido realizada e a máquina volte à condição de referência, o PSO (Equações~\eqref{eq:s24-3}/\eqref{eq:s24-4}) pode ser executado separadamente para re-sintonizar o peso $\rho$ do MPC ou buscar um novo setpoint global de resfriamento/purga que leve em conta o desgaste acumulado esperado até a próxima janela de manutenção — um ajuste de ciclo mais longo, não uma resposta ao evento.
+
+\subsection{Síntese do Fluxo de Dados}
+
+A Tabela~\ref{tab:28-2} percorre o cenário inteiro em ordem, mostrando explicitamente o que cada algoritmo recebeu, o que produziu e quem consumiu essa saída em seguida — a pergunta que os Capítulos 18 e 20, olhados isoladamente, respondem em teoria mas não demonstram em números.
+
+\begin{table}[h!]
+	\centering
+	\resizebox{\textwidth}{!}{
+	\begin{tabular}{l l l l}
+		\toprule
+		\textbf{Etapa} & \textbf{Entrada} & \textbf{Saída} & \textbf{Consumidor seguinte} \\ \midrule
+		Física (Parte I) & Ponto de operação, $\delta/L$ verdadeiro & $T_{d,lp}$, $I$, $v_{\text{rms}}$ previstos & EKF (modelo $f$) \\
+		EKF (Eq.~\eqref{eq:s21-4}) & $z_k$ medido, $f(\cdot)$ da Parte I & $\hat\delta/L \approx 0{,}0091$, $P_{k|k}$ & PIML, prognóstico GP \\
+		VAE (Eq.~\eqref{eq:s20-4}) & Vetor de 28 variáveis & $E_{\text{rec}} = 4{,}8 > \tau$ & Gatilho de diagnóstico \\
+		PIML (Eq.~\eqref{eq:s23-2}) & $\hat\delta/L$ do EKF, hipóteses alternativas & Resíduo mínimo em $\delta$ & Atribuição de causa-raiz \\
+		Prognóstico (Eq.~\eqref{eq:s19-10}) & Série $\hat\delta/L(t)$ do EKF & $RUL_\delta \approx 9$ sem. [6, 14] & MPC \\
+		MPC (Eq.~\eqref{eq:s24-1}) & $RUL_\delta$, restrições de integridade & Ação prescritiva + custo & Operador \\
+		PSO (Eq.~\eqref{eq:s24-3}) & Condição pós-manutenção & Novo $\rho$/setpoint global & Próximo ciclo do MPC \\ \bottomrule
+	\end{tabular}
+	}
+	\caption[Fluxo de dados do estudo de caso integrado]{Fluxo de dados do estudo de caso integrado — cada linha alimenta a próxima, do modelo físico à decisão prescritiva.}
+	\label{tab:28-2}
+\end{table}
+
+\vspace{1em}
+\hrule
+\vspace{1em}
+
+\textbf{Diretriz Técnica Final:} Nenhum dos sete algoritmos da Tabela~\ref{tab:28-2}, isolado, sustentaria o diagnóstico deste capítulo — é a cadeia completa, cada elo consumindo a saída do anterior, que transforma três desvios individualmente irrelevantes numa janela de manutenção quantificada com incerteza. Esse é o argumento central deste documento, e a razão de a Parte I (física verificável) ter precedido a Parte II (algoritmos que dependem inteiramente dessa física para terem qualquer validade): um Gêmeo Digital que pulasse a Parte I e treinasse o EKF, o VAE e o PIML direto sobre dados históricos, sem o modelo físico como espinha dorsal, não teria como distinguir desgaste de folga de incrustação de intercooler no exemplo acima — teria, na melhor das hipóteses, um alarme genérico sem causa-raiz, exatamente o que este documento se propôs a evitar desde o Capítulo 1.
+
+% --- Fim do Capítulo 28 ---
 
 \newpage
 \begin{thebibliography}{99}

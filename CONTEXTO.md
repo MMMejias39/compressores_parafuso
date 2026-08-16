@@ -1035,6 +1035,93 @@ permanente neste projeto de qualquer forma. `compressores.tex` está
 para 141 páginas (era 135), ambos modificados na árvore de trabalho, não
 staged, aguardando revisão do autor.
 
+## Parte III — Estudo de Caso Integrado, Capítulo 28 (15/08/2026)
+
+O autor pediu "a 3ª parte, o programa combinado de gêmeos digitais com
+aprendizado de máquina já modelado". Duas rodadas de esclarecimento antes
+de escrever (decisão de escopo grande demais para adivinhar):
+
+1. **Livro ou app?** Livro (`compressores.tex`), não código no
+   `aplicativo/`.
+2. **O que exatamente falta, já que Cap. 18 (unificação da física) e
+   Cap. 20 (EKF+VAE+PIML+MPC/PSO amarrados num workflow de 4 etapas)
+   já existiam?** Confirmado: um **estudo de caso numérico de ponta a
+   ponta** — pendência já registrada na seção "Pendências conhecidas"
+   deste arquivo desde 30/07/2026 como "a maior adição possível em
+   esforço, nunca pedida" — agora pedida explicitamente.
+
+**Estrutura**: nova **Parte III** (divisor de página manual, mesmo padrão
+de Parte I/II — `\clearpage`, `\thispagestyle{empty}`,
+`\addcontentsline{toc}{part}{...}`, bloco centralizado), com um único
+**Capítulo 28** — "Estudo de Caso Integrado: Diagnóstico Precoce de
+Desgaste de Folgas via EKF, VAE, PIML e MPC/PSO" — inserido entre o fim
+do Capítulo 27 e a bibliografia.
+
+**Cenário escolhido** (advertência explícita no capítulo: todos os
+números são ilustrativos, não medições reais): desgaste gradual da folga
+$\delta$ do estágio LP ao longo de 6 semanas — deliberadamente uma falha
+que desloca $T_{d,lp}$, $I$ e $v_{\text{rms}}$ cada uma por uma quantidade
+pequena demais para cruzar qualquer limiar H/HH isolado da Tabela 18.2,
+mas cuja correlação conjunta é exatamente o que a arquitetura combinada
+existe para capturar. O capítulo percorre a cadeia completa com números
+concretos passando de um algoritmo para o próximo:
+
+- **EKF** (Eqs. 21.2/21.4/21.7): $\hat\delta/L$ converge de 0,0020 para
+  ≈0,0091; NIS em torno de 5,1 confirma o filtro calibrado.
+- **VAE** (Eqs. 20.4/22.6): $E_{rec}$ sobe de 1,2 para 4,8, cruzando
+  $\tau_{limiar}=4{,}0$ na 5ª semana — mesmo sem nenhuma das 28 variáveis
+  isoladamente fora de faixa.
+- **PIML** (Eq. 23.2): o substituto treinado, consultado com $\hat\delta$
+  do EKF, reproduz $T_{d,lp}$/$I$ dentro de tolerância — testado contra
+  duas hipóteses alternativas (incrustação de intercooler, viés de
+  $T_{amb}$) que não reproduzem o mesmo padrão nas 5 medições, isolando
+  a causa-raiz.
+- **Prognóstico** (Eq. 19.10, forma de Processo Gaussiano **reaproveitada**
+  do dano de engrenagem $D(t)$ para a série $\hat\delta/L(t)$ do EKF — a
+  mesma suavidade que motivou o *kernel* original se aplica aqui):
+  $RUL_\delta \approx 9$ semanas, IC 95% [6, 14] — nova Equação~28.1
+  (única equação genuinamente nova do capítulo; todo o resto reaproveita
+  `\eqref{}` de equações já existentes com números concretos substituídos).
+- **MPC/PSO** (Eqs. 24.1/24.2/24.3/24.4): MPC decide entre manter operação
+  + antecipar manutenção ou reduzir levemente o setpoint de pressão
+  (custo de SPC vs. vida estendida); PSO explicitamente **não** participa
+  da decisão em tempo real (papel já estabelecido no Cap. 24 — latência
+  incompatível com proteção mecânica), só re-sintonizando offline depois
+  da manutenção.
+
+Duas tabelas novas: Tabela 28.1 (linha de base saudável vs. limiar de
+alarme) e Tabela 28.2 (síntese do fluxo de dados — cada linha mostra
+entrada/saída/consumidor seguinte de cada um dos 7 elos da cadeia).
+
+**Erros cometidos e corrigidos antes de fechar**:
+- Tabela 28.1 sem `\resizebox` gerou um overfull de 30,9pt (bem acima do
+  baseline de ~2pt já tolerado) — corrigido envolvendo em
+  `\resizebox{\textwidth}{!}{...}`, mesmo padrão já usado em outras
+  tabelas largas do documento.
+- 2 ocorrências de aspas retas (`"regra dos 7%/bar"`, `"9 semanas"`) —
+  mesmo bug do babel já documentado nesta sessão para o Cap. 12 (engole o
+  espaço seguinte) — corrigidas para `` `` `` / `''`.
+- 6 referências a equações dentro de células de tabela (Tabela 28.2)
+  escritas como `Eq.~21.4` hardcoded em vez de `Eq.~\eqref{eq:s21-4}` —
+  pegas e corrigidas antes de compilar a versão final (mesma classe de
+  erro da correção em massa registrada na seção anterior).
+- `RUL` (Eq. 19.9) nunca tinha entrada na Nomenclatura, apesar de já
+  usado desde 29/07/2026 — lacuna pré-existente, não introduzida nesta
+  sessão, mas corrigida de passagem ao adicionar `RUL_\delta` (a entrada
+  cobre a base e a variante subscrita, já que este documento não lista
+  subscritos de um símbolo já definido individualmente).
+
+**Verificação**: compilação limpa em 3 passagens, 0 refs indefinidas, 0
+labels duplicados, `209` labels `eq:s*-*` (era 208, +1 — Eq. 28.1), `0`
+violações na varredura de auto-referência (a regra reforçada mais acima
+neste arquivo se aplicou à Eq. 28.1 desde a escrita), overfull hboxes em
+`35` (34 baseline + 1 novo de 1,1pt, abaixo do próprio limiar de
+insignificância já estabelecido), `0` marcadores `??`, 146→151 páginas.
+Renderização visual conferida em 4 páginas (divisor da Parte III, abertura
+do Cap. 28, Tabela 28.1, Tabela 28.2) — todas limpas.
+
+**Nada foi commitado ainda** — aguardando revisão do autor.
+
 ## Verificação visual do PDF compilado — achado e corrigido bug de cabeçalho (15/08/2026)
 
 O autor pediu para verificar se o PDF compilado estava correto depois da
@@ -1489,10 +1576,8 @@ aproximada de valor:
 3. **Redes Bayesianas (Cap. 25)** e os detalhes de MHE do `do-mpc` (Cap. 27)
    continuam citados só por nome, sem equação — pendência herdada do
    "Inventário de algoritmos da Parte II" acima.
-4. **Estudo de caso numérico de ponta a ponta** (sugestão comum aos dois
-   pareceres externos): um exemplo resolvido com números reais atravessando
-   Parte I e Parte II. É a maior adição possível em esforço, e nunca foi pedida
-   pelo autor — não perseguir sem pedido explícito.
+4. ~~Estudo de caso numérico de ponta a ponta~~ — **feito em 15/08/2026**,
+   ver "Parte III — Estudo de Caso Integrado, Capítulo 28" acima.
 
 **Deliberadamente descartado**: a recomendação do Manus de abandonar o termo
 "Enciclopédia" no título por ser ambicioso demais para 105 páginas. Contraria a
