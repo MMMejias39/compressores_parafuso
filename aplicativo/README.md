@@ -34,19 +34,35 @@ cd aplicativo
 venv/bin/pytest tests/
 ```
 
+## Documentação
+
+- **`IMPLEMENTACAO.md`** — arquitetura, filosofia de projeto, decisões e o porquê delas.
+- **`GUIA_CODIGO.md`** — o que cada arquivo faz, módulo por módulo.
+- **`MANUTENCAO.md`** — como estender, testar e manter o projeto.
+- **`../CONTEXTO_app.md`** — histórico cronológico de sessões de desenvolvimento (achados, bugs, decisões — o "diário" por trás dos três documentos acima).
+
 ## Estrutura
 
 ```
 aplicativo/
-├── app.py                  # interface Streamlit (ponto de entrada)
+├── app.py                  # interface Streamlit (4 abas — ver GUIA_CODIGO.md)
 ├── compressor_sim/
 │   ├── constantes.py       # propriedades do ar e defaults (origem citada)
-│   ├── nucleo.py           # estágios de compressão + psicrometria
+│   ├── nucleo.py           # estágios de compressão, motor, hood, carcaça, psicrometria
 │   ├── subsistemas.py      # intercooler, separador, secador PSA, vaso/rede
-│   └── sistema.py          # cascata completa: simular(params) -> resultados
-├── tests/test_simulador.py # testes de sanidade (pytest)
+│   ├── sistema.py          # cascata completa: simular(params) -> resultados
+│   ├── dinamica.py         # simulação transiente do vaso/rede (VSD ou carga/alívio)
+│   ├── psa_ciclo.py        # rodízio de N torres do secador PSA
+│   ├── ekf.py               # Filtro de Kalman Estendido (+ estado aumentado, Cap. 28.1)
+│   ├── vae.py               # Autoencoder Variacional (detecção de anomalia)
+│   ├── piml.py              # Physics-Informed ML (+ problema inverso, Cap. 23.8)
+│   ├── mpc.py               # Controle Preditivo Baseado em Modelo
+│   └── pso.py               # Otimização por Enxame de Partículas
+├── tests/test_simulador.py # testes de sanidade (pytest, 71 testes)
 └── requirements.txt
 ```
+
+Ver `GUIA_CODIGO.md` para o que cada módulo faz em detalhe.
 
 ## Convenções
 

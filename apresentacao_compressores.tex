@@ -346,6 +346,18 @@
 	\end{alertblock}
 \end{frame}
 
+\begin{frame}{Não é só teoria: simulador funcional (\texttt{aplicativo/})}
+	Implementação real (Python/NumPy/PyTorch/SciPy) de cada algoritmo da Parte II, não pseudocódigo — 71 testes automatizados:
+	\begin{itemize}
+		\item \textbf{EKF, VAE, PIML, MPC, PSO}: os cinco rodam de fato, numa 4ª aba interativa (Streamlit) ao lado da simulação do trem.
+		\item \textbf{Identificação por problema inverso} (Cap.\ 23.8/28.1): o coeficiente $K$ — fixo no resto do app — é recuperado a partir de dados simulados por dois caminhos complementares, EKF aumentado (online) e PINN (offline).
+		\item Toda equação no código cita o número do livro — rastreável ao texto, não uma reimplementação paralela.
+	\end{itemize}
+	\begin{alertblock}{Achado real do processo}
+		Portar as equações para código expôs 3 erros de unidade no livro (Eqs.\ 9.8, 11.6, 15.7), corrigidos em ambos.
+	\end{alertblock}
+\end{frame}
+
 \begin{frame}{Síntese}
 	\begin{equation*}
 		\boxed{\;y_{\text{real}} = f_{\text{física}}(x) + \epsilon_{\text{IA}}(x) \quad \text{via EKF, VAE, PIML e MPC}\;}

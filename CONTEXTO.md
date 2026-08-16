@@ -1876,6 +1876,22 @@ os dois novos, Síntese).
 
 **Nada foi commitado ainda** — aguardando revisão do autor.
 
+## Slide novo no Beamer: o app como prova de conceito (16/08/2026)
+
+A pedido do autor ("atualize a apresentação com o escopo ampliado para que
+as pessoas entendam"), mais um slide em `apresentacao_compressores.tex`,
+entre o slide do Cap. 29 e a Síntese: "Não é só teoria: simulador funcional
+(`aplicativo/`)" — resume que os 5 algoritmos da Parte II rodam de verdade
+no app (71 testes automatizados), cita a identificação de parâmetro por
+problema inverso (Cap. 23.8/28.1, implementada no app no mesmo dia — ver
+`CONTEXTO_app.md`) como exemplo concreto, e fecha com o achado real de que
+portar equações para código já expôs 3 erros de unidade no livro. Mesmo
+ajuste de conteúdo do primeiro slide desta família (encurtado após estourar
+a moldura na primeira versão, `pdftoppm` confirmou depois de corrigido).
+Deck foi de 23 para 24 slides, compilação limpa.
+
+**Nada foi commitado ainda** — aguardando revisão do autor.
+
 ## Pendências conhecidas (candidatos para a próxima sessão)
 
 Nada está quebrado — o documento compila limpo e não há dívida técnica em

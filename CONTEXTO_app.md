@@ -726,6 +726,125 @@ sessão futura quiser fechar esses pontos, o padrão já está estabelecido
 (funções puras em `nucleo.py`, parâmetros ASSUMIDO em `constantes.py`,
 threading em `sistema.py`).
 
+## Estimação de parâmetro por problema inverso — EKF aumentado e PIML (Cap. 28.1/23.8, 16/08/2026)
+
+Portadas para o app as duas adições do livro desta mesma sessão (ver
+`CONTEXTO.md`, "Capítulo 28 implementado" e a entrada do Cap. 23.8): K, o
+coeficiente de vazamento fixo da Equação 9.3, deixa de ser um valor de
+catálogo assumido e passa a ser **identificado a partir de dados**, por dois
+caminhos complementares — exatamente o par que o livro descreve (online via
+EKF, offline via PINN).
+
+**Achado real, e por que os dois módulos não foram uma tradução direta do
+livro**: a primeira versão de cada mecanismo divergiu. No EKF aumentado, com
+os defaults do resto do app (δ/L=0,002, ruído de sensor 1e-4 kg/s), o efeito
+de K sobre ṁ_seco é menor que o próprio ruído de medição — o problema é mal
+condicionado por construção nesses valores (K multiplica δ/L na Eq. 9.3, e
+δ/L de comissionamento é pequena de propósito). No PIML, o resíduo da Eq. 9.3
+reimplementado à mão em PyTorch (para ser diferenciável em Ξ) inicialmente
+ignorava a correção psicrométrica que `sistema.py` já aplica a `m_dot_seco`
+(`m_dot/(1+1,6078·w_amb)`) — um viés sistemático de alguns % que dominava
+completamente o efeito real de Ξ (da ordem de décimos de %), fazendo Ξ
+divergir para >0,7 tentando compensar um viés que não tinha relação com ele.
+Confirmado isolando o resíduo contra os próprios rótulos reais (sem rede):
+zero exatamente no K real só depois da correção.
+
+### EKF com estado aumentado (`compressor_sim/ekf.py`, Eqs. 28.1/28.2)
+
+`medicao_aumentada()` e `simular_ekf_aumentado()`, novos, ao lado das funções
+de 2 estados já existentes (preservadas sem alteração de comportamento —
+`passo_ekf()` ganhou um parâmetro `medicao_fn` injetável, default o
+`medicao()` original, para reaproveitar o mesmo ciclo predição-correção sem
+duplicar código). Estado x_aug = [δ/L, R_f, K]. Implementa os dois regimes de
+$Q_\Lambda$ da Seção 28.1 via `q_proc_calibracao`/`q_proc_operacao` e
+`n_passos_calibracao`: na janela de calibração, δ/L e R_f têm Q quase nulo
+(tratados como conhecidos) enquanto K é livre; depois, K "congela" (Q
+pequeno) e δ/L volta a acompanhar deriva como no EKF original. **δ/L maior
+durante a calibração identifica K melhor** (efeito escala com δ/L,
+Eq. 9.3) — por isso a demo da UI usa δ/L=0,010 como referência de
+calibração, não o valor de comissionamento (0,002) do resto do app.
+
+### PIML — identificação por problema inverso (`compressor_sim/piml.py`, Eq. 23.5)
+
+`treinar_com_identificacao()`, nova, ao lado de `treinar()` (preservada sem
+alteração). Mesma perda híbrida e balanceamento adaptativo de λ (Eq. 23.4) já
+existentes, mas o resíduo físico é `_residuo_inverso()` — a Eq. 9.3 (balanço
+mássico), com Ξ como `torch.nn.Parameter` otimizado no mesmo `Adam` dos
+pesos da rede, não o resíduo de energia do intercooler (Eq. 23.2, que
+continua intocado em `treinar()`). `_residuo_inverso()` recalcula a razão de
+umidade ponto a ponto via `nucleo.razao_umidade()` **fora** do grafo do
+PyTorch (não depende de Ξ nem dos pesos, só de `t_amb`/`ur_amb`/`p_amb`) para
+replicar exatamente a correção psicrométrica de `sistema.py` — ver o achado
+acima.
+
+### Testes e verificação
+
+5 testes novos (3 EKF aumentado, 2 PIML) — **71 no total, todos passando**.
+Tolerâncias calibradas numericamente antes de escrever os `assert`s (rodando
+os cenários via `python -c` e inspecionando a convergência), não escolhidas
+a priori — Ξ/K convergem de forma robusta entre sementes e pontos de partida
+diferentes (testado 0,02 e 0,09 como crença inicial, 3 seeds), sempre dentro
+de ±0,003 do K real (0,05).
+
+**Verificação em duas camadas**: `streamlit.testing.v1.AppTest` primeiro (0
+exceções, 4 abas, todos os `st.metric` novos com valores plausíveis) e depois
+**Claude-in-Chrome real** (extensão conectada nesta sessão, ao contrário das
+duas sessões anteriores) — servidor subido, navegado até a aba "Gêmeo
+Digital", as duas seções novas roladas e conferidas visualmente: o gráfico de
+K mostra convergência de 0,03 (crença inicial) para a faixa 0,050-0,056
+durante a janela de calibração (fundo cinza), permanecendo estável depois; o
+δ/L fica plano na janela e retoma a deriva depois; o gráfico de Ξ do PIML
+mostra a mesma assinatura de overshoot-e-correção já documentada para λ em
+sessões anteriores, estabilizando perto de 0,047. Console do navegador sem
+erros. Servidor encerrado ao final — não ficou rodando.
+
+**Símbolos novos na UI/código**: nenhum parâmetro `ASSUMIDO` novo em
+`constantes.py` — K, η_mec e ζ_ref já existiam como constantes fixas
+(`K_FOLGA`, `ETA_MECANICA`, `ZETA_FILTRO`); esta sessão os torna
+*identificáveis*, não os introduz. `xi_inicial`/`k_inicial_aum` (crenças de
+partida, deliberadamente diferentes do valor real) são parâmetros de cenário
+da demo, não do modelo físico.
+
+**Pendência aberta por este trabalho**: apenas K (Eq. 9.3) foi portado dos
+três parâmetros de Λ do livro (K, η_mec, ζ_ref) — η_mec e ζ_ref não têm
+contraparte observável nos dois canais de medição atuais do EKF (ṁ_seco,
+T_HP,in) nem no resíduo de energia/massa já implementados no PIML; estendê-los
+exigiria um canal de medição novo (ex. potência elétrica para η_mec, ΔP do
+filtro para ζ_ref) e fica para uma sessão futura, se pedido.
+
+## Documentação de implementação criada (16/08/2026)
+
+A pedido do autor, três documentos novos em `aplicativo/`, complementares a
+este arquivo (que continua sendo o registro cronológico de sessão — os três
+abaixo são a versão destilada e estável, para humanos que não precisam do
+histórico completo):
+
+- **`IMPLEMENTACAO.md`**: arquitetura (diagrama de dependência entre
+  módulos em texto), filosofia de projeto (gray-box, rastreabilidade a
+  equação do livro, convenção `m_dot`/`m_dot_seco`, uma unidade
+  representativa + escala de planta), as 4 abas, e por que os algoritmos de
+  IA têm escopo reduzido frente ao vetor completo do livro.
+- **`GUIA_CODIGO.md`**: cada módulo de `compressor_sim/` explicado, na
+  ordem de dependência (constantes → núcleo → subsistemas → sistema →
+  dinâmica/PSA → EKF/VAE/PIML/MPC/PSO → app.py) — inclui o passo a passo
+  dos 8 estágios de `sistema.simular()`.
+- **`MANUTENCAO.md`**: checklist para adicionar equação nova, cuidados
+  específicos para estender os algoritmos de IA (destilados dos bugs reais
+  desta e de sessões anteriores — verificar resíduo contra rótulos reais
+  antes de treinar, normalizar resíduo pela própria escala, checar
+  observabilidade do parâmetro antes de depurar convergência), gestão de
+  dependências (torch fora do `requirements.txt`, motivo), protocolo de
+  verificação de UI (Claude-in-Chrome > AppTest > nunca só pytest),
+  disciplina de sincronia livro↔app, e a lista de escopo fora (resumo
+  vivo — a versão completa continua na seção "Pendências conhecidas" deste
+  arquivo).
+
+`README.md` também atualizado (estava desatualizado desde antes do EKF/VAE/
+PIML/MPC/PSO existirem — só citava os 4 módulos originais da cascata
+estática) e agora linka os três documentos novos.
+
+**Nada foi commitado ainda** — aguardando revisão do autor.
+
 ## Estado atual
 
 Código compila sem erro de sintaxe, **66/66 testes passam**
