@@ -982,3 +982,29 @@ contexto para ele.
 3. ~~GPU disponível na máquina do autor (RTX 4070) não é usada~~ —
    **resolvido em 16/08/2026**, ver "Uso de GPU (CUDA) quando disponível"
    abaixo.
+4. **Quatro extensões metodológicas implementadas só no livro em
+   16/08/2026** (pendências 5-8 do `CONTEXTO.md` principal, seção
+   "Pendências conhecidas") — nenhuma tem implementação de referência
+   neste simulador ainda:
+   - **Sensores portáteis/wireless** (Cap. 18, Eq. 18.6,
+     $\mathcal{R}_{\text{port}} = \kappa_{\text{port}}\cdot\mathcal{R}_{\text{fixo}}$)
+     — o app não simula leitura assíncrona/de menor confiança; todo canal
+     do EKF (`ekf.py`) usa a mesma $\mathcal{R}$ fixa por chamada.
+   - **$\zeta_{\text{valv}}$, coeficiente de perda de válvulas** (Cap. 5,
+     Eq. 5.16) — estende $\Lambda$ da Eq. 28.1 para 4 elementos (ver
+     `MANUTENCAO.md`, seção "Escopo"); exigiria um canal de $\Delta P$ de
+     válvula que nem `sistema.py` nem a Tabela 18.1 têm hoje.
+   - **Treino multi-mecanismo** (Cap. 29, Eq. 29.2, busca por resíduo
+     mínimo generalizada sobre o catálogo de 59 mecanismos) — o app só
+     reproduz o cenário único de desgaste de folga; falta o gerador
+     sistemático de dataset sintético multi-mecanismo e a busca
+     $\arg\min$ correspondente.
+   - **Painel supervisório de frota** (Cap. 26, nova subseção, laço
+     `ciclo_supervisorio` em pseudocódigo) — o app roda um cenário e uma
+     máquina por execução do Streamlit, sem estado persistente entre
+     sessões nem agendamento contínuo; reproduzir o painel exigiria as
+     duas peças, nenhuma presente hoje.
+
+   Se qualquer uma dessas for pedida para o app no futuro, o ponto de
+   partida é a seção correspondente do `compressores.tex` (números acima)
+   — a arquitetura já está descrita lá, falta só o código.
