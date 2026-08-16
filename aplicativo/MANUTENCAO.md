@@ -176,9 +176,12 @@ a versão sempre atualizada). Resumo no momento desta escrita (16/08/2026):
   exigiriam um modelo de temperatura do rotor que o livro não fecha.
 - `n_compressores` assume unidades **idênticas** no **mesmo** ponto de
   operação — sem lógica de carga desigual ou rodízio de seleção (N+1).
-- Do vetor Λ do Cap. 28.1 (K, η_mec, ζ_ref), só K é identificável
-  (EKF aumentado e PIML inverso) — η_mec e ζ_ref exigiriam um canal de
-  medição que o EKF/PIML ainda não usam (potência elétrica, ΔP do filtro).
+- Do vetor Λ do Cap. 28.1, agora com 4 elementos (K, η_mec, ζ_ref, ζ_valv —
+  o quarto adicionado em 16/08/2026, coeficiente de perda de válvulas de
+  alívio/retenção, Eq. 5.16), só K é identificável (EKF aumentado e PIML
+  inverso) — os outros três exigiriam um canal de medição que o EKF/PIML
+  ainda não usam (potência elétrica para η_mec, ΔP do filtro para ζ_ref,
+  ΔP de válvula para ζ_valv).
 - Parte III do app (orquestração EKF→VAE→PIML→prognóstico→MPC como um
   pipeline único, replicando o Capítulo 29 do livro): os algoritmos
   existem e funcionam cada um isoladamente na aba 4, mas não há ainda uma

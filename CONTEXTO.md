@@ -2095,21 +2095,27 @@ aproximada de valor:
    "Inventário de algoritmos da Parte II" acima.
 4. ~~Estudo de caso numérico de ponta a ponta~~ — **feito em 15/08/2026**,
    ver "Parte III — Estudo de Caso Integrado, Capítulo 28" acima.
-5. **Sensores móveis/portáteis** — todo o equacionamento de instrumentação
-   (Tabela 18.1) assume pontos fixos instalados permanentemente; nem o
-   livro nem o app cobrem inspeção com sensor não permanente (portátil,
-   drone, etc.). Levantado pelo autor em 16/08/2026 — ver "Fluxo conceitual
-   do pipeline completo" no topo deste arquivo.
-6. **Perda de carga de válvulas como elemento parametrizado** — hoje só
-   tubulação (Eq. 5.15) e filtro (Eq. 5.4) têm coeficiente de perda
-   próprio; válvulas (blow-off, *check valve*, PSV) só aparecem como
-   mecanismo de falha binário no catálogo do Cap. 28.3, sem coeficiente
-   identificável pelo mesmo mecanismo de problema inverso do Cap. 23.8/28.1.
-7. **Treino sobre múltiplos mecanismos de falha simultaneamente** — o
-   Cap. 29/app demonstram só o cenário de desgaste de folga (δ/L) ponta a
-   ponta; falta geração sistemática de dados sintéticos cobrindo vários dos
-   57 mecanismos do catálogo (Cap. 28.3) para treinar um classificador mais
-   geral, não um cenário único.
+5. ~~Sensores móveis/portáteis~~ — **feito no livro em 16/08/2026**, restrito
+   a equipamentos portáteis e wireless (drones excluídos a pedido do
+   autor): Cap. 18, nova subseção "Sensores Portáteis e Wireless:
+   Complemento à Instrumentação Fixa", Tabela 18.3, Equação 18.6
+   ($\mathcal{R}_{\text{port}} = \kappa_{\text{port}}\cdot\mathcal{R}_{\text{fixo}}$).
+   Ver "Extensão de três pendências no livro" abaixo. **App**: sem
+   implementação de referência ainda.
+6. ~~Perda de carga de válvulas como elemento parametrizado~~ — **feito no
+   livro em 16/08/2026**: Cap. 5, nova subseção e Equação 5.16
+   ($\zeta_{\text{valv}}$, mesma forma do filtro/Eq. 5.4), vetor $\Lambda$
+   da Equação 28.1 estendido de 3 para 4 elementos. Ver "Extensão de três
+   pendências no livro" abaixo. **App**: sem implementação de referência
+   ainda (mesma lacuna de canal de medição que já vale para $\eta_{\text{mec}}$/$\zeta_{\text{ref}}$).
+7. ~~Treino sobre múltiplos mecanismos de falha simultaneamente~~ — **feito
+   no livro em 16/08/2026**: Cap. 29, nova subseção "Generalização: da
+   Atribuição Pontual ao Treino Multi-Mecanismo", Equação 29.2 (busca por
+   resíduo mínimo generalizada sobre o catálogo, $\mathcal{M}\subseteq$
+   Tabela 28.2 — contagem real do catálogo é 59 mecanismos, não 57 como
+   escrito nesta pendência originalmente). Ver "Extensão de três
+   pendências no livro" abaixo. **App**: sem gerador sistemático de
+   dataset multi-mecanismo ainda — só o cenário único do Cap. 29.
 8. **Supervisório real** (painel contínuo por máquina/frota, não uma
    simulação pontual de um cenário por vez) — nem o livro nem o app cobrem
    isso hoje; o app é ferramenta de simulação/demonstração, não um sistema
@@ -2199,4 +2205,77 @@ caminho quando algum deles é incerto (pasta que pode já ter sido
 removida, por exemplo), e sempre conferir `git status` depois de commitar,
 não só antes.
 
-**Nada foi commitado ainda** — aguardando revisão do autor.
+**Commitado** em dois passos: `5ef93c3` (movimentação dos 6 itens, mas sem
+CONTEXTO.md por causa do erro de pathspec acima) e `0732cb4` (correção — o
+4º JPEG oculto, CONTEXTO.md, e a exclusão do caminho antigo do 3º JPEG).
+
+## Extensão de três pendências no livro: sensores portáteis, válvulas e treino multi-mecanismo (16/08/2026)
+
+A pedido do autor ("atualize o compressores.tex com as últimas
+informações"), implementadas as pendências 5, 6 e 7 listadas acima —
+restrita a item 5 apenas à parte de "equipamentos portáteis e wireless"
+(sem cobrir drones, que o autor excluiu explicitamente). As três entram
+como metodologia documentada no livro; nenhuma tem implementação de
+referência no app ainda (registrado como tal em cada seção nova, e em
+`aplicativo/MANUTENCAO.md`).
+
+- **Item 5 — Sensores portáteis e wireless** (Capítulo 18, nova
+  subseção "Sensores Portáteis e Wireless: Complemento à Instrumentação
+  Fixa", antes da Diretriz Técnica Final): nova Tabela 18.3 com 5 casos de
+  uso (analisador de vibração de mão, termografia portátil, detector
+  ultrassônico de vazamento, contador de partículas portátil, nó wireless
+  de retrofit — protocolos WirelessHART/IEC 62591 e ISA100.11a/IEC 62734,
+  citados sem `\cite` por não estarem na bibliografia do documento — ver
+  lição abaixo). Nova Equação 18.6: $\mathcal{R}_{\text{port}} =
+  \kappa_{\text{port}} \cdot \mathcal{R}_{\text{fixo}}$, inflando a
+  covariância de ruído de medição do EKF para leituras não-fixas. A
+  equação final do capítulo (unificação multiobjetivo) foi renumerada de
+  18.6 para 18.7 — só duas referências cruzadas no próprio parágrafo,
+  confirmado por `grep` antes de editar, sem referências órfãs.
+- **Item 6 — Perda de carga parametrizada em válvulas** (Capítulo 5, nova
+  subseção "Perda de Carga Parametrizada em Válvulas de Alívio e
+  Retenção", nova Equação 5.16, mesma forma clássica do filtro (Eq. 5.4)
+  aplicada a blow-off/check valve/PSV com coeficiente próprio
+  $\zeta_{\text{valv}}$): estende o vetor $\Lambda$ da Equação 28.1 de 3
+  para 4 elementos ($K$, $\eta_{\text{mec}}$, $\zeta_{\text{ref}}$,
+  $\zeta_{\text{valv}}$) — Tabela 28.1 (categoria iii) atualizada, símbolo
+  novo na Nomenclatura.
+- **Item 7 — Treino multi-mecanismo** (Capítulo 29, nova subseção
+  "Generalização: da Atribuição Pontual ao Treino Multi-Mecanismo", nova
+  Equação 29.2): generaliza a atribuição de causa-raiz por resíduo mínimo
+  (já usada informalmente na Seção "Atribuição de Causa-Raiz via PIML"
+  contra 3 hipóteses escolhidas à mão) para uma busca formal
+  $\arg\min$ sobre um subconjunto $\mathcal{M}$ do catálogo completo da
+  Tabela 28.2. **Correção de contagem**: a pendência listada acima citava
+  "57 mecanismos" — contagem real conferida por `awk`/`grep` sobre as
+  linhas da Tabela 28.2 é **59**; o livro usa o número verificado (59),
+  não o da nota antiga.
+
+**Correção adicional, fora do escopo original dos 3 itens mas encontrada
+ao revisar o texto da Seção 28.1**: o parágrafo que descreve a
+implementação de referência do EKF com estado aumentado estava
+desatualizado — dizia "sem implementação de referência no simulador até o
+momento" para a estimação conjunta de $\Lambda$, mas
+`aplicativo/compressor_sim/ekf.py` já tem, desde a fase 2 da Parte II
+(commit `06c50bb`), a função `simular_ekf_aumentado()` implementando
+exatamente esse mecanismo para $K$ (Eqs. 28.1/28.2, estado aumentado de 3
+elementos). Corrigido para descrever com precisão o que está implementado
+($K$, via `simular_ekf_aumentado()`) e o que não está ($\eta_{\text{mec}}$,
+$\zeta_{\text{ref}}$, $\zeta_{\text{valv}}$, por falta de canal de medição).
+`aplicativo/MANUTENCAO.md` também atualizado para refletir o vetor Λ de
+4 elementos.
+
+**Lição sobre citações de norma**: o primeiro rascunho da seção de
+sensores wireless citava `\cite{iso8573}` (ISO 8573-1, pureza do ar
+comprimido) para os protocolos WirelessHART/ISA100.11a — citação errada,
+copiada por proximidade de contexto (ambos aparecem perto de "protocolo"),
+não por verificação real. Corrigido antes da compilação: os números de
+norma (IEC 62591, IEC 62734) são citados apenas como texto, sem `\cite`,
+por não haver entrada correspondente na bibliografia deste documento —
+reforça a regra de sempre verificar contra a fonte real antes de inserir
+qualquer citação, mesmo quando o padrão parece familiar.
+
+**Verificação**: 3 passagens de `pdflatex`, 160→164 páginas, sem
+referências indefinidas, sem rótulo duplicado, sem *overfull hbox* severo
+(>20pt) introduzido pelas mudanças — conferido por `grep` no log de
+compilação antes de reportar como concluído.

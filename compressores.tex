@@ -228,7 +228,8 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$f_{\text{ciclo}}$ & Frequência de ciclagem carga/alívio & h$^{-1}$ & Cap. 13 \\
 	$E_{\Pi}$ & Elasticidade da potência de compressão em relação à razão de pressão & adimensional & Cap. 13 \\
 	$\delta$ (contexto de controle)\dag & Estado binário da válvula de admissão (1 = carga, 0 = alívio) — distinto da folga $\delta$ dos capítulos de rotores & adimensional & Cap. 13 \\
-	$C_{op}$ & Custo operacional acumulado do ciclo carga/alívio & R\$, kWh & Cap. 13 \\ \bottomrule
+	$C_{op}$ & Custo operacional acumulado do ciclo carga/alívio & R\$, kWh & Cap. 13 \\
+	$\zeta_{\text{valv}}$\dag & Coeficiente de perda de carga localizada de válvulas de alívio/retenção (\textit{blow-off}, \textit{check}, PSV) — mesma família de $\zeta$ do filtro (Cap. 5), com subscrito próprio & adimensional & Cap. 5, 28 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Elétrica e Acionamento}
@@ -326,6 +327,7 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$g$\dag & Função não linear de observação do EKF, $z=g(x)$ & --- & Cap. 20 \\
 	$Q$ & Matriz de covariância do ruído de processo (EKF) & --- & Cap. 20 \\
 	$\mathcal{R}$\dag & Matriz de covariância do ruído de \textbf{medição} (EKF) & --- & Cap. 20 \\
+	$\kappa_{\text{port}}$\dag & Fator de inflação de $\mathcal{R}$ para leituras de sensor portátil/wireless ($\kappa$ está ocupado pelo fator de suavização do PIML) & --- & Cap. 18 \\
 	$F_k, G_k$ & Jacobianas de transição de estado e de observação (EKF) & --- & Cap. 20 \\
 	$\Lambda$ & Vetor de parâmetros estáticos calibráveis, aumentado ao estado do EKF & --- & Cap. 28 \\
 	$Q_\Lambda$\dag & Covariância de processo dos parâmetros estáticos aumentados — próxima de zero na janela de calibração, pequena para acompanhar deriva lenta depois (distingue-se de $Q$, a covariância do estado dinâmico original) & --- & Cap. 28 \\
@@ -359,7 +361,10 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$J$ & Função de custo/objetivo (MPC, PSO) & --- & Cap. 15, 20 \\
 	$H$ & Horizonte de predição (MPC) & passos & Cap. 15, 20 \\
 	$k$ & Índice de tempo discreto (sempre como subscrito: $x_k$, $z_k$) & --- & Cap. 15, 20 \\
-	$RUL$ & \textit{Remaining Useful Life} — vida útil remanescente projetada (base: dano acumulado, Eq. 19.9; com subscrito, projeção sobre outra variável de estado, ex. $RUL_\delta$ no Cap. 29) & tempo/ciclos & Cap. 19, 29 \\ \bottomrule
+	$RUL$ & \textit{Remaining Useful Life} — vida útil remanescente projetada (base: dano acumulado, Eq. 19.9; com subscrito, projeção sobre outra variável de estado, ex. $RUL_\delta$ no Cap. 29) & tempo/ciclos & Cap. 19, 29 \\
+	$\mathcal{M}$ & Subconjunto do catálogo de mecanismos de falha (Tabela~28.2) considerado na busca por resíduo mínimo & --- & Cap. 29 \\
+	$\hat{m}_{\text{falha}}$\dag & Mecanismo de falha estimado por resíduo mínimo sobre $\mathcal{M}$ (o subscrito evita colisão com o módulo de engrenagem $m$ do Cap. 8) & --- & Cap. 29 \\
+	$\mathcal{D}_{\text{multi}}$ & Conjunto de dados sintéticos multi-mecanismo, gerado pelo modelo direto da Parte I sobre o catálogo & --- & Cap. 29 \\ \bottomrule
 \end{longtable}
 }
 
@@ -928,11 +933,23 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 	Onde $f_D$ é o fator de atrito de Darcy (função do número de Reynolds e da rugosidade relativa da tubulação \cite{white}), $L_{\text{linha}}$ o comprimento do trecho e $D_{\text{linha}}$ seu diâmetro interno. Cada trecho interestágios (descarga LP$\to$intercooler, intercooler$\to$sucção HP, descarga HP$\to$aftercooler) tem sua própria Equação~\eqref{eq:s5-15}, com $f_D$, $L_{\text{linha}}$ e $D_{\text{linha}}$ específicos daquele trecho. O efeito prático é uma pequena correção à pressão usada nas Equações~\eqref{eq:s5-5}, \eqref{eq:s5-8}/\eqref{eq:s5-9} e~\eqref{eq:s5-14}: a pressão de sucção do estágio seguinte é a pressão de descarga do estágio anterior \textbf{menos} a Equação~\eqref{eq:s5-15} do trecho que os liga, não o mesmo valor de $P_{\text{int}}$ usado até aqui por simplificação. Em linhas curtas e bem dimensionadas dentro do próprio pacote (\textit{skid}), essa correção costuma ser pequena frente às demais perdas do capítulo — mas cresce com o desgaste (rugosidade interna por corrosão/incrustação, que eleva $f_D$ ao longo da vida da instalação) e deve ser tratada como mais um sintoma rastreável pelo Gêmeo Digital, não descartada por ser pequena no comissionamento.
 
+	\subsection{\textbf{Perda de Carga Parametrizada em Válvulas de Alívio e Retenção}}
+
+	O catálogo de mecanismos de falha do Capítulo 28 (Seção~28.3) trata a válvula de \textit{blow-off}, a válvula de retenção (\textit{check valve}) e a válvula de segurança e alívio (PSV) como mecanismos \textbf{binários}: a válvula funciona dentro da especificação ou falhou (trava aberta, trava fechada, vaza acima do assento). Essa simplificação deixa de fora o regime intermediário que, na prática, costuma preceder a falha binária — o assento desgasta, a mola perde rigidez por fadiga ou corrosão, ou depósitos se acumulam na sede, e a perda de carga que a válvula impõe ao escoamento cresce de forma gradual muito antes de qualquer travamento. É o mesmo padrão de degradação já modelado para o filtro de admissão (Equação~\eqref{eq:s5-4}) e para a tubulação interestágios (Equação~\eqref{eq:s5-15}) — e a mesma forma clássica de perda de carga localizada se aplica, com um coeficiente próprio de cada válvula, $\zeta_{\text{valv}}$, na Equação~\eqref{eq:s5-16}:
+
+	\begin{equation}\label{eq:s5-16}
+	\Delta P_{\text{valv}} = \zeta_{\text{valv}} \cdot \frac{\rho \, v^2}{2}
+	\end{equation}
+
+	Como no filtro (Equação~\eqref{eq:s5-4}), $\zeta_{\text{valv}}$ cresce a partir de um valor de referência limpo/novo ($\zeta_{\text{valv,ref}}$) conforme a válvula degrada — mas, diferente do filtro, cuja perda é permanentemente exposta ao escoamento principal, cada válvula deste grupo só é atravessada por vazão em condições específicas (a PSV só abre acima da pressão de ajuste; a de retenção conduz continuamente, mas em um único sentido; o \textit{blow-off} só atua durante alívio de partida ou parada). O sinal de degradação, portanto, não é uma leitura contínua como $\Delta P_{ic}$ do intercooler (ponto D da Tabela~\ref{tab:18-1}), mas o desvio entre a perda de carga observada no instante em que a válvula efetivamente conduz e o valor de referência esperado para aquela vazão — exigindo, tal qual $\zeta_{\text{ref}}$ do filtro (Seção~28.2), um canal de medição de pressão diferencial dedicado, hoje ausente da matriz da Tabela~\ref{tab:18-1}.
+
+	Com esse coeficiente definido, a mesma técnica de estimação conjunta de estado e parâmetro que identifica $K$, $\eta_{\text{mec}}$ e $\zeta_{\text{ref}}$ (Seção~28.1) se estende naturalmente a $\zeta_{\text{valv}}$: basta incluí-lo no vetor $\Lambda$ da Equação~\eqref{eq:s28-1}, desde que exista, para aquela válvula específica, a medição de $\Delta P_{\text{valv}}$ que torna o parâmetro observável — a mesma condição discutida na Seção de Condição de Observabilidade do Capítulo 21, agora aplicada a um quarto parâmetro estático em vez dos três originais.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s5-13} consolida todo o capítulo em um único KPI de eficiência global — mas seu valor só é confiável se cada termo de perda (folga interna via $V_i$, gearbox, bomba de óleo) estiver sendo medido ou estimado corretamente; um $\eta_{\text{global}}$ isolado sem essa rastreabilidade componente-a-componente é apenas um número, não um diagnóstico. A Equação~\eqref{eq:s5-14} acrescenta um segundo eixo de leitura, ortogonal ao primeiro: mesmo com $\eta_{\text{global}}$ nominal, uma pressão interestágio deslocada do ótimo indica que a carga entre os dois estágios está mal balanceada — tipicamente o primeiro sinal observável de um intercooler em degradação, antes mesmo que a Equação~\eqref{eq:s10-4} feche o diagnóstico. A Equação~\eqref{eq:s5-15} fecha a última lacuna de perda de carga do trem primário: uma tendência de alta em $f_D$ para o mesmo ponto de operação, isolada da leitura de $P_{\text{int}}$, é sintoma de degradação da própria tubulação (corrosão, incrustação interna), independente de qualquer coisa que esteja acontecendo no intercooler ou nos estágios.
+	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s5-13} consolida todo o capítulo em um único KPI de eficiência global — mas seu valor só é confiável se cada termo de perda (folga interna via $V_i$, gearbox, bomba de óleo) estiver sendo medido ou estimado corretamente; um $\eta_{\text{global}}$ isolado sem essa rastreabilidade componente-a-componente é apenas um número, não um diagnóstico. A Equação~\eqref{eq:s5-14} acrescenta um segundo eixo de leitura, ortogonal ao primeiro: mesmo com $\eta_{\text{global}}$ nominal, uma pressão interestágio deslocada do ótimo indica que a carga entre os dois estágios está mal balanceada — tipicamente o primeiro sinal observável de um intercooler em degradação, antes mesmo que a Equação~\eqref{eq:s10-4} feche o diagnóstico. A Equação~\eqref{eq:s5-15} fecha a última lacuna de perda de carga do trem primário: uma tendência de alta em $f_D$ para o mesmo ponto de operação, isolada da leitura de $P_{\text{int}}$, é sintoma de degradação da própria tubulação (corrosão, incrustação interna), independente de qualquer coisa que esteja acontecendo no intercooler ou nos estágios. A Equação~\eqref{eq:s5-16} estende essa mesma lógica de perda de carga localizada às válvulas de alívio e retenção, hoje tratadas como falha binária no catálogo do Capítulo 28 — uma tendência de alta em $\zeta_{\text{valv}}$ é o análogo, para essas válvulas, do que a tendência de alta em $\zeta_{\text{ref}}$ já representa para o filtro de admissão.
 
 	% --- Fim do Capítulo 5 ---
 	
@@ -2481,18 +2498,51 @@ O segundo é o \textbf{limiar de vibração global}. É comum encontrar o valor 
 
 O critério correto para $v_{\text{trip}}$ vem de três fontes, nesta ordem de precedência: (i) o valor contratual de aceitação e alarme definido pela API 619 \cite{api619} e pelos requisitos do fabricante (OEM) para aquela carcaça específica; (ii) a \textbf{linha de base da própria máquina}, levantada no comissionamento sob condição de carga conhecida e usada como referência de tendência; e (iii) quando o componente e a montagem se enquadrarem no escopo (o motor elétrico de acionamento, por exemplo, é uma máquina industrial coberta pela ISO 20816-3), o critério da norma aplicado apenas àquele componente. Essa é, aliás, a filosofia do próprio Gêmeo Digital: o desvio relevante é o afastamento da assinatura individual da máquina, não a ultrapassagem de um número tabelado por uma norma que nunca a teve em vista.
 
+\subsection{Sensores Portáteis e Wireless: Complemento à Instrumentação Fixa}
+
+A Tabela~\ref{tab:18-1} assume, em todas as suas linhas, um sensor \textbf{permanentemente instalado} — cabeado até o sistema de automação, amostrando em taxa constante. Essa é a premissa correta para qualquer grandeza que alimente o intertravamento da Tabela~\ref{tab:18-2} ou o ciclo de predição-correção do EKF em tempo real (Equação~\eqref{eq:s21-4}), mas não é a única forma de instrumentação que um Gêmeo Digital pode consumir. Duas categorias de sensor \textbf{não permanente} complementam a matriz fixa sem substituí-la: o instrumento \textbf{portátil}, operado por um técnico em rondas periódicas (analisador de vibração de mão, câmera termográfica portátil, detector ultrassônico de vazamento de ar comprimido), e o nó \textbf{wireless} de retrofit — um sensor sem fio, alimentado por bateria, instalado temporária ou permanentemente num ponto que não justificava o custo de cabeamento até o painel (WirelessHART e ISA100.11a são os dois protocolos consolidados para esse retrofit industrial, ambos padronizados internacionalmente como IEC 62591 e IEC 62734 respectivamente). Ambos preenchem a mesma lacuna: pontos onde uma leitura periódica de baixo custo já entrega valor diagnóstico suficiente, sem justificar uma instalação permanente.
+
+A Tabela~\ref{tab:18-3} lista os casos de uso mais diretos para este trem de compressão, todos complementares a um ponto já existente na Tabela~\ref{tab:18-1}, nunca substitutos de uma medição que já alimenta o intertravamento.
+
+\begin{table}[h!tbp]
+	\centering
+	\resizebox{\textwidth}{!}{
+		\begin{tabular}{l l l l}
+			\toprule
+			\textbf{Sensor} & \textbf{Ponto/grandeza complementada} & \textbf{Modo} & \textbf{Uso} \\ \midrule
+			Analisador de vibração de mão & $v_{\text{rms}}$ (ponto B) & Portátil, ronda periódica & Validação cruzada do acelerômetro fixo; pontos sem acelerômetro \\
+			Câmera/pistola termográfica & Carcaças, mancais, painel elétrico & Portátil, ronda periódica & Ponto quente incipiente fora da matriz fixa \\
+			Detector ultrassônico de vazamento & Header e ramais (ponto I) & Portátil, ronda periódica & Perda não contabilizada em $\dot{m}_{tot}$ \\
+			Contador de partículas de óleo & Circuito de lubrificação & Portátil, amostragem pontual & Complementa a série ISO 4406 já periódica (Cap. 12) \\
+			Nó \textit{wireless} de vibração/temperatura & Pontos sem cabeamento viável & Wireless, retrofit & Cobertura de lacuna sem custo de cabeamento novo \\ \bottomrule
+		\end{tabular}
+	}
+	\caption[Instrumentação portátil e wireless complementar à matriz fixa]{Instrumentação portátil e wireless complementar à matriz fixa da Tabela~\ref{tab:18-1}.}
+	\label{tab:18-3}
+\end{table}
+
+O ciclo de predição-correção do EKF (Equação~\eqref{eq:s21-4}) já lida naturalmente com a irregularidade temporal dessas leituras — a etapa de predição é parametrizada pelo intervalo $\Delta t$ decorrido desde a última medição, seja ele constante (sensor fixo) ou variável (ronda semanal, nó \textit{wireless} de baixa taxa de amostragem para economizar bateria). O que o ciclo \textbf{não} ajusta sozinho é a confiança relativa depositada em cada leitura: uma medição portátil carrega ruído adicional que a fixa não tem — variabilidade de posicionamento da sonda entre rondas, ausência de um ponto de fixação calibrado, e, no caso \textit{wireless}, latência e perda ocasional de pacote. A covariância de ruído de medição $\mathcal{R}$ da Equação~\eqref{eq:s21-1} deve refletir essa diferença, inflada por um fator $\kappa_{\text{port}}$ em relação ao mesmo canal medido de forma fixa, conforme a Equação~\eqref{eq:s18-6}:
+
+\begin{equation}\label{eq:s18-6}
+\mathcal{R}_{\text{port}} = \kappa_{\text{port}} \cdot \mathcal{R}_{\text{fixo}}, \qquad \kappa_{\text{port}} > 1
+\end{equation}
+
+Ignorar essa inflação — tratar uma leitura de ronda mensal como se tivesse a mesma confiabilidade de um sensor fixo amostrado a cada segundo — tem o mesmo efeito diagnosticado pelo NIS da Equação~\eqref{eq:s21-7}: o filtro passa a confiar demais numa medição ruidosa, e a estimativa diverge da realidade de forma silenciosa, sem que nenhum alarme dispare.
+
 \vspace{1em}
 \hrule
 \vspace{1em}
 
-\textbf{Diretriz Técnica Final:} A unificação matemática, formalizada na Equação~\eqref{eq:s18-6}, permite que o Gêmeo Digital opere em um ponto de ótimo multiobjetivo, onde a segurança operacional é a restrição fundamental e a sustentabilidade é a meta de performance:
+\textbf{Diretriz Técnica Final:} A unificação matemática, formalizada na Equação~\eqref{eq:s18-7}, permite que o Gêmeo Digital opere em um ponto de ótimo multiobjetivo, onde a segurança operacional é a restrição fundamental e a sustentabilidade é a meta de performance:
 
-\begin{equation}\label{eq:s18-6}
+\begin{equation}\label{eq:s18-7}
 \begin{aligned}
 	\text{Minimizar } J &= \int_{t}^{t+\Delta t} \left( \sum \dot{I} + \beta \sum \dot{m}_{\text{CO}_2} \right) \, dt \\[10pt]
 	\text{Sujeito a: } & \begin{cases} T_{dp} \le T_{dp,\text{limit}} \quad (\text{Qualidade}) \\ \sigma_{b} < \sigma_{\text{adm}} \quad (\text{Integridade}) \\ P_{tk} \ge P_{\text{crit}} \quad (\text{Disponibilidade}) \\ \Delta \theta_{\text{sync}} < \theta_{\text{backlash}} \quad (\text{Sincronismo}) \end{cases}
 \end{aligned}
 \end{equation}
+
+A inflação de $\mathcal{R}$ da Equação~\eqref{eq:s18-6} completa essa unificação num eixo que as quatro restrições anteriores não cobrem: a \textbf{origem} do dado, não só o seu valor. Um Gêmeo Digital que trata uma leitura de ronda mensal e uma leitura de sensor fixo amostrada a cada segundo com a mesma covariância de medição está, na prática, inflando artificialmente sua própria confiança — o mesmo risco silencioso que o NIS da Equação~\eqref{eq:s21-7} existe para detectar.
 
 \clearpage
 \thispagestyle{empty}
@@ -3421,10 +3471,10 @@ Os Capítulos 21 a 27 descreveram como o Gêmeo Digital estima \textbf{estados} 
 
 \subsection{Estimação Conjunta de Estado e Parâmetro (EKF com Estado Aumentado)}
 
-Além de $K$, outros parâmetros do modelo físico da Parte I nunca foram medidos nesta máquina específica: $\eta_{\text{mec}}$ (eficiência mecânica do elemento compressor, Equação~\eqref{eq:s5-5}) e o coeficiente de perda de filtro em condição limpa, $\zeta_{\text{ref}}$ (Equações~\eqref{eq:s3-4}/\eqref{eq:s5-4}), entram no equacionamento como valores de catálogo ou de literatura — calibrados pelo fabricante em condições padronizadas de bancada, não na instalação real. Essa premissa raramente se sustenta: o próprio $K$ já é descrito, na Equação~\eqref{eq:s9-3}, como calibrado por ensaio de desempenho \textit{da máquina}, precisamente porque agrega efeitos de geometria e usinagem que variam de um lote de rotores para outro; $\eta_{\text{mec}}$ muda com o alinhamento e a lubrificação de campo; $\zeta_{\text{ref}}$ depende do elemento filtrante efetivamente especificado em cada obra, que varia entre plataformas e fornecedores. Determinar esses parâmetros a partir de medições indiretas, em vez de assumi-los fixos, é um \textbf{problema inverso}: no problema direto, conhecidos os parâmetros, calcula-se a resposta do sistema; aqui se observa a resposta (as medições de campo desta instalação específica) e busca-se o parâmetro causal que a produziu — a mesma dualidade que fundamenta a formulação de PINNs do Capítulo 23 \cite{piml}, aplicada aqui por um mecanismo diferente. Esta seção resolve esse problema inverso com a técnica padrão de \textbf{estimação conjunta de estado e parâmetro} (\textit{joint/dual state-parameter estimation}) \cite{simon}: em vez de tratar esses parâmetros como constantes externas ao filtro, eles passam a integrar o próprio vetor de estado do EKF, na Equação~\eqref{eq:s28-1}:
+Além de $K$, outros parâmetros do modelo físico da Parte I nunca foram medidos nesta máquina específica: $\eta_{\text{mec}}$ (eficiência mecânica do elemento compressor, Equação~\eqref{eq:s5-5}), o coeficiente de perda de filtro em condição limpa, $\zeta_{\text{ref}}$ (Equações~\eqref{eq:s3-4}/\eqref{eq:s5-4}), e, para as válvulas de alívio e retenção, o coeficiente de perda de referência $\zeta_{\text{valv,ref}}$ (Equação~\eqref{eq:s5-16}) — entram no equacionamento como valores de catálogo ou de literatura — calibrados pelo fabricante em condições padronizadas de bancada, não na instalação real. Essa premissa raramente se sustenta: o próprio $K$ já é descrito, na Equação~\eqref{eq:s9-3}, como calibrado por ensaio de desempenho \textit{da máquina}, precisamente porque agrega efeitos de geometria e usinagem que variam de um lote de rotores para outro; $\eta_{\text{mec}}$ muda com o alinhamento e a lubrificação de campo; $\zeta_{\text{ref}}$ depende do elemento filtrante efetivamente especificado em cada obra, que varia entre plataformas e fornecedores. Determinar esses parâmetros a partir de medições indiretas, em vez de assumi-los fixos, é um \textbf{problema inverso}: no problema direto, conhecidos os parâmetros, calcula-se a resposta do sistema; aqui se observa a resposta (as medições de campo desta instalação específica) e busca-se o parâmetro causal que a produziu — a mesma dualidade que fundamenta a formulação de PINNs do Capítulo 23 \cite{piml}, aplicada aqui por um mecanismo diferente. Esta seção resolve esse problema inverso com a técnica padrão de \textbf{estimação conjunta de estado e parâmetro} (\textit{joint/dual state-parameter estimation}) \cite{simon}: em vez de tratar esses parâmetros como constantes externas ao filtro, eles passam a integrar o próprio vetor de estado do EKF, na Equação~\eqref{eq:s28-1}:
 
 \begin{equation}\label{eq:s28-1}
-x_{\text{aug}} = \begin{bmatrix} x \\ \Lambda \end{bmatrix}, \qquad \Lambda = \begin{bmatrix} K \\ \eta_{\text{mec}} \\ \zeta_{\text{ref}} \end{bmatrix}
+x_{\text{aug}} = \begin{bmatrix} x \\ \Lambda \end{bmatrix}, \qquad \Lambda = \begin{bmatrix} K \\ \eta_{\text{mec}} \\ \zeta_{\text{ref}} \\ \zeta_{\text{valv}} \end{bmatrix}
 \end{equation}
 
 Onde $x$ é o mesmo vetor de estado dinâmico da Equação~\eqref{eq:s21-2} — as variáveis de degradação, que continuam a variar com o tempo — e $\Lambda$ é o vetor dos parâmetros estáticos escolhidos como exemplo para este trem de compressão; a lista não é exaustiva, e qualquer outro parâmetro de catálogo do modelo físico pode ser aumentado da mesma forma, seguindo o protocolo da Seção~28.2 para decidir quais valem a pena. O modelo de transição do estado aumentado, Equação~\eqref{eq:s28-2}, propaga $x$ pela mesma dinâmica não linear $f$ da Equação~\eqref{eq:s21-1} — agora explicitamente parametrizada por $\Lambda$ — e trata os parâmetros estáticos como um passeio aleatório de covariância controlável:
@@ -3435,7 +3485,7 @@ Onde $x$ é o mesmo vetor de estado dinâmico da Equação~\eqref{eq:s21-2} — 
 
 O ganho da técnica está inteiramente em como $Q_\Lambda$ é escolhido ao longo do tempo, não numa equação nova: o ciclo de predição-correção em si continua sendo exatamente o da Equação~\eqref{eq:s21-4}, aplicado ao vetor aumentado $x_{\text{aug}}$ no lugar de $x$. Durante uma \textbf{janela de calibração} — comissionamento, ou o período imediatamente após uma manutenção confirmada, quando se sabe por outros meios (inspeção, relatório de serviço) que a máquina está numa condição de referência conhecida — $Q_\Lambda$ é fixado próximo de zero: o filtro trata $\Lambda$ como verdadeiramente constante, o que acelera a convergência e produz a melhor estimativa possível dos parâmetros com os dados daquela janela. Terminada a calibração, $Q_\Lambda$ passa a um valor pequeno mas não nulo, permitindo que o filtro acompanhe deriva lenta genuína — o próprio $K$ tende a crescer ao longo de anos por desgaste do perfil do rotor — sem descartar de uma vez a informação acumulada na janela de calibração.
 
-Essa mecânica de convergência — uma crença inicial pouco informativa que se estreita ao longo de vários ciclos até um valor sustentado pelos dados — já tem precedente de implementação prática na ferramenta de referência que acompanha este documento: o módulo EKF do simulador (\texttt{aplicativo/compressor\_sim/ekf.py}) implementa o mesmo ciclo de predição-correção da Equação~\eqref{eq:s21-4} para dois dos estados dinâmicos com contraparte calculável no simulador (folga relativa e incrustação equivalente do intercooler), partindo de uma condição inicial pouco informativa e convergindo para o valor real conforme medições ruidosas chegam — o mesmo mecanismo bayesiano que a Equação~\eqref{eq:s28-2} estende ao vetor de parâmetros estáticos $\Lambda$. A estimação conjunta de $\Lambda$ em si, por sua vez, é uma extensão proposta nesta seção, sem implementação de referência no simulador até o momento.
+Essa mecânica de convergência — uma crença inicial pouco informativa que se estreita ao longo de vários ciclos até um valor sustentado pelos dados — já tem precedente de implementação prática na ferramenta de referência que acompanha este documento, em duas camadas. O módulo EKF do simulador (\texttt{aplicativo/compressor\_sim/ekf.py}, função \texttt{simular\_ekf()}) implementa o ciclo de predição-correção da Equação~\eqref{eq:s21-4} para os dois estados dinâmicos com contraparte calculável no simulador (folga relativa e incrustação equivalente do intercooler), sem nenhum parâmetro estático aumentado. A função \texttt{simular\_ekf\_aumentado()} do mesmo módulo vai além: implementa de fato o estado aumentado das Equações~\eqref{eq:s28-1}/\eqref{eq:s28-2} — $x_{\text{aug}} = [\text{folga\_rel}, r_{f,\text{equiv}}, K]$ — incluindo os dois regimes de $Q_\Lambda$ descritos acima (quase nulo na janela de calibração, pequeno depois). Isso cobre apenas $K$, o primeiro dos quatro elementos de $\Lambda$ na Equação~\eqref{eq:s28-1}; $\eta_{\text{mec}}$, $\zeta_{\text{ref}}$ e $\zeta_{\text{valv}}$ permanecem sem implementação de referência no simulador, porque nenhum dos três tem, ainda, o canal de medição adicional que os tornaria observáveis nesse mecanismo (potência elétrica para $\eta_{\text{mec}}$, $\Delta P$ do filtro para $\zeta_{\text{ref}}$, $\Delta P$ de válvula para $\zeta_{\text{valv}}$) — a mesma lacuna de instrumentação que a Seção~28.2 formaliza a seguir.
 
 \subsection{Protocolo de Registro de Parâmetros Desconhecidos e Lacunas de Instrumentação}
 
@@ -3449,7 +3499,7 @@ A Tabela~\ref{tab:18-1} já expõe as \textbf{lacunas de observabilidade} do tre
 \textbf{Categoria} & \textbf{Definição} & \textbf{Exemplo(s)} & \textbf{Ação Recomendada} \\ \midrule
 (i) Medido & Sensor de campo existe, listado na Tabela~\ref{tab:18-1} & $P$, $T$, $I$, $v_{\text{rms}}$ (pontos A--I) & Usar diretamente, sem inferência \\
 (ii) Inferível via \textit{Soft-Sensor} & Sem sensor dedicado, mas calculável por relação física a partir de outra grandeza já medida & $\dot{m}_w$ (Equação~\eqref{eq:s12-8}), $T_{\text{hood}}$ (Equação~\eqref{eq:s2-4}) & Validar a relação física periodicamente contra o comissionamento \\
-(iii) Calibrável na Janela Saudável & Sem sensor nem relação inferível direta, mas identificável por estimação conjunta (Seção~28.1) numa janela de operação confirmadamente saudável & $K$ (Equação~\eqref{eq:s9-3}), $\eta_{\text{mec}}$ (Equação~\eqref{eq:s5-5}), $\zeta_{\text{ref}}$ (Equações~\eqref{eq:s3-4}/\eqref{eq:s5-4}) & Recalibrar após toda manutenção confirmada; documentar a janela usada \\
+(iii) Calibrável na Janela Saudável & Sem sensor nem relação inferível direta, mas identificável por estimação conjunta (Seção~28.1) numa janela de operação confirmadamente saudável & $K$ (Equação~\eqref{eq:s9-3}), $\eta_{\text{mec}}$ (Equação~\eqref{eq:s5-5}), $\zeta_{\text{ref}}$ (Equações~\eqref{eq:s3-4}/\eqref{eq:s5-4}), $\zeta_{\text{valv}}$ (Equação~\eqref{eq:s5-16}) & Recalibrar após toda manutenção confirmada; documentar a janela usada \\
 (iv) Desconhecido / Valor de Literatura & Nem medido, nem inferível, nem calibrável em campo — fixado por folha de dados do fabricante ou literatura, sem via de verificação & Propriedade de material não instrumentada (ex.: módulo de cisalhamento $G$ do eixo, Equação~\eqref{eq:s6-5}) & Análise de sensibilidade obrigatória antes de qualquer decisão crítica baseada nele; marcar explicitamente como tal na documentação do modelo \\ \bottomrule
 \end{tabular}
 }
@@ -3628,11 +3678,29 @@ A Tabela~\ref{tab:29-2} percorre o cenário inteiro em ordem, mostrando explicit
 	\label{tab:29-2}
 \end{table}
 
+\subsection{Generalização: da Atribuição Pontual ao Treino Multi-Mecanismo}
+
+O cenário deste capítulo, do início ao fim, cobre um único mecanismo de falha — desgaste de folga — testado ponta a ponta contra duas alternativas escolhidas manualmente na Seção "Atribuição de Causa-Raiz via PIML" (incrustação do intercooler, viés de calibração do sensor de $T_{amb}$). Essa escolha é deliberada e pedagogicamente correta para demonstrar a arquitetura, mas não escala: a Tabela~\ref{tab:28-2} cataloga 59 mecanismos de falha diferentes, e um Gêmeo Digital de produção não pode depender de um analista escolhendo à mão, caso a caso, quais três hipóteses testar contra o resíduo do PIML.
+
+A generalização exige duas peças que este cenário único não força a construir. A primeira é um \textbf{conjunto de treino sintético sistemático}: em vez de simular apenas a trajetória de $\delta/L$ ao longo de seis semanas, o modelo direto da Parte I é executado repetidamente para cada mecanismo $m$ do catálogo que afeta um parâmetro identificável (a mesma categoria (iii) da Tabela~\ref{tab:28-1}, mas também mecanismos com efeito direto sobre um estado do EKF), amostrando sua severidade $s_m$ dentro da faixa plausível daquele mecanismo e o ponto de operação, e rotulando cada trajetória sintética resultante com o par (mecanismo, severidade) que a gerou — um conjunto de dados $\mathcal{D}_{\text{multi}}$ que cobre o catálogo inteiro, não um cenário isolado.
+
+A segunda peça é a generalização da própria regra de atribuição. A Seção "Atribuição de Causa-Raiz via PIML" já usa, na prática, uma busca por resíduo mínimo entre hipóteses — apenas restrita a três candidatas escolhidas manualmente. A Equação~\eqref{eq:s29-2} formaliza a mesma busca sobre o catálogo completo $\mathcal{M}$ da Tabela~\ref{tab:28-2}, em vez de uma lista curta definida a priori:
+
+\begin{equation}\label{eq:s29-2}
+\hat{m}_{\text{falha}} = \operatorname*{arg\,min}_{m \, \in \, \mathcal{M}} \; \frac{1}{n_z}\sum_{j=1}^{n_z} \left( \frac{z_j - \hat{z}_j^{(m)}}{\sigma_j} \right)^{2}
+\end{equation}
+
+Onde $\hat{z}^{(m)}$ é a predição do substituto treinado por PIML (Capítulo 23) para a hipótese de que o mecanismo $m$, na severidade que melhor ajusta os dados observados, é a causa-raiz, e $\sigma_j$ o desvio-padrão de ruído de cada canal medido — a mesma normalização por escala já usada na estatística NIS da Equação~\eqref{eq:s21-7}, necessária aqui pela mesma razão: sem ela, o canal de maior variância numérica dominaria a busca independentemente de qual mecanismo efetivamente explica os dados ($\hat{m}_{\text{falha}}$ carrega o subscrito para não colidir com o módulo de engrenagem $m$ do Capítulo 8). $\hat{m}_{\text{falha}}$ generaliza a inspeção manual da Seção "Atribuição de Causa-Raiz via PIML" — que, em retrospecto, é exatamente o caso particular da Equação~\eqref{eq:s29-2} com $|\mathcal{M}|=3$.
+
+Nem toda linha da Tabela~\ref{tab:28-2} precisa entrar em $\mathcal{M}$: mecanismos já cobertos por limiar direto (a maioria da tabela) não se beneficiam da busca por resíduo mínimo, que só agrega valor onde múltiplos mecanismos produzem assinaturas parecidas nas mesmas variáveis medidas — o mesmo critério de ambiguidade que já orienta a coluna "Detecção Primária" daquela tabela. Restringir $\mathcal{M}$ a esse subconjunto ambíguo, em vez do catálogo inteiro, mantém a busca da Equação~\eqref{eq:s29-2} tratável e evita diluir o poder discriminativo do resíduo entre candidatos que um limiar direto já resolveria sozinho.
+
+Esta seção descreve a extensão metodológica, não uma implementação de referência: o simulador que acompanha este documento reproduz hoje apenas o cenário único de desgaste de folga deste capítulo, sem o gerador sistemático de $\mathcal{D}_{\text{multi}}$ nem a busca da Equação~\eqref{eq:s29-2} sobre o catálogo completo — candidato natural de evolução, registrado como tal no plano de manutenção do simulador.
+
 \vspace{1em}
 \hrule
 \vspace{1em}
 
-\textbf{Diretriz Técnica Final:} Nenhum dos sete algoritmos da Tabela~\ref{tab:29-2}, isolado, sustentaria o diagnóstico deste capítulo — é a cadeia completa, cada elo consumindo a saída do anterior, que transforma três desvios individualmente irrelevantes numa janela de manutenção quantificada com incerteza. Esse é o argumento central deste documento, e a razão de a Parte I (física verificável) ter precedido a Parte II (algoritmos que dependem inteiramente dessa física para terem qualquer validade): um Gêmeo Digital que pulasse a Parte I e treinasse o EKF, o VAE e o PIML direto sobre dados históricos, sem o modelo físico como espinha dorsal, não teria como distinguir desgaste de folga de incrustação de intercooler no exemplo acima — teria, na melhor das hipóteses, um alarme genérico sem causa-raiz, exatamente o que este documento se propôs a evitar desde o Capítulo 1.
+\textbf{Diretriz Técnica Final:} Nenhum dos sete algoritmos da Tabela~\ref{tab:29-2}, isolado, sustentaria o diagnóstico deste capítulo — é a cadeia completa, cada elo consumindo a saída do anterior, que transforma três desvios individualmente irrelevantes numa janela de manutenção quantificada com incerteza. Esse é o argumento central deste documento, e a razão de a Parte I (física verificável) ter precedido a Parte II (algoritmos que dependem inteiramente dessa física para terem qualquer validade): um Gêmeo Digital que pulasse a Parte I e treinasse o EKF, o VAE e o PIML direto sobre dados históricos, sem o modelo físico como espinha dorsal, não teria como distinguir desgaste de folga de incrustação de intercooler no exemplo acima — teria, na melhor das hipóteses, um alarme genérico sem causa-raiz, exatamente o que este documento se propôs a evitar desde o Capítulo 1. A Equação~\eqref{eq:s29-2} aponta o caminho de generalização dessa mesma arquitetura para além do cenário único: o princípio de resíduo mínimo que resolve este capítulo já é, em essência, uma busca sobre hipóteses — só falta estendê-la, com dados sintéticos sistemáticos, ao catálogo inteiro da Tabela~\ref{tab:28-2}.
 
 % --- Fim do Capítulo 29 ---
 
