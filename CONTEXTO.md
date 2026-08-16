@@ -1035,6 +1035,53 @@ permanente neste projeto de qualquer forma. `compressores.tex` está
 para 141 páginas (era 135), ambos modificados na árvore de trabalho, não
 staged, aguardando revisão do autor.
 
+## Verificação visual do PDF compilado — achado e corrigido bug de cabeçalho (15/08/2026)
+
+O autor pediu para verificar se o PDF compilado estava correto depois da
+correção em massa acima. Verificação em várias camadas, não só o log de
+compilação:
+
+- Recompilação limpa (3 passagens), `0` refs indefinidas/labels duplicados,
+  `34` overfull hboxes (mesmo baseline, sem regressão), `0` marcadores `??`
+  no texto extraído, `0` caracteres de substituição/bytes de controle
+  (ligaduras), `208` labels = equações intactas.
+- Renderização visual (`pdftoppm`) de páginas-chave: capa, Nomenclatura
+  (tabelas editadas nesta sessão), Sumário, e as 4 páginas com as
+  subseções novas (Cap. 2, 4, 5, 9) — todas limpas, sem sobreposição,
+  colunas de tabela alinhadas, `\dag` renderizando corretamente.
+
+**Achado real**: o cabeçalho corrente (`fancyhdr`) do Capítulo 9
+("Termodinâmica do Estágio LP, Dinâmica de Folgas e Resposta Vibracional",
+70 caracteres — o título mais longo do livro) colide com o número da
+página no canto direito, sem nenhum espaço entre os dois — confirmado
+visualmente em alta resolução. **Pré-existente**: comparei contra o PDF do
+commit `2876885` (estado antes desta sessão) e o mesmo colapso já
+aparecia lá — não foi introduzido pelo trabalho de hoje. Os outros títulos
+longos (Cap. 7, 68 caract.; Cap. 8, 67; Cap. 10, 66) ficam apertados mas
+não colidem — só o Capítulo 9 realmente ultrapassa.
+
+**Corrigido**: `\markboth{Termodinâmica do Estágio LP, Dinâmica de
+Folgas}{}` logo após o `\section{}` do Capítulo 9, sobrescrevendo só o
+cabeçalho corrente (via `\sectionmark`/`\leftmark`) com uma forma
+encurtada (47 caracteres) — o título completo no sumário, nos bookmarks e
+na página de abertura do próprio capítulo **não muda**, só o texto que
+aparece no topo das páginas seguintes. Verificado antes/depois com
+renderização em alta resolução; título completo confirmado intacto no
+Sumário e na primeira página do capítulo.
+
+**Técnica registrada para reuso**: se um título de capítulo futuro (deste
+volume ou de um volume novo da coleção) tiver mais de ~65-68 caracteres,
+o cabeçalho corrente provavelmente vai colidir com o número de página —
+`\markboth{<forma curta>}{}` logo após o `\section{}` é o jeito de
+corrigir sem tocar no título de verdade. `fancyhdr` não gera nenhum aviso
+de compilação para esse tipo de colisão (não é um `Overfull \hbox` —
+são duas caixas de header independentes que simplesmente se sobrepõem
+espacialmente), por isso passou despercebido em todas as revisões de
+diagramação anteriores (26/07, 01/08) — só apareceu numa inspeção visual
+direta do cabeçalho em alta resolução. Vale conferir visualmente o
+cabeçalho de qualquer capítulo com título longo ao adicionar um volume
+novo à coleção.
+
 ## Correção em massa: número da equação citado antes de aparecer (15/08/2026)
 
 O autor notou que a convenção "explicação antes da equação" (ver seção de
