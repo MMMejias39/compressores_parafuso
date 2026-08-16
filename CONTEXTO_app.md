@@ -1395,17 +1395,33 @@ call sites de teste atualizados via substituição em lote.
    Se qualquer uma dessas for pedida para o app no futuro, o ponto de
    partida é a seção correspondente do `compressores.tex` (números acima)
    — a arquitetura já está descrita lá, falta só o código.
-5. **Soprador booster na regeneração** (levantado pelo autor, 16/08/2026,
-   explicitamente adiado por ele para depois de outras correções em
-   andamento) — aumentaria o coeficiente de convecção no aquecedor de
-   regeneração, mas isso exigiria um modelo de transferência de calor
-   (h·A·ΔT ou NTU) que não existe hoje neste app nem no livro;
-   `delta_t_regen` continua um parâmetro assumido (ASSUMIDO), não
-   calculado a partir de vazão/geometria do aquecedor.
-6. **Diferença de forma do dessecante (pellets vs. esferas)** e vazão
-   diferenciada do soprador (autor, 16/08/2026, mesma frente do item 5,
-   também adiado) — nem `MATERIAIS_DESSECANTE` nem a Eq. 15.1 distinguem
-   forma de partícula hoje, só material.
+5. **[Fechado no livro em 16/08/2026, falta o app]** Soprador booster na
+   regeneração — o livro agora fecha o coeficiente de convecção do
+   aquecedor via correlação de Dittus-Boelter (Eq. 15.15: $Re_{reg}$,
+   $Nu$, $h$ a partir de $\dot m_{reg}$) e o método $\epsilon$-NTU (Eq.
+   15.16: $T_{reg,in} = T_{a\text{-cooler,out}} + \epsilon_{heater}(T_{elem,max}
+   - T_{a\text{-cooler,out}})$), substituindo o antigo `delta_t_regen`
+   assumido por um resultado calculado a partir de vazão do booster e
+   geometria do aquecedor. `SEC_dry` (Eq. 15.6) ganhou o termo
+   $\dot W_{booster}$. **Neste app**, `psa_ciclo.py` continua usando
+   `delta_t_regen` como parâmetro assumido — portar as Eqs. 15.15/15.16
+   exigiria novos parâmetros ($D_h$, $A_{aquecedor}$, $T_{elem,max}$,
+   $\dot m_{reg}$) hoje inexistentes em `constantes.py`, e um novo widget
+   de "vazão do soprador booster" na UI.
+6. **[Fechado no livro em 16/08/2026, falta o app]** Diferença de forma
+   do dessecante (pellets vs. esferas) e vazão diferenciada do soprador
+   — o livro agora tem a Eq. 15.17 (perda de carga do leito pela
+   equação de Ergun, função da esfericidade $\psi_p$ e do diâmetro de
+   partícula $d_p$) e a Eq. 15.18 ($k_{ads} = k_{ads,ref}\cdot\psi_p/\psi_{p,ref}$,
+   já que a área externa específica $a_v = 6\psi_p/d_p$ acelera a troca
+   de massa para esfericidade menor). Referência nova adicionada à
+   bibliografia: Ergun, S. (1952), *Fluid Flow through Packed Columns*,
+   Chem. Eng. Progress — citação verificada, artigo real e clássico da
+   área. **Neste app**, nem `MATERIAIS_DESSECANTE` nem `psa_ciclo.py`
+   distinguem forma de partícula hoje, só material — portar exigiria um
+   campo `psi_p` por material e religar `k_ads` e a perda de carga do
+   leito (hoje `DP_NOM_PSA`, uma constante fixa, não calculada) a essas
+   duas equações novas.
 7. **`k_ads_ref` não verificado** (autor perguntou diretamente, 16/08/2026,
    ver "Bug real: massa do leito desconectada do PDP" acima) — os 3
    valores de referência (1,5/1,2/1,8) são uma ordenação relativa

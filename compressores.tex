@@ -2189,6 +2189,29 @@ q_d = q_{eq} \cdot \exp \left( -k_{ads} \cdot \frac{t_{ads}}{t_{res}} \right)
 			Substituindo $\dot{W}_{\text{heater}}$ por $\dot{W}_{\text{heater,real}}$ na Equação~\eqref{eq:s15-6}, o Gêmeo Digital quantifica em tempo real quanto a recuperação de calor está reduzindo o $SEC_{dry}$ — e pode sinalizar quando o trocador de recuperação está subdimensionado ou incrustado, caso $\epsilon_{\text{recup}}$ medido caia abaixo do valor de projeto sem justificativa de carga térmica.
 		\end{itemize}
 
+		\subsection{\textbf{Soprador Booster e Fechamento Convectivo do Aquecedor}}
+		Até este ponto, a temperatura do ar que entra no leito durante a regeneração ($T_{reg,in}$, usada na Equação~\eqref{eq:s15-4}) é tratada como um patamar dado — o quanto o aquecedor resistivo eleva a temperatura do ar acima da entrada não é derivado de nenhuma física de troca térmica. Essa lacuna importa na prática: o elemento resistivo só aquece o ar que efetivamente escoa em contato com ele, e esse contato é convectivo — sem um \textbf{soprador booster} forçando vazão suficiente através do aquecedor, o coeficiente de convecção $h$ despenca para a faixa de convecção natural, e o mesmo aquecedor de potência nominal fixa entrega um $\Delta T$ real muito menor do que o projeto pressupõe (o excesso de potência simplesmente eleva a temperatura do próprio elemento resistivo, não a do ar, até o limite de segurança do elemento). O soprador booster existe justamente para evitar esse regime: ele impõe a vazão de ar de regeneração ($\dot{m}_{reg}$, tipicamente distinta e menor que a vazão principal de processo) que mantém o escoamento em regime turbulento forçado sobre o elemento aquecedor.
+
+		A vazão imposta pelo booster fixa o número de Reynolds do escoamento através do duto/banco de aquecedores, e a correlação clássica de Dittus-Boelter para convecção forçada turbulenta em duto \cite[Cap.~8]{incropera} fecha o coeficiente de convecção resultante, pela Equação~\eqref{eq:s15-15}:
+		\begin{equation}\label{eq:s15-15}
+		\begin{aligned}
+			Re_{reg} &= \frac{4 \, \dot{m}_{reg}}{\pi \, D_h \, \mu_{ar}} \\[4pt]
+			Nu &= 0{,}023 \, Re_{reg}^{0{,}8} \, Pr^{0{,}4} \\[4pt]
+			h &= \frac{Nu \cdot k_{ar}}{D_h}
+		\end{aligned}
+	\end{equation}
+		Onde $D_h$ é o diâmetro hidráulico do duto/banco de resistências, $\mu_{ar}$ e $k_{ar}$ a viscosidade dinâmica e a condutividade térmica do ar à temperatura de película, e $Pr$ o número de Prandtl do ar ($\approx 0{,}7$). O expoente $0{,}4$ do número de Prandtl é o caso de aquecimento do fluido (o ar está sendo aquecido pelo elemento, não resfriado) — a mesma correlação, com expoente $0{,}3$, se aplicaria ao ramo de resfriamento do ciclo.
+
+		Com $h$ fechado, o aquecedor se comporta como um trocador de calor de um único fluido contra uma superfície a temperatura aproximadamente constante (o elemento resistivo, limitado termostaticamente a $T_{elem,max}$ para não degradar o próprio material dessecante por superaquecimento localizado) — o método $\epsilon$-NTU já usado nos demais trocadores do documento fecha $T_{reg,in}$ diretamente a partir de $h$, sem precisar assumir $\Delta T_{regen}$ como parâmetro livre, pela Equação~\eqref{eq:s15-16}:
+		\begin{equation}\label{eq:s15-16}
+		\begin{aligned}
+			NTU &= \frac{h \cdot A_{aquecedor}}{\dot{m}_{reg} \cdot c_{p,ar}} \\[4pt]
+			\epsilon_{heater} &= 1 - e^{-NTU} \\[4pt]
+			T_{reg,in} &= T_{a\text{-cooler,out}} + \epsilon_{heater} \cdot \left( T_{elem,max} - T_{a\text{-cooler,out}} \right)
+		\end{aligned}
+	\end{equation}
+		Onde $A_{aquecedor}$ é a área de troca do elemento resistivo (geometria de projeto) e $T_{a\text{-cooler,out}}$ é a temperatura do ar a montante do aquecedor — a saída do aftercooler (Equação~\eqref{eq:s14-1}) ou, quando o pré-aquecimento por recuperação de calor da subseção anterior está ativo, a temperatura já elevada por ele. A relação entre o booster e o resultado final agora é direta e mensurável: dobrar $\dot{m}_{reg}$ aumenta $Re_{reg}$ proporcionalmente, $h$ na potência $0{,}8$ disso, e portanto $NTU$ — mas eleva o denominador $\dot{m}_{reg} \cdot c_{p,ar}$ do próprio $NTU$ na mesma proporção, de modo que o ganho líquido em $\epsilon_{heater}$ é sublinear e satura conforme $NTU \to \infty$. Existe, portanto, um ponto de vazão além do qual aumentar o booster deixa de compensar o consumo elétrico adicional do próprio soprador — o Gêmeo Digital deve incluir $\dot{W}_{booster}$ na Equação~\eqref{eq:s15-6} do $SEC_{dry}$ para que esse trade-off apareça no KPI, e não apenas no tempo de regeneração.
+
 		\subsection{\textbf{Matriz de Diagnóstico de Falhas}}
 		A Tabela~\ref{tab:15-1} relaciona as falhas típicas do secador PSA/tambor rotativo (saturação do leito, falha de chaveamento, degradação térmica e desgaste mecânico) aos seus indicadores primários e à ação prescrita pelo Gêmeo Digital.
 		\begin{table}[h!tbp]
@@ -2211,9 +2234,9 @@ q_d = q_{eq} \cdot \exp \left( -k_{ads} \cdot \frac{t_{ads}}{t_{res}} \right)
 		\subsection{\textbf{Indicadores Globais de Performance (KPIs)}}
 		
 		\begin{itemize}
-			\item \textbf{Consumo Energético Específico ($SEC_{dry}$):} A Equação~\eqref{eq:s15-6} soma a potência do aquecedor de regeneração e a potência do motor do tambor rotativo, e divide pela vazão de ar seco produzida — o custo energético de secar cada quilograma de ar:
+			\item \textbf{Consumo Energético Específico ($SEC_{dry}$):} A Equação~\eqref{eq:s15-6} soma a potência do aquecedor de regeneração, a potência do motor do tambor rotativo e a potência do soprador booster (Equação~\eqref{eq:s15-15}), e divide pela vazão de ar seco produzida — o custo energético de secar cada quilograma de ar:
 			\begin{equation}\label{eq:s15-6}
-SEC_{dry} = \frac{\dot{W}_{heater} + \dot{W}_{drum}}{\dot{m}_{dry}}
+SEC_{dry} = \frac{\dot{W}_{heater} + \dot{W}_{drum} + \dot{W}_{booster}}{\dot{m}_{dry}}
 \end{equation}
 
 			\item \textbf{Índice de Saúde do Dessecante ($HI_{des}$):} A Equação~\eqref{eq:s15-7} multiplica duas razões normalizadas — perda de carga nominal sobre perda de carga real, e ponto de orvalho alvo sobre ponto de orvalho real — de modo que o índice se degrada tanto se o leito colmatar (aumentando $\Delta P_{real}$) quanto se perder capacidade de secagem (piorando $PDP_{real}$). A razão de ponto de orvalho precisa ser calculada em \textbf{Kelvin}, não em Celsius: como o $PDP$ é negativo na convenção deste documento (ex.: $-40\,^{\circ}$C na Classe 2), tomar a razão diretamente em Celsius inverte o sentido do índice — um $PDP_{real}$ pior (mais próximo de $0\,^{\circ}$C ou positivo) produziria um $HI_{des}$ \textit{maior}, o oposto do pretendido. A conversão ($+273{,}15$) é, portanto, obrigatória:
@@ -2227,11 +2250,28 @@ HI_{des} = \frac{\Delta P_{nom}}{\Delta P_{real}} \cdot \frac{PDP_{target} + 273
 \end{equation}
 			O Gêmeo Digital deve reportar $\eta_{purge}$ junto ao $SPC$ (Equação~\eqref{eq:s11-11}): um SPC aparentemente saudável pode mascarar uma purga excessiva — por exemplo, um ciclo de regeneração mal ajustado ou uma válvula solenoide vazando entre torres — que já está sendo paga em consumo elétrico antes mesmo de chegar ao consumidor.
 		\end{itemize}
-		
+
+		\subsection{\textbf{Forma da Partícula: Pellets versus Esferas}}
+		Todo o equacionamento deste capítulo trata o dessecante como um meio genérico, caracterizado apenas por massa, densidade e capacidade de trabalho (Tabela~\ref{tab:15-2}) — sem distinguir a \textbf{forma} da partícula. Na prática, os três materiais de referência não são intercambiáveis nesse aspecto: sílica-gel e peneira molecular são tipicamente fornecidas como esferas, enquanto a alumina ativada é comum tanto em esferas quanto em pellets extrudados (cilindros). A forma afeta o Gêmeo Digital por dois caminhos físicos distintos, ambos capturados pelo fator de esfericidade $\psi_p$ (razão entre a área superficial de uma esfera de mesmo volume e a área superficial real da partícula, $\psi_p = 1$ para esfera perfeita e tipicamente $0{,}7$--$0{,}9$ para pellets extrudados) \cite{ergun}:
+
+		\begin{itemize}
+			\item \textbf{Perda de Carga no Leito:} A equação clássica de Ergun para escoamento através de um leito empacotado fecha $\Delta P_{real}$ (usada na Equação~\eqref{eq:s15-7}) a partir da geometria da partícula e da porosidade do leito ($\varepsilon_{leito}$), pela Equação~\eqref{eq:s15-17}:
+			\begin{equation}\label{eq:s15-17}
+			\frac{\Delta P_{real}}{L_{leito}} = 150 \, \frac{(1-\varepsilon_{leito})^2}{\varepsilon_{leito}^3} \, \frac{\mu_{ar} \, v_s}{(\psi_p \, d_p)^2} + 1{,}75 \, \frac{1-\varepsilon_{leito}}{\varepsilon_{leito}^3} \, \frac{\rho_{ar} \, v_s^2}{\psi_p \, d_p}
+		\end{equation}
+			Onde $v_s$ é a velocidade superficial do ar (vazão volumétrica dividida pela área da seção do vaso) e $d_p$ o diâmetro de partícula equivalente em volume. Para a mesma vazão e o mesmo material, uma esfericidade menor ($\psi_p < 1$, pellets) eleva $\Delta P_{real}$ em ambos os termos — é essa a física por trás de uma observação comum de campo: leitos de pellets extrudados normalmente exigem sopradores de maior cabeçote (ou vazão reduzida) frente a um leito equivalente de esferas, para não sobrecarregar a queda de pressão além do projeto.
+			\item \textbf{Cinética de Adsorção:} A taxa de adsorção $k_{ads}$ da Equação~\eqref{eq:s15-1} é dominada pela área superficial externa disponível por unidade de volume de partícula, $a_v = 6\psi_p/d_p$ \cite{ergun} — maior para uma esfericidade menor a diâmetro equivalente fixo, porque a superfície real da partícula irregular excede a da esfera de mesmo volume. A correção multiplicativa sobre o valor de referência tabelado, pela Equação~\eqref{eq:s15-18}:
+			\begin{equation}\label{eq:s15-18}
+			k_{ads} = k_{ads,ref} \cdot \frac{a_v}{a_{v,ref}} = k_{ads,ref} \cdot \frac{\psi_p}{\psi_{p,ref}}
+		\end{equation}
+			Com $\psi_{p,ref} = 1$ (esfera, forma de referência da Tabela~\ref{tab:15-2}). Esta correção captura corretamente a \textbf{direção} do efeito de forma sobre a cinética — mais área externa por volume acelera a troca de massa —, mas herda a mesma ressalva já registrada para $k_{ads,ref}$: o valor absoluto de $\psi_p$ por material/fornecedor não foi verificado contra ensaio ou literatura específica deste documento, apenas a relação funcional entre esfericidade e taxa de adsorção, bem estabelecida na literatura de leitos empacotados \cite{ergun}.
+		\end{itemize}
+		A vazão do soprador booster (Equação~\eqref{eq:s15-15}) e a forma da partícula, portanto, não são parâmetros independentes: a Equação~\eqref{eq:s15-17} limita a vazão máxima praticável para uma dada queda de pressão admissível do soprador, enquanto a Equação~\eqref{eq:s15-18} determina o quanto essa vazão — via $Re_{reg}$ e $h$ na Equação~\eqref{eq:s15-15} para o aquecedor, e via $k_{ads}$ aqui para o leito — se traduz em regeneração e adsorção efetivas. Dimensionar o soprador sem considerar a forma da partícula tende a subestimar a queda de pressão real de um leito de pellets, ou a deixar vazão ociosa não aproveitada num leito de esferas.
+
 		\vspace{1em}
 		\hrule
 		\vspace{1em}
-		
+
 		\textbf{Diretriz Técnica Final:} A otimização da purga é realizada em tempo real para minimizar perdas operacionais, pela Equação~\eqref{eq:s15-8}:
 		\begin{equation}\label{eq:s15-8}
 \boxed{\dot{m}_{purge,opt} = f(W_{in}, \dot{m}_a, P_{in})}
@@ -3900,6 +3940,8 @@ Esta seção descreve a extensão metodológica, não uma implementação de ref
 \bibitem{vogel} Vogel, H. \textit{Das Temperaturabhängigkeitsgesetz der Viskosität von Flüssigkeiten}. Physikalische Zeitschrift, 22, 645, 1921.
 
 \bibitem{buck} Buck, A.L. \textit{New Equations for Computing Vapor Pressure and Enhancement Factor}. Journal of Applied Meteorology, 20(12), 1527–1532, 1981. DOI: 10.1175/1520-0450(1981)020\textless 1527:NEFCVP\textgreater 2.0.CO;2
+
+\bibitem{ergun} Ergun, S. \textit{Fluid Flow through Packed Columns}. Chemical Engineering Progress, 48(2), 89–94, 1952.
 
 \bibitem{basquin} Basquin, O.H. \textit{The Exponential Law of Endurance Tests}. Proceedings of the American Society for Testing and Materials (ASTM), 10, 625–630, 1910.
 

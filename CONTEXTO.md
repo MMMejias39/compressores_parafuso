@@ -2532,3 +2532,53 @@ futuro, ponto de partida é a equação correspondente acima.
 completo para resolver a referência nova a `eq:s4-13`, que ficava
 undefined até o `.aux` ser regenerado do zero) — sem referências
 indefinidas nem overfull severo no log final.
+
+## Soprador booster e forma da partícula (pellets vs. esferas) fechados no livro (16/08/2026)
+
+Mesmo pedido do autor ("seguir com as avaliações e correções da
+pendências"), agora cobrindo as duas frentes que ele havia explicitamente
+adiado antes ("Terminar o que já está em andamento primeiro") — soprador
+booster e diferença pellet/esfera. Detalhe completo em `CONTEXTO_app.md`
+(itens 5 e 6 da lista de pendências, marcados como "fechado no livro,
+falta o app").
+
+- **Soprador booster (Cap. 15, novas Eq. 15.15/15.16):** o antigo
+  `ΔT_regen` assumido dá lugar a um fechamento convectivo real. A vazão
+  do booster fixa $Re_{reg}$; Dittus-Boelter (Eq. 15.15, citando
+  Incropera Cap. 8) fecha $h$; o aquecedor é tratado como trocador
+  $\epsilon$-NTU contra a temperatura do elemento resistivo, limitada
+  termostaticamente (Eq. 15.16), fechando $T_{reg,in}$ direto de $h$,
+  $A_{aquecedor}$ e $\dot m_{reg}$. Explicado por que o ganho em
+  $\epsilon_{heater}$ satura com o aumento de vazão (o próprio $NTU$
+  tem $\dot m_{reg}$ no denominador) — existe um ponto de vazão além do
+  qual o booster deixa de compensar seu próprio consumo elétrico, por
+  isso $\dot W_{booster}$ entrou na Eq. 15.6 ($SEC_{dry}$).
+- **Pellets vs. esferas (Cap. 15, novas Eq. 15.17/15.18, nova
+  referência bibliográfica `ergun`):** fator de esfericidade $\psi_p$
+  ($=1$ para esfera, $0{,}7$–$0{,}9$ típico para pellet extrudado).
+  Equação de Ergun (Eq. 15.17) fecha a perda de carga do leito como
+  função de $\psi_p$ e do diâmetro de partícula $d_p$ — antes o livro
+  não tinha nenhuma equação de $\Delta P$ do leito, só o KPI $HI_{des}$
+  comparando $\Delta P_{real}$ contra $\Delta P_{nom}$ sem derivar
+  nenhum dos dois. Eq. 15.18 propaga $\psi_p$ para $k_{ads}$ via área
+  específica $a_v = 6\psi_p/d_p$: esfericidade menor (pellet) acelera a
+  cinética por ter mais área externa por volume a diâmetro equivalente
+  fixo. Referência nova (`ergun`, Chemical Engineering Progress 1952)
+  verificada antes de inserir — artigo real, clássico da área, autoria
+  única de Sabri Ergun. Mesma ressalva já registrada para `k_ads_ref`
+  se aplica a $\psi_p$: a direção do efeito está bem estabelecida na
+  literatura, os valores absolutos por material/fornecedor não.
+- Texto final da subseção explicita que vazão do booster e forma da
+  partícula não são independentes: Ergun limita a vazão máxima
+  praticável para uma perda de carga admissível do soprador, e a forma
+  determina o quanto dessa vazão se traduz em regeneração/adsorção
+  efetivas.
+
+**Não implementado — só no livro, sem app:** portar exigiria novos
+parâmetros em `constantes.py` ($D_h$, $A_{aquecedor}$, $T_{elem,max}$,
+$\dot m_{reg}$, $\psi_p$ por material) e novos widgets na UI — maior
+que uma correção pontual, registrado como pendência em
+`CONTEXTO_app.md`, não implementado sem confirmação do autor.
+
+169→171 páginas. Compilação limpa, sem referências indefinidas nem
+overfull severo.
