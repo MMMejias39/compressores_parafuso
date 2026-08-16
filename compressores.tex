@@ -753,7 +753,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\end{aligned}
 		\end{equation}
 		Onde $\bar{V}_L$ e $\bar{I}$ são as médias das três tensões de linha e das três correntes de fase, respectivamente. Um $IU$ persistente acima de poucos pontos percentuais mesmo com $VU$ pequeno — sintoma que a corrente de linha agregada sozinha não capta — já justifica investigação de curto entre espiras ou conexão frouxa no painel.
-		\item \textbf{Correntes de Eixo por Descarga Eletrostática (EDM) em Motor Acionado por VSD:} O chaveamento PWM de alta frequência do VSD (Capítulo de Subsistema Elétrico) não é eletricamente simétrico entre as três fases em cada instante de comutação, o que induz uma tensão de modo comum residual no barramento — e, por acoplamento capacitivo entre estator e rotor, uma tensão parasita no próprio eixo do motor. Quando essa tensão de eixo excede a rigidez dielétrica do filme de óleo lubrificante que separa as esferas/roletes das pistas do rolamento, o filme rompe e a energia armazenada se descarrega como um pulso de corrente — a corrente de descarga eletromagnética (EDM, \textit{Electrical Discharge Machining}) — que erode a pista a cada evento. É o mecanismo de falha elétrica mais característico de motores de alta potência com acionamento por inversor \cite{erdman}, distinto e adicional à degradação térmica do isolamento já modelada pela Equação~\eqref{eq:s4-7}: enquanto a Equação~\eqref{eq:s4-7} governa a vida do enrolamento, a EDM governa a vida do rolamento — as duas vias dominantes de mortalidade prematura de motor com VSD.
+		\item \textbf{Correntes de Eixo por Descarga Eletrostática (EDM) em Motor Acionado por VSD:} O chaveamento PWM de alta frequência do VSD (Capítulo de Subsistema Elétrico) não é eletricamente simétrico entre as três fases em cada instante de comutação, o que induz uma tensão de modo comum residual no barramento — e, por acoplamento capacitivo entre estator e rotor, uma tensão parasita no próprio eixo do motor. Quando essa tensão de eixo excede a rigidez dielétrica do filme de óleo lubrificante que separa as esferas/roletes das pistas do rolamento, o filme rompe e a energia armazenada se descarrega como um pulso de corrente — a corrente de descarga eletromagnética (EDM, \textit{Electrical Discharge Machining}) — que erode a pista a cada evento. É o mecanismo de falha elétrica mais característico de motores de alta potência com acionamento por inversor \cite{erdman}, distinto e adicional à degradação térmica do isolamento já modelada pela Equação~\eqref{eq:s4-7}: enquanto a Equação~\eqref{eq:s4-7} governa a vida do enrolamento, a EDM governa a vida do rolamento — as duas vias dominantes de mortalidade prematura de motor com VSD. A Equação~\eqref{eq:s4-13}, ao final deste capítulo, fecha essa tensão de eixo e o critério de disparo em função de parâmetros de projeto do motor, em vez de tratá-la apenas qualitativamente.
 		\begin{itemize}
 			\item \textbf{Indicador:} Padrão de craterização (\textit{fluting}) visível em inspeção de pista de rolamento; em campo, pico recorrente de corrente de eixo medido por sonda de corrente dedicada (\textit{shaft grounding} instrumentado), cuja progressão acompanha o histórico de operação do VSD (tempo em carga, frequência de chaveamento).
 			\item \textbf{Mitigação (acessórios):} Rolamento isolado eletricamente no lado oposto ao acoplamento (\textit{Non-Drive End}), anel de aterramento de eixo (\textit{shaft grounding ring}) que oferece um caminho de descarga de baixa impedância alternativo ao rolamento, e filtro de modo comum na saída do VSD.
@@ -783,11 +783,21 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 	A dependência de $T$ já registrada na notação $\eta_{\text{mot}}(s,T)$ não aparece como um termo à parte nesta equação — ela entra pela mesma via já modelada na Equação~\eqref{eq:s4-5}: a resistência do rotor $R_r$ cresce com a temperatura de operação, alterando o torque eletromagnético $\tau_{em}$ (e, por extensão, $P_{ag}$) para o mesmo escorregamento medido. $P_{\text{fixas}}$ é um valor de placa/ensaio do fabricante, não uma grandeza calculada pelo Gêmeo Digital — mas, uma vez conhecida, a Equação~\eqref{eq:s4-11} isola a única parcela de perda que realmente se desloca com o ponto de operação, permitindo distinguir um motor operando normalmente em carga mais alta (mais perda de rotor, esperada) de um motor com perdas fixas degradadas (núcleo ou mancais do próprio motor, por exemplo) para a mesma carga.
 
+	\subsection{\textbf{Fechamento Eletrostático da Tensão de Eixo (EDM)}}
+	O mecanismo de EDM descrito acima é qualitativo até este ponto: sabe-se que a tensão de modo comum do VSD induz uma tensão de eixo e que a ruptura ocorre quando essa tensão excede a rigidez dielétrica do filme de óleo, mas nenhuma das duas grandezas foi expressa em função de parâmetros calculáveis. O acoplamento estator-rotor-carcaça se comporta como um divisor capacitivo: a tensão de modo comum do barramento ($V_{\text{modo\_comum}}$) se distribui entre a capacitância estator-rotor ($C_{sr}$, caminho de acoplamento), a capacitância rotor-carcaça via aterramento ($C_{rg}$) e a capacitância do próprio filme de óleo do rolamento ($C_{\text{bearing}}$) — a fração que efetivamente chega ao eixo fecha pela Equação~\eqref{eq:s4-13}:
+	\begin{equation}\label{eq:s4-13}
+	\begin{aligned}
+		V_{\text{shaft}} &= \frac{C_{sr}}{C_{sr} + C_{rg} + C_{\text{bearing}}} \cdot V_{\text{modo\_comum}} \\[4pt]
+		\text{Descarga (EDM)} &\iff V_{\text{shaft}} \geq E_{\text{dielétrico}} \cdot e_{\text{filme}}(T, \omega)
+	\end{aligned}
+\end{equation}
+	Onde $E_{\text{dielétrico}}$ é a rigidez dielétrica do óleo (tipicamente $10$--$15\,\text{kV/mm}$ para óleo mineral novo \cite{erdman}) e $e_{\text{filme}}(T, \omega)$ é a espessura do filme lubrificante no rolamento — a mesma grandeza que a teoria de lubrificação elastohidrodinâmica (EHL) relaciona à viscosidade $\mu(T)$ e à velocidade de rotação $\omega$: filme mais fino (óleo mais quente, rotação mais baixa) reduz a tensão de ruptura e antecipa a descarga, mesmo sem qualquer aumento em $V_{\text{modo\_comum}}$. É essa dependência de $e_{\text{filme}}$ que explica um padrão observado em campo e não previsto pela leitura elétrica isolada: eventos de EDM se concentram em partidas a frio e em operação prolongada em baixa rotação (VSD em carga parcial), não necessariamente nos pontos de maior corrente. $C_{sr}$, $C_{rg}$ e $C_{\text{bearing}}$ são parâmetros de projeto do motor (geometria do entreferro, blindagem, tipo de graxa/óleo) — tipicamente fornecidos por ensaio do fabricante ou estimados por norma \cite{erdman} —, não grandezas medidas em campo pelo Gêmeo Digital.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s4-9} é o elo que impede diagnósticos ambíguos entre falha elétrica e falha pneumática — sem ela, um aumento de corrente no painel seria indistinguível de um aumento real de demanda de ar, levando a decisões erradas de manutenção. O desbalanço de fase da Equação~\eqref{eq:s4-8} cobre a lacuna complementar: uma falha que se manifesta \textbf{entre} fases pode não alterar a corrente de linha agregada nem a potência total consumida, permanecendo invisível para a Equação~\eqref{eq:s4-9} até se agravar. A Equação~\eqref{eq:s4-12} fecha $\eta_{\text{mot}}(s,T)$ no mesmo nível de detalhe já disponível para VSD e gearbox: um $\eta_{\text{mot}}$ medido abaixo do esperado só é sintoma de degradação depois de descontada a parcela de perda de rotor que a própria carga ($s$) já explica — o resíduo depois desse desconto é que aponta para $P_{\text{fixas}}$ fora da faixa de ensaio original.
+	\textbf{Diretriz Técnica Final:} A Equação~\eqref{eq:s4-9} é o elo que impede diagnósticos ambíguos entre falha elétrica e falha pneumática — sem ela, um aumento de corrente no painel seria indistinguível de um aumento real de demanda de ar, levando a decisões erradas de manutenção. O desbalanço de fase da Equação~\eqref{eq:s4-8} cobre a lacuna complementar: uma falha que se manifesta \textbf{entre} fases pode não alterar a corrente de linha agregada nem a potência total consumida, permanecendo invisível para a Equação~\eqref{eq:s4-9} até se agravar. A Equação~\eqref{eq:s4-12} fecha $\eta_{\text{mot}}(s,T)$ no mesmo nível de detalhe já disponível para VSD e gearbox: um $\eta_{\text{mot}}$ medido abaixo do esperado só é sintoma de degradação depois de descontada a parcela de perda de rotor que a própria carga ($s$) já explica — o resíduo depois desse desconto é que aponta para $P_{\text{fixas}}$ fora da faixa de ensaio original. Por fim, a Equação~\eqref{eq:s4-13} conecta a taxa de chaveamento PWM do VSD — hoje só correlacionada qualitativamente à degradação de rolamento (Tabela de mecanismos, item ``Correntes de eixo por EDM'') — a um critério de disparo verificável: o Gêmeo Digital pode cruzar a frequência de comutação efetivamente operada com $V_{\text{shaft}}$ estimado, em vez de depender apenas do padrão indireto de vibração e temperatura para suspeitar de EDM.
 
 	% --- Fim do Capítulo 4 ---
 	
@@ -1465,7 +1475,20 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 	Fora do regime permanente, a mesma linearização dá a solução transiente de primeira ordem $T_c(t) = T_{c} + (T_{c,0} - T_{c}) \cdot e^{-t/\tau_c}$, com $T_c$ da Equação~\eqref{eq:s9-16} e $T_{c,0}$ a condição inicial — a aproximação exponencial ao regime permanente após um degrau de $\dot{Q}_{\text{int}}$, forma idêntica à já usada para a resposta em rampa do inversor de frequência (Capítulo 13).
 
-	Esse fechamento não substitui a Equação~\eqref{eq:s9-7}: mesmo com $T_c$ calculável, a folga residual $\delta_{\text{real}}$ segue dependendo da temperatura do próprio rotor ($T_r$), que este documento não modela por um balanço térmico equivalente — permanece, por ora, uma grandeza a ser medida ou estimada por um modelo à parte, fora do escopo fechado por esta seção.
+	Esse fechamento cobre apenas metade da Equação~\eqref{eq:s9-7}: a folga residual $\delta_{\text{real}}$ também depende da temperatura do próprio rotor ($T_r$), que a subseção a seguir fecha por um balanço térmico análogo ao de $T_c$.
+
+	\subsection{\textbf{Fechamento da Temperatura do Rotor ($T_r$)}}
+	O rotor não troca calor com o ambiente externo como a carcaça — ele é banhado internamente pelo próprio gás em compressão e perde calor por condução ao longo do eixo até os mancais, onde é finalmente dissipado pelo óleo de lubrificação. O balanço é estruturalmente idêntico ao da Equação~\eqref{eq:s9-6} (mesma forma de capacitância térmica acumulando a diferença entre geração e perda), mas com termos de troca próprios do rotor, pela Equação~\eqref{eq:s9-18}:
+	\begin{equation}\label{eq:s9-18}
+ M_r \, c_r \, \frac{dT_r}{dt} = h_r(\omega, \dot{m}) \cdot A_r \cdot (T_{\text{gas,med}} - T_r) - \dot{Q}_{\text{cond,eixo}}
+\end{equation}
+	Onde $M_r$ e $c_r$ são a massa e o calor específico do conjunto rotativo, $h_r$ o coeficiente de convecção gás-rotor (função da rotação $\omega$ e da vazão mássica $\dot{m}$, tipicamente correlações do tipo Nusselt-Reynolds para escoamento anular confinado), $A_r$ a área molhada do rotor, e $\dot{Q}_{\text{cond,eixo}}$ o calor conduzido pelo eixo para fora da câmara de compressão, em direção aos mancais. $T_{\text{gas,med}}$ é a temperatura média do gás que banha o rotor ao longo da compressão — aproximada pela média aritmética entre sucção e descarga do estágio, $T_{\text{gas,med}} \approx (T_{\text{in}} + T_{\text{out}})/2$, na ausência de um perfil de temperatura interno medido.
+
+	Em regime permanente ($dT_r/dt = 0$), a mesma linearização usada na Equação~\eqref{eq:s9-16} para $T_c$ fecha $T_r$ diretamente, pela Equação~\eqref{eq:s9-19}:
+	\begin{equation}\label{eq:s9-19}
+ T_r = T_{\text{gas,med}} - \frac{\dot{Q}_{\text{cond,eixo}}}{h_r \cdot A_r}
+\end{equation}
+	Com $T_r$ e $T_c$ ambos calculáveis a partir do ponto de operação, a Equação~\eqref{eq:s9-7} deixa de depender de qualquer medição direta de temperatura interna — o Gêmeo Digital pode estimar a folga residual $\delta_{\text{real}}$ inteiramente a partir de grandezas já disponíveis (vazão, rotação, temperaturas de sucção/descarga), o mesmo valendo para a Equação~\eqref{eq:s11-7} do estágio HP. $h_r$ e $\dot{Q}_{\text{cond,eixo}}$ seguem como parâmetros de calibração específicos da máquina — assim como $G_{\text{ext}}$ e $G_{\text{arref}}$ o são para $T_c$ —, não valores de catálogo universais.
 
 	\textbf{Ressalva sobre $T_{amb}$ em instalações com invólucro:} as Equações~\eqref{eq:s9-15}--\eqref{eq:s9-17} usam $T_{amb}$ como referência de convecção da carcaça, o que só é fisicamente correto para um compressor a céu aberto. Quando o elemento compressor está confinado no mesmo invólucro acústico que o motor, o VSD e a gearbox — arranjo comum em pacotes offshore por restrição de ruído, cobrindo às vezes o trem inteiro até a saída do 2º estágio (Capítulo 2) —, o ar que efetivamente banha a carcaça não é o ambiente externo, e sim o ar interno do invólucro, já aquecido pelas demais fontes de calor confinadas. Nesse caso, $T_{amb}$ nas três equações acima deve ser lido como $T_{\text{hood}}$, fechado pela Equação~\eqref{eq:s2-4} do Capítulo 2 — não como reescrita das equações (a forma matemática é idêntica), mas como reinterpretação do termo de referência. A ordem de cálculo correta está detalhada naquela seção.
 
@@ -1473,7 +1496,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} O Índice de Saúde da Equação~\eqref{eq:s9-10} só é interpretável se cada uma de suas quatro entradas ($\Pi$, $\eta_{is}$, vibração, $\delta_{\text{real}}$) for rastreada individualmente na Matriz de Falhas apresentada acima — reduzir tudo a um único número sem manter o detalhamento por causa raiz transforma um diagnóstico acionável em apenas mais um alarme genérico. A Equação~\eqref{eq:s9-11} adiciona a mesma cautela ao próprio $\Delta\eta_{is}$ que alimenta esse índice: antes de contar uma queda de $\eta_{is}$ como sintoma de falha, o Gêmeo Digital deve descontar a parcela que é apenas o efeito esperado de operar em razão de pressão distinta do ponto de garantia — só o resíduo depois desse desconto é degradação real. As Equações~\eqref{eq:s9-14}--\eqref{eq:s9-17} fecham o último elo puramente conceitual do capítulo: com elas, $T_c$ deixa de ser uma grandeza que só um sensor de carcaça poderia fornecer e passa a ser calculável a partir do próprio ponto de operação — mas a Equação~\eqref{eq:s9-17} também é um lembrete de escala: $\tau_c$ tipicamente responde em minutos a dezenas de minutos, ordem de grandeza muito maior que a dinâmica de pressão da rede (Capítulo 13) — um alarme de superaquecimento de carcaça nunca deve ser dimensionado com a mesma constante de tempo usada para a resposta do VSD.
+	\textbf{Diretriz Técnica Final:} O Índice de Saúde da Equação~\eqref{eq:s9-10} só é interpretável se cada uma de suas quatro entradas ($\Pi$, $\eta_{is}$, vibração, $\delta_{\text{real}}$) for rastreada individualmente na Matriz de Falhas apresentada acima — reduzir tudo a um único número sem manter o detalhamento por causa raiz transforma um diagnóstico acionável em apenas mais um alarme genérico. A Equação~\eqref{eq:s9-11} adiciona a mesma cautela ao próprio $\Delta\eta_{is}$ que alimenta esse índice: antes de contar uma queda de $\eta_{is}$ como sintoma de falha, o Gêmeo Digital deve descontar a parcela que é apenas o efeito esperado de operar em razão de pressão distinta do ponto de garantia — só o resíduo depois desse desconto é degradação real. As Equações~\eqref{eq:s9-14}--\eqref{eq:s9-19} fecham o último elo puramente conceitual do capítulo: com elas, $T_c$ e $T_r$ deixam de ser grandezas que só sensores dedicados poderiam fornecer e passam a ser calculáveis a partir do próprio ponto de operação — mas a Equação~\eqref{eq:s9-17} também é um lembrete de escala: $\tau_c$ tipicamente responde em minutos a dezenas de minutos, ordem de grandeza muito maior que a dinâmica de pressão da rede (Capítulo 13) — um alarme de superaquecimento de carcaça nunca deve ser dimensionado com a mesma constante de tempo usada para a resposta do VSD.
 
 	% --- Fim do Capítulo 9 ---
 	
@@ -1563,11 +1586,18 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{equation}\label{eq:s10-8}
  c_{p,\text{úmido}} = c_{p,\text{ar seco}} + W \cdot c_{p,\text{vapor}} \approx 1005 + W \cdot 1860 \quad [\text{J}\,\text{kg}^{-1}\,\text{K}^{-1}] 
 \end{equation}
-	Ignorar essa correção introduz um viés sistemático nos balanços de energia dos trocadores em condições de alta umidade relativa offshore, justamente o cenário mais crítico para o dimensionamento do secador PSA a jusante.
-
-	\textbf{Falha de Drenagem e Arraste:} A falha no sistema de purga resulta em acúmulo de líquido, identificado pelo aumento da perda de carga ($\Delta P_{\text{ar}}$) e pela assinatura vibracional de alta frequência no estágio HP — Equação~\eqref{eq:s10-9}:
-
+	Ignorar essa correção introduz um viés sistemático nos balanços de energia dos trocadores em condições de alta umidade relativa offshore, justamente o cenário mais crítico para o dimensionamento do secador PSA a jusante. Mas $c_{p,\text{úmido}}$ só corrige a parcela \textbf{sensível} do balanço — a Equação~\eqref{eq:s10-1} continua incompleta enquanto tratar a troca térmica como puramente sensível, porque ignora o calor \textbf{latente} liberado pela própria condensação que a Equação~\eqref{eq:s10-6} calcula: cada quilograma de vapor que condensa libera sua entalpia de vaporização diretamente na água de resfriamento, não no ar. O balanço de energia total do trocador, incluindo essa parcela, fecha pela Equação~\eqref{eq:s10-9}:
 	\begin{equation}\label{eq:s10-9}
+	\begin{aligned}
+		\dot{Q}_{\text{total}} &= \dot{m}_a \cdot c_{p,\text{úmido}} \cdot (T_{LP,\text{out}} - T_{HP,\text{in}}) + \dot{m}_{\text{cond}} \cdot h_{fg}(T_{HP,\text{in}}) \\[4pt]
+		h_{fg}(T) &\approx 2501 - 2.36 \, T \quad [\text{kJ}\,\text{kg}^{-1}, \; T \text{ em } ^{\circ}\text{C}]
+	\end{aligned}
+\end{equation}
+	Em condições marinhas de alta umidade, essa parcela latente pode representar uma fração não desprezível de $\dot{Q}_{\text{total}}$ — omiti-la subestima a carga térmica real exigida da água de resfriamento e distorce tanto o cálculo de $U$ pela Equação~\eqref{eq:s10-5} (que usa $\dot{Q}$ no numerador de $R_f$) quanto qualquer dimensionamento derivado dele. A mesma correção se aplica ao aftercooler do Capítulo 14 (Equação~\eqref{eq:s14-2}), com $\dot{m}_{\text{cond}}$ da Equação~\eqref{eq:s14-3} no lugar da Equação~\eqref{eq:s10-6}.
+
+	\textbf{Falha de Drenagem e Arraste:} A falha no sistema de purga resulta em acúmulo de líquido, identificado pelo aumento da perda de carga ($\Delta P_{\text{ar}}$) e pela assinatura vibracional de alta frequência no estágio HP — Equação~\eqref{eq:s10-10}:
+
+	\begin{equation}\label{eq:s10-10}
 	\Delta P_{\text{ar,real}} = f(\dot{m}_a, \rho) + \Delta P_{\text{obstrução}}
 \end{equation}
 	
@@ -1592,9 +1622,9 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\end{table}
 	
 	\subsection{\textbf{Lógica de Predição de Trip e Saúde do Ativo}}
-	O Índice de Saúde do Intercooler ($HI_{\text{IC}}$) e a predição de temperatura de descarga são calculados continuamente, pela Equação~\eqref{eq:s10-10}:
+	O Índice de Saúde do Intercooler ($HI_{\text{IC}}$) e a predição de temperatura de descarga são calculados continuamente, pela Equação~\eqref{eq:s10-11}:
 
-	\begin{equation}\label{eq:s10-10}
+	\begin{equation}\label{eq:s10-11}
 	\begin{cases}
 		HI_{\text{IC}} = \omega_1 \cdot \left( \frac{\epsilon_{\text{real}}}{\epsilon_{\text{nom}}} \right) + \omega_2 \cdot \left( \frac{\Delta P_{\text{nom}}}{\Delta P_{\text{real}}} \right) \\[10pt]
 		T_{HP,\text{out,pred}} = T_{HP,\text{in}} \cdot \Pi^{\frac{n-1}{n}}
@@ -1607,7 +1637,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} A predição da Equação~\eqref{eq:s10-10} só tem valor preventivo se calculada com antecedência suficiente ao \textit{trip} — o Gêmeo Digital deve acionar o alívio de carga a partir da tendência projetada de $T_{HP,\text{out,pred}}$, não apenas quando o limite já tiver sido atingido pela medição real.
+	\textbf{Diretriz Técnica Final:} A predição da Equação~\eqref{eq:s10-11} só tem valor preventivo se calculada com antecedência suficiente ao \textit{trip} — o Gêmeo Digital deve acionar o alívio de carga a partir da tendência projetada de $T_{HP,\text{out,pred}}$, não apenas quando o limite já tiver sido atingido pela medição real.
 
 	% --- Fim do Capítulo 10 ---
 	
@@ -1634,10 +1664,11 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 \end{equation}
 		
 		\item \textbf{Eficiência Volumétrica ($\eta_{v,HP}$):}
-		É extremamente sensível às folgas internas ($\delta$) e à pressão diferencial. A forma da Equação~\eqref{eq:s11-3} vem de tratar cada folga como um \textbf{orifício de descarga}: o produto $C_d \cdot A_{\text{gap}}(\delta) \cdot \sqrt{2 \rho \Delta P}$ é a vazão mássica de Bernoulli através de uma restrição de área $A_{\text{gap}}$, corrigida pelo coeficiente de descarga $C_d$, que absorve a contração da veia fluida e o desvio em relação ao escoamento ideal. É daí que vem uma consequência prática pouco intuitiva: a fuga cresce com a \textit{raiz} da pressão diferencial, não linearmente — dobrar $\Delta P$ aumenta o vazamento em cerca de $41\%$, não em $100\%$. O tratamento de referência para desempenho de compressores de deslocamento positivo, com seção dedicada aos de parafuso, está no \textit{Compressor Handbook} \cite[Cap.~1 e 2]{hanlon}:
+		É extremamente sensível às folgas internas ($\delta$) e à pressão diferencial. A forma da Equação~\eqref{eq:s11-3} vem de tratar cada folga como um \textbf{orifício de descarga}, mas o estágio HP opera sob razões de pressão altas o bastante para que a razão entre câmaras adjacentes ($r = P_{HP,\text{in}}/P_{HP,\text{out}}$) frequentemente caia abaixo da razão crítica $r_{cr} \approx 0{,}528$ (Equação~\eqref{eq:s13-2}) — a garganta da folga atinge regime sônico, e o modelo de orifício hidráulico incompressível ($\sqrt{2\rho\Delta P}$, sem limite superior à medida que $\Delta P$ cresce) superestima a vazão de fuga justamente na condição mais crítica de operação. A Equação~\eqref{eq:s11-3} reaproveita a mesma função de escoamento compressível $\Phi(r)$ da válvula de admissão (Equação~\eqref{eq:s13-1}), que satura corretamente no regime bloqueado:
 		\begin{equation}\label{eq:s11-3}
- \eta_{v,HP} = 1 - \frac{\dot{m}_{\text{leak}}}{\dot{m}_{\text{th}}} = 1 - \frac{C_d \cdot A_{\text{gap}}(\delta) \cdot \sqrt{2 \rho \Delta P}}{\dot{m}_{\text{th}}} 
+ \eta_{v,HP} = 1 - \frac{\dot{m}_{\text{leak}}}{\dot{m}_{\text{th}}} = 1 - \frac{C_d \cdot A_{\text{gap}}(\delta) \cdot P_{HP,\text{out}} \cdot \sqrt{\dfrac{2}{R \cdot T_{HP,\text{out}}}} \cdot \Phi(r)}{\dot{m}_{\text{th}}}
 \end{equation}
+		Onde $C_d$ absorve a contração da veia fluida e o desvio em relação ao escoamento ideal, tal como na Equação~\eqref{eq:s13-1} — só que aqui a pressão e a temperatura a montante são as de descarga do próprio estágio HP ($P_{HP,\text{out}}$, $T_{HP,\text{out}}$), não as atmosféricas. No regime subsônico ($r > r_{cr}$), essa forma se reduz ao mesmo comportamento em raiz de $\Delta P$ já discutido — a fuga cresce com a \textit{raiz} da pressão diferencial, não linearmente. O tratamento de referência para desempenho de compressores de deslocamento positivo, com seção dedicada aos de parafuso, está no \textit{Compressor Handbook} \cite[Cap.~1 e 2]{hanlon}.
 	\end{itemize}
 	
 	\subsection{\textbf{Dinâmica de Sincronismo e Cargas Mecânicas}}
@@ -1672,8 +1703,8 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\begin{equation}\label{eq:s11-7}
  \delta_{\text{res}} = \delta_{\text{nom}} - \alpha \cdot L \cdot (T_{\text{rotor}} - T_{\text{carcaça}}) 
 \end{equation}
-		Se $\delta_{\text{res}} \le 0$, ocorre contato metálico, detectado por picos de vibração e queda súbita de $\eta_{is}$.
-		
+		Se $\delta_{\text{res}} \le 0$, ocorre contato metálico, detectado por picos de vibração e queda súbita de $\eta_{is}$. $T_{\text{rotor}}$ e $T_{\text{carcaça}}$ não precisam mais ser medidos ou estimados isoladamente para o estágio HP: são as mesmas Equações~\eqref{eq:s9-19} e~\eqref{eq:s9-16} do Capítulo 9, com $T_{\text{gas,med}}$ e $T_c$ recalculados a partir do ponto de operação do estágio HP.
+
 		\item \textbf{Desgaste de Engrenagens e Perda de Sincronismo:}
 		Causado por fadiga ou falha de lubrificação. O sintoma é o aumento dos harmônicos da frequência de engrenamento — Equação~\eqref{eq:s11-8}, mesma definição cinemática já usada no Capítulo de Engenharia do Trem de Transmissão — e alteração na fase vibracional entre os eixos:
 		\begin{equation}\label{eq:s11-8}
@@ -1973,7 +2004,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\begin{equation}\label{eq:s14-3}
  \dot{m}_{cond} = \dot{m}_a \cdot (W_{in} - W_{sat,out})
 \end{equation}
-		Onde $W$ é a razão de umidade (kg de água por kg de ar seco). O Gêmeo Digital calcula $W_{sat,out}$ utilizando a pressão de saturação do vapor na temperatura de saída $T_{ac,out}$.
+		Onde $W$ é a razão de umidade (kg de água por kg de ar seco). O Gêmeo Digital calcula $W_{sat,out}$ utilizando a pressão de saturação do vapor na temperatura de saída $T_{ac,out}$. A mesma ressalva do intercooler (Equação~\eqref{eq:s10-9}) se aplica aqui: a Equação~\eqref{eq:s14-2} soma apenas a parcela sensível de $\dot{Q}$, e a forma completa deve incluir o calor latente liberado por $\dot{m}_{cond}$ — $\dot{Q}_{\text{total}} = \dot{m}_a \cdot c_{p,\text{úmido}} \cdot (T_{d,hp} - T_{ac,out}) + \dot{m}_{cond} \cdot h_{fg}(T_{ac,out})$, mesma $h_{fg}(T)$ da Equação~\eqref{eq:s10-9}.
 		\item \textbf{Eficiência de Separação ($\eta_{sep}$):} O separador mecânico (ciclone) deve remover a fase líquida. O arraste de gotículas (\textit{carry-over}) é modelado como uma falha de separação por excesso de velocidade, pela Equação~\eqref{eq:s14-4}:
 		\begin{equation}\label{eq:s14-4}
  \dot{m}_{arraste} = \dot{m}_{cond} \cdot (1 - \eta_{sep}) 
@@ -2449,8 +2480,9 @@ Duas leituras dessa tabela são úteis. Na horizontal, ela funciona como especif
 			\textbf{C} & \textbf{Estágio LP} & Pressão Sucção & $P_{s,lp}$ & $\text{bar}$ & Pressão de entrada (atmosférica) \\ \cline{3-6} 
 			& & Temp. Descarga & $T_{d,lp}$ & $^{\circ}\text{C}$ & Calor de compressão do 1º estágio \\ \cline{3-6} 
 			& & Folga Interna & $\delta_{lp}$ & $\mu\text{m}$ & Espaço residual entre parafusos \\
-			\textbf{D} & \textbf{Intercooler} & Temp. Água In & $T_{w,in}$ & $^{\circ}\text{C}$ & Temperatura do fluido de resfriamento \\ \cline{3-6} 
-			& & Delta Pressão & $\Delta P_{ic}$ & $\text{bar}$ & Perda de carga no trocador \\ \cline{3-6} 
+			\textbf{D} & \textbf{Intercooler} & Temp. Água In & $T_{w,in}$ & $^{\circ}\text{C}$ & Temperatura do fluido de resfriamento \\ \cline{3-6}
+			& & Pressão Interestágio & $P_{int}$ & $\text{bar}$ & Sucção HP / referência da Eq.~5.14 \\ \cline{3-6}
+			& & Delta Pressão & $\Delta P_{ic}$ & $\text{bar}$ & Perda de carga no trocador \\ \cline{3-6}
 			& & Vazão Condensado & $\dot{m}_{c}$ & $\text{kg}\,\cdotp\,\text{h}^{-1}$ & Taxa de remoção de umidade \\
 			\textbf{E} & \textbf{Estágio HP} & Pressão Descarga & $P_{d,hp}$ & $\text{bar}$ & Pressão final de compressão \\ \cline{3-6}
 			& & Temp. Descarga & $T_{d,hp}$ & $^{\circ}\text{C}$ & Temperatura crítica do 2º estágio \\ \cline{3-6}
@@ -2869,11 +2901,13 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	\begin{equation}\label{eq:s21-2}
 	x = \begin{bmatrix} \eta_{is,LP} \\ \eta_{is,HP} \\ \delta \\ R_f \\ \sigma_b \end{bmatrix}, \qquad
-	z = \begin{bmatrix} P_{\text{out}} \\ T_{\text{out}} \\ T_{w,\text{out}} \\ I \\ v_{\text{rms}} \end{bmatrix}, \qquad
+	z = \begin{bmatrix} P_{int} \\ T_{d,lp} \\ P_{\text{out}} \\ T_{\text{out}} \\ T_{w,\text{out}} \\ I \\ v_{\text{rms}} \end{bmatrix}, \qquad
 	u = \begin{bmatrix} f_{\text{VSD}} \\ \dot{V}_{\text{demand}} \end{bmatrix}
 \end{equation}
 
 	A leitura física dessa escolha é o ponto central do capítulo. Nenhum sensor mede a folga $\delta$ entre os rotores — instrumentar diretamente uma câmara de compressão em rotação é impraticável — mas a folga governa a fuga interna e, portanto, a eficiência volumétrica, que por sua vez altera a relação entre a pressão de saída medida e a corrente elétrica consumida. O EKF explora exatamente essa cadeia causal: ele não ``mede'' a folga, ele infere qual valor de $\delta$ torna as medições observadas mais prováveis, dado o modelo físico da Parte I. O mesmo raciocínio vale para a resistência de incrustação $R_f$, inferida do descasamento entre a troca térmica prevista pela LMTD e a temperatura de água efetivamente observada na saída do trocador.
+
+	$P_{int}$ e $T_{d,lp}$ (ponto C/D da Tabela~\ref{tab:18-1}) entram em $z$ por uma razão distinta das demais: sem eles, as duas eficiências isentrópicas $\eta_{is,LP}$ e $\eta_{is,HP}$ só deixam assinatura nas medições \textit{finais} ($P_{\text{out}}$, $T_{\text{out}}$) — e uma queda em qualquer um dos dois estágios produz um efeito quase indistinguível sobre essas mesmas duas leituras, o que degrada o condicionamento da matriz de observabilidade $\mathcal{O}$ (Equação~\eqref{eq:s21-5}) entre os dois estados. A medição intermediária quebra essa colinearidade: uma queda em $\eta_{is,LP}$ altera $T_{d,lp}$ diretamente, enquanto uma queda isolada em $\eta_{is,HP}$ não — o EKF passa a distinguir de qual estágio vem a degradação, em vez de atribuí-la de forma ambígua a ambos.
 
 	\subsection{Linearização por Jacobianos}
 	Dada a natureza não linear dos processos termofluídicos, o algoritmo realiza a linearização em cada passo de tempo. É aqui que reside a aproximação que define o EKF e o distingue do filtro de Kalman original: as funções $f$ e $g$ são substituídas pelos dois primeiros termos de suas séries de Taylor em torno da estimativa corrente, de modo que a máquina linear ótima possa ser aplicada ao sistema linearizado resultante \cite[Cap.~13]{simon}. Os Jacobianos da Equação~\eqref{eq:s21-3} são exatamente os coeficientes desse truncamento de primeira ordem, e é o descarte dos termos de ordem superior que cobra o preço discutido ao fim deste capítulo:
@@ -2926,7 +2960,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\text{NIS}_k = \tilde{z}_k^T S_k^{-1} \tilde{z}_k \;\sim\; \chi^2_{n_z}
 \end{equation}
 
-	Onde $n_z$ é a dimensão do vetor de medições (também cinco aqui), grafada com subscrito para não colidir com o módulo de engrenagem $m$ do Capítulo 8. A interpretação operacional é direta e vale a pena explicitar, porque é ela que transforma uma identidade estatística em ferramenta de manutenção. Um NIS \textbf{consistentemente acima} da faixa esperada significa que o filtro está mais confiante do que deveria: as inovações são maiores do que $S_k$ prevê, indicando ou modelo físico defasado (a máquina degradou de um jeito que o modelo não captura) ou $Q$ subestimada. Um NIS \textbf{consistentemente abaixo} indica o contrário — covariâncias infladas, filtro excessivamente conservador, respondendo devagar demais a mudanças reais. E uma inovação com \textbf{média não nula} denuncia viés: tipicamente um sensor descalibrado ou um erro sistemático no modelo.
+	Onde $n_z$ é a dimensão do vetor de medições (sete aqui, Equação~\eqref{eq:s21-2}), grafada com subscrito para não colidir com o módulo de engrenagem $m$ do Capítulo 8. A interpretação operacional é direta e vale a pena explicitar, porque é ela que transforma uma identidade estatística em ferramenta de manutenção. Um NIS \textbf{consistentemente acima} da faixa esperada significa que o filtro está mais confiante do que deveria: as inovações são maiores do que $S_k$ prevê, indicando ou modelo físico defasado (a máquina degradou de um jeito que o modelo não captura) ou $Q$ subestimada. Um NIS \textbf{consistentemente abaixo} indica o contrário — covariâncias infladas, filtro excessivamente conservador, respondendo devagar demais a mudanças reais. E uma inovação com \textbf{média não nula} denuncia viés: tipicamente um sensor descalibrado ou um erro sistemático no modelo.
 
 	Note que o NIS é calculável a cada passo sem qualquer conhecimento do estado verdadeiro. Isso o torna o único indicador realmente disponível em campo para responder à pergunta ``posso confiar nesta estimativa?'', e é a razão pela qual ele deve ser registrado e tendenciado junto com as próprias variáveis estimadas — um EKF sem monitoramento de inovação é um instrumento sem verificação de calibração.
 
@@ -3711,7 +3745,7 @@ Seis semanas depois, o Gêmeo Digital coleta a média móvel das três grandezas
 
 \subsection{Estimação de Estado via EKF}
 
-O EKF do Capítulo 21 recebe o vetor de medições $z = [P_{\text{out}}, T_{\text{out}}, T_{w,\text{out}}, I, v_{\text{rms}}]$ da Equação~\eqref{eq:s21-2} a cada ciclo de varredura e, pelo ciclo de predição-correção da Equação~\eqref{eq:s21-4}, atualiza a estimativa do vetor de estado $x = [\eta_{is,LP}, \eta_{is,HP}, \delta, R_f, \sigma_b]$ — o mesmo vetor não instrumentado da Equação~\eqref{eq:s21-2}. A cada nova medição, o ganho $K_k$ pondera o quanto a correção confia no sensor contra o quanto confia no modelo físico da Parte I; ao longo de várias centenas de ciclos na janela de seis semanas, a estimativa $\hat\delta_{k|k}$ converge de $0{,}0020$ (valor inicial, sem informação) para $\hat\delta_{k|k}/L \approx 0{,}0091$ — o valor de folga que, propagado pelas Equações~\eqref{eq:s9-3} e~\eqref{eq:s9-4}, melhor explica o desvio conjunto observado em $T_{d,lp}$ e $I$, dentro da incerteza $P_{k|k}$ da Equação~\eqref{eq:s21-4}.
+O EKF do Capítulo 21 recebe o vetor de medições $z = [P_{int}, T_{d,lp}, P_{\text{out}}, T_{\text{out}}, T_{w,\text{out}}, I, v_{\text{rms}}]$ da Equação~\eqref{eq:s21-2} a cada ciclo de varredura e, pelo ciclo de predição-correção da Equação~\eqref{eq:s21-4}, atualiza a estimativa do vetor de estado $x = [\eta_{is,LP}, \eta_{is,HP}, \delta, R_f, \sigma_b]$ — o mesmo vetor não instrumentado da Equação~\eqref{eq:s21-2}. A cada nova medição, o ganho $K_k$ pondera o quanto a correção confia no sensor contra o quanto confia no modelo físico da Parte I; ao longo de várias centenas de ciclos na janela de seis semanas, a estimativa $\hat\delta_{k|k}$ converge de $0{,}0020$ (valor inicial, sem informação) para $\hat\delta_{k|k}/L \approx 0{,}0091$ — o valor de folga que, propagado pelas Equações~\eqref{eq:s9-3} e~\eqref{eq:s9-4}, melhor explica o desvio conjunto observado em $T_{d,lp}$ e $I$, dentro da incerteza $P_{k|k}$ da Equação~\eqref{eq:s21-4}.
 
 Antes de aceitar essa estimativa, o Gêmeo Digital audita o próprio filtro pela estatística NIS da Equação~\eqref{eq:s21-7}: ao longo da janela, $\text{NIS}_k$ oscila em torno de $5{,}1$ — consistente com a distribuição $\chi^2_{n_z=5}$ esperada (média teórica igual a $n_z$) — confirmando que o filtro está calibrado, nem excessivamente confiante nem excessivamente conservador, e que $\hat\delta$ é uma estimativa sustentada pelos dados, não um artefato de covariância mal ajustada (a advertência da Seção de Condição de Observabilidade do Capítulo 21).
 

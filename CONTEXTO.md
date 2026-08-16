@@ -2453,17 +2453,82 @@ já estava exatamente na forma que o próprio relatório propôs como
 correção. Bom exemplo de por que verificar contra o texto real antes de
 aplicar checklist externo, não só contra o resumo do relatório.
 
-**Não implementado ainda — 5 propostas de adição (Seção 2 do relatório):**
-balanço térmico do rotor $T_r$ (Cap. 9/11), calor latente nos trocadores
-(Cap. 10/14), expansão do vetor $z$ do EKF com medições interestágio
-(Cap. 21), fuga compressível/sônica no estágio HP (Cap. 11), e modelo de
-capacitância/tensão de eixo para EDM (Seção 4.4). São adições de escopo
-maior, não correções de erro — dado que a sessão já tem pendências
-explicitamente adiadas pelo autor (ver lista de pendências), ficam
-registradas aqui para o autor decidir se/quando entrar nelas, em vez de
-implementadas sem confirmação.
-
 167 páginas mantidas, sem alteração no total (só correções pontuais de
 equações + prosa ao redor). 1 passagem de `latexmk`, sem referências
 indefinidas nem overfull severo introduzido pelas edições (dois
 underfulls preexistentes nas linhas ~3792/3854, não relacionados).
+
+## As 5 propostas de adição do Gemini_ajuste.pdf implementadas no livro (16/08/2026)
+
+Pedido do autor: "seguir com as avaliações e correções da pendências" —
+autorização geral para prosseguir. Implementadas as 5 propostas da Seção
+2 do relatório (fechamentos analíticos, não correções de erro), todas só
+no livro por ora, sem contrapartida no app ainda:
+
+- **$T_r$ — balanço térmico do rotor (Cap. 9, novas Eq. 9.18/9.19):**
+  fecha a lacuna que o próprio livro já admitia explicitamente (linha
+  "a folga residual $\delta_{\text{real}}$ segue dependendo da
+  temperatura do próprio rotor... fora do escopo fechado por esta
+  seção"). Mesma estrutura do balanço já fechado para $T_c$
+  (capacitância térmica, convecção menos condução), mas com termos
+  próprios do rotor: convecção gás-rotor $h_r(\omega,\dot m)\cdot A_r$
+  e condução pelo eixo $\dot Q_{\text{cond,eixo}}$. Em regime
+  permanente, $T_r = T_{\text{gas,med}} - \dot Q_{\text{cond,eixo}}/(h_r A_r)$.
+  Referenciado pela Eq. 9.7 (LP) e Eq. 11.7 (HP), que antes dependiam
+  de $T_r$ como grandeza só medida ou estimada à parte.
+- **Calor latente nos trocadores (Cap. 10, nova Eq. 10.9; Cap. 14,
+  prosa junto à Eq. 14.3):** a Eq. 10.1 (intercooler) e a Eq. 14.2
+  (aftercooler) tratavam a troca térmica como puramente sensível,
+  ignorando o calor liberado pela própria condensação que a Eq. 10.6/
+  14.3 já calculava. Nova Eq. 10.9: $\dot Q_{\text{total}} = \dot m_a
+  c_{p,\text{úmido}}\Delta T + \dot m_{\text{cond}} h_{fg}(T)$, com
+  $h_{fg}(T) \approx 2501 - 2{,}36\,T$ kJ/kg — mesma correlação do
+  relatório. Como isso empurrou os índices de equação, as duas
+  equações finais do Cap. 10 foram renumeradas (antiga 10-9→10-10,
+  10-10→10-11); verificado que não havia referência externa a elas em
+  outro capítulo antes de renumerar.
+- **Vetor $z$ do EKF expandido (Cap. 21, Eq. 21.2; Tabela 18.1):** o
+  relatório apontou que $z$ só tinha medições finais
+  ($P_{out}, T_{out}, T_{w,out}, I, v_{rms}$), o que colineariza
+  $\eta_{is,LP}$ e $\eta_{is,HP}$ (queda em qualquer um dos dois
+  produz efeito quase indistinguível nas medições finais). Adicionados
+  $P_{int}$ e $T_{d,lp}$. $T_{d,lp}$ já existia na Tabela 18.1 (ponto
+  C); $P_{int}$ **não existia** como tag na tabela apesar do texto do
+  Cap. 5 (linha ~927) alegar que já estava instrumentado — inconsistência
+  real entre capítulos, corrigida adicionando a linha "Pressão
+  Interestágio $P_{int}$" ao ponto D. $n_z$ passou de 5 para 7 (Eq.
+  21.7, cálculo do NIS, atualizada); $n_x$ (vetor de estado) não mudou,
+  continua 5. Também corrigido um exemplo numérico no Cap. 29 que
+  listava o $z$ antigo por extenso.
+- **Fuga compressível/sônica no estágio HP (Cap. 11, Eq. 11.3):** a
+  fórmula original usava Bernoulli incompressível
+  ($\sqrt{2\rho\Delta P}$, sem limite superior), mas o estágio HP
+  frequentemente opera com razão de pressão entre câmaras adjacentes
+  abaixo de $r_{cr}\approx 0{,}528$ (regime bloqueado/sônico da própria
+  Eq. 13.2), o que superestima a fuga real. Reaproveitada a mesma
+  função $\Phi(r)$ já usada na válvula de admissão (Eq. 13.1) — mesma
+  forma, só trocando pressão/temperatura atmosférica por $P_{HP,out}$/
+  $T_{HP,out}$ (a montante do vazamento é a descarga do próprio
+  estágio). Referência forward para o Cap. 13 — o livro já tem
+  precedente de referência cruzada para frente (Cap. 5 → Eq. 10.4),
+  não é violação de convenção nova.
+- **Tensão de eixo e disparo EDM (Cap. 4, nova Eq. 4.13):** o mecanismo
+  de EDM (correntes de eixo por descarga eletrostática) era só
+  qualitativo no livro. Nova equação: divisor capacitivo
+  $V_{\text{shaft}} = \frac{C_{sr}}{C_{sr}+C_{rg}+C_{\text{bearing}}}
+  \cdot V_{\text{modo\_comum}}$, com disparo quando $V_{\text{shaft}}
+  \geq E_{\text{dielétrico}} \cdot e_{\text{filme}}(T,\omega)$ — modelo
+  padrão de divisor capacitivo estator-rotor-carcaça da literatura de
+  proteção de rolamento em motores VSD, não inventado para esta sessão.
+  Colocada ao final do Cap. 4 (não junto ao bullet qualitativo original)
+  para não forçar renumeração das Eq. 4.9-4.12, já referenciadas em
+  vários pontos do capítulo.
+
+**Não implementado — só no livro, sem app:** nenhuma das 5 adições tem
+contrapartida em `aplicativo/` ainda. Se alguma for pedida para o app no
+futuro, ponto de partida é a equação correspondente acima.
+
+167→169 páginas. Compilação limpa após renumeração (forçou 1 rebuild
+completo para resolver a referência nova a `eq:s4-13`, que ficava
+undefined até o `.aux` ser regenerado do zero) — sem referências
+indefinidas nem overfull severo no log final.
