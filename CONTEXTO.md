@@ -1035,6 +1035,100 @@ permanente neste projeto de qualquer forma. `compressores.tex` está
 para 141 páginas (era 135), ambos modificados na árvore de trabalho, não
 staged, aguardando revisão do autor.
 
+## PENDENTE — Metodologia de calibração/anomalia na Parte III (pedido em 15/08/2026, não iniciado)
+
+**Sessão parou por limite de uso antes de escrever qualquer coisa no
+`.tex`** — só houve levantamento via `grep` (nenhuma edição feita). Repo
+limpo, commit `52fb4f9`. Pedido literal do autor: "introduza no capítulo
+III uma metodologia de estimativa de parâmetros para uso quando o
+equipamento está em bom funcionamento e registrar parâmetros
+desconhecidos ou falta de algum equipamento em casos reais, depois
+utilizar gêmeos digitais para detecção de anomalias com base nos
+mecanismos de falha que podem ser simulados via codificação do
+equipamento."
+
+**Plano já fechado, pronto para executar na próxima sessão:**
+
+1. **Separar a Parte III em dois capítulos** — novo **Capítulo 28**
+  (metodologia) inserido *antes* do capítulo de estudo de caso já
+  existente, que vira **Capítulo 29**. Renumeração conferida como
+  trivial: `eq:s28-1`→`eq:s29-1`, `tab:28-1`→`tab:29-1`,
+  `tab:28-2`→`tab:29-2` (únicas ocorrências, todas dentro do próprio
+  capítulo — sem referência externa a atualizar, já checado com
+  `grep -n "eq:s28-1\b"` e `grep -n "Capítulo 28\|tab:28-"` contra o
+  `.tex` inteiro). Também ajustar a linha de `RUL` na Nomenclatura
+  ("Cap. 19, 28" → "Cap. 19, 29") e o comentário
+  `% --- Fim do Capítulo 28 ---` → 29.
+
+2. **Conteúdo do novo Capítulo 28**, três subseções cobrindo os três
+  pedidos do autor, nesta ordem:
+  - **28.1 — Estimação Conjunta de Estado e Parâmetro (EKF com estado
+    aumentado)**: metodologia formal de calibração de parâmetros
+    ASSUMIDO (K de folga da Eq. 9.3, ζ de filtros, η_mec, etc.) durante
+    uma **janela de operação conhecidamente saudável** (comissionamento
+    ou logo após manutenção confirmada) — técnica padrão de
+    "*joint/dual state-parameter estimation*", citável via `\cite{simon}`
+    (já na bibliografia, Simon cobre isso). Ideia central: aumentar o
+    vetor de estado do EKF (Eq. 21.2) com os parâmetros estáticos θ,
+    tratá-los como passeio aleatório de ruído de processo ≈0 durante a
+    janela de calibração (convergência agressiva), depois "congelar" ou
+    dar Q maior para acompanhar deriva lenta — exatamente o que já foi
+    implementado de fato no app (`aplicativo/compressor_sim/ekf.py`,
+    filtro parte de uma crença "como novo" e converge) — esta subseção
+    deve **citar essa implementação como validação prática**.
+  - **28.2 — Protocolo de Registro de Parâmetros Desconhecidos e Lacunas
+    de Instrumentação**: formaliza como uma tabela/matriz de decisão a
+    convenção "ASSUMIDO" já usada em todo o `aplicativo/` e a ideia de
+    "lacunas de observabilidade" já presente no Cap. 18 (Tabela 18.1).
+    Quatro categorias por parâmetro/medição exigida pelo modelo: (i)
+    Medido (sensor de campo existe, está na Tabela 18.1); (ii) Inferível
+    via *soft-sensor* (relação física + outro sensor, ex.: Eq. 12.8); (iii)
+    Calibrável só na janela saudável (produto da subseção 28.1); (iv)
+    Desconhecido/ASSUMIDO (sem sensor nem relação inferível — valor de
+    literatura, marcado como tal, com recomendação explícita de análise
+    de sensibilidade antes de qualquer decisão crítica baseada nele). Não
+    força equação nova — pode ficar só como tabela/prosa, mesmo padrão já
+    aceito em subseções conceituais do livro (ex.: "Limitações e
+    Cautelas" do Cap. 23).
+  - **28.3 — Catálogo de Mecanismos de Falha Simuláveis para Detecção via
+    Gêmeo Digital**: tabela grande — Mecanismo de Falha | Capítulo de
+    Origem | Variável/Estado Associado | Codificável (sim/como) |
+    Algoritmo Detector Primário (EKF/VAE/PIML) — cobrindo os mecanismos
+    de falha **já catalogados** no livro (não inventar novos). Levantamento
+    já começado via `grep -n "Mecanismo de Falha"` e
+    `grep -n "Matriz de Falhas\|label{tab:[0-9]"` — resultado parcial
+    obtido, candidatos confirmados por capítulo: Cap. 2 (falha do
+    exaustor do hood), Cap. 6 (`tab:6-1`, transmissão), Cap. 7
+    (`tab:7-1`, lubrificação/óleo — degradação térmica, perda de
+    viscosidade, colmatagem de filtro), Cap. 8 (`tab:8-1`, "Matriz de
+    Falhas de Transmissão" — pitting, fadiga, desalinhamento), Cap. 9
+    (`tab:9-1`, "Matriz de Falhas Integrada do Estágio LP" — desgaste de
+    folga, o mesmo δ já usado no Cap. 29/estudo de caso), Cap. 10
+    (`tab:10-1`, "Matriz de Falhas Integrada do Sistema Intermediário" —
+    *offloading*, *fouling*), Cap. 11 (`tab:11-1`), Cap. 12 (`tab:12-1`),
+    Cap. 13 (`tab:13-1`), Cap. 14 (`tab:14-1`), Cap. 15 (`tab:15-1`),
+    Cap. 16 (`tab:16-1`), Cap. 17 (`tab:17-1`). **Ainda faltava conferir
+    o conteúdo exato de cada uma dessas tabelas** (só os `\label`s foram
+    levantados, não o conteúdo) antes de montar a tabela-catálogo —
+    próximo passo concreto ao retomar. O Cap. 4 (motor) tem mecanismos de
+    falha fora do padrão "\textbf{Mecanismo de Falha:}" (é uma
+    `\begin{enumerate}` com itens tipo "Quebra de Barras do Rotor",
+    "Desbalanço de Tensão/Corrente", "EDM") — não esquecer de incluir,
+    exige busca textual diferente (já identificado, não está no grep
+    acima).
+
+3. **Diretriz Técnica Final do novo Capítulo 28**: amarrar as três
+  subseções — calibração (28.1) alimenta o protocolo de lacunas (28.2)
+  que por sua vez condiciona a confiabilidade do catálogo de detecção
+  (28.3); e apontar para o Capítulo 29 (estudo de caso) como a
+  demonstração concreta de 28.1-28.3 em ação.
+
+4. **Depois de escrever**: recompilar 3 passagens, rodar a mesma
+  varredura de auto-referência de equação já usada nesta sessão (regra
+  permanente da seção de Convenções), conferir overfull/páginas/labels
+  como sempre, atualizar `CONTEXTO.md` com uma entrada nova (não reescrever
+  esta, só marcar como concluída ou substituí-la).
+
 ## Parte III — Estudo de Caso Integrado, Capítulo 28 (15/08/2026)
 
 O autor pediu "a 3ª parte, o programa combinado de gêmeos digitais com
