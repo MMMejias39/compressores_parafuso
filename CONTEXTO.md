@@ -83,9 +83,23 @@ commits sem pedido explícito do autor.
   padronizado `\textbf{Diretriz Técnica Final:} ...` — uma consequência prática do
   conteúdo do capítulo para o funcionamento do Gêmeo Digital. Mantenha esse padrão em
   qualquer capítulo novo.
-- **Explicação antes da equação**: toda equação deve ser precedida de um parágrafo
-  didático explicando o que ela representa e o significado de cada termo — não
-  apresente equações "cruas".
+- **Explicação antes da equação, com o número citado**: toda equação deve ser
+  precedida de um parágrafo didático explicando o que ela representa e o
+  significado de cada termo — não apresente equações "cruas". **Isso inclui citar
+  o próprio número da equação via `\eqref{eq:sC-N}` no parágrafo que a antecede**,
+  exatamente a mesma disciplina já exigida abaixo para figuras e tabelas (ex.:
+  "A Equação~`\eqref{eq:s5-5}` calcula..." antes do `\begin{equation}`, não só
+  depois). Um parágrafo que apenas *explica o conceito* sem citar o número não
+  satisfaz esta regra — o objetivo é que o leitor já saiba "isto é a Equação X.Y"
+  antes de encontrá-la, igual já acontece com toda figura/tabela do documento.
+  **Achado em 15/08/2026**: uma varredura programática (contar, para cada
+  `\label{eq:sC-N}`, se `\eqref{eq:sC-N}` aparece no texto imediatamente anterior)
+  achou 110 das então 208 equações (53%) sem essa citação prévia — o padrão mais
+  comum era um item de `itemize` com `\textbf{Nome do Conceito:}` seguido de frase
+  explicativa, mas sem o `\eqref{}` de si mesma. Corrigido na mesma sessão (ver
+  entrada de log correspondente mais abaixo). **Regra permanente daqui em diante**:
+  toda equação nova precisa desse `\eqref{}` de si mesma no parágrafo anterior,
+  mesmo quando já introduzida por um título em negrito de item de lista.
 - **Figuras**: cada figura tem `\label{fig:C-N}` (C = capítulo, N = sequencial) e é
   antecedida por um parágrafo que a referencia via `Figura~\ref{fig:C-N}` antes de
   aparecer.
@@ -1020,6 +1034,60 @@ permanente neste projeto de qualquer forma. `compressores.tex` está
 ~104 linhas maior (119 linhas de diff), `compressores.pdf` recompilado
 para 141 páginas (era 135), ambos modificados na árvore de trabalho, não
 staged, aguardando revisão do autor.
+
+## Correção em massa: número da equação citado antes de aparecer (15/08/2026)
+
+O autor notou que a convenção "explicação antes da equação" (ver seção de
+Convenções acima) não estava, na prática, exigindo o mesmo que já era
+exigido de figuras e tabelas — citar o **número** via `\eqref{}` no texto
+antes do `\begin{equation}`, não só explicar o conceito. Pedido: registrar
+a observação no `CONTEXTO.md` (feito — ver a entrada correspondente na
+seção de Convenções, acima) e ajustar o texto inteiro.
+
+**Varredura programática** (contar, para cada `\label{eq:sC-N}`, se
+`\eqref{eq:sC-N}` aparece nos ~800 caracteres imediatamente anteriores):
+achou **110 das 208 equações do livro (53%) sem essa citação prévia**. O
+padrão mais comum era um item de `itemize` com `\textbf{Nome do
+Conceito:}` seguido de frase explicativa que descrevia o que a equação
+calcula, mas nunca citava "Equação~(X.Y)" antes dela — só depois, quando
+citada de novo por outro capítulo, ou nunca.
+
+**Correção**: as 3 primeiras (Capítulo 2, achadas e corrigidas na mesma
+sessão do achado anterior) foram feitas manualmente como referência de
+estilo; as 107 restantes (Capítulos 4 a 27) foram delegadas a um
+subagente (fork), com instrução explícita de tecer a citação na própria
+frase de abertura já existente (não adicionar uma sentença nova redundante
+quando evitável) e variar o conector — "pela Equação~\eqref{}", "conforme
+a Equação~\eqref{}", "dada pela Equação~\eqref{}", "A Equação~\eqref{}
+calcula/define/expressa...", etc. — para não ler como template repetido.
+
+**Verificação independente feita pelo Claude após o retorno do subagente**
+(não confiar só no relato dele — recompilação e nova varredura do zero):
+- 3 passagens de `pdflatex` limpas, `0` referências indefinidas/labels
+  duplicados.
+- Nova varredura: **0 violações restantes** (era 110).
+- `208` labels `eq:s*-*` — nenhuma equação foi adicionada, removida ou
+  renumerada; só a prosa ao redor mudou.
+- Overfull hboxes: `34`, idêntico ao baseline antes desta correção — sem
+  regressão de diagramação.
+- `0` marcadores `??` no PDF extraído.
+- Amostragem manual de 7 equações espalhadas por capítulos diferentes
+  (4, 6, 9, 13, 17, 20, 26) conferida linha a linha — todas naturais,
+  nenhuma com número hardcoded.
+
+**Observação cosmética menor, não perseguida**: uma checagem de repetição
+de conector dentro do mesmo capítulo achou ~18 casos de frases vizinhas
+usando o mesmo conector (ex.: "pela Equação~\eqref{}" duas vezes em
+parágrafos próximos) — estilisticamente repetitivo em alguns pontos, mas
+não viola a regra em si (o número está lá, citado antes). Mesma categoria
+dos ~30 overfulls residuais de 2pt já registrados como cosmeticamente
+insignificantes — não é dívida técnica, é só um refinamento de prosa
+opcional se uma sessão futura quiser revisitar.
+
+**Regra permanente reforçada**: qualquer equação nova, em qualquer
+capítulo futuro (incluindo volumes futuros da coleção), precisa desse
+`\eqref{}` de si mesma na frase que a antecede, mesmo quando já
+introduzida por um título em negrito de item de lista.
 
 ## Auditoria de perdas termodinâmicas/fluidas e acoplamento com o Hood (15/08/2026)
 
