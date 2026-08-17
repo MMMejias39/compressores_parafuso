@@ -2802,3 +2802,49 @@ diferente em duas equações, contagem de variáveis divergente,
 capítulos errados na Nomenclatura, e outros itens cosméticos) ficam
 para a próxima rodada — registrados na mensagem original da revisora,
 não repetidos aqui para não duplicar.
+
+## Lote 3 completo: os 11 achados de severidade média/baixa (17/08/2026)
+
+Fecha o lote 3 inteiro (os 3 de severidade alta já estavam registrados
+acima). Os 11 restantes, todos aplicados:
+
+- **Eq. 16.2 (Helmholtz):** $c$ → $a$ (mesmo símbolo de velocidade do
+  som já estabelecido na Eq. 9.13, $a=\sqrt{\gamma R T}$).
+- **Nomenclatura com capítulo errado:** bloco de exergia ($\dot I$,
+  $\psi$, $\eta_{ex}$, $T_0$, $\dot S_{gen}$, $h$, $s$) dizia "Cap. 15,
+  19" — as equações reais são do Cap. 17 (definição) e Cap. 18 (CO2).
+  $N_{\text{frota}}$ dizia "Cap. 14" — a Eq. 16.1 confirma Cap. 16.
+  Ambos corrigidos.
+- **Eq. 17.4 vs. Eq. 18.3 ($\eta_{ex}$):** denominadores diferentes
+  para a mesma eficiência exergética global ($\dot W_{real}$ vs.
+  $\dot W_{elec}$). Padronizado em $\dot W_{elec}$, consistente com a
+  convenção de CO2 já corrigida nesta sessão (potência elétrica total,
+  não uma potência intermediária do trem mecânico).
+- **Contagem de 28 variáveis monitoradas:** a Tabela 18.1 soma 26
+  (contagem manual: A:4+B:4+C:3+D:4+E:4+F:1+G:2+H:2+I:2), não 28.
+  Corrigido em 9 ocorrências espalhadas pelos Caps. 20, 22 e 29
+  (incluindo uma que eu mesmo tinha escrito nesta sessão, na nota
+  sobre normalização de $E_{rec}$, copiando o número errado sem
+  questionar).
+- **Colisão de $\beta$ (peso econômico do MPC) com o $\beta$ do VAE
+  (Cap. 22):** renomeado para $\beta_{\text{mpc}}$ em 4 equações
+  (Eqs. 18.7, 19.4, 20.7, e o resumo boxado da Seção de unificação).
+- **$\omega_1,\omega_2$ (Eq. 19.1) vs. $\lambda_1,\lambda_2$ (Eq. 20.5)
+  vs. $\lambda$ único (Eq. 23.3):** três grafias para o mesmo peso
+  física-informada em três capítulos. Unificado em $\lambda_1,\lambda_2$
+  (a Eq. 19.1 já tinha colisão documentável com $\omega$ de velocidade
+  angular — resolvida como efeito colateral), com nota explicando que
+  a Eq. 23.3 é o caso simplificado (peso de dados implícito 1).
+- **Eq. 17.1 (vetor $z$):** incluía $I$ e $V$ sem bullet de introdução
+  prévia (só pressões, temperaturas, ΔP, vazão e PDP tinham). Bullet
+  novo adicionado.
+- **$U_{cv}$ (Eq. 23.2) e item de $\delta_{emerg}$ (Eq. 16.1):**
+  avaliados como genuinamente cosméticos/opcionais pela própria
+  revisora — não alterados.
+- **Símbolos locais de Savitzky-Golay/Isolation Forest/SHAP:**
+  explicitamente dentro da licença que o preâmbulo do documento já
+  permite — não alterados.
+
+175 páginas (172→175 ao longo do lote 3 inteiro, texto explicativo
+novo). Compilação limpa, sem referências indefinidas nem overfull
+severo.

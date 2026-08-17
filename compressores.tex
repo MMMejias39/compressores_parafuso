@@ -309,14 +309,14 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	\toprule
 	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
 	\endhead
-	$\dot{I}$ & Taxa de destruição de exergia (irreversibilidade) & W & Cap. 15, 19 \\
-	$\psi$\dag & Exergia específica de fluxo (notação de Kotas) & J\,kg$^{-1}$ & Cap. 15, 19 \\
-	$\eta_{ex}$ & Eficiência exergética global & adimensional & Cap. 15, 19 \\
-	$T_0$ & Temperatura do ambiente de referência (morto termodinâmico) & K & Cap. 15, 19 \\
-	$\dot{S}_{gen}$ & Taxa de geração de entropia & W\,K$^{-1}$ & Cap. 15, 19 \\
-	$h$ & Entalpia específica & J\,kg$^{-1}$ & Cap. 15, 19 \\
-	$s$ (contexto exergético) & Entropia específica & J\,kg$^{-1}$\,K$^{-1}$ & Cap. 15, 19 \\
-	$N_{\text{frota}}$\dag & Número de compressores ativos na frota (somatórios) & adimensional & Cap. 14 \\ \bottomrule
+	$\dot{I}$ & Taxa de destruição de exergia (irreversibilidade) & W & Cap. 17, 18 \\
+	$\psi$\dag & Exergia específica de fluxo (notação de Kotas) & J\,kg$^{-1}$ & Cap. 17, 18 \\
+	$\eta_{ex}$ & Eficiência exergética global & adimensional & Cap. 17, 18 \\
+	$T_0$ & Temperatura do ambiente de referência (morto termodinâmico) & K & Cap. 17, 18 \\
+	$\dot{S}_{gen}$ & Taxa de geração de entropia & W\,K$^{-1}$ & Cap. 17, 18 \\
+	$h$ & Entalpia específica & J\,kg$^{-1}$ & Cap. 17, 18 \\
+	$s$ (contexto exergético) & Entropia específica & J\,kg$^{-1}$\,K$^{-1}$ & Cap. 17, 18 \\
+	$N_{\text{frota}}$\dag & Número de compressores ativos na frota (somatórios) & adimensional & Cap. 16 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Estimação de Estado, IA e Otimização}
@@ -389,6 +389,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\item $R$ (constante do gás/ar, uso dominante) permanece; a constante universal dos gases da equação de Arrhenius (degradação de isolamento, Cap. 4) passou a $R_u$.
 	\item $\alpha$ (taxa de falsos alarmes do VAE, Cap. 22) e $\beta$ (peso da divergência KL do VAE, Cap. 22) permanecem; as constantes da curva de disparo do relé de sobrecarga (Cap. 4) passaram a $\alpha_{\text{relé}}$ e $\beta_{\text{relé}}$, mesmo padrão já usado para $k_{\text{relé}}$.
 	\item $\zeta$ (coeficiente de perda de carga localizada, filtro de admissão, Eq.~5.4) permanece; o mesmo coeficiente aplicado ao filtro coalescente (Cap. 14) passou a $\zeta_{\text{coal}}$.
+	\item Os pesos da função de perda física-informada (dados vs. física) usam $\lambda_1, \lambda_2$ de forma consistente nas Equações~\eqref{eq:s19-1} e~\eqref{eq:s20-5} (antes $\omega_1,\omega_2$ na primeira, colidindo com $\omega$ de velocidade angular), simplificados a um único $\lambda$ na Equação~\eqref{eq:s23-3} quando o termo de dados já vem normalizado com peso implícito 1.
 \end{itemize}
 
 \newpage
@@ -2307,9 +2308,9 @@ O balanço de massa da Equação~\eqref{eq:s16-1} descreve o nível médio de pr
 \begin{itemize}
 	\item \textbf{Frequência Acústica Natural (Ressonador de Helmholtz):} O trecho de tubulação conectando o compressor ao vaso pulmão se comporta como um ressonador de Helmholtz, cuja frequência natural é dada pela Equação~\eqref{eq:s16-2}:
 	\begin{equation}\label{eq:s16-2}
- f_H = \frac{c}{2\pi} \sqrt{\frac{A_{\text{tubo}}}{V_{\text{tank}} \cdot L_{\text{eff}}}} 
+ f_H = \frac{a}{2\pi} \sqrt{\frac{A_{\text{tubo}}}{V_{\text{tank}} \cdot L_{\text{eff}}}}
 \end{equation}
-	Onde $c$ é a velocidade do som no ar comprimido (função de $T$ e da umidade), $A_{\text{tubo}}$ a área da seção do tubo, $V_{\text{tank}}$ o volume do vaso pulmão e $L_{\text{eff}}$ o comprimento efetivo do trecho (comprimento físico acrescido de correção de extremidade).
+	Onde $a$ é a velocidade do som no ar comprimido (mesmo símbolo já estabelecido na Equação~\eqref{eq:s9-13}, $a=\sqrt{\gamma R T}$, função de $T$ e da umidade), $A_{\text{tubo}}$ a área da seção do tubo, $V_{\text{tank}}$ o volume do vaso pulmão e $L_{\text{eff}}$ o comprimento efetivo do trecho (comprimento físico acrescido de correção de extremidade).
 	\item \textbf{Critério de Risco de Ressonância:} O Gêmeo Digital compara $f_H$ com as frequências de excitação mecânica conhecidas do trem de compressão, pelo critério da Equação~\eqref{eq:s16-3}:
 	\begin{equation}\label{eq:s16-3}
  \text{Risco de Ressonância se} \quad \left| \frac{f_H - f_{bp}}{f_H} \right| < 0.10 \quad \text{ou} \quad \left| \frac{f_H - GMF}{f_H} \right| < 0.10 
@@ -2403,6 +2404,7 @@ O Gêmeo Digital processa o vetor de estado $z(t)$ extraído continuamente da in
 	\item \textbf{Diferenciais de Pressão ($\Delta P$):} Queda de carga em filtros e secadores (indicadores de colmatação).
 	\item \textbf{Vazão ($\dot{m}$):} Medição direta ou estimada para balanço de massa e energia.
 	\item \textbf{Ponto de Orvalho ($T_{dp}$):} Variável crítica para conformidade com a classe de umidade contratada da ISO 8573-1 \cite{iso8573}, evitando condensação e corrosão nos equipamentos clientes.
+	\item \textbf{Corrente e Tensão Elétricas ($I$, $V$):} Corrente de fase do motor principal (mesma leitura do ponto A da Tabela~\ref{tab:18-1}) e tensão de linha de alimentação — a via elétrica de acompanhamento de carga, complementar às grandezas termofluídicas acima.
 	\item \textbf{Vetor de Entrada Global ($z$):} As variáveis acima se organizam no vetor de entrada da Equação~\eqref{eq:s17-1}:
 	\begin{equation}\label{eq:s17-1}
 z = [P, T, \Delta P, \dot{m}, T_{dp}, I, V]^T
@@ -2443,8 +2445,9 @@ O conceito estende a noção de ``energia disponível'' de Gibbs e Keenan, forma
 	\item \textbf{Eficiência Exergética Global ($\eta_{ex}$):}
 	O Gêmeo Digital busca maximizar este índice, definido na Equação~\eqref{eq:s17-4}, para garantir a operação próxima ao limite termodinâmico:
 	\begin{equation}\label{eq:s17-4}
-\eta_{ex} = 1 - \frac{\dot{I}_{comp} + \dot{I}_{cool} + \dot{I}_{dry}}{\dot{W}_{real}}
+\eta_{ex} = 1 - \frac{\dot{I}_{comp} + \dot{I}_{cool} + \dot{I}_{dry}}{\dot{W}_{elec}}
 \end{equation}
+	O denominador usa $\dot{W}_{elec}$ (potência elétrica total consumida da rede), não a potência de eixo — a mesma convenção já adotada na Equação~\eqref{eq:s18-3} (onde $\eta_{ex}$ reaparece) e no cálculo de emissões de CO$_2$: para um índice \textbf{global} de eficiência exergética, a referência é o que a planta efetivamente consome da fonte primária, não uma potência intermediária do trem mecânico.
 \end{itemize}
 
 \subsection{Redução de Consumo e Emissões de GEE}
@@ -2662,7 +2665,7 @@ Ignorar essa inflação — tratar uma leitura de ronda mensal como se tivesse a
 
 \begin{equation}\label{eq:s18-7}
 \begin{aligned}
-	\text{Minimizar } J &= \int_{t}^{t+\Delta t} \left( \sum \dot{I} + \beta \sum \dot{m}_{\text{CO}_2} \right) \, dt \\[10pt]
+	\text{Minimizar } J &= \int_{t}^{t+\Delta t} \left( \sum \dot{I} + \beta_{\text{mpc}} \sum \dot{m}_{\text{CO}_2} \right) \, dt \\[10pt]
 	\text{Sujeito a: } & \begin{cases} T_{dp} \le T_{dp,\text{limit}} \quad (\text{Qualidade}) \\ \sigma_{b} < \sigma_{\text{adm}} \quad (\text{Integridade}) \\ P_{tk} \ge P_{\text{crit}} \quad (\text{Disponibilidade}) \\ \Delta \theta_{\text{sync}} < \theta_{\text{backlash}} \quad (\text{Sincronismo}) \end{cases}
 \end{aligned}
 \end{equation}
@@ -2692,9 +2695,9 @@ Para integrar as equações de termodinâmica, exergia e fadiga em um único mod
 
 \begin{enumerate}
 	\item \textbf{Estrutura do Modelo:}
-	As equações diferenciais e algébricas (DAEs) desenvolvidas nos capítulos anteriores são incorporadas diretamente à função de perda ($Loss$) do modelo de inteligência artificial. A Equação~\eqref{eq:s19-1} soma dois termos ponderados: $L_{\text{data}}$, o erro convencional contra os dados medidos, e $L_{\text{physics}}$, a penalidade por violar as leis físicas — os pesos $\omega_1$ e $\omega_2$ controlam o equilíbrio entre ``confiar nos dados'' e ``confiar na física'':
+	As equações diferenciais e algébricas (DAEs) desenvolvidas nos capítulos anteriores são incorporadas diretamente à função de perda ($Loss$) do modelo de inteligência artificial. A Equação~\eqref{eq:s19-1} soma dois termos ponderados: $L_{\text{data}}$, o erro convencional contra os dados medidos, e $L_{\text{physics}}$, a penalidade por violar as leis físicas — os pesos $\lambda_1$ e $\lambda_2$ controlam o equilíbrio entre ``confiar nos dados'' e ``confiar na física'' (mesmos símbolos usados de novo na Equação~\eqref{eq:s20-5} e simplificados a um único $\lambda$ na Equação~\eqref{eq:s23-3}, quando o termo de dados já vem normalizado por $N$ com peso implícito 1):
 	\begin{equation}\label{eq:s19-1}
- L_{\text{total}} = \omega_1 L_{\text{data}} + \omega_2 L_{\text{physics}}
+ L_{\text{total}} = \lambda_1 L_{\text{data}} + \lambda_2 L_{\text{physics}}
 \end{equation}
 
 	\item \textbf{Componente Físico ($L_{\text{physics}}$):}
@@ -2709,13 +2712,13 @@ Para integrar as equações de termodinâmica, exergia e fadiga em um único mod
 
 \subsection{Redução de Dimensionalidade: O Modelo de Espaço Latente}
 
-Monitorar 28 variáveis simultaneamente introduz a ``maldição da dimensionalidade'' e problemas de colinearidade. O modelo adotado para simplificar esta estrutura sem perda de informação crítica é o \textbf{Autoencoder Variacional (VAE)}.
+Monitorar 26 variáveis simultaneamente introduz a ``maldição da dimensionalidade'' e problemas de colinearidade. O modelo adotado para simplificar esta estrutura sem perda de informação crítica é o \textbf{Autoencoder Variacional (VAE)}.
 
 \begin{itemize}
 	\item \textbf{Limitação do PCA:} A Análise de Componentes Principais (PCA) é linear e falha ao capturar relações complexas, como a variação da viscosidade do óleo ou a dinâmica não linear da compressão politrópica.
 	\item \textbf{Arquitetura do Autoencoder:}
 	\begin{itemize}
-		\item \textbf{Encoder ($q_{\phi}$):} Comprime o vetor de 28 variáveis ($z$) em um vetor reduzido ($\ell$) de 3 ou 4 dimensões, denominado Espaço Latente.
+		\item \textbf{Encoder ($q_{\phi}$):} Comprime o vetor de 26 variáveis ($z$) em um vetor reduzido ($\ell$) de 3 ou 4 dimensões, denominado Espaço Latente.
 		\item \textbf{Bottleneck (Gargalo):} Força a rede a aprender apenas as características essenciais, ou a ``assinatura de saúde'' do compressor.
 		\item \textbf{Decoder ($p_{\theta}$):} Reconstrói o vetor original ($\hat{z}$) a partir do espaço latente para validação.
 	\end{itemize}
@@ -2737,7 +2740,7 @@ Para resolver a função objetivo multiobjetivo em tempo real, o modelo de solu�
 	
 	\item \textbf{Função Objetivo Dinâmica:} O MPC minimiza, ao longo do horizonte $H$, a função de custo da Equação~\eqref{eq:s19-4}:
 	\begin{equation}\label{eq:s19-4}
- \text{Minimizar } J = \sum_{k=0}^{H} \left[ \dot{I}(k) + \beta \cdotp \dot{m}_{\text{CO}_2}(k) + \gamma \cdotp \Delta u(k)^2 \right] 
+ \text{Minimizar } J = \sum_{k=0}^{H} \left[ \dot{I}(k) + \beta_{\text{mpc}} \cdotp \dot{m}_{\text{CO}_2}(k) + \gamma \cdotp \Delta u(k)^2 \right]
 \end{equation}
 	
 	\item \textbf{Restrições de Integridade:}
@@ -2796,7 +2799,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 \textbf{Diretriz Técnica Final:} A solução proposta integra o rigor das equações de primeira ordem com a flexibilidade da inteligência artificial. O modelo resultante compreende a relação causal entre a degradação mecânica ($\sigma_b$) e a ineficiência térmica ($\dot{I}$), permitindo uma manutenção preditiva baseada em evidências exergéticas, consolidada na Equação~\eqref{eq:s19-11}:
 
 \begin{equation}\label{eq:s19-11}
-\boxed{\text{Min } J = \int (\dot{I} + \beta \dot{m}_{\text{CO}_2}) \, dt \quad \text{via PIML e Autoencoder}}
+\boxed{\text{Min } J = \int (\dot{I} + \beta_{\text{mpc}} \dot{m}_{\text{CO}_2}) \, dt \quad \text{via PIML e Autoencoder}}
 \end{equation}
 
 	\clearpage
@@ -2846,7 +2849,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	\subsection{Redução de Dimensionalidade: Autoencoder Variacional (VAE)}
 
-	Para gerenciar as 28 variáveis monitoradas, o DT utiliza o \textbf{VAE}, formalizado por Kingma e Welling em 2013 como uma extensão probabilística do autoencoder clássico \cite{vae}, para projetar os dados em um \textbf{Espaço Latente} de baixa dimensão ($\ell \in \mathbb{R}^d$, onde $d \ll 28$; usa-se $\ell$ em vez de $h$ para não colidir com a entalpia específica dos capítulos de termodinâmica).
+	Para gerenciar as 26 variáveis monitoradas, o DT utiliza o \textbf{VAE}, formalizado por Kingma e Welling em 2013 como uma extensão probabilística do autoencoder clássico \cite{vae}, para projetar os dados em um \textbf{Espaço Latente} de baixa dimensão ($\ell \in \mathbb{R}^d$, onde $d \ll 26$; usa-se $\ell$ em vez de $h$ para não colidir com a entalpia específica dos capítulos de termodinâmica).
 	
 	\begin{itemize}
 		\item \textbf{Metodologia de Detecção de Anomalias:}
@@ -2886,8 +2889,9 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 		\item \textbf{Controle Preditivo Baseado em Modelo (MPC):}
 		O MPC resolve um problema de otimização dinâmica em um horizonte $H$, minimizando o custo operacional ($J$) da Equação~\eqref{eq:s20-7}:
 		\begin{equation}\label{eq:s20-7}
- \text{Min } J = \sum_{k=0}^{H} \left[ \dot{W}_{\text{elec}}(k) + \beta \cdotp \dot{I}(k) \right] 
+ \text{Min } J = \sum_{k=0}^{H} \left[ \dot{W}_{\text{elec}}(k) + \beta_{\text{mpc}} \cdotp \dot{I}(k) \right]
 \end{equation}
+			Onde $\beta_{\text{mpc}}$ é subscrito para não colidir com o peso da divergência KL do VAE (Cap.~22), mesma grandeza de custo econômico-exergético já introduzida na Equação~\eqref{eq:s18-7}, aqui reaproveitada como peso do MPC.
 		Sujeito às duas restrições que o otimizador nunca pode violar, independentemente do quão vantajosa a solução pareça em termos de custo: a tensão real na raiz do dente abaixo do limite admissível (integridade mecânica) e o ponto de orvalho sob pressão abaixo de $-40\,^{\circ}$C, que é o limite da \textbf{Classe 2 de umidade} da ISO 8573-1 \cite{iso8573} adotada como requisito de projeto neste documento (a norma define classes, não um valor único — ver a qualificação no Capítulo 18). Ambas são formalizadas na Equação~\eqref{eq:s20-8}:
 		\begin{equation}\label{eq:s20-8}
  \begin{cases} \sigma_{b,\text{real}} < \sigma_{b,\text{adm}} \\ T_{\text{dp}} \le -40\,^{\circ}\text{C} \end{cases}
@@ -3046,7 +3050,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	O \textbf{VAE} resolve os dois problemas ao impor que o espaço latente siga uma distribuição conhecida. Isso força a continuidade: pontos próximos no espaço latente decodificam para estados físicos próximos, sem lacunas arbitrárias. Para o diagnóstico, essa propriedade é o que permite interpretar a \textit{posição} no espaço latente — e não apenas o erro de reconstrução — como assinatura de saúde da máquina.
 	
 	\subsection{Arquitetura Probabilística e Espaço Latente}
-	O VAE projeta o vetor de 28 variáveis em um espaço latente ($\ell$) modelado por distribuições gaussianas. A Figura~\ref{fig:22-1} ilustra essa arquitetura de ``gargalo'': o encoder comprime progressivamente a entrada $z$ até os poucos parâmetros do espaço latente, e o decoder expande esse gargalo de volta ao tamanho original, produzindo a reconstrução $\hat{z}$ — a diferença entre $z$ e $\hat{z}$ é justamente o erro de reconstrução usado como resíduo de diagnóstico mais adiante neste capítulo.
+	O VAE projeta o vetor de 26 variáveis em um espaço latente ($\ell$) modelado por distribuições gaussianas. A Figura~\ref{fig:22-1} ilustra essa arquitetura de ``gargalo'': o encoder comprime progressivamente a entrada $z$ até os poucos parâmetros do espaço latente, e o decoder expande esse gargalo de volta ao tamanho original, produzindo a reconstrução $\hat{z}$ — a diferença entre $z$ e $\hat{z}$ é justamente o erro de reconstrução usado como resíduo de diagnóstico mais adiante neste capítulo.
 
 	\begin{figure}[h!tbp]
 		\centering
@@ -3094,7 +3098,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	\begin{equation}\label{eq:s22-5}
  E_{\text{rec}} = \sum_{i=1}^{M} \frac{(z_i - \hat{z}_i)^2}{\sigma_i^2}
 \end{equation}
-	A normalização por $\sigma_i^2$ (variância de cada variável $i$ no conjunto de treino saudável) não é opcional: o vetor de 28 variáveis monitoradas mistura grandezas de escalas completamente diferentes (pressões em bar, temperaturas em °C, vibração em mm/s) — sem normalizar, a variável de maior escala numérica dominaria a soma e mascararia desvios reais nas demais. Desvios em relação ao padrão aprendido indicam degradação mecânica ou térmica.
+	A normalização por $\sigma_i^2$ (variância de cada variável $i$ no conjunto de treino saudável) não é opcional: o vetor de 26 variáveis monitoradas mistura grandezas de escalas completamente diferentes (pressões em bar, temperaturas em °C, vibração em mm/s) — sem normalizar, a variável de maior escala numérica dominaria a soma e mascararia desvios reais nas demais. Desvios em relação ao padrão aprendido indicam degradação mecânica ou térmica.
 
 	\subsection{A Premissa Crítica: Pureza do Conjunto de Treinamento}
 
@@ -3796,7 +3800,7 @@ Antes de aceitar essa estimativa, o Gêmeo Digital audita o próprio filtro pela
 
 \subsection{Confirmação por Detecção de Anomalia via VAE}
 
-Em paralelo, o vetor completo de 28 variáveis monitoradas (não só as sete do EKF) é padronizado e projetado no espaço latente do VAE (Capítulo 22). O erro de reconstrução $E_{\text{rec}}$ da Equação~\eqref{eq:s20-4} — que soma o desvio quadrático normalizado de cada variável — sobe de uma linha de base de $E_{\text{rec}} \approx 1{,}2$ para $E_{\text{rec}} \approx 4{,}8$ ao longo da mesma janela, cruzando o limiar de disparo $\tau_{\text{limiar}} = 4{,}0$ (Equação~\eqref{eq:s22-6}) na quinta semana. O ponto relevante não é o valor absoluto de $E_{\text{rec}}$, mas \textbf{por que} ele sobe: nenhuma das 28 variáveis, isoladamente, se afasta o suficiente da sua própria faixa normal para disparar um limiar univariado — é a combinação específica de pequenos desvios simultâneos em $T_{d,lp}$, $I$ e $v_{\text{rms}}$, incompatível com a estrutura de correlação que o VAE aprendeu da operação saudável, que o autoencoder reconhece como fora de distribuição. É a mesma leitura, por um caminho estatístico independente do EKF, de que algo mudou.
+Em paralelo, o vetor completo de 26 variáveis monitoradas (não só as sete do EKF) é padronizado e projetado no espaço latente do VAE (Capítulo 22). O erro de reconstrução $E_{\text{rec}}$ da Equação~\eqref{eq:s20-4} — que soma o desvio quadrático normalizado de cada variável — sobe de uma linha de base de $E_{\text{rec}} \approx 1{,}2$ para $E_{\text{rec}} \approx 4{,}8$ ao longo da mesma janela, cruzando o limiar de disparo $\tau_{\text{limiar}} = 4{,}0$ (Equação~\eqref{eq:s22-6}) na quinta semana. O ponto relevante não é o valor absoluto de $E_{\text{rec}}$, mas \textbf{por que} ele sobe: nenhuma das 26 variáveis, isoladamente, se afasta o suficiente da sua própria faixa normal para disparar um limiar univariado — é a combinação específica de pequenos desvios simultâneos em $T_{d,lp}$, $I$ e $v_{\text{rms}}$, incompatível com a estrutura de correlação que o VAE aprendeu da operação saudável, que o autoencoder reconhece como fora de distribuição. É a mesma leitura, por um caminho estatístico independente do EKF, de que algo mudou.
 
 \subsection{Atribuição de Causa-Raiz via PIML}
 
@@ -3828,7 +3832,7 @@ A Tabela~\ref{tab:29-2} percorre o cenário inteiro em ordem, mostrando explicit
 		\textbf{Etapa} & \textbf{Entrada} & \textbf{Saída} & \textbf{Consumidor seguinte} \\ \midrule
 		Física (Parte I) & Ponto de operação, $\delta/L$ verdadeiro & $T_{d,lp}$, $I$, $v_{\text{rms}}$ previstos & EKF (modelo $f$) \\
 		EKF (Eq.~\eqref{eq:s21-4}) & $z_k$ medido, $f(\cdot)$ da Parte I & $\hat\delta/L \approx 0{,}0091$, $P_{k|k}$ & PIML, prognóstico GP \\
-		VAE (Eq.~\eqref{eq:s20-4}) & Vetor de 28 variáveis & $E_{\text{rec}} = 4{,}8 > \tau$ & Gatilho de diagnóstico \\
+		VAE (Eq.~\eqref{eq:s20-4}) & Vetor de 26 variáveis & $E_{\text{rec}} = 4{,}8 > \tau$ & Gatilho de diagnóstico \\
 		PIML (Eq.~\eqref{eq:s23-2}) & $\hat\delta/L$ do EKF, hipóteses alternativas & Resíduo mínimo em $\delta$ & Atribuição de causa-raiz \\
 		Prognóstico (Eq.~\eqref{eq:s19-10}) & Série $\hat\delta/L(t)$ do EKF & $RUL_\delta \approx 9$ sem. [6, 14] & MPC \\
 		MPC (Eq.~\eqref{eq:s24-1}) & $RUL_\delta$, restrições de integridade & Ação prescritiva + custo & Operador \\
