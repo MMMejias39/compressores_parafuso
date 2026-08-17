@@ -2755,6 +2755,50 @@ admissão vs. coalescente).
 
 Lote 3 cobre os Caps. 16-28 (todo o restante do livro, incluindo o
 Gêmeo Digital: exergia/CO2, VAE, EKF/MPC/PSO, estudo de caso final).
-14 achados reportados, priorizados por severidade — aplicação em
-andamento nesta mesma sessão, ver próxima entrada para o que já foi
-verificado e corrigido.
+14 achados reportados, priorizados por severidade. Os 3 de severidade
+**alta** já foram verificados e corrigidos:
+
+1. **Eq. 17.3, erro de sinal no balanço de exergia — confirmado por
+   derivação própria.** $\dot{I} = \sum\dot{m}_{in}\psi_{in} -
+   \sum\dot{m}_{out}\psi_{out} - \dot{W}_{shaft}$ dava destruição de
+   exergia \textbf{negativa} para um compressor simples (ar ambiente
+   comprimido, $\psi_{in}\approx0$): $\dot I = -\psi_{out}\dot m -
+   \dot W_{shaft} < 0$, violando a 2ª Lei. Com $\dot{W}_{shaft}$ na
+   convenção do livro (trabalho consumido sempre positivo), o termo de
+   trabalho entra no balanço de exergia com sinal \textbf{positivo}
+   (exergia que entra no volume de controle junto com o fluxo de
+   massa), não negativo. Corrigido para
+   $\dot I = \dot W_{shaft} + \sum\dot m_{in}\psi_{in} - \sum\dot
+   m_{out}\psi_{out}$.
+2. **$E_{rec}$ definido de duas formas incompatíveis — Eq. 20.4
+   (normalizada por $\sigma_i^2$) vs. Eq. 22.5 (soma simples, sem
+   normalização).** O exemplo numérico do Cap. 29 usa a versão
+   normalizada — confirmei que ele cita corretamente a Eq. 20.4 em
+   ambos os pontos onde aparece (não a 22.5, como o relatório
+   apontou; a citação já estava certa, só a duplicidade de fórmula
+   entre capítulos era o problema real). Corrigida a Eq. 22.5 para
+   reproduzir a mesma forma normalizada da Eq. 20.4, com nota
+   explicando por que a normalização é necessária (28 variáveis de
+   escalas físicas muito diferentes — bar, °C, mm/s — não podem ser
+   somadas cruas sem que a de maior escala numérica domine).
+3. **Linha ~3649 (Cap. 28), contradição com o código de referência —
+   confirmado lendo `ekf.py` linhas 168-173.** O livro afirmava que
+   `simular_ekf_aumentado()` segue os "dois regimes de $Q_\Lambda$
+   descritos acima" (quase nulo na calibração, pequeno depois) — mas
+   o docstring da função, para $K$ especificamente, faz o
+   \textbf{oposto}: $Q_K$ normal/ativo durante a calibração
+   (convergência por exploração ativa) e quase nulo depois (valor
+   calibrado "congelado"). Não é bug de código — é uma estratégia de
+   sintonia igualmente válida (convergência via $Q$ alto em vez de via
+   encolhimento de $P$ a partir de um prior largo) — mas o livro
+   afirmava a correspondência errada. Corrigido para descrever a
+   ordem real e explicar que é o inverso da filosofia geral, não uma
+   implementação literal dela.
+
+172→173 páginas. Compilação limpa. Os 11 achados restantes (média/
+baixa severidade — colisões de símbolo α/β no Cap. 20, ω1/ω2/λ em três
+grafias diferentes para o mesmo peso PIML, η_ex com denominador
+diferente em duas equações, contagem de variáveis divergente,
+capítulos errados na Nomenclatura, e outros itens cosméticos) ficam
+para a próxima rodada — registrados na mensagem original da revisora,
+não repetidos aqui para não duplicar.
