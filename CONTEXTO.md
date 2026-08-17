@@ -2635,3 +2635,43 @@ Autor pediu para prosseguir sem o kimi após o erro de cota
 ("continue com suas análises sem o kimi").
 
 171 páginas mantidas (só correções pontuais). Compilação limpa.
+
+## Sessão revisora paralela (compressores-29): auditoria completa dos 4 commits do dia (16/08/2026)
+
+O autor configurou, em paralelo a esta sessão, uma segunda sessão do
+Claude Code (`compressores-29`) como revisora técnica dedicada do
+`compressores.tex` — comunicação via `SendMessage`/mensagens
+cross-session. Pedido do autor: "commite... e após isso envie
+automaticamente para o compressores-29 revisar tudo". Ela auditou os 4
+commits de equacionamento do dia (`64ee675`, `770b413`, `2e0b8c7`,
+`4c91ee2`) via 3 sub-revisões independentes próprias, e reportou:
+
+**14 de 15 itens confirmados corretos** — incluindo validação numérica
+própria da Eq. 15.15/15.16 (Dittus-Boelter+ε-NTU) contra um
+`heat-transfer-mcp` externo (Gnielinski deu ~9% de diferença, dentro do
+esperado) e conferência à mão da Eq. 8.5 (mola em paralelo/série).
+
+**1 achado real, corrigido**: a expansão do vetor $z$ do EKF de 5 para 7
+elementos (Eq. 21.2, commit `770b413`) não tinha propagado para o
+exemplo numérico do Cap. 29 — três resíduos do "5" antigo:
+- $\text{NIS}_k \approx 5{,}1$ / $\chi^2_{n_z=5}$ (linha ~3790) — não é
+  só o subscrito: com $n_z=7$ a média teórica também muda, então o
+  próprio valor ilustrativo de NIS estava desatualizado. Trocado para
+  $7{,}2$ / $\chi^2_{n_z=7}$.
+- "não só as cinco do EKF" → "sete" (linha ~3794).
+- "mesmo padrão conjunto nas cinco medições" → "sete" (linha ~3798).
+
+**2 notas editoriais de severidade baixa, aplicadas por bom senso**
+(não eram erro técnico, só clareza):
+- Prosa de abertura da Seção 11 (Cap. 11, linha ~1652) atribuía base
+  politrópica a Eq. 11.1 E Eq. 11.2 — mas 11.2 é isentrópica-com-η_is
+  (mesma família da Eq. 10.4), não politrópica. Reescrita para separar
+  as duas e explicar por que a Eq. 11.2 soma perdas mecânicas que a
+  Eq. 11.1 (só $T_{HP,\text{out}}$) não captura.
+- Eq. 11.3 (Cap. 11) reaproveita $\Phi(r)$ da Eq. 13.1 (Cap. 13,
+  posterior) — forward reference real, mas já avisada explicitamente no
+  texto desde o commit `770b413`; revisora considerou aceitável dado
+  que o livro já tem precedente disso (Cap. 5 → Eq. 10.4). Não alterado.
+
+171 páginas mantidas. Compilação limpa, sem referências indefinidas
+nem overfull severo.
