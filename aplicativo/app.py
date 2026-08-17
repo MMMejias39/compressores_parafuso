@@ -49,6 +49,7 @@ from compressor_sim import (
     psa_ciclo,
     pso,
     simular,
+    subsistemas,
     vae,
 )
 
@@ -271,6 +272,33 @@ with tab_config:
                      "regeneração, reduzindo a potência elétrica do "
                      "aquecedor resistivo (Eq. 3.3) na mesma proporção. "
                      "ε=0 desliga a recuperação (aquecedor 100% elétrico).")
+            forma_particula_psa = st.radio(
+                "Forma da partícula do dessecante (Eqs. 15.17/15.18)",
+                ["Esfera", "Pellet extrudado"],
+                help="Esfericidade ψ_p = 1,0 (esfera) ou ψ_p ≈ 0,8 (pellet, "
+                     "ASSUMIDO — meio da faixa 0,7-0,9 citada no livro). "
+                     "Afeta a perda de carga do leito (Eq. 15.17, equação "
+                     "de Ergun) e a cinética de adsorção k_ads (Eq. 15.18) "
+                     "em direções opostas: pellets têm mais área externa "
+                     "por volume — adsorvem mais rápido, mas também "
+                     "impõem mais perda de carga para a mesma vazão.")
+            psi_p_psa = (constantes.PSI_P_ESFERA if forma_particula_psa == "Esfera"
+                        else constantes.PSI_P_PELLET)
+            m_dot_reg_psa = st.slider(
+                "Vazão do soprador booster de regeneração [kg/s] (assumido)",
+                0.005, 0.50, constantes.M_DOT_REG_DEFAULT_KG_S, 0.005,
+                help="Vazão de ar forçada pelo soprador booster através do "
+                     "aquecedor de regeneração — fecha o coeficiente de "
+                     "convecção h (Eq. 15.15, Dittus-Boelter) e, por "
+                     "ε-NTU (Eq. 15.16), a temperatura real que o ar "
+                     "atinge ao sair do aquecedor, substituindo o antigo "
+                     "ΔT_regen assumido. Sem soprador suficiente, h cai "
+                     "para a faixa de convecção natural e o mesmo "
+                     "aquecedor de potência fixa entrega bem menos ΔT do "
+                     "que o projeto pressupõe — mas vazão maior não eleva "
+                     "essa temperatura de saída (na verdade cai "
+                     "levemente), o ganho real é na potência térmica "
+                     "total entregue ao leito.")
 
     with cfg2:
         with st.expander("Gêmeo Digital — EKF (aba 4, Eqs. 21.2-21.8)", expanded=True):
@@ -527,6 +555,7 @@ params = {
     "v_i": v_i,
     "eta_mec": eta_mec,
     "folga_rel": folga_rel,
+    "psi_p": psi_p_psa,
     "m_carcaca": m_carcaca,
     "c_carcaca": c_carcaca,
     "cond_ext_carcaca": cond_ext_carcaca,
@@ -729,10 +758,32 @@ with tab_est:
         "temperatura de referência acima. τ_c indica quão rápido a "
         "carcaça responde a uma mudança de carga — não é um transiente "
         "calculado ao longo do tempo nesta aba (só o valor de regime), "
-        "diferente da rampa do VSD na aba \"Dinâmica temporal\". A Eq. 9.7 "
-        "(folga residual por dilatação térmica) não está implementada — "
-        "exigiria um modelo à parte para a temperatura do rotor, não "
-        "fechado pelo livro."
+        "diferente da rampa do VSD na aba \"Dinâmica temporal\"."
+    )
+
+    st.subheader("Temperatura do rotor e folga residual térmica (Eqs. 9.7/9.18/9.19)")
+    r1, r2, r3 = st.columns(3)
+    r1.metric("T_rotor (regime permanente)", f"{k['t_rotor_c']:.1f} °C")
+    r2.metric("ΔT_rotor acima de T_amb", f"{k['delta_t_rotor_c']:.1f} K")
+    r3.metric("Folga residual térmica δ_real", f"{k['folga_residual_um']:.0f} µm",
+             help="Eq. 9.7 — δ_nom menos a dilatação térmica diferencial "
+                  "rotor/carcaça. δ_real ≤ 0 sinaliza risco de contato "
+                  "metálico (rubbing). Diagnóstico separado da folga "
+                  "relativa δ/L da aba Configurações (usada diretamente na "
+                  "eficiência volumétrica, Eq. 9.3): esta aqui é a mesma "
+                  "grandeza física vista por uma lente térmica diferente, "
+                  "não uma substituição — o EKF (aba 4) continua estimando "
+                  "δ/L a partir de medições indiretas, sem depender deste "
+                  "cálculo.")
+    st.caption(
+        "16/08/2026 — fecha a lacuna que a Eq. 9.6 sozinha (T_c) não "
+        "cobria: T_rotor (Eq. 9.19) usa a mesma forma de regime permanente "
+        "da carcaça, mas limitada por CIMA pela temperatura média do gás "
+        "(T_gas,med = média entre sucção e descarga do estágio LP), não "
+        "por baixo pela ambiente — o rotor perde calor por condução pelo "
+        "eixo, não ganha calor do ambiente. cond_rotor (h_r·A_r) e "
+        "Q̇_cond,eixo são parâmetros ASSUMIDOS (constantes.py), assim como "
+        "δ_nom e os coeficientes de dilatação térmica α_rotor/α_carcaça."
     )
 
     st.subheader("Tubulação interestágios (Eq. 5.15)")
@@ -938,6 +989,37 @@ with tab_psa:
     p_low_psa = params["p_amb"]
     p_high_psa = params["p_amb"] * params["pi_total"]
 
+    # --- Soprador booster: fecha h (Dittus-Boelter, Eq. 15.15) e T_reg,in
+    # (ε-NTU, Eq. 15.16) a partir da vazão do booster, substituindo o
+    # antigo delta_t_regen assumido por um valor calculado. Forma da
+    # partícula (Eq. 15.18) corrige k_ads antes de entrar no ciclo.
+    # 16/08/2026.
+    t_upstream_regen_c = res["nos"][4]["t_c"]
+    h_aquecedor = subsistemas.coef_conveccao_forcada(
+        m_dot_reg_psa, constantes.D_H_AQUECEDOR_M, constantes.MU_AR_REGEN,
+        constantes.K_AR_REGEN, constantes.PR_AR, aquecendo=True)
+    ua_aquecedor = h_aquecedor * constantes.A_AQUECEDOR_M2
+    t_reg_in_c = subsistemas.saida_trocador(
+        t_upstream_regen_c, constantes.T_ELEM_MAX_C, ua_aquecedor,
+        m_dot_reg_psa * constantes.CP_AR)
+    delta_t_regen_calc = t_reg_in_c - t_upstream_regen_c
+    k_ads_efetivo = subsistemas.k_ads_por_forma(k_ads_psa, psi_p_psa)  # Eq. 15.18
+
+    # --- Potência do soprador booster (Eq. 15.6, SEC_dry): perda de carga
+    # do leito na vazão de regeneração (Ergun, Eq. 15.17) vezes vazão
+    # volumétrica, sobre a eficiência do soprador.
+    rho_ar_regen = nucleo.densidade_ar(p_high_psa, t_upstream_regen_c + 273.15)
+    area_vaso_psa = np.pi * params["d_vaso_psa"] ** 2 / 4.0
+    v_s_regen = m_dot_reg_psa / (rho_ar_regen * area_vaso_psa)
+    dp_leito_regen = subsistemas.perda_carga_ergun(
+        params["mu_ar_psa"], v_s_regen, rho_ar_regen, psi_p_psa,
+        params["d_p_particula"], params["porosidade_leito"],
+        params["l_leito_psa"])
+    w_booster = (m_dot_reg_psa / rho_ar_regen) * dp_leito_regen / constantes.ETA_SOPRADOR_BOOSTER
+    sec_dry_com_booster_kj_kg = subsistemas.sec_dry(
+        res["potencias"]["aquecedor"] + w_booster, 0.0,
+        res["potencias"]["m_dot_util"]) / 1000.0
+
     r_psa = psa_ciclo.simular_ciclo_psa(
         horizonte_min=horizonte_psa,
         m_dot_ar=m_dot_psa,
@@ -945,17 +1027,28 @@ with tab_psa:
         t_regen_min=t_regen_psa,
         t_resfriamento_min=t_resfriamento_psa,
         n_vasos=n_vasos_psa,
-        k_ads=k_ads_psa,
+        k_ads=k_ads_efetivo,
         p_low=p_low_psa,
         p_high=p_high_psa,
         fator_purga=params["fator_purga"],
         t_entrada_c=res["nos"][4]["t_c"],
-        delta_t_regen=params["delta_t_regen"],
+        delta_t_regen=delta_t_regen_calc,
         pdp_entrada_c=res["nos"][4]["pdp_c"],
         capacidade_trabalho=_props_material["capacidade_trabalho"],
         massa_leito_kg=massa_leito_psa,
     )
     kp = r_psa["kpis"]
+
+    st.caption(
+        f"Soprador booster ({m_dot_reg_psa:.3f} kg/s, {forma_particula_psa.lower()} "
+        f"ψ_p={psi_p_psa:.2f}): h={h_aquecedor:.0f} W/(m²K) (Eq. 15.15) → "
+        f"T_reg,in={t_reg_in_c:.1f} °C, ΔT_regen calculado={delta_t_regen_calc:.1f} K "
+        f"(Eq. 15.16, substitui o antigo valor assumido) — k_ads efetivo "
+        f"{k_ads_efetivo:.2f} (Eq. 15.18) — potência do booster "
+        f"≈{w_booster:.0f} W (Eq. 15.17, Ergun) — SEC_dry com booster "
+        f"≈{sec_dry_com_booster_kj_kg:.1f} kJ/kg (vs. "
+        f"{k['sec_dry_kj_kg']:.1f} kJ/kg sem, no card abaixo)."
+    )
 
     st.subheader(f"Rodízio de {n_vasos_psa} torres — {topologia_psa.lower()}")
     st.caption(
@@ -1004,9 +1097,12 @@ with tab_psa:
                   "modela o secador de tambor rotativo (HOC) do Cap. 15, "
                   "então Ẇ_drum é sempre 0 aqui.")
     e2.metric("HI_des (Eq. 15.7)", f"{k['hi_des']:.2f}",
-             help="1,0 = leito saudável (ΔP e PDP medidos, na barra lateral, "
-                  "iguais ao nominal/alvo). Cai conforme ΔP real e PDP real "
-                  "se afastam desses valores.")
+             help=f"1,0 = leito saudável (ΔP real, na barra lateral, igual "
+                  f"ao ΔP nominal calculado por Ergun — Eq. 15.17, "
+                  f"{k['dp_nom_psa_calc_bar']*1000:.0f} mbar na geometria/"
+                  "vazão/forma de partícula atuais, 16/08/2026 — substitui "
+                  "o antigo valor fixo de 300 mbar). Cai conforme ΔP real e "
+                  "PDP real se afastam do nominal/alvo.")
     e3.metric("η_purge (Eq. 15.9)", f"{k['purga_pct']:.1f} %")
     if k["hi_des"] < 0.7:
         st.warning(

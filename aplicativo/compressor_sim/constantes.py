@@ -32,6 +32,25 @@ C_CARCACA_LP = 460.0        # J/(kg·K), calor específico típico do ferro fund
 COND_EXT_CARCACA_LP = 10.0  # W/K, condutância de convecção natural carcaça-ambiente (h_ext·A_ext) — ASSUMIDO
 COND_ARREF_CARCACA_LP = 20.0  # W/K, condutância do arrefecimento ativo/ventilação forçada do invólucro — ASSUMIDO
 
+# --- Rotor — balanço térmico e folga residual (Eqs. 9.7/9.18/9.19, 16/08/2026) ---
+COND_ROTOR_W_K = 15.0     # W/K, h_r·A_r lumped (convecção gás-rotor) — ASSUMIDO,
+                           # menor que a condutância da carcaça (área molhada do
+                           # rotor é bem menor que a área externa da carcaça)
+Q_COND_EIXO_W = 50.0       # W, calor conduzido pelo eixo para os mancais — ASSUMIDO
+DELTA_NOM_UM = 250.0       # µm, folga nominal a frio (referência de T_amb) — ASSUMIDO. Calibrado
+                           # para ficar acima da dilatação diferencial típica no ponto de operação
+                           # default do app (~140 µm) com alguma margem — 100 µm (primeira tentativa)
+                           # dava δ_real negativo por construção, sinalizando risco de contato numa
+                           # máquina "saudável" default (achado em verificação visual, 16/08/2026).
+                           # Não calibrado para bater com folga_rel=δ/L (Eq. 9.3, config. separada) —
+                           # os "L" das duas equações não são a mesma grandeza física (ver docstring
+                           # de folga_residual_termica).
+ALPHA_ROTOR = 12.0e-6      # 1/K, coef. de dilatação térmica linear do aço do rotor — ASSUMIDO (material)
+ALPHA_CARCACA = 10.0e-6    # 1/K, coef. de dilatação térmica linear do ferro fundido — ASSUMIDO (material,
+                           # mesma família de C_CARCACA_LP)
+L_ROTOR_M = 1.0            # m, comprimento característico do rotor — ASSUMIDO
+L_CARCACA_M = 1.0          # m, comprimento característico da carcaça — ASSUMIDO
+
 # --- Motor elétrico (Eqs. 4.10-4.12) — fechamento simplificado das perdas ---
 S_MOTOR_DEFAULT = 0.02          # escorregamento nominal — ASSUMIDO (motor de indução típico)
 P_FIXAS_MOTOR_DEFAULT = 1500.0  # W, perdas fixas de ensaio (estator+núcleo+atrito/vent.+suplementares,
@@ -126,6 +145,42 @@ MATERIAIS_DESSECANTE = {
 MATERIAL_PSA_DEFAULT = "Alumina Ativada"
 MASSA_LEITO_PSA_DEFAULT_KG = 200.0  # kg por torre — ASSUMIDO (ordem de grandeza
                                      # de leito industrial de médio porte)
+
+# --- Forma da partícula: pellets vs. esferas (Eqs. 15.17/15.18, 16/08/2026) ---
+# A esfericidade não é específica de material no livro (ψ_p é tratado como
+# parâmetro geométrico independente, não uma propriedade de catálogo por
+# material) — por isso entra como uma escolha própria na UI, não dentro de
+# MATERIAIS_DESSECANTE.
+PSI_P_ESFERA = 1.0        # esfericidade de referência (esfera perfeita)
+PSI_P_PELLET = 0.8        # ASSUMIDO — meio da faixa 0,7-0,9 citada no livro
+                           # para pellets extrudados
+D_P_PARTICULA_M = 0.0015  # m, diâmetro de partícula equivalente em volume — ASSUMIDO (1,5 mm,
+                           # extremidade fina da faixa típica de dessecante industrial)
+POROSIDADE_LEITO_PSA = 0.38  # fração de vazios do leito — ASSUMIDO (típico de leito
+                              # empacotado de partículas quase-esféricas)
+L_LEITO_PSA_M = 2.3       # m, altura do leito por torre — ASSUMIDO
+D_VASO_PSA_M = 0.30       # m, diâmetro interno do vaso — ASSUMIDO. Os quatro valores acima
+                           # (D_P/POROSIDADE/L/D_VASO) foram calibrados em conjunto para que a
+                           # Eq. 15.17 (Ergun), no ponto de operação default do app, reproduza a
+                           # mesma ordem de grandeza do antigo DP_NOM_PSA fixo (~300 mbar) — sem
+                           # essa calibração, geometria "razoável" isolada (ex.: vaso de 0,5 m,
+                           # leito de 1 m) dava ΔP ~6 mbar, 50× menor, disparando HI_des≈0,02 e um
+                           # alarme falso de "dessecante degradado" logo na carga inicial do app
+                           # (achado em verificação visual, 16/08/2026). Mesmo calibrados, ainda
+                           # não batem exatamente com DP_NOM_PSA — o antigo valor também era só
+                           # ASSUMIDO, nunca derivado de geometria — e o pequeno desvio residual é
+                           # esperado, não um bug.
+
+# --- Soprador booster e aquecedor de regeneração (Eqs. 15.15/15.16, 16/08/2026) ---
+D_H_AQUECEDOR_M = 0.05     # m, diâmetro hidráulico do duto/banco de resistências — ASSUMIDO
+A_AQUECEDOR_M2 = 2.0       # m², área de troca do elemento resistivo — ASSUMIDO
+T_ELEM_MAX_C = 250.0       # °C, temperatura máxima do elemento (limite termostático) — ASSUMIDO
+M_DOT_REG_DEFAULT_KG_S = 0.05  # kg/s, vazão de ar de regeneração imposta pelo booster — ASSUMIDO,
+                                # bem menor que a vazão principal de processo (FAD_DEFAULT_M3_MIN)
+ETA_SOPRADOR_BOOSTER = 0.65    # eficiência do soprador booster — ASSUMIDO (centrífugo típico)
+MU_AR_REGEN = 2.6e-5       # Pa·s, viscosidade dinâmica do ar ~150 °C (regeneração) — ASSUMIDO
+K_AR_REGEN = 0.035         # W/(m·K), condutividade térmica do ar ~150 °C — ASSUMIDO
+PR_AR = 0.7                # número de Prandtl do ar — valor padrão de literatura
 EPSILON_RECUP_PSA_DEFAULT = 0.5  # efetividade do trocador de recuperação de
                                   # calor da regeneração (Eq. 15.11) — ASSUMIDO,
                                   # meio de uma faixa típica de trocador

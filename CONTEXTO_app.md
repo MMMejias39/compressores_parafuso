@@ -1342,6 +1342,98 @@ call sites de teste atualizados via substituição em lote.
 **Documentação atualizada**: `GUIA_CODIGO.md` (§ `psa_ciclo.py` e §
 `sistema.py`, ordem real de dependência 8a/8b documentada).
 
+## Soprador booster, forma da partícula e temperatura do rotor no app (16/08/2026)
+
+Pedido do autor: "commite no .tex e no aplicativo" seguido de escolha via
+pergunta — as três frentes que só existiam no livro até então (ver
+"Soprador booster e forma de partícula fechados no livro" em
+`CONTEXTO.md`) portadas para o app. Diferente do padrão usual desta
+sessão, cada uma foi **verificada ao vivo no navegador antes de aceitar
+como correta** — e essa verificação achou 3 bugs reais, todos corrigidos
+antes do commit final:
+
+**Novos parâmetros (`constantes.py`)**: `COND_ROTOR_W_K`, `Q_COND_EIXO_W`,
+`DELTA_NOM_UM`, `ALPHA_ROTOR`, `ALPHA_CARCACA`, `L_ROTOR_M`, `L_CARCACA_M`
+(rotor); `PSI_P_ESFERA`, `PSI_P_PELLET`, `D_P_PARTICULA_M`,
+`POROSIDADE_LEITO_PSA`, `L_LEITO_PSA_M`, `D_VASO_PSA_M` (leito PSA);
+`D_H_AQUECEDOR_M`, `A_AQUECEDOR_M2`, `T_ELEM_MAX_C`,
+`M_DOT_REG_DEFAULT_KG_S`, `ETA_SOPRADOR_BOOSTER`, `MU_AR_REGEN`,
+`K_AR_REGEN`, `PR_AR` (soprador/aquecedor).
+
+**Novas funções**: `nucleo.temperatura_rotor_regime` e
+`nucleo.folga_residual_termica` (Eqs. 9.19/9.7); `subsistemas.
+coef_conveccao_forcada` (Dittus-Boelter, Eq. 15.15), `subsistemas.
+perda_carga_ergun` (Eq. 15.17), `subsistemas.k_ads_por_forma` (Eq. 15.18).
+O fechamento do aquecedor (Eq. 15.16, $\epsilon$-NTU) **reaproveita**
+`subsistemas.saida_trocador`, já existente para o intercooler — nenhuma
+função nova para isso.
+
+**Integração em `sistema.py`**: T_rotor/δ_real calculados após T_carcaça
+(novos KPIs `t_rotor_c`, `delta_t_rotor_c`, `folga_residual_um`); o
+antigo `DP_NOM_PSA` fixo usado em HI_des (Eq. 15.7) foi substituído por
+um valor calculado via Ergun a partir da vazão/geometria/forma de
+partícula atuais (novo KPI `dp_nom_psa_calc_bar`) — `dp_real_psa`
+(medido) continua com o default antigo, então HI_des deixa de ser
+exatamente 1,0 por construção no caso saudável (ver ressalva abaixo).
+
+**Integração em `psa_ciclo.py`**: **nenhuma mudança de assinatura** —
+decisão deliberada para não arriscar quebrar os 8 call sites de teste já
+existentes. O soprador e a forma de partícula entram por fora: `app.py`
+calcula $h$, $T_{reg,in}$ (logo, $\Delta T_{regen}$ efetivo) e
+$k_{ads}$ corrigido por $\psi_p$ **antes** de chamar
+`simular_ciclo_psa()`, passando os resultados nos parâmetros já
+existentes (`delta_t_regen`, `k_ads`).
+
+**Novos widgets (`app.py`, aba Configurações → Secagem PSA)**: rádio
+"Forma da partícula" (Esfera/Pellet) e slider "Vazão do soprador
+booster". Novas métricas na aba "Operação estática" (T_rotor, ΔT_rotor,
+δ_real) e uma legenda na aba "Secagem PSA" mostrando h, T_reg,in,
+ΔT_regen calculado, k_ads efetivo, potência do booster e SEC_dry
+com/sem booster.
+
+**3 bugs reais encontrados na verificação ao vivo (não seriam pegos só
+pelos 79 testes automatizados, que continuaram passando o tempo todo)**:
+
+1. **Falso alarme de HI_des**: os primeiros valores ASSUMIDOS de
+   geometria do leito ($D_{vaso}=0{,}5$ m, $L=1$ m, $d_p=3$ mm,
+   $\varepsilon=0{,}40$) davam ΔP via Ergun de só ~6 mbar — 50× menor
+   que o antigo `DP_NOM_PSA` (300 mbar) — disparando HI_des≈0,02 e o
+   banner de "dessecante degradado" logo na carga inicial do app, sem
+   qualquer degradação real configurada. Recalibrados em conjunto
+   ($D_{vaso}=0{,}30$ m, $L=2{,}3$ m, $d_p=1{,}5$ mm,
+   $\varepsilon=0{,}38$ — geometria ainda realista) para reproduzir a
+   mesma ordem de grandeza do valor antigo (~200 mbar) no ponto de
+   operação default.
+2. **Falso alarme de contato metálico (δ_real negativo)**: com
+   $\delta_{nom}=100$ µm, a dilatação térmica diferencial rotor/carcaça
+   no ponto de operação default (~140 µm) já excedia a folga nominal,
+   dando $\delta_{real}=-40$ µm — risco de rubbing sinalizado numa
+   máquina "saudável" por padrão. Corrigido para
+   $\delta_{nom}=250$ µm, dando $\delta_{real}\approx+110$ µm.
+3. **Aquecedor de regeneração não aquecia**: `saida_trocador(t_quente_in,
+   t_fria_in, ua, c_min)` foi chamada com os argumentos trocados
+   ($T_{elem,max}$ no lugar de "quente", o ar no lugar de "frio") — a
+   função interpola do primeiro argumento em direção ao segundo
+   conforme $\epsilon$ cresce, então a chamada errada fazia $T_{reg,in}$
+   convergir para a temperatura do ar de entrada (25°C), não para a do
+   elemento (250°C). Resultado antes da correção: $T_{reg,in}=34{,}8$°C
+   (praticamente sem aquecimento); depois: $T_{reg,in}=240{,}2$°C —
+   batendo com o cálculo manual de conferência ($\epsilon\text{-NTU}$
+   com $NTU\approx3{,}14$, $\epsilon\approx0{,}96$).
+
+Todos os três só apareceram ao rodar o app de verdade no navegador e
+olhar os números — reforça a prática já registrada no `CLAUDE.md`
+("For UI or frontend changes, start the dev server and use the feature
+in a browser before reporting the task as complete"), que quase foi
+pulada aqui por vir de uma sessão que trabalhou o dia inteiro só no
+`.tex`.
+
+79/79 testes passando (nenhum teste novo — os 3 bugs eram de
+integração/calibração, não de lógica unitária isolada, e os testes
+existentes não exercitam esses caminhos novos). Servidor Streamlit
+reiniciado e verificado limpo (sem exceções, sem warnings de aplicação)
+antes do commit.
+
 ## Pendências conhecidas
 
 1. **[Item desatualizado — corrigido em 16/08/2026]** O app cobre os
@@ -1354,12 +1446,13 @@ call sites de teste atualizados via substituição em lote.
    (ficou sem atualização por várias sessões). Rotordinâmica/mancais
    (Caps. 8, 9, 11)
    agora tem cobertura **parcial**: Eq. 9.3 (eficiência volumétrica por
-   folga) desde antes, e Eq. 9.6 (balanço térmico da carcaça, regime
-   permanente) desde 15/08/2026 — ver seção acima. Seguem sem
-   representação: velocidade crítica/torcional (Cap. 8), vibração
-   espectral (Eq. 9.8), vida de rolamento (Cap. 11) e Eq. 9.7 (folga
-   residual por dilatação térmica, que dependeria de um modelo de
-   temperatura do rotor não fechado pelo livro).
+   folga) desde antes, Eq. 9.6 (balanço térmico da carcaça, regime
+   permanente) desde 15/08/2026, e Eq. 9.7/9.18/9.19 (temperatura do
+   rotor e folga residual térmica, regime permanente) desde 16/08/2026 —
+   ver seção "Soprador booster, forma da partícula e temperatura do
+   rotor no app" abaixo. Seguem sem representação: velocidade crítica/
+   torcional (Cap. 8), vibração espectral (Eq. 9.8), vida de rolamento
+   (Cap. 11).
 2. `n_compressores` assume unidades **idênticas** operando no **mesmo**
    ponto de operação (mesma fração de carga cada uma) — não modela um
    cenário de carga desigual entre máquinas nem lógica de seleção de qual
@@ -1395,33 +1488,15 @@ call sites de teste atualizados via substituição em lote.
    Se qualquer uma dessas for pedida para o app no futuro, o ponto de
    partida é a seção correspondente do `compressores.tex` (números acima)
    — a arquitetura já está descrita lá, falta só o código.
-5. **[Fechado no livro em 16/08/2026, falta o app]** Soprador booster na
-   regeneração — o livro agora fecha o coeficiente de convecção do
-   aquecedor via correlação de Dittus-Boelter (Eq. 15.15: $Re_{reg}$,
-   $Nu$, $h$ a partir de $\dot m_{reg}$) e o método $\epsilon$-NTU (Eq.
-   15.16: $T_{reg,in} = T_{a\text{-cooler,out}} + \epsilon_{heater}(T_{elem,max}
-   - T_{a\text{-cooler,out}})$), substituindo o antigo `delta_t_regen`
-   assumido por um resultado calculado a partir de vazão do booster e
-   geometria do aquecedor. `SEC_dry` (Eq. 15.6) ganhou o termo
-   $\dot W_{booster}$. **Neste app**, `psa_ciclo.py` continua usando
-   `delta_t_regen` como parâmetro assumido — portar as Eqs. 15.15/15.16
-   exigiria novos parâmetros ($D_h$, $A_{aquecedor}$, $T_{elem,max}$,
-   $\dot m_{reg}$) hoje inexistentes em `constantes.py`, e um novo widget
-   de "vazão do soprador booster" na UI.
-6. **[Fechado no livro em 16/08/2026, falta o app]** Diferença de forma
-   do dessecante (pellets vs. esferas) e vazão diferenciada do soprador
-   — o livro agora tem a Eq. 15.17 (perda de carga do leito pela
-   equação de Ergun, função da esfericidade $\psi_p$ e do diâmetro de
-   partícula $d_p$) e a Eq. 15.18 ($k_{ads} = k_{ads,ref}\cdot\psi_p/\psi_{p,ref}$,
-   já que a área externa específica $a_v = 6\psi_p/d_p$ acelera a troca
-   de massa para esfericidade menor). Referência nova adicionada à
-   bibliografia: Ergun, S. (1952), *Fluid Flow through Packed Columns*,
-   Chem. Eng. Progress — citação verificada, artigo real e clássico da
-   área. **Neste app**, nem `MATERIAIS_DESSECANTE` nem `psa_ciclo.py`
-   distinguem forma de partícula hoje, só material — portar exigiria um
-   campo `psi_p` por material e religar `k_ads` e a perda de carga do
-   leito (hoje `DP_NOM_PSA`, uma constante fixa, não calculada) a essas
-   duas equações novas.
+5. **[Resolvido no app em 16/08/2026]** Soprador booster na regeneração —
+   ver seção "Soprador booster, forma da partícula e temperatura do
+   rotor no app" abaixo.
+6. **[Resolvido no app em 16/08/2026]** Diferença de forma do dessecante
+   (pellets vs. esferas) — ver mesma seção abaixo. Vazão diferenciada do
+   soprador **por forma de partícula** (ex.: soprador dimensionado
+   automaticamente para não estourar um ΔP máximo) continua não
+   implementada — a vazão do booster é um slider independente, não
+   otimizada em função de ψ_p.
 7. **`k_ads_ref` não verificado** (autor perguntou diretamente, 16/08/2026,
    ver "Bug real: massa do leito desconectada do PDP" acima) — os 3
    valores de referência (1,5/1,2/1,8) são uma ordenação relativa

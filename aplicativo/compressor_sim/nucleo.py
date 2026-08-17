@@ -191,6 +191,38 @@ def temperatura_carcaca(t_c0: float, t_amb: float, q_int: float, cond_ext: float
     return t_ss + (t_c0 - t_ss) * math.exp(-t / tau_c)
 
 
+def temperatura_rotor_regime(t_gas_med: float, q_cond_eixo: float,
+                             cond_rotor: float) -> float:
+    """Temperatura do rotor em regime permanente (dT_r/dt = 0) [K].
+
+    Eq. 9.19 — T_r = T_gas,med − Q̇_cond,eixo/(h_r·A_r). `cond_rotor` é o
+    produto h_r·A_r (Eq. 9.18) já fechado, mesma convenção lumped de
+    cond_ext/cond_arref para a carcaça — parâmetro de calibração da
+    máquina, não valor de catálogo universal. Diferente de
+    `temperatura_carcaca_regime` (que SOBE acima de T_amb pelo calor
+    interno gerado), aqui T_r é limitada por CIMA por T_gas_med e cai
+    conforme mais calor é conduzido para fora pelo eixo.
+    """
+    if cond_rotor <= 0.0:
+        return t_gas_med
+    return t_gas_med - q_cond_eixo / cond_rotor
+
+
+def folga_residual_termica(delta_nom_um: float, alpha_r: float, l_r: float,
+                           delta_t_r: float, alpha_c: float, l_c: float,
+                           delta_t_c: float) -> float:
+    """Folga residual por dilatação térmica diferencial [µm].
+
+    Eq. 9.7 — δ_real = δ_nom − (α_r·L_r·ΔT_r − α_c·L_c·ΔT_c). ΔT_r e ΔT_c
+    são os aumentos de temperatura do rotor e da carcaça acima da
+    referência de folga nominal (T_amb, condição de máquina fria/parada
+    em que δ_nom foi especificada). α em 1/K, L em m — o termo entre
+    parênteses converte para µm (fator 1e6) para ficar na mesma unidade
+    de δ_nom. δ_real ≤ 0 sinaliza risco de contato metálico (rubbing).
+    """
+    return delta_nom_um - (alpha_r * l_r * delta_t_r - alpha_c * l_c * delta_t_c) * 1.0e6
+
+
 def spc(w_total: float, fad_m3_min: float) -> float:
     """Consumo específico de energia [kW·min/m³].
 
@@ -300,6 +332,8 @@ __all__ = [
     "temperatura_carcaca_regime",
     "constante_tempo_carcaca",
     "temperatura_carcaca",
+    "temperatura_rotor_regime",
+    "folga_residual_termica",
     "potencia_entreferro",
     "perdas_motor",
     "eficiencia_motor",

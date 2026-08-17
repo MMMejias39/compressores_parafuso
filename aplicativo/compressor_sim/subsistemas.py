@@ -139,6 +139,48 @@ def sec_dry(w_heater: float, w_drum: float, m_dot_dry: float) -> float:
     return (w_heater + w_drum) / m_dot_dry
 
 
+def coef_conveccao_forcada(m_dot: float, d_h: float, mu: float, k_fluido: float,
+                           pr: float, aquecendo: bool = True) -> float:
+    """Coeficiente de convecção forçada turbulenta em duto [W/(m²K)].
+
+    Eq. 15.15 (Dittus-Boelter) — Re = 4ṁ/(π·D_h·μ); Nu = 0,023·Re^0,8·Pr^n
+    (n=0,4 aquecendo o fluido, n=0,3 resfriando); h = Nu·k_fluido/D_h.
+    """
+    re = 4.0 * m_dot / (math.pi * d_h * mu)
+    n = 0.4 if aquecendo else 0.3
+    nu = 0.023 * re ** 0.8 * pr ** n
+    return nu * k_fluido / d_h
+
+
+def k_ads_por_forma(k_ads_ref: float, psi_p: float) -> float:
+    """Correção da taxa de adsorção pela esfericidade da partícula.
+
+    Eq. 15.18 — k_ads = k_ads_ref/ψ_p (ψ_p,ref = 1, esfera de referência).
+    A área externa específica a_v = 6/(ψ_p·d_p) cresce para esfericidade
+    menor (pellet tem mais área externa por volume que a esfera de mesmo
+    volume equivalente), acelerando a cinética de adsorção.
+    """
+    return k_ads_ref / psi_p
+
+
+def perda_carga_ergun(mu: float, v_s: float, rho: float, psi_p: float,
+                      d_p: float, porosidade: float, l_leito: float) -> float:
+    """Perda de carga em leito empacotado [Pa].
+
+    Eq. 15.17 (Ergun, 1952) — soma o termo viscoso/laminar (Blake-Kozeny)
+    e o termo inercial/turbulento (Burke-Plummer). ψ_p é a esfericidade
+    da partícula (1,0 para esfera perfeita, < 1 para pellet extrudado —
+    eleva ΔP em ambos os termos para a mesma vazão e o mesmo material).
+    v_s é a velocidade superficial do ar (vazão volumétrica / área da
+    seção do vaso).
+    """
+    termo_viscoso = (150.0 * (1.0 - porosidade) ** 2 / porosidade ** 3
+                      * mu * v_s / (psi_p * d_p) ** 2)
+    termo_inercial = (1.75 * (1.0 - porosidade) / porosidade ** 3
+                       * rho * v_s ** 2 / (psi_p * d_p))
+    return (termo_viscoso + termo_inercial) * l_leito
+
+
 def hi_des(dp_nom: float, dp_real: float, pdp_target_c: float, pdp_real_c: float) -> float:
     """Índice de saúde do dessecante.
 
@@ -190,6 +232,9 @@ __all__ = [
     "purga_psa",
     "eta_purga",
     "potencia_aquecedor",
+    "coef_conveccao_forcada",
+    "k_ads_por_forma",
+    "perda_carga_ergun",
     "sec_dry",
     "hi_des",
     "dp_dt_vaso",

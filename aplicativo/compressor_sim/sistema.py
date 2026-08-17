@@ -13,14 +13,20 @@ import math
 
 from . import nucleo, subsistemas
 from .constantes import (
+    ALPHA_CARCACA,
+    ALPHA_ROTOR,
     COND_ARREF_CARCACA_LP,
     COND_EXT_CARCACA_LP,
+    COND_ROTOR_W_K,
     CP_AR,
     C_CARCACA_LP,
+    DELTA_NOM_UM,
     DELTA_T_REGEN,
     DEMANDA_M3_MIN,
     DP_NOM_PSA,
     D_LINHA_DEFAULT,
+    D_P_PARTICULA_M,
+    D_VASO_PSA_M,
     EPSILON_RECUP_PSA_DEFAULT,
     ETA_MECANICA,
     ETA_SEPARADOR,
@@ -30,17 +36,24 @@ from .constantes import (
     F_D_LINHA_DEFAULT,
     HOOD_ENCLAUSURADO_DEFAULT,
     K_FOLGA,
+    L_CARCACA_M,
+    L_LEITO_PSA_M,
     L_LINHA_DEFAULT,
+    L_ROTOR_M,
+    MU_AR_REGEN,
     M_CARCACA_LP,
     M_DOT_VENT_DEFAULT,
     N_COMPRESSORES_DEFAULT,
     N_POLITROPICO,
-    P_ATM,
     PDP_ALVO_C,
     PI_REDE_DEFAULT,
+    POROSIDADE_LEITO_PSA,
+    PSI_P_ESFERA,
+    P_ATM,
     P_FIXAS_MOTOR_DEFAULT,
     P_LIMITE_REDE,
     P_LOSS_HOOD_OUTROS_DEFAULT,
+    Q_COND_EIXO_W,
     R_AR,
     RF_FOULING_DEFAULT,
     S_MOTOR_DEFAULT,
@@ -96,6 +109,21 @@ def parametros_default() -> dict:
         "dp_real_psa": DP_NOM_PSA,   # medido — default = nominal (leito limpo)
         "pdp_real_c": PDP_ALVO_C,    # medido — default = alvo (secador saudável)
         "eps_recup_psa": EPSILON_RECUP_PSA_DEFAULT,  # Eq. 15.11
+        # --- Rotor: balanço térmico e folga residual (Eqs. 9.7/9.18/9.19) ---
+        "cond_rotor": COND_ROTOR_W_K,
+        "q_cond_eixo": Q_COND_EIXO_W,
+        "delta_nom_um": DELTA_NOM_UM,
+        "alpha_rotor": ALPHA_ROTOR,
+        "l_rotor": L_ROTOR_M,
+        "alpha_carcaca": ALPHA_CARCACA,
+        "l_carcaca": L_CARCACA_M,
+        # --- Secador PSA: forma da partícula e geometria do leito (Eq. 15.17) ---
+        "psi_p": PSI_P_ESFERA,
+        "d_p_particula": D_P_PARTICULA_M,
+        "porosidade_leito": POROSIDADE_LEITO_PSA,
+        "l_leito_psa": L_LEITO_PSA_M,
+        "d_vaso_psa": D_VASO_PSA_M,
+        "mu_ar_psa": MU_AR_REGEN,
     }
 
 
@@ -210,8 +238,24 @@ def simular(par: dict | None = None) -> dict:
     # PDP real usada em HI_des (Eq. 15.7): degradar o PDP medido agora reduz
     # de fato a qualidade do ar entregue à rede, não só o índice de saúde.
     w_pos_secador = nucleo.razao_umidade(p["pdp_real_c"] + 273.15, p_rede, 1.0)
+
+    # --- 6b. Perda de carga do leito via Ergun (Eq. 15.17, 16/08/2026) —
+    # substitui o antigo DP_NOM_PSA fixo (ASSUMIDO) por um valor calculado a
+    # partir da geometria do vaso/partícula e da vazão real, incluindo o
+    # efeito da esfericidade ψ_p (pellets vs. esferas, Eq. 15.18 para
+    # k_ads análogo). Como dp_real_psa (medido) continua com default =
+    # DP_NOM_PSA (constante antiga), HI_des deixa de ser exatamente 1,0 por
+    # construção no caso saudável — o desvio revela se a geometria
+    # configurada bate com a suposição original de 0,30 bar, em vez de
+    # esconder essa checagem.
+    rho_ar_leito = nucleo.densidade_ar(p_rede, t_pos_after)
+    area_vaso_psa = math.pi * p["d_vaso_psa"] ** 2 / 4.0
+    v_s_psa = m_dot_util / (rho_ar_leito * area_vaso_psa)
+    dp_nom_psa_calc = subsistemas.perda_carga_ergun(                  # Eq. 15.17
+        p["mu_ar_psa"], v_s_psa, rho_ar_leito, p["psi_p"],
+        p["d_p_particula"], p["porosidade_leito"], p["l_leito_psa"])
     hi_des = subsistemas.hi_des(                                      # Eq. 15.7
-        DP_NOM_PSA, p["dp_real_psa"], PDP_ALVO_C, p["pdp_real_c"])
+        dp_nom_psa_calc, p["dp_real_psa"], PDP_ALVO_C, p["pdp_real_c"])
 
     # --- 7. Vaso pulmão / rede -------------------------------------------------
     # m_dot_util é de UMA unidade; o vaso/rede recebe a soma das n_comp
@@ -267,6 +311,21 @@ def simular(par: dict | None = None) -> dict:
     tau_carcaca = nucleo.constante_tempo_carcaca(
         p["m_carcaca"], p["c_carcaca"], p["cond_ext_carcaca"], p["cond_arref_carcaca"])
 
+    # --- 8c. Temperatura do rotor e folga residual térmica (Eqs. 9.7/9.18/
+    # 9.19, 16/08/2026) — fecha a metade da Eq. 9.7 que a Eq. 9.16 (T_c)
+    # sozinha não cobria. T_gas_med é a média entre sucção e descarga do
+    # estágio LP (mesma aproximação do livro, na ausência de perfil de
+    # temperatura interno medido). ΔT_r e ΔT_c são tomados acima de T_amb —
+    # a referência em que δ_nom foi especificada (máquina fria/parada).
+    t_gas_med_lp = (p["t_amb"] + t_lp_out) / 2.0
+    t_rotor = nucleo.temperatura_rotor_regime(                        # Eq. 9.19
+        t_gas_med_lp, p["q_cond_eixo"], p["cond_rotor"])
+    delta_t_rotor = t_rotor - p["t_amb"]
+    delta_t_carcaca_termica = t_carcaca - p["t_amb"]
+    folga_residual_um = nucleo.folga_residual_termica(                 # Eq. 9.7
+        p["delta_nom_um"], p["alpha_rotor"], p["l_rotor"], delta_t_rotor,
+        p["alpha_carcaca"], p["l_carcaca"], delta_t_carcaca_termica)
+
     if t_hp_out - 273.15 < 100.0:
         avisos.append("Descarga HP abaixo de 100 °C — atípico (:584).")
     if not 0.0 <= eps_inter <= 1.0:
@@ -321,6 +380,7 @@ def simular(par: dict | None = None) -> dict:
             "w_lp": w_lp, "w_hp": w_hp,
             "perda_vi_lp": perda_vi_lp, "perda_vi_hp": perda_vi_hp,
             "aquecedor": p_aquecedor, "aquecedor_nominal": p_aquecedor_nominal,
+            "m_dot_util": m_dot_util,
             "q_disp_regen": q_disp, "w_total": w_total,
             "w_isotermico": w_iso,
             "q_intercooler": q_inter, "q_aftercooler": q_after,
@@ -338,6 +398,10 @@ def simular(par: dict | None = None) -> dict:
             "delta_t_carcaca_c": t_carcaca - t_ref_carcaca,
             "tau_carcaca_min": tau_carcaca / 60.0,
             "t_ref_carcaca_c": t_ref_carcaca - 273.15,
+            "t_rotor_c": t_rotor - 273.15,
+            "delta_t_rotor_c": delta_t_rotor,
+            "folga_residual_um": folga_residual_um,
+            "dp_nom_psa_calc_bar": dp_nom_psa_calc / 1e5,
             "eta_mot": eta_mot,
             "p_ag_w": p_ag,
             "p_perdas_mot_w": p_perdas_mot,
