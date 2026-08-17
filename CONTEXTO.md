@@ -2706,3 +2706,55 @@ de sessão da revisora e tiveram que ser relançados — resultado ainda
 pendente.
 
 171 páginas mantidas. Compilação limpa.
+
+## Lote 2 completo (compressores-29): 5 achados de notação/consistência (17/08/2026)
+
+Fecha o lote 2 (Caps. 1-4, 12-14; Cap. 5 já registrado acima). 5 achados
+reais, todos verificados por conta própria antes de aplicar:
+
+1. **Eq. 4.7 (Arrhenius, isolamento do motor):** usava $R$ (constante do
+   ar, 287 J/kg·K) numa fórmula que fisicamente exige a constante
+   universal dos gases (8,314 J/mol·K) — colisão de símbolo que a
+   própria seção de Convenções de Desambiguação do livro deveria ter
+   pego. Renomeado para $R_u$, com nota explicando a diferença física
+   (cinética química de degradação de isolamento vs. termofluídica).
+2. **Eq. 4.1 (curva de disparo do relé):** $\alpha, \beta$ colidiam,
+   sem nota, com $\alpha$ (taxa de falsos alarmes) e $\beta$ (peso KL
+   do VAE) do Cap. 22. Renomeados para $\alpha_{\text{relé}}$,
+   $\beta_{\text{relé}}$ — mesmo padrão já usado para $k_{\text{relé}}$
+   na mesma equação.
+3. **Eq. 14.5 (filtro coalescente):** usava $K_{filt}$, símbolo nunca
+   definido na Nomenclatura, para a mesma grandeza física que $\zeta$
+   já cobre na Eq. 5.4 (mesma forma exata da equação). Renomeado para
+   $\zeta_{\text{coal}}$.
+4. **Linha ~2027 (dreno travado aberto):** descrevia a condição de
+   bloqueio sônico com a razão de pressão invertida (montante/jusante
+   "ultrapassando" $r_{cr}$) — a convenção do livro (Eq. 13.2) é
+   jusante/montante \textbf{abaixo} de $r_{cr}\approx0{,}528$. A frase
+   seguinte (mesma seção) já usava a convenção certa; só a transição
+   estava trocada. Corrigida.
+5. **Eq. 14.7 ($KPI_{treat}$), severidade alta:** a fórmula original
+   usava $T_{ac,out}$ no denominador, mas a Diretriz Técnica dizia que
+   "próximo de 1 = boa performance" quando $T_{ac,out} \to T_{w,in}$ —
+   exatamente a condição que zera esse denominador e faz o índice
+   divergir, não convergir para 1. Verificado por conta própria: a
+   fórmula original é matematicamente incompatível com a própria
+   interpretação escrita ao lado dela. Corrigido trocando $T_{ac,out}$
+   por $T_{d,hp}$ (descarga do estágio HP) — mesma referência fixa já
+   usada pela Eq. 14.1 ($\epsilon_{ac}$), resolvendo tanto a direção
+   (perto de 1 = bom) quanto o divisor degenerado.
+
+Um item relatado (nomenclatura de $\zeta_{\text{valv}}$ "Cap. 5" vs.
+"Cap. 3") foi descartado pela própria revisora após conferir — não era
+erro, só não óbvio à primeira vista (são dois filtros diferentes,
+admissão vs. coalescente).
+
+171→172 páginas (texto explicativo novo). Compilação limpa.
+
+## Lote 3 (compressores-29): 14 achados no restante do livro — em andamento (17/08/2026)
+
+Lote 3 cobre os Caps. 16-28 (todo o restante do livro, incluindo o
+Gêmeo Digital: exergia/CO2, VAE, EKF/MPC/PSO, estudo de caso final).
+14 achados reportados, priorizados por severidade — aplicação em
+andamento nesta mesma sessão, ver próxima entrada para o que já foi
+verificado e corrigido.

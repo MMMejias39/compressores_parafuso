@@ -386,6 +386,9 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\item $x$ (vetor de estado do EKF, convenção padrão da literatura de estimação) permanece; a fração de carga da máquina passou a $x_c$.
 	\item $a$ (constante empírica da curva de Vogel e dos polinômios de ajuste) permanece; a abertura da válvula termostática passou a $a_{tv}$.
 	\item $\delta$ (folga entre rotores, uso dominante) permanece nos capítulos de compressão; no Capítulo 13 o mesmo símbolo denota o estado binário da válvula de admissão, uso local e explicitado no ponto de emprego — a distinção é contextual, não notacional, por ser $\delta$ a convenção estabelecida nas duas literaturas.
+	\item $R$ (constante do gás/ar, uso dominante) permanece; a constante universal dos gases da equação de Arrhenius (degradação de isolamento, Cap. 4) passou a $R_u$.
+	\item $\alpha$ (taxa de falsos alarmes do VAE, Cap. 22) e $\beta$ (peso da divergência KL do VAE, Cap. 22) permanecem; as constantes da curva de disparo do relé de sobrecarga (Cap. 4) passaram a $\alpha_{\text{relé}}$ e $\beta_{\text{relé}}$, mesmo padrão já usado para $k_{\text{relé}}$.
+	\item $\zeta$ (coeficiente de perda de carga localizada, filtro de admissão, Eq.~5.4) permanece; o mesmo coeficiente aplicado ao filtro coalescente (Cap. 14) passou a $\zeta_{\text{coal}}$.
 \end{itemize}
 
 \newpage
@@ -686,13 +689,13 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\item \textbf{Equacionamento de Disparo (Norma IEC 60255 \cite{iec60255}):}
 		O tempo de atuação $t_{\text{trip}}$ é modelado pela Equação~\eqref{eq:s4-1} para detectar sobrecargas térmicas antes que ocorram danos permanentes:
 		\begin{equation}\label{eq:s4-1}
- t_{\text{trip}} = \frac{k_{\text{relé}} \cdot \beta}{\left( \frac{I}{I_s} \right)^\alpha - 1} 
+ t_{\text{trip}} = \frac{k_{\text{relé}} \cdot \beta_{\text{relé}}}{\left( \frac{I}{I_s} \right)^{\alpha_{\text{relé}}} - 1}
 \end{equation}
 		Onde:
 		\begin{itemize}
 			\item $I$: Corrente de carga medida em tempo real.
 			\item $I_s$: Corrente de ajuste (setpoint).
-			\item $\alpha, \beta, k_{\text{relé}}$: Constantes que definem a curva (Normalmente Inversa, Muito Inversa ou Extremamente Inversa); $k_{\text{relé}}$ é subscrito para não colidir com o índice de tempo discreto $k$ usado nos capítulos de EKF/MPC/PSO.
+			\item $\alpha_{\text{relé}}, \beta_{\text{relé}}, k_{\text{relé}}$: Constantes que definem a curva (Normalmente Inversa, Muito Inversa ou Extremamente Inversa); todas subscritas — $k_{\text{relé}}$ para não colidir com o índice de tempo discreto $k$ usado nos capítulos de EKF/MPC/PSO, e $\alpha_{\text{relé}}$/$\beta_{\text{relé}}$ para não colidir com a taxa de falsos alarmes $\alpha$ e o peso da divergência KL $\beta$ do Capítulo 22.
 		\end{itemize}
 		\item \textbf{Mecanismos de Falha no Painel:} O Gêmeo Digital monitora a resistência de contato e a temperatura nos barramentos. Um aumento na temperatura $T_{\text{contato}}$ sem aumento de corrente indica oxidação ou afrouxamento mecânico por vibração.
 	\end{itemize}
@@ -741,8 +744,9 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		Onde $f_1$ é a frequência fundamental de alimentação (rede/VSD) e $j = 1, 2, 3, \dots$ é a ordem do harmônico da banda lateral monitorada (usa-se $j$ em vez de $k$ para não colidir com a constante do relé e o índice de tempo discreto usados em outros capítulos).
 		\item \textbf{Degradação do Isolamento Térmico:} Utiliza a Equação de Arrhenius, na forma da Equação~\eqref{eq:s4-7}, para estimar a vida útil residual ($L$) baseada na temperatura medida nos enrolamentos ($T_{\text{enrol}}$):
 		\begin{equation}\label{eq:s4-7}
- L = L_0 \cdot \exp \left( \frac{E_a}{R \cdot T_{\text{enrol}}} \right) 
+ L = L_0 \cdot \exp \left( \frac{E_a}{R_u \cdot T_{\text{enrol}}} \right)
 \end{equation}
+		Onde $R_u$ é a constante universal dos gases ($8{,}314\,\text{J}\,\text{mol}^{-1}\,\text{K}^{-1}$, com $E_a$ em $\text{J}\,\text{mol}^{-1}$) — subscrita para não colidir com $R$, a constante específica do ar ($287\,\text{J}\,\text{kg}^{-1}\,\text{K}^{-1}$, Nomenclatura) usada em todo o resto do documento. A degradação de isolamento elétrico é um processo de cinética química, não termofluídica: a constante do ar não tem papel físico aqui.
 		\item \textbf{Excentricidade e Falhas de Rolamento:} Modeladas como um aumento no torque de atrito parasita $\tau_{\text{fric}}$, que desvia o consumo elétrico da curva teórica de compressão.
 		\item \textbf{Desbalanço de Tensão/Corrente entre Fases e Sobreaquecimento Localizado:} Por ser um motor trifásico, um pequeno desbalanço entre as três tensões de linha de alimentação ($V_{L,1}, V_{L,2}, V_{L,3}$) — comum em redes elétricas isoladas offshore sujeitas a flutuações de carga (Capítulo 1) — já é suficiente para produzir um desbalanço de corrente desproporcionalmente maior entre as três fases ($I_1, I_2, I_3$), por causa da baixa impedância de sequência negativa do motor: a fase mais carregada sobreaquece localmente mesmo que a corrente de linha única ($I$, Equação~\eqref{eq:s4-1}) pareça normal. O Gêmeo Digital monitora essa condição pelos dois índices adimensionais de desbalanço, na definição padronizada pela NEMA MG1 \cite{nemamg1} — o desvio máximo de cada grandeza em relação à média das três fases, normalizado pela própria média — complementados pelo espalhamento entre as três temperaturas de enrolamento medidas por RTD dedicado por fase ($T_1, T_2, T_3$), conforme a Equação~\eqref{eq:s4-8}:
 		\begin{equation}\label{eq:s4-8}
@@ -2014,9 +2018,9 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\subsection{Dinâmica de Filtragem Coalescente}
 	Os pré-filtros removem aerossóis de óleo e particulados. A perda de carga ($\Delta P$) é monitorada e normalizada pela densidade e vazão.
 	\begin{itemize}
-		\item \textbf{Equação de Perda de Carga:} Mesma forma de perda de carga localizada já usada para o filtro de admissão (Equação~\eqref{eq:s5-4}), agora aplicada ao filtro coalescente \cite{atlascopco}: proporcional ao coeficiente do elemento filtrante $K_{filt}$ e à pressão dinâmica do escoamento, pela Equação~\eqref{eq:s14-5}:
+		\item \textbf{Equação de Perda de Carga:} Mesma forma de perda de carga localizada já usada para o filtro de admissão (Equação~\eqref{eq:s5-4}), agora aplicada ao filtro coalescente \cite{atlascopco}: proporcional ao coeficiente do elemento filtrante $\zeta_{\text{coal}}$ (mesma grandeza física de $\zeta$ na Equação~\eqref{eq:s5-4}, subscrito por ser um valor de projeto próprio do elemento coalescente) e à pressão dinâmica do escoamento, pela Equação~\eqref{eq:s14-5}:
 		\begin{equation}\label{eq:s14-5}
- \Delta P_{filt} = K_{filt} \cdot \frac{\rho \cdot v^2}{2}
+ \Delta P_{filt} = \zeta_{\text{coal}} \cdot \frac{\rho \cdot v^2}{2}
 \end{equation}
 		\item \textbf{Diagnóstico de Saturação:} O modelo diferencia a perda de carga nominal da saturação por óleo ou água. Se $\Delta P_{filt} > \Delta P_{limit}$, o Gêmeo Digital emite um alerta de substituição para evitar o colapso do meio filtrante e a contaminação da secadora.
 	\end{itemize}
@@ -2024,7 +2028,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\subsection{Gestão de Drenos Automáticos e Purga}
 	Os drenos são componentes críticos com alta taxa de falha mecânica em plataformas.
 	\begin{itemize}
-		\item \textbf{Falha Travado Aberto (\textit{Stuck Open}):} Causa perda de ar comprimido, elevando o consumo específico ($SPC$). Como a razão entre a pressão de rede e a atmosférica ultrapassa a razão crítica, o escoamento pelo orifício do dreno satura em regime sônico (\textit{choked flow}): a vazão mássica deixa de depender da pressão a jusante e passa a ser função apenas das condições a montante, seguindo a forma clássica de escoamento compressível em bocais convergentes \cite{white}, pela Equação~\eqref{eq:s14-6}:
+		\item \textbf{Falha Travado Aberto (\textit{Stuck Open}):} Causa perda de ar comprimido, elevando o consumo específico ($SPC$). Como a razão entre a pressão atmosférica (jusante) e a pressão de rede (montante) fica abaixo da razão crítica $r_{cr}$ — mesma convenção $r=P_{\text{jusante}}/P_{\text{montante}}$ da Equação~\eqref{eq:s13-2} —, o escoamento pelo orifício do dreno satura em regime sônico (\textit{choked flow}): a vazão mássica deixa de depender da pressão a jusante e passa a ser função apenas das condições a montante, seguindo a forma clássica de escoamento compressível em bocais convergentes \cite{white}, pela Equação~\eqref{eq:s14-6}:
 		\begin{equation}\label{eq:s14-6}
  \dot{m}_{perda} = C_d \cdot A_{dreno} \cdot \sqrt{\gamma \rho P \left( \frac{2}{\gamma+1} \right)^{\frac{\gamma+1}{\gamma-1}}}
 \end{equation}
@@ -2054,16 +2058,16 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\end{table}
 
 	\subsection{KPI de Performance de Tratamento (\texorpdfstring{$KPI_{treat}$}{KPI treat})}
-	O indicador de saúde deste estágio, na Equação~\eqref{eq:s14-7}, valida se o ar está sendo resfriado o suficiente para maximizar a remoção de água antes da secagem química:
+	O indicador de saúde deste estágio, na Equação~\eqref{eq:s14-7}, valida se o ar está sendo resfriado o suficiente para maximizar a remoção de água antes da secagem química — mesma lógica de efetividade da Equação~\eqref{eq:s14-1} ($\epsilon_{ac}$), mas comparando o ponto de orvalho realmente alcançado, não a temperatura do ar:
 	\begin{equation}\label{eq:s14-7}
- \boxed{KPI_{treat} = \frac{T_{ac,out} - T_{dew,actual}}{T_{ac,out} - T_{w,in}}}
+ \boxed{KPI_{treat} = \frac{T_{d,hp} - T_{dew,actual}}{T_{d,hp} - T_{w,in}}}
 \end{equation}
 
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
 
-	\textbf{Diretriz Técnica Final:} Um $KPI_{treat}$ próximo de 1 na Equação~\eqref{eq:s14-7} indica que o aftercooler está resfriando o ar até próximo da temperatura da água de resfriamento — condição necessária para proteger o leito dessecante do secador PSA a jusante; valores decrescentes aqui devem disparar investigação \textbf{antes} que o ponto de orvalho no secador seja afetado, não depois.
+	\textbf{Diretriz Técnica Final:} Um $KPI_{treat}$ próximo de 1 na Equação~\eqref{eq:s14-7} indica que o ponto de orvalho efetivamente alcançado ($T_{dew,actual}$) está próximo da temperatura da água de resfriamento — condição necessária para proteger o leito dessecante do secador PSA a jusante; valores decrescentes aqui devem disparar investigação \textbf{antes} que o ponto de orvalho no secador seja afetado, não depois. O denominador usa $T_{d,hp}$ (descarga do estágio HP, mesma referência fixa da Equação~\eqref{eq:s14-1}), não $T_{ac,out}$: com $T_{ac,out}$ no denominador, o próprio ato de o aftercooler funcionar bem ($T_{ac,out} \to T_{w,in}$) zeraria o denominador e faria o índice divergir, em vez de convergir para 1 — o oposto do pretendido.
 
 		\clearpage
 		\section{\textbf{Sistema de Secagem por Adsorção (PSA e Tambor Rotativo)}}
