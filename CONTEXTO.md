@@ -2675,3 +2675,34 @@ exemplo numérico do Cap. 29 — três resíduos do "5" antigo:
 
 171 páginas mantidas. Compilação limpa, sem referências indefinidas
 nem overfull severo.
+
+## Lote 2 da auditoria (compressores-29): citação errada no Cap. 29 (17/08/2026)
+
+Segunda rodada do loop de revisão pedido pelo autor ("continue em loop
+com o compressores-29 até não haver mais ajustes propostos"). A
+revisora está cobrindo o livro em lotes (Caps. 1-4, 5, 12-14 no lote
+2); o Cap. 5 terminou primeiro e já veio com 1 achado real:
+
+**Citação errada, Cap. 29 (linha ~3764):** o exemplo numérico dizia
+$\pi_{lp} = \sqrt{\pi} = 2{,}828$ "pela Equação~5.7 com estágios
+simétricos" — mas a Eq. 5.7 é $\pi_i = V_i^{\,n}$ (razão de pressão
+\textbf{interna}, fixada pela geometria do rotor via $V_i$, Cap. 5),
+sem nenhuma relação com estágios simétricos. A fórmula
+$\pi_{lp}=\sqrt{\pi}$ é corolário da Eq. 5.14 (pressão intermediária
+ótima, $P_{\text{int}}^{*}=\sqrt{P_1 P_2}$, minimização do trabalho
+total entre estágios) — confirmado por conta própria: dividindo
+$P_{\text{int}}^{*}$ por $P_1$ dá exatamente $\sqrt{P_2/P_1}=\sqrt{\pi}$.
+Bug de citação (a equação errada foi referenciada), não de matemática
+— o valor numérico 2,828 sempre esteve certo. Corrigido para citar a
+Eq. 5.14 e explicitar por que não é a Eq. 5.7 (duas grandezas físicas
+diferentes: pressão interna do rotor vs. pressão interestágio ótima).
+
+Restante do Cap. 5 (5.1-5.4, 5.6, 5.8-5.13, 5.15, 5.16) confirmado
+correto pela revisora, incluindo Eq. 5.15 (Darcy-Weisbach) validada
+numericamente contra ferramenta externa de transferência de calor.
+
+Dois dos três agentes do lote 2 (Caps. 1-4 e 12-14) bateram no limite
+de sessão da revisora e tiveram que ser relançados — resultado ainda
+pendente.
+
+171 páginas mantidas. Compilação limpa.
