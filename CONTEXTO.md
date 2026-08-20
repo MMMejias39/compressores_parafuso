@@ -2928,3 +2928,72 @@ sobreposição ou corte.
 
 Commitado a pedido do autor junto com esta própria entrada do
 `CONTEXTO.md` — ver `git log -1` para o hash.
+
+## Verificação Quantitativa do Catálogo por Injeção Isolada — Cap. 28.4 (20/08/2026)
+
+O autor pediu para sincronizar o livro com o Painel de Falhas implementado
+no `aplicativo/` na sessão anterior (ver `CONTEXTO_app.md`, "Painel de
+Falhas — cenários de falha isolada, 10 de 56 mecanismos"). Em vez de
+descrever o app diretamente, a metodologia foi formalizada como uma nova
+subseção — **28.4, "Verificação Quantitativa do Catálogo por Injeção
+Isolada"** — inserida entre a Tabela 28.2 (catálogo de mecanismos) e a
+Diretriz Técnica Final do Capítulo 28, seguindo a mesma disciplina já
+aplicada a toda sincronização anterior entre app e livro: o app implementa
+primeiro, o livro formaliza depois, citando o módulo como implementação
+de referência.
+
+**Conteúdo novo**: uma equação (`eq:s28-3`, desvio percentual do
+indicador entre condição saudável e condição de falha injetada, usando a
+notação genérica $y$ já empregada nas Equações 20.1/24.1 — sem símbolo
+novo) e a **Tabela 28.3** (`tab:28-3`), listando os dez mecanismos da
+Tabela 28.2 que hoje têm um parâmetro identificável no modelo direto
+(mesmo subconjunto de `aplicativo/compressor_sim/cenarios_falha.py`,
+mesma ordem). O parágrafo de abertura do Capítulo 28 foi atualizado de
+"três passos" para "quatro passos", e a Diretriz Técnica Final do
+capítulo passou a amarrar as quatro seções (28.1→28.2→28.3→28.4) em vez
+de três, com o Capítulo 29 citado como demonstração das quatro peças em
+conjunto.
+
+**Achado citado no texto, não só implementado**: o exemplo de $\delta/L$
+levada a 0,020 (mesmo limiar do cenário do Capítulo 29) produzindo apenas
+$-0,2\,\%$ de desvio em $\eta_{v,LP}$ — já encontrado ao calibrar os
+valores do app na sessão anterior — agora aparece no livro como
+justificativa numérica explícita de por que a Tabela 28.2 recomenda EKF
+(não limiar direto) para esse mecanismo especificamente. É a mesma
+conclusão qualitativa já presente no Capítulo 21 desde a discussão de
+observabilidade, mas citada aqui pela primeira vez como número.
+
+**Dois erros cometidos e corrigidos antes de compilar a versão final**
+(nenhum sobreviveu à checagem de rotina do log):
+1. Um caractere Unicode `Δ` literal (em vez de `$\Delta$`) numa célula da
+   tabela — `pdflatex` não é Unicode-aware neste documento (fontes
+   `ec`/Computer Modern via `pk`), e gerou um erro fatal de compilação
+   (`! LaTeX Error: Unicode character Δ`). O PDF ainda foi produzido
+   (comportamento de recuperação do `pdflatex`), mas isso não é
+   aceitável — corrigido antes de considerar a sessão concluída.
+2. Um *overfull hbox* de 28pt numa célula da Tabela 28.3 — "(Eq.
+   9.7/9.18/9.19)" numa coluna de 2,4cm, sem ponto de quebra entre os
+   números por causa das barras "/" sem espaço. Mesma classe de erro já
+   corrigida horas antes na mesma sessão (Convenções de Desambiguação,
+   quatro `\eqref{}` encadeados) — trocado por "Eqs. 9.7, 9.18, 9.19"
+   (vírgulas permitem quebra de linha, barras não). **Padrão a evitar
+   daqui em diante**: nunca encadear múltiplas referências numéricas com
+   "/" sem espaço em texto corrido ou célula de tabela — sempre vírgula.
+
+**Nomenclatura**: aproveitando a mesma edição, adicionada a entrada
+faltante para $y$ (saída/resposta genérica do sistema) — já usado desde
+os Capítulos 20 e 24 (`y_real`, `y(k)`, `y_ref`) mas sem entrada própria
+na tabela até agora, achado ao verificar se o símbolo reaproveitado pela
+Equação 28.3 já estava documentado.
+
+**Verificação**: compilação limpa em 3 passagens, 176→177 páginas, 227
+labels `eq:s*-*` (era 226, +1), 0 referências indefinidas, 0 labels
+duplicados (fora o `page.1` conhecido), 0 erros de compilação, overfull
+hboxes em 36 — mesmo baseline desta sessão, sem regressão, 0 severos
+(>20pt) sobreviventes. Renderização visual conferida em 4 páginas
+(`pdftoppm`): abertura da Seção 28.4, Tabela 28.3, Diretriz Técnica Final
+atualizada, Sumário e Lista de Tabelas — todas com a entrada nova
+corretamente indexada e sem sobreposição/corte.
+
+Nada foi commitado ainda nesta entrada — aguardando confirmação do
+autor, como sempre.

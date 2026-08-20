@@ -363,6 +363,7 @@ A tabela abaixo reúne os símbolos empregados neste documento, seu significado,
 	$\varpi_j$\dag & Peso do indicador $j$ no $HI$ ($\omega$ está ocupado pela velocidade angular) & --- & Cap. 26 \\
 	$J$ & Função de custo/objetivo (MPC, PSO) — não confundir com $J_p$, momento polar de inércia da seção transversal do eixo (Cap.~6) & --- & Cap. 17, 19, 20, 24 \\
 	$H$ & Horizonte de predição (MPC) & passos & Cap. 17, 19, 20, 24 \\
+	$y$ & Saída/resposta genérica do sistema (grandeza monitorada, gray-box ou de controle — o indicador específico varia por contexto, ex. $y_{\text{real}}$ no Cap.~20, $y(k)$ no Cap.~24) & --- & Cap. 20, 24, 28 \\
 	$k$ & Índice de tempo discreto (sempre como subscrito: $x_k$, $z_k$) & --- & Cap. 20, 21, 24 \\
 	$RUL$ & \textit{Remaining Useful Life} — vida útil remanescente projetada (base: dano acumulado, Eq. 19.9; com subscrito, projeção sobre outra variável de estado, ex. $RUL_\delta$ no Cap. 29) & tempo/ciclos & Cap. 19, 29 \\
 	$\mathcal{M}$ & Subconjunto do catálogo de mecanismos de falha (Tabela~28.2) considerado na busca por resíduo mínimo & --- & Cap. 29 \\
@@ -3639,7 +3640,7 @@ domain.add_constraint(PointwiseProbabilityConstraint(
 \section{Metodologia de Calibração de Parâmetros e Catálogo de Detecção}
 \markboth{Metodologia de Calibração e Catálogo de Detecção}{}
 
-Os Capítulos 21 a 27 descreveram como o Gêmeo Digital estima \textbf{estados} que variam com o tempo — folga, incrustação, eficiência isentrópica — a partir de um modelo físico que, até aqui, tratou seus próprios parâmetros como constantes conhecidas. Na prática de campo isso raramente é verdade: a Equação~\eqref{eq:s9-3} já qualifica o coeficiente de vazamento $K$ como algo ``calibrado por ensaio de desempenho da máquina'', mas nenhum capítulo anterior descreveu como fazer esse ensaio de forma sistemática, nem o que fazer quando ele não é possível. Este capítulo fecha essa lacuna metodológica em três passos, na ordem em que um comissionamento real os enfrentaria: primeiro, como calibrar os parâmetros estáticos do modelo a partir de dados de uma janela de operação sabidamente saudável (Seção~28.1); segundo, como registrar de forma explícita e auditável o que continua desconhecido depois dessa calibração, em vez de deixar essa lacuna implícita (Seção~28.2); e terceiro, um catálogo consolidado ligando cada mecanismo de falha já descrito na Parte I ao algoritmo da Parte II mais adequado para detectá-lo (Seção~28.3). O Capítulo 29 aplica as três peças em conjunto, num cenário numérico único.
+Os Capítulos 21 a 27 descreveram como o Gêmeo Digital estima \textbf{estados} que variam com o tempo — folga, incrustação, eficiência isentrópica — a partir de um modelo físico que, até aqui, tratou seus próprios parâmetros como constantes conhecidas. Na prática de campo isso raramente é verdade: a Equação~\eqref{eq:s9-3} já qualifica o coeficiente de vazamento $K$ como algo ``calibrado por ensaio de desempenho da máquina'', mas nenhum capítulo anterior descreveu como fazer esse ensaio de forma sistemática, nem o que fazer quando ele não é possível. Este capítulo fecha essa lacuna metodológica em quatro passos, na ordem em que um comissionamento real os enfrentaria: primeiro, como calibrar os parâmetros estáticos do modelo a partir de dados de uma janela de operação sabidamente saudável (Seção~28.1); segundo, como registrar de forma explícita e auditável o que continua desconhecido depois dessa calibração, em vez de deixar essa lacuna implícita (Seção~28.2); terceiro, um catálogo consolidado ligando cada mecanismo de falha já descrito na Parte I ao algoritmo da Parte II mais adequado para detectá-lo (Seção~28.3); e quarto, a verificação quantitativa de que essa indicação de algoritmo é sustentada pelo próprio modelo direto, para o subconjunto do catálogo em que isso é hoje simulável (Seção~28.4). O Capítulo 29 aplica as quatro peças em conjunto, num cenário numérico único.
 
 \subsection{Estimação Conjunta de Estado e Parâmetro (EKF com Estado Aumentado)}
 
@@ -3757,7 +3758,47 @@ Desvio de curva $P$-$T$ do estágio (agregado) & 17 & Desvio de $\eta_{is}$ espe
 \bottomrule
 \end{longtable}
 
-\textbf{Diretriz Técnica Final:} As três seções deste capítulo formam uma cadeia de dependência, não três tópicos independentes — a Seção~28.1 calibra os parâmetros estáticos que a Seção~28.2 classifica e documenta, e é exatamente essa documentação de proveniência que determina quanto peso a Seção~28.3 pode depositar em cada detecção do catálogo: um mecanismo cujo indicador depende de um parâmetro da categoria (iv) (desconhecido, Tabela~\ref{tab:28-1}) herda aquela incerteza, mesmo que o algoritmo de detecção em si — EKF, VAE ou PIML — esteja corretamente implementado. Calibração ruim ou não documentada não aparece como erro do algoritmo; aparece como falso alarme ou detecção tardia, silenciosamente. O Capítulo~29 demonstra as três peças em conjunto: uma janela saudável de referência (equivalente ao produto da Seção~28.1), parâmetros e variáveis com proveniência implícita nas suas próprias equações (o mesmo espírito da Seção~28.2), e três mecanismos do catálogo desta seção — desgaste de folgas, e as hipóteses alternativas de incrustação de intercooler e viés de temperatura ambiente — postos em ação sobre um único cenário numérico.
+\subsection{Verificação Quantitativa do Catálogo por Injeção Isolada}
+
+A Tabela~\ref{tab:28-2} associa cada mecanismo de falha catalogado a uma variável indicadora e a um algoritmo de detecção primário — mas essa associação, como qualquer julgamento de engenharia, foi feita por raciocínio físico sobre qual grandeza carrega o sinal daquele mecanismo, não por uma verificação numérica de que o efeito realmente existe, na direção e na magnitude esperadas, quando o modelo direto da Parte I é avaliado. Esta seção fecha essa lacuna para o subconjunto do catálogo em que isso é hoje possível: os mecanismos cujo efeito físico se reduz à variação de um único parâmetro já equacionado nos capítulos anteriores — a folga $\delta$ (Equação~\eqref{eq:s9-3}), a resistência de incrustação $R_f$ (Equação~\eqref{eq:s10-5}), o coeficiente de perda do filtro $\zeta$ (Equação~\eqref{eq:s5-4}), entre outros.
+
+A verificação é direta: parte-se de um ponto de operação de referência (comissionamento saudável), desloca-se \textbf{um único parâmetro} até um valor severo fisicamente plausível — mantendo todos os demais fixos — e recalcula-se o modelo direto duas vezes, uma para cada condição. O desvio percentual do indicador associado àquele mecanismo, na Equação~\eqref{eq:s28-3}, é a métrica de verificação:
+\begin{equation}\label{eq:s28-3}
+\Delta\% = 100 \cdot \frac{y_{\text{falha}} - y_{\text{saudável}}}{|y_{\text{saudável}}|}
+\end{equation}
+onde $y$ é o indicador associado ao mecanismo na Tabela~\ref{tab:28-2} (a mesma notação genérica de saída já usada nas Equações~\eqref{eq:s20-1}/\eqref{eq:s24-1}), avaliado com o modelo direto sob a condição saudável e sob a condição de falha injetada. Um $|\Delta\%|$ pequeno mesmo em severidade extrema não invalida a linha do catálogo — ao contrário, \textbf{confirma} por que a coluna Detecção Primária daquela linha aponta EKF, VAE ou PIML em vez de limiar direto: o efeito é real, mas pequeno demais para um limiar ingênuo capturar de forma confiável, exigindo a fusão de múltiplas medições ou a estimação bayesiana que esses algoritmos oferecem.
+
+A Tabela~\ref{tab:28-3} lista o subconjunto verificado desta forma na implementação de referência (\texttt{aplicativo/compressor\_sim/cenarios\_falha.py}) — dez dos mecanismos catalogados na Tabela~\ref{tab:28-2}, os únicos que hoje têm um parâmetro identificável no modelo direto. Os demais mecanismos do catálogo exigiriam grandezas que este documento equaciona mas que o simulador de referência ainda não implementa numericamente (espectro vibratório, correntes elétricas por fase) ou física fora do escopo atual do simulador (circuito de óleo) — uma lacuna explícita, não escondida pela tabela.
+
+\begin{table}[h!tbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{>{\raggedright\arraybackslash}p{5.0cm} >{\raggedright\arraybackslash}p{2.4cm} >{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{4.6cm}}
+\toprule
+\textbf{Mecanismo (Tabela~\ref{tab:28-2})} & \textbf{Cap./Eq.} & \textbf{Parâmetro variado} & \textbf{Indicador ($y$)} & \textbf{Detecção primária} \\ \midrule
+Desgaste de folgas (estágio LP) & Cap. 9 (Eq.~9.3) & $\delta/L$ & $\eta_{v,LP}$ & EKF ($\delta$) \\
+\textit{Fouling} (intercooler) & Cap. 10 (Eq.~10.5) & $R_f$ & Efetividade $\epsilon$ & EKF ($R_f$) \\
+Filtro de admissão obstruído & Cap. 5 (Eq.~5.4) & $\zeta$ & $\Delta P_{\text{filtro}}$ & Limiar direto \\
+Falha do exaustor (Hood) & Cap. 2 (Eq.~2.2) & $\dot{m}_{\text{vent}}$ & $T_{\text{hood}}$ & PIML (ambíguo) \\
+Perda de arrefecimento da carcaça & Cap. 9 (Eq.~9.15) & $G_{\text{arref}}$ & $T_c$ & PIML (ambíguo) \\
+Contato/\textit{rubbing} por folga térmica do rotor & Cap. 9 (Eqs.~9.7, 9.18, 9.19) & $\delta_{\text{nom}}$ & $\delta_{\text{real}}$ & Limiar direto \\
+Filtro coalescente/leito PSA saturado ($\Delta P$) & Cap. 15 (Eq.~15.7) & $\Delta P_{\text{real,PSA}}$ & $HI_{des}$ & Limiar direto ($HI_{des}$) \\
+\textit{Breakthrough} (secador PSA) & Cap. 15 (Eq.~15.7) & $PDP_{\text{real}}$ & $HI_{des}$ & VAE (envelhecimento gradual) \\
+Desgaste de mancais/engrenagens & Cap. 5/6 (Eq.~5.5) & $\eta_{\text{mec}}$ & SPC & Limiar direto \\
+Motor degradado (escorregamento) & Cap. 4 (Eq.~4.11) & $s$ & $\eta_{\text{mot}}$ & Limiar direto \\ \bottomrule
+\end{tabular}
+}
+\caption[Subconjunto do catálogo verificado por injeção isolada]{Subconjunto de dez mecanismos da Tabela~\ref{tab:28-2} verificados quantitativamente por injeção isolada de falha no modelo direto (Equação~\eqref{eq:s28-3}).}
+\label{tab:28-3}
+\end{table}
+
+Um exemplo concreto ilustra o ponto sobre magnitude pequena discutido acima: levando a folga relativa $\delta/L$ de $0{,}002$ (comissionamento) a $0{,}020$ — a mesma severidade que define o limiar crítico do cenário do Capítulo~29 — a eficiência volumétrica $\eta_{v,LP}$ (Equação~\eqref{eq:s9-3}) se desloca apenas $-0{,}2\,\%$ em relação à condição saudável. Um limiar percentual genérico não distingue isso de ruído de medição; é exatamente essa constatação numérica que já motivou, no Capítulo~21, a escolha do EKF em vez de um limiar direto para esse mecanismo especificamente — a verificação desta seção não traz informação nova, mas é a primeira vez que ela aparece como número, não apenas como argumento qualitativo.
+
+\vspace{1em}
+\hrule
+\vspace{1em}
+
+\textbf{Diretriz Técnica Final:} As quatro seções deste capítulo formam uma cadeia de dependência, não quatro tópicos independentes — a Seção~28.1 calibra os parâmetros estáticos que a Seção~28.2 classifica e documenta, a Seção~28.3 cataloga os mecanismos de falha e o algoritmo mais indicado para cada um, e a Seção~28.4 verifica numericamente, para o subconjunto simulável, que essa indicação é fisicamente sustentada — não apenas plausível. Um mecanismo cujo indicador depende de um parâmetro da categoria (iv) (desconhecido, Tabela~\ref{tab:28-1}) herda aquela incerteza mesmo que o algoritmo de detecção em si — EKF, VAE ou PIML — esteja corretamente implementado, e mesmo que a Seção~28.4 confirme a magnitude do efeito: calibração ruim ou não documentada não aparece como erro do algoritmo; aparece como falso alarme ou detecção tardia, silenciosamente. O Capítulo~29 demonstra as quatro peças em conjunto: uma janela saudável de referência (equivalente ao produto da Seção~28.1), parâmetros e variáveis com proveniência implícita nas suas próprias equações (o mesmo espírito da Seção~28.2), três mecanismos do catálogo da Seção~28.3 — desgaste de folgas, e as hipóteses alternativas de incrustação de intercooler e viés de temperatura ambiente — postos em ação sobre um único cenário numérico, e a mesma disciplina de verificação quantitativa da Seção~28.4 aplicada ponta a ponta em vez de mecanismo a mecanismo.
 
 % --- Fim do Capítulo 28 ---
 
