@@ -2848,3 +2848,83 @@ acima). Os 11 restantes, todos aplicados:
 175 páginas (172→175 ao longo do lote 3 inteiro, texto explicativo
 novo). Compilação limpa, sem referências indefinidas nem overfull
 severo.
+
+## Ampliação da descrição de variáveis do Gêmeo Digital (20/08/2026)
+
+O autor pediu para "ampliar a parte de descrição de variáveis do Gêmeo
+Digital, para que o leitor não entenda incorretamente" — escopo
+esclarecido via pergunta direta (Nomenclatura só, prosa dos capítulos
+19-29 só, ou ambos): o autor escolheu ambos. Antes de editar, foi feita
+uma leitura completa dos Capítulos 17-29 (não só 19-27 — o levantamento
+mostrou que o vetor $z$ é introduzido pela primeira vez no Capítulo 17,
+não no 19 como a Nomenclatura sugeria) para mapear onde a notação já
+existente arrisca confundir o leitor, em vez de reescrever descrições à
+toa.
+
+**Achados reais, não só reformulação de texto:**
+
+- **Capítulo 17 chamava o vetor de medições de ``vetor de estado''**
+  (linha ~2399, "$z(t)$ extraído... da instrumentação de campo") — erro
+  terminológico direto: em todo o resto do documento "estado" é sempre
+  $x$ (oculto, estimado pelo EKF), nunca as leituras de sensor. Corrigido
+  para "vetor de medições", com a distinção $x$/$z$ explicitada na mesma
+  frase.
+- **$z$ é reaproveitado com dimensão diferente em dois contextos, sem
+  isso nunca ter sido dito em lugar nenhum**: sete elementos no EKF
+  (Equação~21.2) e as 26 variáveis monitoradas como entrada do VAE
+  (Capítulo 22). É o achado mais sério da sessão — um leitor lendo o
+  Capítulo 20 em sequência linear vê $z$ como vetor de sete elementos duas
+  páginas antes de ver $z_i$ somado até $M$ (nunca definido) num contexto
+  de 26 variáveis, sem qualquer aviso de que o símbolo mudou de
+  significado. Adicionadas notas de desambiguação nos cinco pontos onde
+  isso importa (Cap. 17, duas vezes no Cap. 20, Cap. 21, Cap. 22), mais
+  uma entrada expandida na Nomenclatura e dois itens novos em
+  "Convenções de Desambiguação Adotadas". Decisão deliberada: **não**
+  renomear nenhum dos dois $z$ — mesma lógica de coexistência já usada no
+  documento para $G_k$/$G$ (os dois contextos nunca aparecem lado a lado
+  na mesma equação), registrada explicitamente como tal.
+- **Colisão real e não sinalizada: $J$** — função de custo do MPC/PSO
+  (Eqs. 17.6/19.4/19.11/20.7/24.1/24.2, uso dominante na Parte II) vs.
+  momento polar de inércia da seção transversal do eixo (Cap. 6,
+  Equação~6.5, uso único, uma equação só) — nunca notada em nenhuma
+  auditoria anterior (nem a do Manus, nem a do Kimi, nem a das três
+  rodadas da revisora paralela). Renomeada a do Cap. 6 para $J_p$, mesmo
+  critério de sempre (subscrever o símbolo de uso mais restrito),
+  conferido por `grep` que não há mais nenhuma outra referência cruzada
+  a essa equação que dependesse do nome antigo.
+- **$M$** (número de variáveis do VAE, usado no limite do somatório de
+  $E_{\text{rec}}$ desde a própria Equação~17.2) nunca tinha entrada na
+  Nomenclatura nem era definido no ponto de uso — corrigido nos três
+  pontos onde a fórmula reaparece (Eqs. 17.2, 20.4, 22.5) e nova entrada
+  na Nomenclatura.
+- **5 linhas da Nomenclatura com capítulo errado**: $\ell$, $E_{\text{rec}}$,
+  $J$, $H$, $k$ estavam todas marcadas ``Cap. 15, 20'' — Capítulo 15 é
+  Secagem PSA, sem relação nenhuma com nenhum desses símbolos. Padrão
+  idêntico nas cinco linhas sugere erro de preenchimento em lote numa
+  sessão anterior, nunca conferido depois. Corrigido para os capítulos
+  reais de cada símbolo, verificados por `grep` contra as ocorrências de
+  fato no texto (ex.: $J$/$H$ aparecem em 17, 19, 20 e 24 — não só 20).
+
+**Expansão pedida pelo autor**: as linhas de $x$, $z$, $Q$, $\Lambda$,
+$\beta$, $J$ na Nomenclatura ganharam descrições mais completas, cada
+uma com referência cruzada explícita ao que poderia confundir (ex.:
+$\Lambda$ maiúsculo vs. $\lambda$ minúsculo do PIML, explicitamente
+diferenciados agora tanto na tabela quanto nas Convenções).
+
+**Verificação**: compilação limpa em 3 passagens, 175→176 páginas, 0
+referências indefinidas, 0 labels duplicados (fora o `page.1` já
+conhecido e inofensivo), 0 marcadores `??`. Overfull hboxes foram de 35
+para 36 — a mesma magnitude mínima de ~2pt já documentada como
+insignificante (mais uma linha da Nomenclatura ficou 2,01pt larga
+demais; nenhum overfull severo, >20pt, sobreviveu — um de 74pt apareceu
+numa primeira tentativa por causa de quatro `\eqref{}` encadeados por
+``/'' sem espaço para quebra de linha, corrigido trocando por vírgulas
+antes de considerar a sessão concluída). Renderização visual conferida
+em 7 páginas (`pdftoppm`): Nomenclatura, Convenções de Desambiguação,
+Capítulo 6 (equação com $J_p$), Capítulo 17 (nota de especialização do
+$z$), Capítulo 20 (as duas notas, EKF e VAE), Capítulo 21 (nota de
+fechamento) e Capítulo 22 (nota de abertura) — todas limpas, sem
+sobreposição ou corte.
+
+Commitado a pedido do autor junto com esta própria entrada do
+`CONTEXTO.md` — ver `git log -1` para o hash.
