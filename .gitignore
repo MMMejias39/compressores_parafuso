@@ -16,5 +16,9 @@ scripts/__pycache__/
 aplicativo/venv/
 aplicativo/**/__pycache__/
 
+# Launcher .desktop com caminho absoluto — específico de cada máquina/clone
+# (iniciar_simulador.sh, o script em si, é portável e continua versionado)
+aplicativo/iniciar_simulador.desktop
+
 # Configuração local do Claude Code (pessoal, não compartilhada)
 .claude/settings.local.json

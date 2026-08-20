@@ -40,6 +40,25 @@ cd aplicativo
 venv\Scripts\streamlit run app.py
 ```
 
+**Windows (um clique):** dê duplo clique em `iniciar_simulador.bat`, dentro
+desta pasta. Na primeira execução ele cria o ambiente virtual e instala as
+dependências sozinho (pode levar alguns minutos, o torch é grande); nas
+execuções seguintes só abre o servidor direto. Não precisa abrir terminal
+nem digitar comando nenhum.
+
+**Linux (um clique):** `iniciar_simulador.sh` faz o mesmo (portável — não
+precisa editar nada, funciona em qualquer clone). Para rodar direto do
+terminal: `./iniciar_simulador.sh`. Para um ícone clicável de verdade no
+GNOME/KDE/etc., há também `iniciar_simulador.desktop` — mas esse arquivo
+tem o caminho absoluto do `Exec=` fixado para esta máquina (por isso não
+está versionado no git); se clonar o repositório num caminho diferente,
+edite as linhas `Exec=`/`Path=` desse arquivo antes de usá-lo. Para
+instalá-lo no menu de aplicativos do GNOME:
+```bash
+ln -sf "$(pwd)/iniciar_simulador.desktop" ~/.local/share/applications/
+update-desktop-database ~/.local/share/applications
+```
+
 Abre no navegador em <http://localhost:8501>.
 
 ## Testes

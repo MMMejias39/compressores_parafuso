@@ -1501,3 +1501,98 @@ antes do commit.
    ver "Bug real: massa do leito desconectada do PDP" acima) — os 3
    valores de referência (1,5/1,2/1,8) são uma ordenação relativa
    assumida, não uma medição nem valor de literatura confirmado.
+
+## Painel de Falhas — cenários de falha isolada, 10 de 56 mecanismos (20/08/2026)
+
+Pedido do autor: um painel consolidado que aponte falhas no equipamento,
+gerando cenários onde cada item falha um de cada vez e simulando o
+resultado. Antes de implementar, planejado via Plan Mode (alinhamento
+explícito com o autor antes de escrever código, dado o tamanho da
+mudança): cruzei o catálogo de 56 mecanismos de falha do livro (Tabela
+28.2, Cap. 28.3) contra os parâmetros `ASSUMIDO` já existentes em
+`constantes.py`/`parametros_default()` — **10 mecanismos** têm hoje um
+único parâmetro que os representa fielmente, bastando alterá-lo e rodar
+`sistema.simular()` de novo. Os outros 46 exigiriam física ainda não
+modelada neste app (espectro de vibração, correntes por fase, circuito de
+óleo) e ficam fora, explicitamente, do escopo — o painel não finge
+cobertura que não tem.
+
+**Novo módulo `compressor_sim/cenarios_falha.py`** (funções puras, mesmo
+padrão de `ekf.py`/`vae.py`/`pso.py` — sem Streamlit):
+- `CATALOGO_CENARIOS`: 10 dicts, cada um com o mecanismo, capítulo/equação
+  do livro, o parâmetro alterado, o valor "severo" (severidade 100%), o
+  KPI principal monitorado e a detecção primária recomendada pelo livro
+  (limiar direto/EKF/VAE/PIML) — ver tabela completa no plano da sessão.
+- `rodar_cenario(params_base, cenario, severidade)`: interpola o
+  parâmetro entre o valor saudável de `params_base` e o valor severo,
+  roda `sistema.simular()` duas vezes (saudável vs. falha), compara o KPI
+  principal e classifica o status.
+- `rodar_todos_cenarios(params_base, severidade)`: mapeia sobre o
+  catálogo inteiro.
+
+**Classificação de status** (`OK`/`ALERTA`/`CRÍTICO`): limiar percentual
+simples sobre o desvio do KPI na direção que piora a condição da máquina
+— `ASSUMIDO`, não vem do livro (>10% ALERTA, >25% CRÍTICO) — mais um
+*override* físico para `folga_residual_um < 0` (contato metal-metal real,
+não uma tendência estatística). Achado ao calibrar os valores severos por
+`python -c` antes de integrar à UI: o cenário de desgaste de folga LP
+produz um desvio de só -0,2% em `eta_v_lp` mesmo em severidade máxima
+(δ/L de 0,002 a 0,020, o mesmo teto do cenário do Cap. 29) — pequeno
+demais para cruzar o limiar de 10%, então fica classificado como `OK`.
+**Isso não é um bug**: é exatamente a mesma razão física pela qual o
+livro recomenda EKF (não limiar direto) para esse mecanismo — o efeito
+isolado é real mas pequeno demais para um limiar ingênuo capturar, só a
+fusão bayesiana do EKF resolve. O painel deixa esse ponto explícito no
+texto de escopo, em vez de esconder a limitação do próprio limiar.
+
+**Bug real encontrado e corrigido antes de aceitar como pronto**: o
+cenário de *breakthrough* do secador PSA (`pdp_real_c`) estava com
+`direcao_piora="aumenta"`, mas o KPI monitorado é `hi_des` — que **cai**
+quando o PSA piora, igual ao outro cenário de PSA (`dp_real_psa`). Com a
+direção errada, uma piora real de -11,4% em `hi_des` era classificada
+como `OK` (mascarada). Pego rodando o catálogo inteiro via `python -c`
+antes de integrar à UI, não em produção — corrigido para `"diminui"`.
+
+**Nova 7ª aba no `app.py`**, "🚨 Painel de Falhas", entre "Gêmeo Digital"
+e "Configurações": texto de escopo (10 de 56 mecanismos, por quê),
+slider de severidade global (0–100%, interpola todos os 10 cenários
+juntos), botão "Rodar cenários de falha" sob demanda (mesmo padrão já
+usado pelo PSO — `st.session_state`, não recálculo a cada rerun),
+`st.dataframe` consolidado (Status/Mecanismo/Cap.-Eq./Parâmetro
+alterado/Saudável→Falha/Indicador/Δ%/Detecção primária) com contadores
+🔴/⚠️/✅, e um expander com a descrição física de cada mecanismo.
+
+**14 testes novos** em `tests/test_simulador.py` (arquivo único já
+estabelecido — não criei um segundo arquivo): um parametrizado sobre o
+catálogo inteiro (10 casos, confere que o KPI se move na direção
+esperada em severidade máxima), mais severidade-zero reproduz baseline,
+cobertura do catálogo inteiro, classificação de status por limiar (os
+dois tiers + o caso da direção errada), e o cruzamento para contato do
+cenário de folga térmica do rotor — 93 no total, todos passando.
+
+**Verificação em três camadas**: (1) `pytest tests/ -q` — 93/93; (2)
+`streamlit.testing.v1.AppTest` — 7 abas, sem exceção, clique no botão via
+`at.tabs[4].button[0].click().run()` reproduziu exatamente os números já
+conferidos por `python -c` (5 CRÍTICO, 3 ALERTA, 2 OK) — achado de
+ferramental: o objeto de aba precisa ser **re-obtido** de `at.tabs[...]`
+depois do `.run()` que processa o clique, não reutilizado da referência
+anterior, senão os elementos renderizados durante aquele rerun (a tabela,
+os `st.metric`) não aparecem na busca; (3) Claude-in-Chrome ao vivo
+(conectado nesta sessão): servidor reiniciado, aba aberta, botão clicado,
+tabela conferida visualmente com os mesmos números, severidade testada em
+0% (as 10 linhas viram OK, "Saudável → Falha" mostra o mesmo valor dos
+dois lados) e de volta a 100%, expander de descrições aberto e conferido,
+console do navegador e log do servidor sem exceção/traceback. Corrigido
+de passagem: `use_container_width=True` (parâmetro depreciado desde a
+atualização do Streamlit para 1.60 já usada neste venv) trocado por
+`width="stretch"`, mesmo padrão já usado nas outras duas chamadas a
+`st.dataframe()` do arquivo.
+
+**Pendências explícitas desta entrega** (registradas no texto da própria
+aba, não escondidas): os 46 mecanismos restantes do catálogo (vibração
+espectral, correntes por fase, circuito de óleo — nada disso modelado
+neste app); o painel roda a física de cada cenário mas não roda o
+EKF/VAE/PIML sobre ele para conferir se o algoritmo do livro de fato
+capturaria a falha; combinações de múltiplas falhas simultâneas (Eq. 29.2
+do livro, treino multi-mecanismo) seguem como pendência já documentada
+acima, sem gerador sistemático de dataset.

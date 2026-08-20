@@ -15,6 +15,12 @@ Abas:
 - "Gêmeo Digital (EKF/PSO)": os 5 algoritmos da Parte II — EKF, VAE, PIML,
   MPC, PSO — incluindo os dois caminhos de identificação por problema
   inverso (EKF com estado aumentado, Cap. 28; PIML, Cap. 23.8);
+- "Painel de Falhas": 10 mecanismos de falha da Tabela 28.2 (Cap. 28.3) que
+  têm hoje um parâmetro ASSUMIDO já implementado — injeta cada um
+  isoladamente (parâmetro saudável -> valor severo) e compara os KPIs
+  resultantes contra um limiar percentual simples. Cobertura parcial e
+  documentada como tal: os outros 46 mecanismos do catálogo exigiriam
+  física ainda não modelada neste app (compressor_sim/cenarios_falha.py);
 - "Configurações": geometria de equipamento e hiperparâmetros de
   algoritmo que não mudam de uma sessão de análise para a outra — as
   condições de operação do momento continuam na barra lateral;
@@ -39,6 +45,7 @@ import streamlit as st
 
 from compressor_sim import (
     calib_lm,
+    cenarios_falha,
     constantes,
     dinamica,
     ekf,
@@ -86,9 +93,10 @@ defaults = parametros_default()
 # dele. Os corpos de tab_est/tab_din/tab_psa/tab_gd continuam mais abaixo,
 # depois de `res = simular(params)` estar pronto.
 # ---------------------------------------------------------------------------
-tab_est, tab_din, tab_psa, tab_gd, tab_config, tab_dados = st.tabs([
+tab_est, tab_din, tab_psa, tab_gd, tab_falhas, tab_config, tab_dados = st.tabs([
     "⚙️ Operação estática", "📈 Dinâmica temporal", "🌀 Secagem PSA",
-    "🧠 Gêmeo Digital (EKF/PSO)", "🎛️ Configurações", "📂 Dados Medidos",
+    "🧠 Gêmeo Digital (EKF/PSO)", "🚨 Painel de Falhas", "🎛️ Configurações",
+    "📂 Dados Medidos",
 ])
 
 # ---------------------------------------------------------------------------
@@ -1851,3 +1859,76 @@ with tab_dados:
                     "Coluna \"Ponto\" não encontrada — mostrando a planilha "
                     "como enviada, sem comparação de cobertura contra a "
                     "Tabela 18.1.")
+
+# ===========================================================================
+# Aba "Painel de Falhas" — cenários de falha isolada, um mecanismo por vez
+# (compressor_sim/cenarios_falha.py)
+# ===========================================================================
+with tab_falhas:
+    st.subheader("Cenários de falha isolada")
+    st.caption(
+        "Cruza o catálogo de mecanismos de falha do livro (Tabela 28.2, "
+        "Cap. 28.3 — 56 mecanismos) com os parâmetros ASSUMIDO já "
+        f"implementados no simulador: {len(cenarios_falha.CATALOGO_CENARIOS)} "
+        "de 56 têm hoje física suficiente para uma injeção isolada (os "
+        "outros exigiriam espectro de vibração, correntes por fase ou "
+        "circuito de óleo — nada disso modelado neste app ainda). Cada "
+        "cenário roda a cascata duas vezes — os parâmetros atuais desta "
+        "sessão (condição saudável) contra o mesmo ponto de operação com "
+        "um único parâmetro deslocado até um valor severo — e compara o "
+        "indicador que o próprio livro associa àquele mecanismo. **Não** "
+        "roda o EKF/VAE/PIML sobre o cenário: mostra a física da falha, "
+        "não testa se o algoritmo do livro (coluna \"Detecção primária\") "
+        "de fato a capturaria em campo."
+    )
+
+    severidade_pct_falha = st.slider(
+        "Severidade global do cenário [%]", 0, 100, 100, 5,
+        help="Interpola cada parâmetro entre o valor saudável atual (0%) "
+             "e o valor severo definido no cenário (100%).")
+
+    if st.button("🔄 Rodar cenários de falha"):
+        st.session_state["resultados_falha"] = cenarios_falha.rodar_todos_cenarios(
+            params, severidade=severidade_pct_falha / 100.0)
+
+    if "resultados_falha" in st.session_state:
+        resultados_falha = st.session_state["resultados_falha"]
+
+        n_criticos = sum(1 for r in resultados_falha
+                         if r["status"] == cenarios_falha.CRITICO)
+        n_alertas = sum(1 for r in resultados_falha
+                        if r["status"] == cenarios_falha.ALERTA)
+        n_ok = len(resultados_falha) - n_criticos - n_alertas
+
+        f1, f2, f3 = st.columns(3)
+        f1.metric("🔴 Crítico", n_criticos)
+        f2.metric("⚠️ Alerta", n_alertas)
+        f3.metric("✅ OK", n_ok)
+
+        _EMOJI_STATUS = {
+            cenarios_falha.OK: "✅",
+            cenarios_falha.ALERTA: "⚠️",
+            cenarios_falha.CRITICO: "🔴",
+        }
+        df_falhas = pd.DataFrame([
+            {
+                "Status": f"{_EMOJI_STATUS[r['status']]} {r['status']}",
+                "Mecanismo": r["nome"],
+                "Cap./Eq.": f"{r['capitulo']} ({r['eq_ref']})",
+                "Parâmetro alterado": r["parametro"],
+                "Saudável → Falha": f"{r['valor_saudavel']:.4g} → {r['valor_falha']:.4g}",
+                "Indicador": r["kpi_path"][-1],
+                "Δ%": f"{r['delta_pct']:+.1f}%",
+                "Detecção primária (livro)": r["deteccao_primaria"],
+            }
+            for r in resultados_falha
+        ])
+        st.dataframe(df_falhas, width="stretch", hide_index=True)
+
+        with st.expander("Descrição física de cada mecanismo"):
+            for cenario, r in zip(cenarios_falha.CATALOGO_CENARIOS, resultados_falha):
+                st.markdown(
+                    f"**{_EMOJI_STATUS[r['status']]} {r['nome']}** "
+                    f"({r['capitulo']}, {r['eq_ref']}) — {cenario['descricao']}")
+    else:
+        st.info("Clique em \"Rodar cenários de falha\" para gerar o painel.")

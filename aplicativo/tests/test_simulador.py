@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from compressor_sim import (
     calib_lm,
+    cenarios_falha,
     dinamica,
     ekf,
     mpc,
@@ -901,3 +902,72 @@ def test_mpc_rastreia_referencia_melhor_que_controle_reativo():
     desvio_mpc = np.mean(np.abs(r_mpc["p_bar"] - p_ref_bar))
     desvio_reativo = np.mean(np.abs(r_reativo["p_bar"] - p_ref_bar))
     assert desvio_mpc < desvio_reativo
+
+
+# --- Painel de Falhas (cenarios_falha.py) ---------------------------------
+#
+# Cada cenário do catálogo (Tabela 28.2 do livro, os 10 mecanismos com
+# parâmetro ASSUMIDO já existente no simulador) é testado individualmente
+# para confirmar que o KPI principal se move na direção fisicamente
+# esperada em severidade máxima -- isso pegaria o mesmo tipo de erro de
+# sinal já encontrado antes neste projeto (ex.: HI_des invertido, Eq. 15.7).
+
+@pytest.mark.parametrize("cenario", cenarios_falha.CATALOGO_CENARIOS,
+                          ids=lambda c: c["id"])
+def test_cenario_falha_move_kpi_na_direcao_esperada(cenario):
+    params = parametros_default()
+    r = cenarios_falha.rodar_cenario(params, cenario, severidade=1.0)
+    if cenario["direcao_piora"] == "aumenta":
+        assert r["kpi_falha"] > r["kpi_saudavel"]
+    else:
+        assert r["kpi_falha"] < r["kpi_saudavel"]
+
+
+def test_cenario_falha_severidade_zero_reproduz_baseline():
+    params = parametros_default()
+    cenario = cenarios_falha.CATALOGO_CENARIOS[0]
+    r = cenarios_falha.rodar_cenario(params, cenario, severidade=0.0)
+    assert r["valor_falha"] == pytest.approx(r["valor_saudavel"])
+    assert r["kpi_falha"] == pytest.approx(r["kpi_saudavel"])
+    assert r["status"] == cenarios_falha.OK
+
+
+def test_rodar_todos_cenarios_cobre_catalogo_inteiro():
+    params = parametros_default()
+    resultados = cenarios_falha.rodar_todos_cenarios(params, severidade=1.0)
+    assert len(resultados) == len(cenarios_falha.CATALOGO_CENARIOS)
+    chaves_esperadas = {
+        "id", "nome", "capitulo", "eq_ref", "parametro", "valor_saudavel",
+        "valor_falha", "kpi_path", "kpi_saudavel", "kpi_falha", "delta_pct",
+        "status", "deteccao_primaria", "descricao",
+    }
+    for r in resultados:
+        assert chaves_esperadas.issubset(r.keys())
+        assert r["status"] in (cenarios_falha.OK, cenarios_falha.ALERTA,
+                                cenarios_falha.CRITICO)
+
+
+def test_classificacao_de_status_por_limiar():
+    # Abaixo do limiar de alerta -> OK.
+    assert cenarios_falha._classificar(5.0, "aumenta") == cenarios_falha.OK
+    assert cenarios_falha._classificar(-5.0, "diminui") == cenarios_falha.OK
+    # Entre os dois limiares -> ALERTA.
+    assert cenarios_falha._classificar(15.0, "aumenta") == cenarios_falha.ALERTA
+    assert cenarios_falha._classificar(-15.0, "diminui") == cenarios_falha.ALERTA
+    # Acima do limiar crítico -> CRÍTICO.
+    assert cenarios_falha._classificar(30.0, "aumenta") == cenarios_falha.CRITICO
+    assert cenarios_falha._classificar(-30.0, "diminui") == cenarios_falha.CRITICO
+    # Direção errada (KPI "melhorou") nunca deve sinalizar falha.
+    assert cenarios_falha._classificar(-30.0, "aumenta") == cenarios_falha.OK
+
+
+def test_cenario_folga_termica_rotor_cruza_para_contato():
+    # Override físico: folga residual negativa é CRÍTICO independente do
+    # limiar percentual genérico (contato metal-metal real, não uma
+    # tendência estatística).
+    params = parametros_default()
+    cenario = next(c for c in cenarios_falha.CATALOGO_CENARIOS
+                    if c["id"] == "folga_termica_rotor")
+    r = cenarios_falha.rodar_cenario(params, cenario, severidade=1.0)
+    assert r["kpi_falha"] < 0
+    assert r["status"] == cenarios_falha.CRITICO
