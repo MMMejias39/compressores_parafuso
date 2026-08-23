@@ -131,6 +131,76 @@ def fig_arquitetura():
     save(fig, "fig_2_2_arquitetura.pdf")
 
 # =====================================================================
+# FIG 18.1 - Diagrama de instrumentacao: os 9 pontos A-I da Tabela 18.1
+# posicionados ao longo da ordem fisica real do trem de compressao, do
+# MCC/Rele ao header de distribuicao.
+# =====================================================================
+def fig_instrumentacao():
+    linha1 = [
+        ("A", "MCC / Relé", r"$V_L,\,I,\,f,\,\cos\phi$"),
+        ("B", "Transmissão", r"$\omega,\,\tau,\,v_{\text{rms}},\,\sigma_b$"),
+        ("C", "Estágio LP", r"$P_{s,lp},\,T_{d,lp},\,\delta_{lp}$"),
+        ("D", "Intercooler", r"$T_{w,in},\,P_{int},\,\Delta P_{ic}$"),
+        ("E", "Estágio HP", r"$P_{d,hp},\,T_{d,hp},\,\delta_{hp}$"),
+    ]
+    linha2 = [
+        ("F", "Aftercooler", r"$T_{ac,out}$"),
+        ("G", "Secador PSA", r"$T_{dp},\,\dot{m}_{p}$"),
+        ("H", "Vaso Pulmão", r"$P_{tk},\,L_{tk}$"),
+        ("I", "Header", r"$\dot{m}_{tot},\,\delta_{i}$"),
+    ]
+    w, gap = 1.85, 0.24
+    x0 = 0.15
+    h = 1.55
+    y1 = 2.35   # linha de cima (A-E)
+    y2 = 0.0    # linha de baixo (F-I)
+
+    fig, ax = plt.subplots(figsize=(10.8, 5.2))
+    ax.axis("off")
+
+    def desenha_linha(pontos, y_bottom, x_inicio):
+        xs = [x_inicio + i * (w + gap) for i in range(len(pontos))]
+        for i, (letra, nome, simb) in enumerate(pontos):
+            x = xs[i]
+            box = FancyBboxPatch((x, y_bottom), w, h, boxstyle="round,pad=0.02,rounding_size=0.07",
+                                  facecolor="#eaf1f8", edgecolor=NAVY, linewidth=1.5)
+            ax.add_patch(box)
+            xc = x + w / 2
+            badge = Circle((xc, y_bottom + h - 0.30), 0.21, facecolor=NAVY, edgecolor="none", zorder=5)
+            ax.add_patch(badge)
+            ax.text(xc, y_bottom + h - 0.30, letra, ha="center", va="center",
+                    fontsize=12.5, fontweight="bold", color="white", zorder=6)
+            ax.text(xc, y_bottom + h - 0.76, nome, ha="center", va="center",
+                    fontsize=10.0, fontweight="bold", color=NAVY)
+            ax.text(xc, y_bottom + 0.36, simb, ha="center", va="center", fontsize=9.0, color="#333333")
+            if i < len(pontos) - 1:
+                ax.annotate("", xy=(xs[i+1], y_bottom + h/2), xytext=(x + w, y_bottom + h/2),
+                            arrowprops=dict(arrowstyle="->", color=GRAY, lw=1.6))
+        return xs
+
+    xs1 = desenha_linha(linha1, y1, x0)
+    xs2 = desenha_linha(linha2, y2, x0)
+
+    # seta de continuidade da linha 1 (termina em E) para a linha 2 (comeca em F)
+    x_fim1 = xs1[-1] + w
+    x_ini2 = xs2[0]
+    ax.annotate("", xy=(x_ini2 + w/2, y2 + h), xytext=(x_fim1 - w/2, y1),
+                arrowprops=dict(arrowstyle="->", color=GRAY, lw=1.6,
+                                 connectionstyle="arc3,rad=0.25"))
+
+    ax.text(x0, y1 + h + 0.30,
+            "Ordem física do trem de compressão, ponto a ponto (Tabela 18.1)",
+            fontsize=11.5, color=NAVY, fontweight="bold")
+    ax.text(x0, y2 - 0.35,
+            "A/B: admissão e transmissão   C/D/E: compressão LP/intercooler/HP   F/G: tratamento   H/I: armazenamento/distribuição",
+            fontsize=8.6, color=GRAY, style="italic")
+
+    ax.set_xlim(-0.15, xs1[-1] + w + 0.15)
+    ax.set_ylim(y2 - 0.65, y1 + h + 0.60)
+    ax.set_aspect("equal")
+    save(fig, "fig_18_1_instrumentacao.pdf")
+
+# =====================================================================
 # FIG 5.1 - Perdas por Sub/Sobrecompressao (V_i)  Eq 5.8 / 5.9
 # =====================================================================
 def fig_vi_perdas():
@@ -701,6 +771,62 @@ def _cil_quads(eixo, lo, hi, c1, c2, r, cor, n_seg=28, amb=0.35, tampas=True):
                 cores.append(cor_tampa)
     return quads, cores
 
+def _frustum_quads(eixo, lo, hi, c1, c2, r_lo, r_hi, cor, n_seg=28, amb=0.35,
+                   tampas=True):
+    """Tronco de cone (frustum) alinhado a um dos eixos globais -- mesma
+    convencao de `_cil_quads`, mas com raio variando linearmente de `r_lo`
+    (na extremidade `lo`) a `r_hi` (na extremidade `hi`). r_hi=0 fecha a
+    ponta (cone completo); usado para o corpo conico de separadores
+    ciclonicos e para aproximar cabecas toriesfericas de vasos de pressao
+    por segmentos."""
+    ang = np.linspace(0, 2 * np.pi, n_seg, endpoint=False)
+    quads, cores = [], []
+
+    def ponto(ax_val, c1v, c2v):
+        if eixo == "x":
+            return (ax_val, c1v, c2v)
+        elif eixo == "y":
+            return (c2v, ax_val, c1v)
+        else:
+            return (c1v, c2v, ax_val)
+
+    def normal(c1v, c2v, dr):
+        # normal de um cone tem componente axial proporcional a dr/dz
+        if eixo == "x":
+            return (-dr, c1v, c2v)
+        elif eixo == "y":
+            return (c2v, -dr, c1v)
+        else:
+            return (c1v, c2v, -dr)
+
+    dr = (r_hi - r_lo) / max(hi - lo, 1e-9)
+    for j in range(n_seg):
+        j2 = (j + 1) % n_seg
+        c1a, c2a = c1 + r_lo * np.cos(ang[j]), c2 + r_lo * np.sin(ang[j])
+        c1b, c2b = c1 + r_lo * np.cos(ang[j2]), c2 + r_lo * np.sin(ang[j2])
+        c1c, c2c = c1 + r_hi * np.cos(ang[j2]), c2 + r_hi * np.sin(ang[j2])
+        c1d, c2d = c1 + r_hi * np.cos(ang[j]), c2 + r_hi * np.sin(ang[j])
+        q = np.array([ponto(lo, c1a, c2a), ponto(lo, c1b, c2b),
+                      ponto(hi, c1c, c2c), ponto(hi, c1d, c2d)])
+        amid = (ang[j] + ang[j2]) / 2
+        nv = np.array(normal(np.cos(amid), np.sin(amid), dr))
+        quads.append(q); cores.append(_sombra3d(nv, cor, amb))
+    if tampas:
+        for ax_val, r, sinal in ((lo, r_lo, -1.0), (hi, r_hi, 1.0)):
+            if r < 1e-6:
+                continue
+            centro = np.array(ponto(ax_val, c1, c2))
+            cor_tampa = _sombra3d(np.array(normal(0, 0, 0)) + np.array(
+                ponto(sinal, 0, 0)) - np.array(ponto(0, 0, 0)), cor, amb + 0.05)
+            for j in range(n_seg):
+                j2 = (j + 1) % n_seg
+                c1a, c2a = c1 + r * np.cos(ang[j]), c2 + r * np.sin(ang[j])
+                c1b, c2b = c1 + r * np.cos(ang[j2]), c2 + r * np.sin(ang[j2])
+                quads.append(np.array([centro, ponto(ax_val, c1a, c2a),
+                                        ponto(ax_val, c1b, c2b)]))
+                cores.append(cor_tampa)
+    return quads, cores
+
 def _engrenagem_quads(eixo, lo, hi, c1, c2, r_raiz, r_dente, n_dentes, cor,
                       amb=0.35, tampas=True):
     """Disco com dentes retangulares (engrenagem estilizada) -- mesma
@@ -1003,6 +1129,518 @@ def fig_conjunto3d():
                    check=True, capture_output=True)
     print("cropped", pdf)
 
+def _cena3d_base(figsize=(9, 5.4)):
+    """Cria figura+eixos 3D com o mesmo estilo (luz, sem eixos) das demais
+    cenas deste arquivo -- reduz duplicacao entre as figuras de componente
+    isolado que seguem."""
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(111, projection="3d")
+    return fig, ax, Poly3DCollection
+
+def _fecha_cena3d(fig, ax, Poly3DCollection, quads, cores, nome_pdf,
+                  elev=20, azim=-60, rotulos=()):
+    ax.add_collection3d(Poly3DCollection(
+        quads, facecolors=cores, edgecolors=cores, linewidths=0.08,
+        zsort="average", rasterized=True))
+    allpts = np.vstack([np.asarray(q).reshape(-1, 3) for q in quads])
+    for setl, dim in zip((ax.set_xlim, ax.set_ylim, ax.set_zlim), range(3)):
+        lo, hi = allpts[:, dim].min(), allpts[:, dim].max()
+        pad = 0.05 * (hi - lo)
+        setl(lo - pad, hi + pad)
+    ax.set_box_aspect(tuple(np.ptp(allpts[:, d]) for d in range(3)))
+    ax.view_init(elev=elev, azim=azim)
+    ax.set_axis_off()
+    for x, y, z, txt in rotulos:
+        ax.text(x, y, z, txt, fontsize=7.8, color="#1a1a1a", ha="center")
+    fig.tight_layout(pad=0)
+    save(fig, nome_pdf)
+    import subprocess
+    pdf = os.path.join(OUTDIR, nome_pdf)
+    subprocess.run(["pdfcrop", "--margins", "6", pdf, pdf],
+                   check=True, capture_output=True)
+    print("cropped", pdf)
+
+def _piso3d(quads, cores, cx, cy, z_chao, rx, ry, cor=(0.88, 0.89, 0.90)):
+    ang = np.linspace(0, 2 * np.pi, 60, endpoint=False)
+    chao = np.array([[cx + rx * np.cos(a), cy + ry * np.sin(a), z_chao] for a in ang])
+    quads.append(chao); cores.append(np.array(cor))
+
+# =====================================================================
+# FIG 11.1 - Elemento Compressor HP (Estagio de Alta Pressao) isolado:
+# carcaca, mancais/engrenagens de sincronismo, flanges de succao/descarga
+# e coto de eixo com flange de acoplamento. Mesmo nivel de acabamento de
+# superficie da Fig. 2.3 (nao um cilindro liso) -- esquema ilustrativo.
+# =====================================================================
+def fig_estagio_hp():
+    fig, ax, P3D = _cena3d_base(figsize=(8.6, 5.6))
+    quads, cores = [], []
+    def ext(par):
+        quads.extend(par[0]); cores.extend(par[1])
+
+    COR_CASC   = (0.58, 0.60, 0.64)
+    COR_TAMPA  = (0.46, 0.48, 0.52)
+    COR_MANC   = (0.40, 0.42, 0.46)   # mancais/engrenagens de sincronismo
+    COR_PE     = (0.22, 0.22, 0.24)
+    COR_FLANGE = (0.36, 0.36, 0.39)
+    COR_EIXO   = (0.50, 0.50, 0.53)
+    COR_ACOPL  = (0.50, 0.51, 0.54)
+    COR_SUC    = (0.30, 0.50, 0.72)
+    COR_DESC   = (0.74, 0.36, 0.30)
+    COR_PLACA  = (0.90, 0.90, 0.88)
+
+    L, R = 2.3, 0.62
+    # --- Carcaca principal (corpo cilindrico do par de rotores) ---
+    ext(_cil_quads("x", 0.0, L, 0.0, 0.0, R, COR_CASC, n_seg=44, tampas=False))
+    # --- Nervuras de reforco (mesma logica das aletas do motor na Fig. 2.3) ---
+    for xa in np.arange(0.30, L - 0.25, 0.30):
+        ext(_cil_quads("x", xa, xa + 0.07, 0.0, 0.0, R + 0.05, COR_CASC, n_seg=44, tampas=False))
+    # --- Carcacas de mancal/engrenagem de sincronismo nas duas extremidades ---
+    ext(_cil_quads("x", -0.22, 0.0, 0.0, 0.0, R + 0.14, COR_MANC, n_seg=36))
+    ext(_cil_quads("x", L, L + 0.24, 0.0, 0.0, R + 0.10, COR_MANC, n_seg=36))
+    # --- Tampa de inspecao no topo (acesso ao engrenamento de sincronismo)
+    # -- convencao global: Z e' "para cima", Y e' largura/profundidade ---
+    ext(_caixa_quads(0.75, 1.55, -0.35, 0.35, R - 0.03, R + 0.16, COR_TAMPA))
+    # --- Pes de fixacao (abaixo, em Z) -- dois pes distintos, nao uma
+    # unica laje continua ---
+    for yc in (-0.42, 0.42):
+        ext(_caixa_quads(0.25, L - 0.25, yc - 0.16, yc + 0.16, -R - 0.28, -R - 0.05, COR_PE))
+    # --- Placa de identificacao (nameplate), no topo ---
+    ext(_caixa_quads(1.35, 1.55, -0.28, 0.28, R - 0.02, R + 0.03, COR_PLACA))
+
+    # --- Coto de eixo + flange de acoplamento no lado de acionamento ---
+    ext(_cil_quads("x", -0.55, -0.22, 0.0, 0.0, 0.17, COR_EIXO, n_seg=24))
+    ext(_cil_quads("x", -0.42, -0.30, 0.0, 0.0, 0.30, COR_ACOPL, n_seg=28))
+
+    # --- Flange de succao (bocal apontando para cima, vindo do intercooler) ---
+    Z_SUC0 = R + 0.02
+    ext(_cil_quads("z", Z_SUC0, Z_SUC0 + 0.75, 0.55, 0.0, 0.22, COR_SUC, n_seg=24))
+    ext(_cil_quads("z", Z_SUC0 + 0.68, Z_SUC0 + 0.78, 0.55, 0.0, 0.30, COR_FLANGE, n_seg=24))
+
+    # --- Flange de descarga (bocal lateral, na direcao -Y, voltado para o
+    # lado da camera, proximo ao lado nao acionado) ---
+    X_DESC = L - 0.55
+    ext(_cil_quads("y", -R - 0.62, -R, 0.0, X_DESC, 0.16, COR_DESC, n_seg=24))
+    ext(_cil_quads("y", -R - 0.64, -R - 0.52, 0.0, X_DESC, 0.23, COR_FLANGE, n_seg=24))
+
+    _piso3d(quads, cores, cx=L/2, cy=0.0, z_chao=-R-0.75, rx=L*0.85, ry=1.5)
+
+    rotulos = [
+        (0.65, 0.0, Z_SUC0 + 1.0, "Sucção\n(do Intercooler)"),
+        (X_DESC, -R - 0.95, 0.0, "Descarga"),
+        (-0.55, 0.0, 0.55, "Acoplamento"),
+        (L + 0.05, 0.0, -R - 0.55, "Mancais e Engrenagens\nde Sincronismo"),
+    ]
+    _fecha_cena3d(fig, ax, P3D, quads, cores, "fig_11_1_estagio_hp.pdf",
+                 elev=18, azim=-58, rotulos=rotulos)
+
+# =====================================================================
+# FIG 12.1 - Circuito de oleo de lubrificacao/arrefecimento: reservatorio,
+# bomba, deaerador, valvula termostatica de 3 vias (bypass/resfriador) e
+# retorno aos mancais/gearbox. Esquema ilustrativo (Cap. 12).
+# =====================================================================
+def fig_circuito_oleo():
+    fig, ax, P3D = _cena3d_base(figsize=(11.5, 5.6))
+    quads, cores = [], []
+    def ext(par):
+        quads.extend(par[0]); cores.extend(par[1])
+
+    COR_TANQUE = (0.30, 0.36, 0.30)
+    COR_VISOR  = (0.55, 0.72, 0.80)
+    COR_PE     = (0.22, 0.22, 0.24)
+    COR_BOMBA  = (0.42, 0.44, 0.48)
+    COR_MOTORB = (0.20, 0.30, 0.44)
+    COR_DEAER  = (0.55, 0.57, 0.61)
+    COR_VALV   = (0.62, 0.47, 0.26)
+    COR_RESF   = (0.46, 0.66, 0.56)
+    COR_RESFT  = (0.60, 0.62, 0.66)
+    COR_GB     = (0.74, 0.76, 0.79)
+    COR_TUBO   = (0.55, 0.40, 0.22)
+    COR_RETORNO= (0.65, 0.65, 0.68)
+    COR_FLANGE = (0.38, 0.38, 0.41)
+
+    def flange_x(xc, c1, c2, r, cor=COR_FLANGE):
+        ext(_cil_quads("x", xc - 0.045, xc + 0.045, c1, c2, r, cor, n_seg=22))
+
+    Z0 = 0.35  # altura da linha principal de oleo
+
+    # --- Reservatorio de oleo ---
+    ext(_caixa_quads(0.0, 1.0, -0.5, 0.5, 0.0, 0.7, COR_TANQUE))
+    ext(_caixa_quads(1.0 - 0.06, 1.0, -0.15, 0.15, 0.15, 0.55, COR_VISOR))  # visor de nivel
+    ext(_caixa_quads(0.1, 0.9, -0.55, -0.75, -0.15, 0.0, COR_PE))          # pes
+
+    # --- Tubulacao ate a bomba ---
+    ext(_cil_quads("x", 1.0, 1.55, 0.0, Z0, 0.07, COR_TUBO, n_seg=18))
+
+    # --- Bomba de oleo + motor acoplado ---
+    ext(_cil_quads("x", 1.55, 1.95, 0.0, Z0, 0.26, COR_BOMBA, n_seg=28))
+    ext(_cil_quads("x", 1.62, 1.88, 0.0, Z0 + 0.42, 0.16, COR_MOTORB, n_seg=24))
+    flange_x(1.95, 0.0, Z0, 0.30)
+
+    # --- Tubulacao ate o deaerador ---
+    ext(_cil_quads("x", 1.99, 2.55, 0.0, Z0, 0.07, COR_TUBO, n_seg=18))
+
+    # --- Deaerador (vaso vertical com topo afunilado) ---
+    XD = 2.85
+    ext(_cil_quads("z", 0.0, 1.15, XD, 0.0, 0.34, COR_DEAER, n_seg=32, tampas=False))
+    ext(_frustum_quads("z", 1.15, 1.45, XD, 0.0, 0.34, 0.10, COR_DEAER, n_seg=32))
+    ext(_cil_quads("z", 1.45, 1.68, XD, 0.0, 0.05, COR_TUBO, n_seg=16))    # respiro
+
+    # --- Tubulacao do deaerador ate a valvula termostatica ---
+    ext(_cil_quads("x", XD + 0.34, 3.55, 0.0, Z0, 0.07, COR_TUBO, n_seg=18))
+
+    # --- Valvula termostatica de 3 vias (corpo + haste do elemento termostatico) ---
+    XV = 3.70
+    ext(_cil_quads("x", 3.55, XV + 0.15, 0.0, Z0, 0.16, COR_VALV, n_seg=24))
+    ext(_cil_quads("z", Z0 + 0.14, Z0 + 0.42, XV, 0.0, 0.06, COR_VALV, n_seg=16))
+
+    # --- Dois ramais: bypass (reto) e resfriador (sobe, atravessa o
+    # trocador, desce) -- mesma tecnica de bocal/flange da Fig. 2.3 ---
+    Z1 = Z0 + 0.85
+    # bypass reto -- corre por baixo do resfriador ate a juncao de saida,
+    # continuo (sem gap) para nao parecer um cano quebrado sob a caixa do
+    # trocador
+    ext(_cil_quads("x", XV + 0.15, 5.25, 0.0, Z0, 0.06, COR_TUBO, n_seg=16))
+    ext(_cil_quads("z", Z0, Z1, XV + 0.35, 0.0, 0.06, COR_TUBO, n_seg=16))     # sobe
+    ext(_cil_quads("x", XV + 0.35, 4.75, 0.0, Z1, 0.06, COR_TUBO, n_seg=16))   # ramal resfriador
+
+    # --- Resfriador de oleo (trocador, mesmo estilo do intercooler da Fig. 2.3) ---
+    ext(_caixa_quads(4.35, 4.85, -0.32, 0.32, Z1 - 0.30, Z1 + 0.30, COR_RESF))
+    for zc in (Z1 - 0.22, Z1, Z1 + 0.20):
+        ext(_caixa_quads(4.30, 4.35, -0.30, 0.30, zc - 0.045, zc + 0.045, COR_RESFT))
+
+    ext(_cil_quads("z", Z0, Z1 - 0.30, 4.85 + 0.20, 0.0, 0.06, COR_TUBO, n_seg=16))  # desce apos o resfriador
+
+    # --- Saida para mancais/gearbox (o bypass ja chega ate 5.25) ---
+    ext(_caixa_quads(5.25, 6.05, -0.55, 0.55, -0.35, 0.75, COR_GB))
+    for za in (-0.35, 0.20, 0.75):
+        ext(_caixa_quads(5.23, 5.25, -0.53, 0.53, za - 0.03, za + 0.03, COR_RESFT))
+
+    # --- Linha de retorno (oleo aquecido, mancais -> reservatorio), em
+    # nivel inferior e cor distinta para nao se confundir com a linha
+    # principal de suprimento ---
+    ZR = -0.55
+    ext(_cil_quads("z", ZR, -0.05, 5.6, 0.0, 0.06, COR_RETORNO, n_seg=16))
+    ext(_cil_quads("x", 0.5, 5.6, 0.0, ZR, 0.06, COR_RETORNO, n_seg=16))
+    ext(_cil_quads("z", ZR, 0.0, 0.5, 0.0, 0.06, COR_RETORNO, n_seg=16))
+
+    _piso3d(quads, cores, cx=3.0, cy=0.0, z_chao=ZR - 0.35, rx=3.6, ry=1.4)
+
+    rotulos = [
+        (0.5, 0.0, 0.95, "Reservatório"),
+        (1.75, 0.0, Z0 - 0.35, "Bomba"),
+        (XD, 0.0, 1.85, "Deaerador"),
+        (XV, 0.0, Z0 - 0.35, "Válvula\nTermostática"),
+        (4.60, 0.0, Z1 + 0.55, "Resfriador\nde Óleo"),
+        (5.65, 0.0, 1.05, "Mancais /\nGearbox"),
+        (3.0, 0.0, ZR - 0.55, "Retorno (óleo aquecido)"),
+    ]
+    _fecha_cena3d(fig, ax, P3D, quads, cores, "fig_12_1_circuito_oleo.pdf",
+                 elev=22, azim=-55, rotulos=rotulos)
+
+# =====================================================================
+# FIG 14.2 - Separador ciclonico de condensado, isolado. Esquema
+# ilustrativo (Cap. 14).
+# =====================================================================
+def fig_separador3d():
+    fig, ax, P3D = _cena3d_base(figsize=(6.4, 6.0))
+    quads, cores = [], []
+    def ext(par):
+        quads.extend(par[0]); cores.extend(par[1])
+
+    COR_CORPO = (0.55, 0.58, 0.62)
+    COR_CONE  = (0.48, 0.51, 0.55)
+    COR_TUBO  = (0.30, 0.50, 0.72)
+    COR_DRENO = (0.62, 0.47, 0.26)
+    COR_PE    = (0.22, 0.22, 0.24)
+    COR_FLANGE= (0.38, 0.38, 0.41)
+
+    R = 0.55
+    # --- Corpo cilindrico superior ---
+    ext(_cil_quads("z", 0.9, 1.9, 0.0, 0.0, R, COR_CORPO, n_seg=40, tampas=False))
+    for zc in (1.05, 1.35, 1.65):
+        ext(_cil_quads("z", zc, zc + 0.04, 0.0, 0.0, R + 0.03, COR_CORPO, n_seg=40, tampas=False))
+    # --- Tampa superior (levemente afunilada) ---
+    ext(_frustum_quads("z", 1.9, 2.05, 0.0, 0.0, R, R * 0.35, COR_CORPO, n_seg=40))
+    # --- Corpo conico inferior ---
+    ext(_frustum_quads("z", 0.0, 0.9, 0.0, 0.0, 0.12, R, COR_CONE, n_seg=40))
+    # --- Dreno de condensado (base) ---
+    ext(_cil_quads("z", -0.35, 0.0, 0.0, 0.0, 0.09, COR_DRENO, n_seg=20))
+    ext(_cil_quads("z", -0.30, -0.20, 0.0, 0.0, 0.15, COR_DRENO, n_seg=20))  # corpo da valvula de dreno
+
+    # --- Entrada tangencial (deslocada do centro para sugerir tangencia) ---
+    YIN = R * 0.55
+    ext(_cil_quads("x", -0.9, -0.12, YIN, 1.55, 0.15, COR_TUBO, n_seg=22))
+    ext(_cil_quads("x", -0.95, -0.85, YIN, 1.55, 0.21, COR_FLANGE, n_seg=22))
+
+    # --- Saida de ar (vortex finder), tubo central subindo pelo topo ---
+    ext(_cil_quads("z", 2.05, 2.75, 0.0, 0.0, 0.16, COR_TUBO, n_seg=24))
+    ext(_cil_quads("z", 2.62, 2.75, 0.0, 0.0, 0.23, COR_FLANGE, n_seg=24))
+
+    # --- Pes de sustentacao ---
+    for ang in (45, 135, 225, 315):
+        a = np.deg2rad(ang)
+        cx, cy = 0.30 * np.cos(a), 0.30 * np.sin(a)
+        ext(_cil_quads("z", -0.35, 0.0, cx, cy, 0.045, COR_PE, n_seg=12))
+
+    _piso3d(quads, cores, cx=0.0, cy=0.0, z_chao=-0.42, rx=1.35, ry=1.35)
+
+    rotulos = [
+        (-0.9, YIN, 1.85, "Entrada\n(ar + condensado)"),
+        (0.0, 0.0, 3.0, "Saída de ar"),
+        (0.0, 0.0, -0.65, "Dreno de\ncondensado"),
+    ]
+    _fecha_cena3d(fig, ax, P3D, quads, cores, "fig_14_2_separador.pdf",
+                 elev=16, azim=-50, rotulos=rotulos)
+
+# =====================================================================
+# FIG 16.1 - Vaso pulmao VERTICAL (air receiver): casco, cabecas
+# toriesfericas aproximadas, pernas de apoio, bocais e dreno. Vasos pulmao
+# offshore sao tipicamente verticais (menor area de piso ocupada, mesma
+# razao de espaco que orienta muitas escolhas de layout em plataforma) --
+# corrigido a pedido do autor (20/08/2026), que apontou o casco na
+# orientacao errada (a primeira versao era horizontal). Esquema
+# ilustrativo (Cap. 16).
+# =====================================================================
+def fig_vaso_pulmao():
+    fig, ax, P3D = _cena3d_base(figsize=(7.2, 8.4))
+    quads, cores = [], []
+    def ext(par):
+        quads.extend(par[0]); cores.extend(par[1])
+
+    COR_CASCO = (0.62, 0.65, 0.69)
+    COR_CABECA= (0.56, 0.59, 0.63)
+    COR_PERNA = (0.30, 0.30, 0.33)
+    COR_BASE  = (0.55, 0.55, 0.55)
+    COR_BOCAL = (0.30, 0.50, 0.72)
+    COR_PSV   = (0.85, 0.55, 0.15)
+    COR_FLANGE= (0.38, 0.38, 0.41)
+    COR_PLACA = (0.90, 0.90, 0.88)
+
+    R, Z0, Z1 = 0.85, 1.0, 4.6
+    # --- Casco cilindrico vertical ---
+    ext(_cil_quads("z", Z0, Z1, 0.0, 0.0, R, COR_CASCO, n_seg=44, tampas=False))
+    # --- Cabecas toriesfericas aproximadas por dois troncos de cone ---
+    for za, zb, r0, r1 in ((Z1, Z1 + 0.22, R, 0.55), (Z1 + 0.22, Z1 + 0.32, 0.55, 0.0)):
+        ext(_frustum_quads("z", min(za, zb), max(za, zb), 0.0, 0.0, r0, r1, COR_CABECA, n_seg=44))
+    for za, zb, r0, r1 in ((Z0, Z0 - 0.22, R, 0.55), (Z0 - 0.22, Z0 - 0.32, 0.55, 0.0)):
+        ext(_frustum_quads("z", min(za, zb), max(za, zb), 0.0, 0.0, r0, r1, COR_CABECA, n_seg=44))
+
+    # --- Pernas de apoio (4), com base de concreto simplificada ---
+    Z_BASE = Z0 - 0.32
+    for ang in (45, 135, 225, 315):
+        a = np.deg2rad(ang)
+        cx, cy = (R - 0.05) * np.cos(a), (R - 0.05) * np.sin(a)
+        ext(_cil_quads("z", Z_BASE - 1.05, Z_BASE, cx, cy, 0.09, COR_PERNA, n_seg=16))
+    ext(_caixa_quads(-R - 0.1, R + 0.1, -R - 0.1, R + 0.1, Z_BASE - 1.20, Z_BASE - 1.05, COR_BASE))
+
+    # --- Bocal de entrada (rede/descarga do compressor), lateral, proximo a base ---
+    ext(_cil_quads("y", -R, -R - 0.55, Z0 + 0.55, 0.0, 0.14, COR_BOCAL, n_seg=22))
+    ext(_cil_quads("y", -R - 0.45, -R - 0.55, Z0 + 0.55, 0.0, 0.20, COR_FLANGE, n_seg=22))
+
+    # --- Bocal de saida (para o header/secador), lateral, proximo ao topo ---
+    ext(_cil_quads("y", R, R + 0.55, Z1 - 0.55, 0.0, 0.14, COR_BOCAL, n_seg=22))
+    ext(_cil_quads("y", R + 0.45, R + 0.55, Z1 - 0.55, 0.0, 0.20, COR_FLANGE, n_seg=22))
+
+    # --- PSV no topo (cabeca superior) ---
+    ext(_cil_quads("z", Z1 + 0.32, Z1 + 0.60, 0.0, 0.0, 0.09, COR_PSV, n_seg=18))
+    ext(_cil_quads("z", Z1 + 0.52, Z1 + 0.66, 0.0, 0.0, 0.14, COR_PSV, n_seg=18))
+
+    # --- Dreno de condensado na base (apice da cabeca inferior) ---
+    ext(_cil_quads("z", Z0 - 0.55, Z0 - 0.32, 0.0, 0.0, 0.07, COR_BOCAL, n_seg=18))
+
+    # --- Placa de identificacao ---
+    ext(_caixa_quads(-0.14, 0.14, R - 0.02, R + 0.02, 2.5, 2.85, COR_PLACA))
+
+    _piso3d(quads, cores, cx=0.0, cy=0.0, z_chao=Z_BASE - 1.22, rx=1.6, ry=1.6)
+
+    rotulos = [
+        (-0.95, -R - 0.6, Z0 + 0.55, "Entrada\n(rede de descarga)"),
+        (0.95, R + 0.6, Z1 - 0.55, "Saída\n(header/secador)"),
+        (0.0, 0.0, Z1 + 1.0, "PSV"),
+        (0.0, 0.0, Z0 - 0.95, "Dreno"),
+    ]
+    _fecha_cena3d(fig, ax, P3D, quads, cores, "fig_16_1_vaso_pulmao.pdf",
+                 elev=12, azim=-58, rotulos=rotulos)
+
+# =====================================================================
+# FIG 4.1 - Motor de inducao trifasico industrial, isolado, com nivel de
+# detalhe maior que o motor simplificado embutido na Fig. 2.3: aletas de
+# refrigeracao, caixa de ligacao com tampa, pes de fixacao e coto de eixo
+# com flange de acoplamento. Substitui a foto real de motor generico de
+# feira comercial (sem relacao explicita com compressores e sem escala
+# aparente) a pedido do autor (20/08/2026). Esquema ilustrativo (Cap. 4).
+# =====================================================================
+def fig_motor3d():
+    fig, ax, P3D = _cena3d_base(figsize=(8.6, 5.4))
+    quads, cores = [], []
+    def ext(par):
+        quads.extend(par[0]); cores.extend(par[1])
+
+    COR_CORPO  = (0.20, 0.30, 0.44)
+    COR_ALETA  = (0.24, 0.35, 0.50)
+    COR_TAMPA  = (0.16, 0.24, 0.36)
+    COR_CAIXAL = (0.72, 0.56, 0.16)
+    COR_CAIXAT = (0.58, 0.44, 0.10)
+    COR_PE     = (0.22, 0.22, 0.24)
+    COR_EIXO   = (0.50, 0.50, 0.53)
+    COR_ACOPL  = (0.50, 0.51, 0.54)
+    COR_PLACA  = (0.90, 0.90, 0.88)
+
+    L, R = 2.3, 0.52
+    # --- Corpo cilindrico com tampas (NDE/DE) ---
+    ext(_cil_quads("x", 0.0, L, 0.0, 0.0, R, COR_CORPO, n_seg=40, tampas=False))
+    ext(_cil_quads("x", 0.0, 0.06, 0.0, 0.0, R, COR_CORPO, n_seg=40))
+    ext(_cil_quads("x", L - 0.06, L, 0.0, 0.0, R, COR_CORPO, n_seg=40))
+    # --- Aletas de refrigeracao ---
+    for xa in np.arange(0.22, L - 0.22, 0.20):
+        ext(_cil_quads("x", xa, xa + 0.07, 0.0, 0.0, R + 0.10, COR_ALETA, n_seg=40, tampas=False))
+    # --- Caixa de ligacao, com tampa em dois niveis (efeito "levantada") ---
+    ext(_caixa_quads(0.95, 1.55, -0.32, 0.32, R - 0.02, R + 0.30, COR_CAIXAL))
+    ext(_caixa_quads(0.90, 1.60, -0.36, 0.36, R + 0.30, R + 0.40, COR_CAIXAT))
+    # --- Pes de fixacao ---
+    for yc in (-0.34, 0.34):
+        ext(_caixa_quads(0.25, L - 0.25, yc - 0.13, yc + 0.13, -R - 0.24, -R - 0.04, COR_PE))
+    # --- Placa de identificacao ---
+    ext(_caixa_quads(1.75, 1.95, -0.24, 0.24, R - 0.02, R + 0.02, COR_PLACA))
+    # --- Coto de eixo + flange de acoplamento no lado de acionamento ---
+    ext(_cil_quads("x", L, L + 0.34, 0.0, 0.0, 0.15, COR_EIXO, n_seg=24))
+    ext(_cil_quads("x", L + 0.20, L + 0.32, 0.0, 0.0, 0.27, COR_ACOPL, n_seg=28))
+
+    _piso3d(quads, cores, cx=L/2, cy=0.0, z_chao=-R-0.55, rx=L*0.85, ry=1.2)
+
+    rotulos = [
+        (1.25, 0.0, R + 0.75, "Caixa de Ligação\n(3 fases)"),
+        (0.6, 0.0, R + 0.95, "Aletas de Refrigeração"),
+        (L + 0.30, 0.0, 0.55, "Acoplamento\n(lado de acionamento)"),
+        (L * 0.5, 0.0, -R - 0.55, "Pés de Fixação"),
+    ]
+    _fecha_cena3d(fig, ax, P3D, quads, cores, "fig_4_1_motor.pdf",
+                 elev=16, azim=-55, rotulos=rotulos)
+
+# =====================================================================
+# FIG 13.1 - Valvula de seguranca (PSV) industrial, isolada: flange de
+# entrada, corpo, flange do capuz, capuz da mola e alavanca de teste
+# manual. Substitui a foto real (fotografada em contexto de obra/tubulacao
+# de processo, porte desproporcional ao de um compressor de parafuso) a
+# pedido do autor (20/08/2026). Esquema ilustrativo (Cap. 13).
+# =====================================================================
+def fig_valvula_psv3d():
+    fig, ax, P3D = _cena3d_base(figsize=(5.6, 6.6))
+    quads, cores = [], []
+    def ext(par):
+        quads.extend(par[0]); cores.extend(par[1])
+
+    COR_CORPO  = (0.60, 0.62, 0.66)
+    COR_FLANGE = (0.42, 0.42, 0.45)
+    COR_CAPUZ  = (0.85, 0.55, 0.15)
+    COR_ALAV   = (0.30, 0.30, 0.33)
+    COR_PLACA  = (0.90, 0.90, 0.88)
+
+    # --- Flange de entrada (base) ---
+    ext(_cil_quads("z", 0.0, 0.10, 0.0, 0.0, 0.34, COR_FLANGE, n_seg=32))
+    # --- Coto de entrada ---
+    ext(_cil_quads("z", 0.10, 0.28, 0.0, 0.0, 0.16, COR_CORPO, n_seg=28))
+    # --- Corpo bojudo (afunila -> alarga -> afunila, silhueta de "bulbo") ---
+    ext(_frustum_quads("z", 0.28, 0.55, 0.0, 0.0, 0.16, 0.40, COR_CORPO, n_seg=32))
+    ext(_frustum_quads("z", 0.55, 0.95, 0.0, 0.0, 0.40, 0.30, COR_CORPO, n_seg=32))
+    # --- Flange do capuz (conjunto de parafusos ao redor) ---
+    ext(_cil_quads("z", 0.95, 1.05, 0.0, 0.0, 0.38, COR_FLANGE, n_seg=32))
+    for ang in range(0, 360, 45):
+        a = np.deg2rad(ang)
+        ext(_cil_quads("z", 0.94, 1.10, 0.36 * np.cos(a), 0.36 * np.sin(a), 0.035, COR_ALAV, n_seg=10))
+    # --- Capuz da mola (cor de aviso, mesma convencao da industria) ---
+    ext(_frustum_quads("z", 1.05, 1.15, 0.0, 0.0, 0.30, 0.24, COR_CAPUZ, n_seg=28))
+    ext(_cil_quads("z", 1.15, 1.65, 0.0, 0.0, 0.24, COR_CAPUZ, n_seg=28, tampas=False))
+    ext(_cil_quads("z", 1.65, 1.72, 0.0, 0.0, 0.24, COR_CAPUZ, n_seg=28))
+    # --- Alavanca de teste manual ---
+    ext(_cil_quads("y", 0.0, 0.32, 1.60, 0.0, 0.035, COR_ALAV, n_seg=12))
+    ext(_cil_quads("z", 1.72, 1.90, 0.0, 0.0, 0.05, COR_ALAV, n_seg=12))
+    # --- Placa de identificacao ---
+    ext(_caixa_quads(-0.02, 0.02, 0.30, 0.30, 0.55, 0.85, COR_PLACA))
+
+    _piso3d(quads, cores, cx=0.0, cy=0.0, z_chao=-0.08, rx=0.85, ry=0.85)
+
+    rotulos = [
+        (0.0, 0.0, 2.15, "Alavanca de\nTeste Manual"),
+        (0.0, -0.55, 1.40, "Capuz da Mola\n(pressão de ajuste)"),
+        (0.0, 0.55, 0.65, "Corpo"),
+        (0.0, -0.55, 0.05, "Flange de Entrada"),
+    ]
+    _fecha_cena3d(fig, ax, P3D, quads, cores, "fig_13_1_valvulas.pdf",
+                 elev=14, azim=-50, rotulos=rotulos)
+
+# =====================================================================
+# FIG 14.1 - Trocador de calor casco-tubo do aftercooler, isolado, com um
+# cabecote aberto expondo o espelho tubular (mesma informacao didatica da
+# foto real que substitui). Substitui a foto real (trocador de um chiller
+# de refrigeracao, aplicacao diferente da deste sistema) a pedido do
+# autor (20/08/2026). Esquema ilustrativo (Cap. 14).
+# =====================================================================
+def fig_aftercooler3d():
+    fig, ax, P3D = _cena3d_base(figsize=(9.0, 5.2))
+    quads, cores = [], []
+    def ext(par):
+        quads.extend(par[0]); cores.extend(par[1])
+
+    COR_CASCO  = (0.58, 0.60, 0.64)
+    COR_CABECA = (0.68, 0.70, 0.66)
+    COR_FLANGE = (0.40, 0.40, 0.43)
+    COR_ESPELHO= (0.30, 0.30, 0.32)
+    COR_TUBO   = (0.15, 0.15, 0.16)
+    COR_BOCAL  = (0.30, 0.50, 0.72)
+    COR_BOCALQ = (0.74, 0.36, 0.30)
+    COR_PE     = (0.22, 0.22, 0.24)
+
+    L, R = 2.6, 0.55
+    X_ESP = 0.0  # face aberta (espelho tubular) na extremidade esquerda
+    # --- Casco cilindrico ---
+    ext(_cil_quads("x", X_ESP, L, 0.0, 0.0, R, COR_CASCO, n_seg=40, tampas=False))
+    # --- Cabecote fechado do lado direito, com flange ---
+    ext(_cil_quads("x", L, L + 0.30, 0.0, 0.0, R * 0.85, COR_CABECA, n_seg=40))
+    ext(_cil_quads("x", L - 0.03, L + 0.03, 0.0, 0.0, R + 0.08, COR_FLANGE, n_seg=40))
+
+    # --- Espelho tubular exposto (face aberta, esquerda) + feixe de tubos
+    # em grade (mesma informacao didatica da foto que substitui) ---
+    ext(_cil_quads("x", X_ESP - 0.02, X_ESP + 0.02, 0.0, 0.0, R, COR_ESPELHO, n_seg=40))
+    ext(_cil_quads("x", X_ESP - 0.05, X_ESP - 0.02, 0.0, 0.0, R + 0.09, COR_FLANGE, n_seg=40))
+    passo = 0.11
+    n_anel = int(R / passo)
+    for i in range(-n_anel, n_anel + 1):
+        for j in range(-n_anel, n_anel + 1):
+            cy, cz = i * passo, j * passo
+            if (cy**2 + cz**2) ** 0.5 > R - 0.09:
+                continue
+            ext(_cil_quads("x", X_ESP - 0.02, X_ESP + 0.14, cy, cz, 0.032, COR_TUBO, n_seg=8))
+    # --- Chicana central visivel na face aberta (mesma leitura da foto) ---
+    ext(_caixa_quads(X_ESP - 0.03, X_ESP + 0.12, -R + 0.06, R - 0.06, -0.05, 0.05, COR_FLANGE))
+
+    # --- Bocais de ar (em linha com o eixo, cascos de entrada/saida do ar
+    # quente do estagio HP e do ar ja resfriado) ---
+    ext(_cil_quads("x", -0.55, X_ESP - 0.05, 0.0, R * 0.55, 0.15, COR_BOCALQ, n_seg=22))
+    ext(_cil_quads("x", L + 0.30, L + 0.85, 0.0, R * 0.55, 0.15, COR_BOCAL, n_seg=22))
+
+    # --- Bocais de agua de resfriamento (radiais, no casco -- convencao
+    # eixo="y" usa (c1,c2)=(z,x): c1=0.0 mantem o bocal centrado em
+    # altura, c2 e' a posicao ao longo do casco ---
+    ext(_cil_quads("y", -R - 0.35, -R, 0.0, 0.65, 0.10, COR_BOCAL, n_seg=18))
+    ext(_cil_quads("y", R, R + 0.35, 0.0, 1.95, 0.10, COR_BOCAL, n_seg=18))
+
+    # --- Pes de apoio ---
+    for xc in (0.55, L - 0.35):
+        ext(_caixa_quads(xc - 0.18, xc + 0.18, -0.45, 0.45, -R - 0.02, 0.0, COR_PE))
+
+    _piso3d(quads, cores, cx=L/2, cy=0.0, z_chao=-R-0.30, rx=L*0.85, ry=1.4)
+
+    rotulos = [
+        (X_ESP - 0.1, -R - 0.85, 0.5, "Espelho Tubular\n(cabeçote aberto)"),
+        (-0.55, 0.0, R + 0.75, "Ar Quente\n(do Estágio HP)"),
+        (L + 0.85, 0.0, R + 0.75, "Ar Resfriado\n(para filtragem/PSA)"),
+        (0.65, -R - 0.85, 0.0, "Água de\nResfriamento"),
+    ]
+    _fecha_cena3d(fig, ax, P3D, quads, cores, "fig_14_1_aftercooler.pdf",
+                 elev=14, azim=-48, rotulos=rotulos)
+
 # =====================================================================
 # FIG 22.1 - Arquitetura do Autoencoder Variacional (VAE)
 # =====================================================================
@@ -1182,6 +1820,14 @@ if __name__ == "__main__":
     fig_ekf()
     fig_parafuso3d()
     fig_conjunto3d()
+    fig_estagio_hp()
+    fig_circuito_oleo()
+    fig_separador3d()
+    fig_vaso_pulmao()
+    fig_instrumentacao()
+    fig_motor3d()
+    fig_valvula_psv3d()
+    fig_aftercooler3d()
     fig_vae_arq()
     fig_mpc_horizonte()
     fig_pso_enxame()

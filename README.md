@@ -4,7 +4,9 @@ Este repositório reúne dois artefatos que andam juntos:
 
 1. **O livro** — *Gêmeo Digital de Sistemas de Compressão Offshore: Diretrizes
    Técnicas, Modelagem e Implementação* (`compressores.tex`/`compressores.pdf`),
-   primeiro volume da coleção *Enciclopédia de Máquinas Rotodinâmicas*.
+   **Volume II** da coleção *Enciclopédia de Máquinas Rotodinâmicas* (o
+   Volume I, com os fundamentos de termodinâmica, mecânica dos fluidos e
+   Mecânica do Contínuo, está em planejamento).
    Cobre a física de um trem de compressão de ar offshore (compressor de
    parafuso oil-free em dois estágios, tratamento, armazenamento) e a
    metodologia de Gêmeo Digital que se constrói sobre essa física — EKF, VAE,

@@ -345,6 +345,26 @@ reeditar `fig_2_1_rotores.pdf` ou `fig_15_1_psa.pdf`, baixe o SVG original de no
 (`curl -sL "https://commons.wikimedia.org/wiki/Special:FilePath/<nome_do_arquivo>.svg"`)
 e edite/converta via Inkscape — não use as funções matplotlib do script para essas duas.
 
+**Três fotos reais adicionais (20/08/2026)**, mesmo princípio de imagem
+livre real do Commons, mas via JPEG/foto (não SVG/desenho técnico como as
+duas acima) — pipeline diferente, sem passar por `gen_figuras.py` nem por
+Inkscape: `curl` da página `Special:FilePath` do arquivo original, recorte
+com `convert <foto>.jpg -crop <geometria> +repage <foto>_crop.jpg`
+(ImageMagick) para remover fundo de feira/oficina, depois
+`convert <foto>_crop.jpg -quality 92 figuras/fig_C_N_nome.pdf` para
+converter para PDF. Licença sempre confirmada visitando a página real do
+arquivo (nunca só o nome sugestivo) antes de baixar:
+- `figuras/fig_4_1_motor.pdf` — de *Electric motor make MarelliMotori*
+  (S.J. de Waard, Wikimedia Commons, CC BY 2.5).
+- `figuras/fig_13_1_valvulas.pdf` — de *Cologne Germany Bopp&Reutter-
+  Safety-Relief-Valve-01* (CEphoto/Uwe Aranas, Wikimedia Commons, CC BY-SA 3.0).
+- `figuras/fig_14_1_aftercooler.pdf` — de *Shell and Tube Heat Exchanger
+  of Chiller* (Saud/SAF1999, Wikimedia Commons, CC BY-SA 4.0).
+
+Se precisar reeditar qualquer uma das três, repita o `curl` na URL da
+Special:FilePath (não há função em `gen_figuras.py` para elas, por não
+serem desenho vetorial nem render matplotlib).
+
 Para regenerar as demais figuras:
 ```bash
 cd /home/mejias/Documentos/Compressores/scripts
@@ -2997,3 +3017,238 @@ corretamente indexada e sem sobreposição/corte.
 
 Nada foi commitado ainda nesta entrada — aguardando confirmação do
 autor, como sempre.
+
+## Oito figuras novas em sete capítulos sem nenhuma imagem (20/08/2026)
+
+O autor apontou que o documento tem "sem muita informação gráfica e de
+imagens de um conjunto compressor real, suas partes e a física e função
+de cada parte". Levantamento por capítulo confirmou: dos 17 capítulos da
+Parte I (física/componentes, Caps. 2-18), **sete não tinham nenhuma
+figura** — Cap. 4 (motor), 6 (transmissão — não atacado nesta sessão,
+ver abaixo), 11 (estágio HP), 12 (circuito de óleo), 13 (válvulas), 14
+(aftercooler/separador) e 16 (vaso pulmão) — mais o Cap. 18
+(instrumentação), que tinha a Tabela 18.1 mas nenhuma imagem localizando
+os 9 pontos A-I. Escopo confirmado com o autor via `AskUserQuestion`
+antes de começar (duas perguntas: quais lacunas atacar — todas as 7
+oferecidas foram escolhidas — e se buscar foto real de licença livre
+antes de cair para render 3D — confirmado que sim, mesma prioridade já
+registrada em [[prefere-figuras-realistas-3d]]).
+
+**Metodologia de busca de foto real**: um fork (`general-purpose`) pesquisou
+candidatas no Wikimedia Commons para motor, vaso de pressão, PSV, válvula
+de retenção, trocador casco-tubo e separador ciclônico, com a mesma
+disciplina de veracidade já exigida para bibliografia — só reportar
+candidata com URL da página, texto exato da licença, autor e título
+confirmados por `WebFetch`, nunca "parece livre". Das 6 pesquisadas, 5
+tinham candidata; todas as 5 foram baixadas e inspecionadas visualmente
+(`Read` sobre o JPEG) antes de qualquer decisão — 3 se mostraram boas o
+suficiente para o livro (motor, PSV, trocador casco-tubo); as outras 2
+(válvula de retenção, separador ciclônico) tinham qualidade ruim (baixa
+resolução, fundo de oficina desorganizado, carimbo de data queimado na
+imagem) e foram descartadas em favor de render 3D — decisão tomada por
+inspeção visual direta, não por presunção.
+
+**Três fotos reais usadas** (recortadas via `convert`/ImageMagick para
+remover fundo de feira/oficina, convertidas para PDF, License verificada
+e creditada no `\caption{}`, mesma disciplina de
+[[feedback-verificar-referencias-sempre]] estendida de citação
+bibliográfica para imagem):
+- **Fig. 4.1** (`figuras/fig_4_1_motor.pdf`) — motor de indução
+  trifásico real, caixa de ligação aberta expondo os terminais das três
+  fases (liga direto com $V_{L,1..3}$/$I_{1..3}$ da Equação 4.8). Foto de
+  S.J. de Waard, *Electric motor make MarelliMotori*, Wikimedia Commons,
+  CC BY 2.5.
+- **Fig. 13.1** (`figuras/fig_13_1_valvulas.pdf`) — duas PSVs industriais
+  reais, corpo flangeado e mola de ajuste visíveis. Foto de
+  CEphoto/Uwe Aranas, Wikimedia Commons, CC BY-SA 3.0.
+- **Fig. 14.1** (`figuras/fig_14_1_aftercooler.pdf`) — trocador
+  casco-tubo real com cabeçote aberto para manutenção, feixe de tubos
+  exposto. Foto de Saud (SAF1999), Wikimedia Commons, CC BY-SA 4.0.
+
+**Cinco figuras novas em render 3D** (`scripts/gen_figuras.py`), mesmo
+estilo já estabelecido pela Fig. 2.3 (primitivas `_caixa_quads`/
+`_cil_quads`/`_engrenagem_quads` já existentes, mais um helper novo,
+`_frustum_quads`, para corpos cônicos/troncos de cone — necessário para
+o separador ciclônico e as cabeças toriesféricas do vaso de pressão) —
+com o mesmo cuidado de acabamento de superfície já exigido desde a
+Fig. 2.3 (nervuras, flanges, pés, tampas de inspeção, não só primitivos
+lisos):
+- **Fig. 11.1** (`fig_estagio_hp()` → `fig_11_1_estagio_hp.pdf`):
+  elemento compressor HP isolado — carcaça com nervuras, carcaça de
+  mancais/engrenagens de sincronismo, coto de eixo com flange de
+  acoplamento, bocais de sucção/descarga.
+- **Fig. 12.1** (`fig_circuito_oleo()` → `fig_12_1_circuito_oleo.pdf`):
+  todo o trajeto físico do óleo — reservatório, bomba, deaerador,
+  válvula termostática de 3 vias (bypass/resfriador), resfriador de
+  óleo, mancais/gearbox, com a linha de retorno em cor distinta.
+- **Fig. 14.2** (`fig_separador3d()` → `fig_14_2_separador.pdf`):
+  separador ciclônico — entrada tangencial, corpo cônico, saída de ar
+  central (*vortex finder*), dreno de condensado.
+- **Fig. 16.1** (`fig_vaso_pulmao()` → `fig_16_1_vaso_pulmao.pdf`): vaso
+  pulmão horizontal — cabeças toriesféricas aproximadas por troncos de
+  cone, selas de apoio, bocais de entrada/saída, PSV, dreno.
+- **Fig. 18.1** (`fig_instrumentacao()` → `fig_18_1_instrumentacao.pdf`):
+  única figura 2D desta leva (diagrama de blocos, mesma família da
+  Fig. 2.2 já aceita) — os 9 pontos A-I da Tabela 18.1 na ordem física
+  real do trem, em duas linhas (A-E, F-I) com seta de continuidade entre
+  elas.
+
+**Dois bugs de convenção de eixos, achados e corrigidos por inspeção
+visual antes de integrar ao `.tex`** (registrar para não repetir — ver
+"Três armadilhas" na seção "Figuras" acima, que já alertava para erro de
+ordem de eixo em `_cil_quads`): a primeira versão da Fig. 11.1 trocou
+Y↔Z em três lugares (tampa de inspeção, pés de fixação, bocal de
+descarga) — resultado visual óbvio (uma caixa preta enorme cortando a
+carcaça ao meio) que só apareceu ao renderizar e inspecionar via `Read`
+sobre o PNG gerado por `pdftoppm`, não pela leitura do código. Corrigido
+e reverificado antes de prosseguir. **Lição reforçada**: sempre
+renderizar e inspecionar visualmente cada figura 3D nova antes de
+integrá-la ao `.tex`, nunca confiar que a geometria "deve estar certa"
+pelos números.
+
+**Um problema de legibilidade impresso, também achado só depois de
+compilar a página real** (não bastou aprovar a figura isolada): a
+Fig. 18.1 (instrumentação), com as 9 caixas numa linha só a 0,80\textwidth,
+imprimia com fonte praticamente ilegível — o aviso "sempre conferir a
+figura na página real, não só isolada" (já registrado para o Beamer em
+16/08/2026) se generaliza para qualquer figura densa em texto. Corrigida
+reorganizando em duas linhas (A-E / F-I) com caixas maiores — mesma
+largura de página, fonte quase o dobro.
+
+**Extensão da convenção de largura de figura**: as 3 categorias
+estabelecidas (0.60/0.75/0.80, ver "Diagramação — convenções" acima)
+foram pensadas para gráficos matplotlib. As fotos reais (retrato, motor e
+PSV) ficariam desproporcionalmente grandes nessas larguras — usadas em
+**0.55\textwidth** (motor, PSV) e o separador ciclônico compacto em
+**0.42\textwidth** (mesma largura já usada para o thumbnail da capa, mas
+aqui por ser uma figura vertical estreita, não por ser um caso especial
+de capa). Registrado aqui como extensão deliberada da convenção, não um
+desvio ad-hoc — categorias novas para fotos verticais/estreitas, mantendo
+0.60/0.75/0.80 para o que já usavam.
+
+**Verificação**: compilação limpa em 3 passagens, 177→182 páginas, 0
+referências indefinidas, 0 labels duplicados (fora o `page.1` conhecido),
+overfull hboxes em 36 — mesmo baseline, sem regressão, 0 severos (>20pt).
+Nenhum símbolo novo (todas as figuras reaproveitam grandezas já
+existentes na Nomenclatura). Todas as 8 páginas de figura nova
+renderizadas via `pdftoppm` e inspecionadas visualmente uma a uma antes
+de considerar a sessão concluída — não só a Lista de Figuras. `git diff`
+em `scripts/gen_figuras.py` limitado às novas funções (`_frustum_quads`,
+`_cena3d_base`/`_fecha_cena3d`/`_piso3d` como helpers de dedução do
+`fig_conjunto3d()` original, `fig_estagio_hp`, `fig_circuito_oleo`,
+`fig_separador3d`, `fig_vaso_pulmao`, `fig_instrumentacao`) — nenhuma
+função existente foi alterada.
+
+**Não atacado nesta sessão**: Capítulo 6 (Engenharia do Trem de
+Transmissão e Matriz de Confiabilidade) continua sem nenhuma figura —
+não estava entre as 7 opções oferecidas ao autor (o Cap. 8, que cobre
+engrenamento/rolamentos em detalhe físico maior, já tem 3 figuras, então
+não foi incluído na lista original de lacunas). Candidato natural para
+uma sessão futura se o autor quiser fechar a última lacuna da Parte I.
+
+**Nada foi commitado ainda** — aguardando revisão do autor, como sempre.
+
+## Correção: 3 fotos reais trocadas por render 3D, vaso pulmão de horizontal para vertical (20/08/2026)
+
+Feedback do autor sobre a leva de 8 figuras acima: "alguns equipamentos
+das fotos não têm relação a elementos de compressores de ar e as
+dimensões dos mesmos, outra parte é que os vasos pulmões são verticais".
+Esclarecido via `AskUserQuestion` qual das 3 fotos trocar — o autor
+escolheu **todas as três**:
+
+- **Fig. 4.1 (motor)**: a foto real (MarelliMotori, feira comercial) não
+  tinha relação explícita com compressor nem escala aparente.
+- **Fig. 13.1 (PSV)**: fotografada em contexto de obra/tubulação de
+  processo, porte possivelmente desproporcional ao de um compressor de
+  parafuso.
+- **Fig. 14.1 (aftercooler)**: a foto real era de um **chiller de
+  refrigeração**, não de um aftercooler de ar comprimido — mesma família
+  construtiva (casco-tubo), aplicação diferente. Este era o caso mais
+  claro de "sem relação com elementos de compressores de ar".
+
+Todas as três substituídas por render 3D no mesmo estilo já estabelecido
+(`fig_motor3d()`, `fig_valvula_psv3d()`, `fig_aftercooler3d()`, novas em
+`scripts/gen_figuras.py`), preservando a informação didática que cada
+foto trazia (motor: caixa de ligação trifásica aberta; PSV: corpo
+flangeado, capuz da mola, alavanca de teste; aftercooler: cabeçote aberto
+expondo o espelho tubular — reproduzido no render via uma grade de tocos
+de tubo). Texto e legenda de cada figura no `.tex` também atualizados
+(removida a menção a "foto real"/crédito CC, adicionado "Esquema
+ilustrativo, não um desenho de projeto", mesmo padrão das outras figuras
+3D). Larguras ajustadas para a proporção real de cada render (motor
+0.70, PSV 0.40, aftercooler 0.75 — antes eram todas 0.55, herdadas do
+recorte das fotos-retrato).
+
+**Vaso pulmão (Fig. 16.1) corrigido de horizontal para vertical** — o
+autor apontou que vasos pulmão são verticais (orientação real de
+plataforma offshore, menor área de piso ocupada). `fig_vaso_pulmao()`
+reescrita com o casco ao longo de Z em vez de X, pernas de apoio (4,
+colunas) em vez de selas horizontais, bocal de entrada próximo à base e
+de saída próximo ao topo. Texto/legenda do Cap. 16 atualizados de
+"horizontal" para "vertical", com a justificativa de área de piso
+adicionada à frase.
+
+**Dois bugs de convenção de eixo (Y↔Z), achados de novo por inspeção
+visual antes de integrar** — mesma classe de erro já documentada na
+entrada anterior, reforça que é um ponto real de atenção nesta família de
+funções:
+1. Os dois bocais de água de resfriamento da Fig. 14.1 (`fig_aftercooler3d`,
+   eixo `"y"`) foram escritos com a posição ao longo do casco no
+   parâmetro `c1` (interpretado como coordenada Z) em vez de `c2` — o
+   resultado visual foi um bocal "flutuando" bem acima do casco, sem
+   tocar a superfície, óbvio ao renderizar mas não ao ler o código.
+   Corrigido trocando `c1`/`c2`.
+2. Os bocais do vaso pulmão vertical inicialmente tinham comprimento
+   curto demais (0,10 unidade) para ficarem visíveis a partir da
+   superfície do casco em qualquer ângulo de câmera — não é bug de
+   eixo, mas o mesmo tipo de defeito só percebido ao renderizar
+   (geometria matematicamente correta, mas praticamente invisível).
+   Corrigido alongando os bocais para ~0,45 unidade.
+
+**Verificação**: compilação limpa em 3 passagens, 182→180 páginas
+(textos de legenda mais curtos que as versões com crédito fotográfico),
+0 referências indefinidas, 0 labels duplicados (fora o `page.1`
+conhecido), overfull hboxes em 36 — mesmo baseline, sem regressão, 0
+severos. As 4 páginas alteradas (Figs. 4.1, 13.1, 14.1, 16.1)
+renderizadas via `pdftoppm` e inspecionadas visualmente uma a uma,
+texto e figura conferidos como consistentes entre si (nenhuma menção
+remanescente a "fotografia"/licença CC nas legendas das 3 trocadas,
+nenhuma menção a "horizontal" no Cap. 16). `git status` limpo — só
+`compressores.tex`, `compressores.pdf`, `scripts/gen_figuras.py` e este
+arquivo modificados; as 8 PDFs de figura em `figuras/` são as mesmas já
+não rastreadas da entrada anterior (não commitadas ainda).
+
+**Nada foi commitado ainda** — aguardando revisão do autor, como sempre.
+
+
+## Glossário bilíngue de anglicismos (23/08/2026)
+
+Inserida seção `\section*{Glossário de Anglicismos}` com
+`\addcontentsline{toc}{section}{Glossário de Anglicismos}` ao final do livro,
+entre o fim do Capítulo 29 (Estudo de Caso Integrado) e o ambiente
+`thebibliography`. A seção é não numerada e entra no sumário como entrada de
+primeiro nível, posicionando-se como material de referência após o corpo
+técnico e antes da bibliografia.
+
+A tabela usa `longtable` com duas colunas (termo em inglês em itálico e
+significado em português), cabeçalho repetido nas continuações e aproximadamente
+40 termos técnicos de uso consolidado na literatura de compressores de parafuso
+e de Gêmeos Digitais: airend, gearbox, aftercooler, intercooler, check valve,
+blow-down, blow-by, skid, offloading, standby, setpoint, backlash, spalling,
+pre-heating, surrogate model, header, model drift, soft-sensors, entre outros.
+
+Ajustadas as primeiras ocorrências no corpo do texto para o padrão
+``termo em português (\textit{termo em inglês})'', garantindo que o leitor
+encontre a versão em português antes de ver o anglicismo usado isoladamente ao
+longo dos capítulos.
+
+**Verificação**: compilação limpa em 3 passagens, 181 páginas, 0 referências
+indefinidas, 0 labels duplicados (fora o `page.1` conhecido), 36 overfull hboxes
+— mesmo baseline das sessões anteriores, sem regressão. Três warnings de
+`hyperref` na linha 1497 permanecem, preexistentes e não relacionados ao
+glossário. As páginas 174–175 do PDF foram renderizadas via `pdftoppm` e
+inspecionadas visualmente: a tabela está legível, a quebra de página ocorre de
+forma natural e o cabeçalho de continuação funciona corretamente na página
+seguinte.
+
+**Nada foi commitado ainda** — aguardando revisão do autor, como sempre.

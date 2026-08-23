@@ -63,7 +63,7 @@
 
 % --- Identificação de volume/revisão (coleção versionada, ver CONTEXTO.md) ---
 \newcommand{\colecaotitulo}{Enciclopédia de Máquinas Rotodinâmicas}
-\newcommand{\volumeatual}{Volume I}
+\newcommand{\volumeatual}{Volume II}
 \newcommand{\revdata}{Rev. 26/07/2026}
 
 % --- Identidade visual dos capítulos (\section = capítulo nesta classe article) ---
@@ -577,7 +577,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{itemize}
 		\item \textbf{Transdutores de Pressão:} Instalados em pontos estratégicos para monitorar perdas de carga ($\Delta P_{\text{filtros}}$).
 		\item \textbf{Medidores de Vazão:} Sensores que quantificam o consumo real da plataforma.
-		\item \textbf{Lógica de Controle:} Mantém a pressão de rede em um \textit{setpoint} ajustando a rampa do VSD.
+		\item \textbf{Lógica de Controle:} Mantém a pressão de rede em um valor de ajuste (\textit{setpoint}) ajustando a rampa do VSD.
 	\end{itemize}
 
 	\subsection{\textbf{Fechamento Térmico do Invólucro}}
@@ -602,12 +602,12 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\clearpage
 	\section{\textbf{Detalhamento de Componentes, Acessórios e Instrumentação}}
 	
-	Antes de detalhar cada subsistema individualmente, é útil visualizar o coração do pacote: o elemento compressor (airend), onde os dois rotores helicoidais executam fisicamente a compressão. A Figura~\ref{fig:3-1} apresenta o par de rotores em perspectiva tridimensional, obtida por varredura helicoidal do mesmo perfil de engrenamento assimétrico $5{:}6$ já apresentado na Figura~\ref{fig:2-2}: o rotor macho (à direita) recebe uma torção total de $300^\circ$ ao longo do comprimento, enquanto a fêmea gira em sentido contrário com hélice oposta, na razão $5/6$ da torção do macho — exatamente a relação cinemática que mantém o contato de vedação contínuo durante a rotação. Os tocos de eixo nas extremidades são os assentos dos rolamentos e, no lado de acionamento, a interface com a caixa multiplicadora (gearbox). As subseções seguintes detalham os blocos que cercam esse núcleo — motor elétrico, acoplamento, gearbox e acessórios — e sua instrumentação associada, seguindo a mesma organização por subsistema já consolidada na literatura de referência sobre tecnologia de compressores \cite{bloch}.
+	Antes de detalhar cada subsistema individualmente, é útil visualizar o coração do pacote: o elemento compressor (\textit{airend}), onde os dois rotores helicoidais executam fisicamente a compressão. A Figura~\ref{fig:3-1} apresenta o par de rotores em perspectiva tridimensional, obtida por varredura helicoidal do mesmo perfil de engrenamento assimétrico $5{:}6$ já apresentado na Figura~\ref{fig:2-2}: o rotor macho (à direita) recebe uma torção total de $300^\circ$ ao longo do comprimento, enquanto a fêmea gira em sentido contrário com hélice oposta, na razão $5/6$ da torção do macho — exatamente a relação cinemática que mantém o contato de vedação contínuo durante a rotação. Os tocos de eixo nas extremidades são os assentos dos rolamentos e, no lado de acionamento, a interface com a caixa multiplicadora (\textit{gearbox}). As subseções seguintes detalham os blocos que cercam esse núcleo — motor elétrico, acoplamento, gearbox e acessórios — e sua instrumentação associada, seguindo a mesma organização por subsistema já consolidada na literatura de referência sobre tecnologia de compressores \cite{bloch}.
 
 	\begin{figure}[h!tbp]
 		\centering
 		\includegraphics[width=0.80\textwidth]{figuras/fig_3_1_parafuso3d.pdf}
-		\caption[Par de rotores helicoidais do elemento compressor (3D)]{Par de rotores helicoidais do elemento compressor (airend) em perspectiva 3D, gerado por varredura helicoidal do perfil de engrenamento da Figura~\ref{fig:2-2} (torção de $300^\circ$ no rotor macho, relação $5{:}6$, hélices opostas). Elaboração 3D original do autor; perfil 2D adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0.}
+		\caption[Par de rotores helicoidais do elemento compressor (3D)]{Par de rotores helicoidais do elemento compressor (\textit{airend}) em perspectiva 3D, gerado por varredura helicoidal do perfil de engrenamento da Figura~\ref{fig:2-2} (torção de $300^\circ$ no rotor macho, relação $5{:}6$, hélices opostas). Elaboração 3D original do autor; perfil 2D adaptado de \textit{Asymmetric Screw Compressor Rotor Mesh}, Slashme, Wikimedia Commons, licença CC BY-SA 4.0.}
 		\label{fig:3-1}
 	\end{figure}
 
@@ -629,7 +629,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	\subsection{\textbf{Resfriamento e Drenagem}}
 	\begin{itemize}
-		\item \textbf{Aftercooler:} É o trocador de calor final do pacote, posicionado logo após a descarga do último estágio de compressão (HP) e antes da filtragem/secagem. Sua função é reduzir a temperatura do ar — tipicamente acima de $100\,^{\circ}\text{C}$ na saída do estágio HP — para um patamar compatível com os elementos filtrantes e, principalmente, para forçar a condensação da umidade que o ar carrega antes que ela chegue ao secador PSA (detalhado no Capítulo de Secagem). Normalmente é resfriado a água do mar ou a ar ambiente, conforme a disponibilidade na plataforma. Sua taxa de rejeição térmica, Equação~\eqref{eq:s3-2}, segue a forma clássica de projeto de trocadores — coeficiente global de transferência ($U$, que piora com incrustação/\textit{fouling}) vezes área de troca ($A$, fixa por projeto) vezes a diferença de temperatura média logarítmica ($\Delta T_{\text{LMTD}}$, detalhada no Capítulo de Dinâmica do Intercooler):
+		\item \textbf{Resfriador final (\textit{aftercooler}):} É o trocador de calor final do pacote, posicionado logo após a descarga do último estágio de compressão (HP) e antes da filtragem/secagem. Sua função é reduzir a temperatura do ar — tipicamente acima de $100\,^{\circ}\text{C}$ na saída do estágio HP — para um patamar compatível com os elementos filtrantes e, principalmente, para forçar a condensação da umidade que o ar carrega antes que ela chegue ao secador PSA (detalhado no Capítulo de Secagem). Normalmente é resfriado a água do mar ou a ar ambiente, conforme a disponibilidade na plataforma. Sua taxa de rejeição térmica, Equação~\eqref{eq:s3-2}, segue a forma clássica de projeto de trocadores — coeficiente global de transferência ($U$, que piora com incrustação/\textit{fouling}) vezes área de troca ($A$, fixa por projeto) vezes a diferença de temperatura média logarítmica ($\Delta T_{\text{LMTD}}$, detalhada no Capítulo de Dinâmica do Intercooler):
 		\begin{equation}\label{eq:s3-2}
  \dot{Q} = U \cdot A \cdot \Delta T_{\text{LMTD}}
 \end{equation}
@@ -722,8 +722,15 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\end{itemize}
 	
 	\subsection{\textbf{Motor Elétrico de Indução Trifásico}}
-	O motor é modelado através de seu circuito equivalente em regime permanente, permitindo a detecção de anomalias eletromagnéticas; a determinação de perdas e rendimento a partir de ensaios segue a metodologia normatizada pela IEC 60034-2-1 \cite{iec60034}.
-	
+	O motor é modelado através de seu circuito equivalente em regime permanente, permitindo a detecção de anomalias eletromagnéticas; a determinação de perdas e rendimento a partir de ensaios segue a metodologia normatizada pela IEC 60034-2-1 \cite{iec60034}. A Figura~\ref{fig:4-1} mostra o motor de indução trifásico deste trem, em perspectiva 3D, com a caixa de ligação aberta expondo os terminais das três fases ($V_{L,1}$, $V_{L,2}$, $V_{L,3}$ da Equação~\eqref{eq:s4-8}), as aletas de refrigeração, os pés de fixação e o acoplamento do lado de acionamento.
+
+	\begin{figure}[h!tbp]
+		\centering
+		\includegraphics[width=0.70\textwidth]{figuras/fig_4_1_motor.pdf}
+		\caption[Motor de indução trifásico industrial]{Motor de indução trifásico industrial, em perspectiva 3D — aletas de refrigeração, caixa de ligação das três fases, pés de fixação e acoplamento. Esquema ilustrativo, não um desenho de projeto.}
+		\label{fig:4-1}
+	\end{figure}
+
 	\begin{itemize}
 		\item \textbf{Cinemática e Escorregamento ($s$):}
 		A rotação síncrona $n_s$ e o escorregamento $s$ são calculados pela Equação~\eqref{eq:s4-4} para determinar a carga real no compressor:
@@ -768,7 +775,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 			\item \textbf{Indicador:} Padrão de craterização (\textit{fluting}) visível em inspeção de pista de rolamento; em campo, pico recorrente de corrente de eixo medido por sonda de corrente dedicada (\textit{shaft grounding} instrumentado), cuja progressão acompanha o histórico de operação do VSD (tempo em carga, frequência de chaveamento).
 			\item \textbf{Mitigação (acessórios):} Rolamento isolado eletricamente no lado oposto ao acoplamento (\textit{Non-Drive End}), anel de aterramento de eixo (\textit{shaft grounding ring}) que oferece um caminho de descarga de baixa impedância alternativo ao rolamento, e filtro de modo comum na saída do VSD.
 		\end{itemize}
-		\item \textbf{Aquecedores Anticondensação (\textit{Space Heaters}):} Resistências de baixa potência instaladas no enrolamento do motor, energizadas somente com a máquina parada, cuja função é manter o enrolamento acima do ponto de orvalho do ar ambiente circundante — em atmosfera offshore salina e saturada, um motor parado e frio condensa umidade internamente a cada ciclo de resfriamento noturno, degradando o isolamento por via elétrica (trilhas de umidade, corrosão dos contatos) muito antes que a via térmica da Equação~\eqref{eq:s4-7} se torne relevante. É o acessório que protege especificamente a unidade em \textit{standby} da frota (Capítulo 16): quanto mais tempo uma máquina permanece parada aguardando comando de partida, maior a janela de exposição à condensação, e é exatamente nesse cenário — parada prolongada em atmosfera salina saturada — que o aquecedor anticondensação atua.
+		\item \textbf{Aquecedores Anticondensação (\textit{Space Heaters}):} Resistências de baixa potência instaladas no enrolamento do motor, energizadas somente com a máquina parada, cuja função é manter o enrolamento acima do ponto de orvalho do ar ambiente circundante — em atmosfera offshore salina e saturada, um motor parado e frio condensa umidade internamente a cada ciclo de resfriamento noturno, degradando o isolamento por via elétrica (trilhas de umidade, corrosão dos contatos) muito antes que a via térmica da Equação~\eqref{eq:s4-7} se torne relevante. É o acessório que protege especificamente a unidade em reserva (\textit{standby}) da frota (Capítulo 16): quanto mais tempo uma máquina permanece parada aguardando comando de partida, maior a janela de exposição à condensação, e é exatamente nesse cenário — parada prolongada em atmosfera salina saturada — que o aquecedor anticondensação atua.
 	\end{enumerate}
 
 	\subsection{\textbf{Equação de Acoplamento Global}}
@@ -900,7 +907,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 
 	\subsection{\textbf{Resfriamento e Separação de Condensado}}
 	\begin{itemize}
-		\item \textbf{Intercooler e Aftercooler:} Trocadores de calor que removem a energia térmica da compressão. A taxa de calor removido, na Equação~\eqref{eq:s5-10}, segue a forma padrão de projeto de trocadores: coeficiente global de transferência ($U$) vezes área de troca térmica ($A$) vezes a diferença de temperatura média logarítmica ($\Delta T_{\text{LMTD}}$, detalhada no Capítulo de Dinâmica do Intercooler):
+		\item \textbf{Resfriador intermediário e final (\textit{intercooler} e \textit{aftercooler}):} Trocadores de calor que removem a energia térmica da compressão. A taxa de calor removido, na Equação~\eqref{eq:s5-10}, segue a forma padrão de projeto de trocadores: coeficiente global de transferência ($U$) vezes área de troca térmica ($A$) vezes a diferença de temperatura média logarítmica ($\Delta T_{\text{LMTD}}$, detalhada no Capítulo de Dinâmica do Intercooler):
 		\begin{equation}\label{eq:s5-10}
  \dot{Q} = U \cdot A \cdot \Delta T_{\text{LMTD}}
 \end{equation}
@@ -914,8 +921,8 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	
 	\subsection{\textbf{Válvulas de Controle e Segurança}}
 	\begin{itemize}
-		\item \textbf{Válvula de Retenção (Check Valve):} Impede o fluxo reverso do reservatório para o compressor na parada.
-		\item \textbf{Válvula de Alívio (Blow-down):} Despressuriza o sistema interno para permitir a partida em vazio (\textit{unloaded start}).
+		\item \textbf{Válvula de retenção (\textit{check valve}):} Impede o fluxo reverso do reservatório para o compressor na parada.
+		\item \textbf{Válvula de alívio (\textit{blow-down}):} Despressuriza o sistema interno para permitir a partida em vazio (\textit{unloaded start}).
 	\end{itemize}
 	
 	\subsection{\textbf{Equacionamento Integrado e Balanço de Potência}}
@@ -953,7 +960,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\begin{equation}\label{eq:s5-15}
  \Delta P_{\text{linha}} = f_D \cdot \frac{L_{\text{linha}}}{D_{\text{linha}}} \cdot \frac{\rho \, v^2}{2}
 \end{equation}
-	Onde $f_D$ é o fator de atrito de Darcy (função do número de Reynolds e da rugosidade relativa da tubulação \cite{white}), $L_{\text{linha}}$ o comprimento do trecho e $D_{\text{linha}}$ seu diâmetro interno. Cada trecho interestágios (descarga LP$\to$intercooler, intercooler$\to$sucção HP, descarga HP$\to$aftercooler) tem sua própria Equação~\eqref{eq:s5-15}, com $f_D$, $L_{\text{linha}}$ e $D_{\text{linha}}$ específicos daquele trecho. O efeito prático é uma pequena correção à pressão usada nas Equações~\eqref{eq:s5-5}, \eqref{eq:s5-8}/\eqref{eq:s5-9} e~\eqref{eq:s5-14}: a pressão de sucção do estágio seguinte é a pressão de descarga do estágio anterior \textbf{menos} a Equação~\eqref{eq:s5-15} do trecho que os liga, não o mesmo valor de $P_{\text{int}}$ usado até aqui por simplificação. Em linhas curtas e bem dimensionadas dentro do próprio pacote (\textit{skid}), essa correção costuma ser pequena frente às demais perdas do capítulo — mas cresce com o desgaste (rugosidade interna por corrosão/incrustação, que eleva $f_D$ ao longo da vida da instalação) e deve ser tratada como mais um sintoma rastreável pelo Gêmeo Digital, não descartada por ser pequena no comissionamento.
+	Onde $f_D$ é o fator de atrito de Darcy (função do número de Reynolds e da rugosidade relativa da tubulação \cite{white}), $L_{\text{linha}}$ o comprimento do trecho e $D_{\text{linha}}$ seu diâmetro interno. Cada trecho interestágios (descarga LP$\to$intercooler, intercooler$\to$sucção HP, descarga HP$\to$aftercooler) tem sua própria Equação~\eqref{eq:s5-15}, com $f_D$, $L_{\text{linha}}$ e $D_{\text{linha}}$ específicos daquele trecho. O efeito prático é uma pequena correção à pressão usada nas Equações~\eqref{eq:s5-5}, \eqref{eq:s5-8}/\eqref{eq:s5-9} e~\eqref{eq:s5-14}: a pressão de sucção do estágio seguinte é a pressão de descarga do estágio anterior \textbf{menos} a Equação~\eqref{eq:s5-15} do trecho que os liga, não o mesmo valor de $P_{\text{int}}$ usado até aqui por simplificação. Em linhas curtas e bem dimensionadas dentro da própria base estrutural do pacote (\textit{skid}), essa correção costuma ser pequena frente às demais perdas do capítulo — mas cresce com o desgaste (rugosidade interna por corrosão/incrustação, que eleva $f_D$ ao longo da vida da instalação) e deve ser tratada como mais um sintoma rastreável pelo Gêmeo Digital, não descartada por ser pequena no comissionamento.
 
 	\subsection{\textbf{Perda de Carga Parametrizada em Válvulas de Alívio e Retenção}}
 
@@ -1039,7 +1046,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 		\begin{equation}\label{eq:s6-5}
  \Delta \theta = \frac{\tau \cdot L}{G \cdot J_p}
 \end{equation}
-		\item \textbf{Risco Crítico:} Se $\Delta \theta$ exceder o \textit{backlash} de projeto, ocorre contato metal-metal. O Gêmeo Digital detecta isso via \textit{Motor Current Signature Analysis} (MCSA).
+		\item \textbf{Risco Crítico:} Se $\Delta \theta$ exceder a folga angular (\textit{backlash}) de projeto, ocorre contato metal-metal. O Gêmeo Digital detecta isso via \textit{Motor Current Signature Analysis} (MCSA).
 	\end{itemize}
 	
 	\subsection{\textbf{Diagnóstico por Resíduos de Potência}}
@@ -1246,7 +1253,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 			\label{fig:8-3}
 		\end{figure}
 
-		\item \textbf{Indicadores de Falha:} O modelo monitora frequências de pista externa (BPFO), interna (BPFI) e elementos rolantes (BSF), utilizando a \textit{Curtose} e o \textit{Fator de Crista} para identificar o início de \textit{spalling}.
+		\item \textbf{Indicadores de Falha:} O modelo monitora frequências de pista externa (BPFO), interna (BPFI) e elementos rolantes (BSF), utilizando a \textit{Curtose} e o \textit{Fator de Crista} para identificar o início de lascamento (\textit{spalling}).
 	\end{itemize}
 
 	\subsection{\textbf{Rotordinâmica e Velocidade Crítica}}
@@ -1372,7 +1379,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 			\caption[Eficiência volumétrica em função da folga]{Eficiência volumétrica em função da folga do rotor, para diferentes razões de pressão do estágio.}
 			\label{fig:9-1}
 		\end{figure}
-		\item \textbf{Fluxo de Massa de Fuga ($\dot{m}_{\text{leak}}$):} Modelado como escoamento compressível através de orifícios. O ar que retorna das câmaras de alta pressão reaquece o ar de sucção (\textit{pre-heating}), pela Equação~\eqref{eq:s9-4}:
+		\item \textbf{Fluxo de Massa de Fuga ($\dot{m}_{\text{leak}}$):} Modelado como escoamento compressível através de orifícios. O ar que retorna das câmaras de alta pressão reaquece o ar de sucção por pré-aquecimento (\textit{pre-heating}), pela Equação~\eqref{eq:s9-4}:
 		\begin{equation}\label{eq:s9-4}
  T_{\text{suc,eff}} = \frac{\dot{m}_{\text{in}} T_{\text{in}} + \dot{m}_{\text{leak}} T_{\text{leak}}}{\dot{m}_{\text{in}} + \dot{m}_{\text{leak}}} 
 \end{equation}
@@ -1515,7 +1522,7 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\clearpage
 	\section{\textbf{Dinâmica do Intercooler, Gestão de Condensado e Distúrbios de Rede}}
 	
-	Este capítulo detalha a modelagem do resfriamento intermediário, integrando a termodinâmica de troca térmica, a psicrometria de condensação e a distinção entre falhas internas e distúrbios operacionais externos, como o impacto térmico de operações de \textit{offloading}.
+	Este capítulo detalha a modelagem do resfriamento intermediário, integrando a termodinâmica de troca térmica, a psicrometria de condensação e a distinção entre falhas internas e distúrbios operacionais externos, como o impacto térmico de operações de sobrecarga de utilidade (\textit{offloading}).
 	
 	\subsection{\textbf{Termodinâmica de Troca Térmica e Efetividade}}
 	O intercooler opera como um trocador de calor de correntes cruzadas ou contracorrente. A taxa de transferência de calor ($\dot{Q}$) é governada pelo balanço de energia e pela equação de transferência global, na Equação~\eqref{eq:s10-1}:
@@ -1656,8 +1663,15 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\clearpage
 	\section{\textbf{Estágio de Alta Pressão (HP), Sincronismo e Integridade Mecânica}}
 	
-	O estágio de Alta Pressão (HP) representa o maior desafio para o Gêmeo Digital, operando sob condições extremas de temperatura e pressão diferencial ($\Delta P$). Neste estágio, as folgas são reduzidas e qualquer desvio mecânico ou térmico pode resultar em falhas catastróficas.
-	
+	O estágio de Alta Pressão (HP) representa o maior desafio para o Gêmeo Digital, operando sob condições extremas de temperatura e pressão diferencial ($\Delta P$). Neste estágio, as folgas são reduzidas e qualquer desvio mecânico ou térmico pode resultar em falhas catastróficas. A Figura~\ref{fig:11-1} mostra o elemento compressor HP isolado da cadeia — mais compacto que o estágio LP da Figura~\ref{fig:2-3} pela razão já discutida no Capítulo de Arquitetura (maior pressão, menor vazão volumétrica) —, com a carcaça de mancais/engrenagens de sincronismo destacada, o coto de eixo com flange de acoplamento do lado de acionamento e os bocais de sucção (topo, vindo do intercooler) e descarga.
+
+	\begin{figure}[h!tbp]
+		\centering
+		\includegraphics[width=0.75\textwidth]{figuras/fig_11_1_estagio_hp.pdf}
+		\caption[Elemento compressor do estágio HP isolado]{Elemento compressor do estágio HP isolado, em perspectiva 3D — carcaça, mancais/engrenagens de sincronismo, coto de eixo e bocais de sucção/descarga. Esquema ilustrativo, não um desenho de projeto.}
+		\label{fig:11-1}
+	\end{figure}
+
 	\subsection{\textbf{Termodinâmica e Performance do Estágio HP}}
 	A compressão no estágio HP é modelada como um processo politrópico real, onde o índice $n$ reflete as perdas internas e a eficiência do resfriamento da carcaça. A Equação~\eqref{eq:s11-1} não é correlação empírica de fabricante: descende da expressão do trabalho de escoamento em processo internamente reversível, $w = \int v\,dP$, aplicada à relação politrópica $P v^{n} = \text{const.}$ — desenvolvimento clássico apresentado por Moran e colaboradores nos capítulos de entropia e de sistemas de potência a gás \cite[Cap.~6 e 9]{moran}. A Equação~\eqref{eq:s11-2} logo a seguir já não é politrópica — troca $n$ por $\gamma$ e divide por $\eta_{is}$, mesma formulação isentrópica-com-eficiência da Equação~\eqref{eq:s10-4} — mas soma às perdas termodinâmicas as perdas mecânicas de rolamentos e engrenagens de sincronismo, que a relação puramente politrópica de $T_{HP,\text{out}}$ não captura.
 	
@@ -1786,7 +1800,14 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\clearpage
 	\section{\textbf{Sistema de Lubrificação e Gestão Térmica}}
 
-	Este capítulo revisita o circuito de óleo já introduzido no Capítulo de Trem de Potência e detalhado no Capítulo de Sistema de Lubrificação, agora sob a ótica específica da gestão térmica do conjunto gearbox/mancais em condições de carga do estágio HP. Como o compressor deste documento é isento de óleo na câmara de compressão (nenhum óleo entra em contato com o ar de processo — ver Capítulo de Arquitetura), o papel do óleo aqui é exclusivamente remover o calor gerado por atrito na caixa multiplicadora e nos mancais e devolvê-lo já resfriado ao circuito; o Gêmeo Digital monitora esse balanço térmico e a integridade do elemento deaerador em tempo real.
+	Este capítulo revisita o circuito de óleo já introduzido no Capítulo de Trem de Potência e detalhado no Capítulo de Sistema de Lubrificação, agora sob a ótica específica da gestão térmica do conjunto gearbox/mancais em condições de carga do estágio HP. Como o compressor deste documento é isento de óleo na câmara de compressão (nenhum óleo entra em contato com o ar de processo — ver Capítulo de Arquitetura), o papel do óleo aqui é exclusivamente remover o calor gerado por atrito na caixa multiplicadora e nos mancais e devolvê-lo já resfriado ao circuito; o Gêmeo Digital monitora esse balanço térmico e a integridade do elemento deaerador em tempo real. A Figura~\ref{fig:12-1} apresenta o trajeto físico completo do óleo — do reservatório à bomba, ao deaerador, à válvula termostática de três vias (que reparte a vazão entre o ramal do resfriador e o \textit{bypass} direto, Equação~\eqref{eq:s12-6}), até os mancais/gearbox, com a linha de retorno de volta ao reservatório em cor distinta.
+
+	\begin{figure}[h!tbp]
+		\centering
+		\includegraphics[width=0.80\textwidth]{figuras/fig_12_1_circuito_oleo.pdf}
+		\caption[Circuito de óleo de lubrificação e arrefecimento]{Circuito de óleo de lubrificação e arrefecimento, em perspectiva 3D — reservatório, bomba, deaerador, válvula termostática de três vias, resfriador de óleo e retorno aos mancais/gearbox. Esquema ilustrativo, não um desenho de projeto.}
+		\label{fig:12-1}
+	\end{figure}
 
 	\subsection{\textbf{Balanço de Energia do Circuito de Óleo}}
 	A taxa de calor que o óleo remove do conjunto gearbox/mancais ($\dot{Q}_{\text{óleo}}$) é a mesma potência de atrito dissipada nesses componentes (Equações~\eqref{eq:s6-3}, \eqref{eq:s6-4} e \eqref{eq:s7-4}) — é fundamental mantê-la dentro da capacidade do resfriador para não elevar a temperatura de operação dos mancais além do limite do lubrificante — Equação~\eqref{eq:s12-1}:
@@ -1918,6 +1939,15 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\end{enumerate}
 	
 	\subsection{\textbf{Dinâmica de \textit{Blow-down} e Modulação VFD}}
+	Diferente da válvula de admissão, interna à máquina, a válvula de segurança (PSV) já descrita como acessório no Capítulo de Detalhamento de Componentes é um exemplo isolável e visível da mesma classe funcional — um elemento puramente mecânico, sem lógica de controle, cuja degradação de assento é modelada pelo mesmo coeficiente $\zeta_{\text{valv}}$ da Equação~\eqref{eq:s5-16} usado para a válvula de \textit{blow-down} e para a de retenção. A Figura~\ref{fig:13-1} mostra esse tipo de válvula em perspectiva 3D, com o corpo flangeado, a mola de ajuste sob o capuz (o mesmo elemento que define a pressão de disparo $P_{\text{set}}$ da Tabela~\ref{tab:16-1}) e a alavanca de teste manual no topo.
+
+	\begin{figure}[h!tbp]
+		\centering
+		\includegraphics[width=0.40\textwidth]{figuras/fig_13_1_valvulas.pdf}
+		\caption[Válvula de segurança industrial (PSV)]{Válvula de segurança (PSV) industrial, em perspectiva 3D — flange de entrada, corpo, flange do capuz, capuz da mola de ajuste e alavanca de teste manual. Esquema ilustrativo, não um desenho de projeto.}
+		\label{fig:13-1}
+	\end{figure}
+
 	Quando a máquina passa para alívio, a válvula de \textit{blow-down} despressuriza o volume interno entre o elemento compressor e a válvula de retenção. Esse esvaziamento não é instantâneo: o ar escoa por um orifício de área fixa, e a pressão decai de forma aproximadamente exponencial a partir do valor de operação até a pressão de alívio residual, conforme a Equação~\eqref{eq:s13-5}. A constante de tempo $\tau_{bd}$ agrega a geometria do orifício de descarga e o volume a despressurizar — quanto maior o volume interno ou menor o orifício, mais lento o alívio:
 	\begin{equation}\label{eq:s13-5}
  P(t) = P_{\text{alívio}} + (P_{\text{max}} - P_{\text{alívio}}) \cdotp e^{-t/\tau_{bd}}
@@ -1993,8 +2023,15 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	Este capítulo detalha a modelagem do resfriamento posterior e da remoção de contaminantes líquidos. O Gêmeo Digital atua nesta etapa para garantir que o ar entregue à secadora PSA esteja dentro dos limites de temperatura e saturação, protegendo a integridade do material dessecante.
 	
 	\subsection{Termodinâmica do Aftercooler (Resfriador Posterior)}
-	O aftercooler é o trocador de calor final do processo de geração. Sua função é reduzir a temperatura de descarga do estágio HP ($T_{d,hp}$) para níveis compatíveis com os elementos de filtragem e secagem. As duas grandezas que o descrevem — a efetividade e o coeficiente global de transferência — não são específicas deste equipamento: são as do método $\epsilon$--NTU e da definição de resistência térmica global, formulação-padrão de análise de trocadores de calor \cite[Cap.~11]{incropera}, aqui apenas particularizada para o par ar comprimido/água de resfriamento.
-	
+	O aftercooler é o trocador de calor final do processo de geração. Sua função é reduzir a temperatura de descarga do estágio HP ($T_{d,hp}$) para níveis compatíveis com os elementos de filtragem e secagem. As duas grandezas que o descrevem — a efetividade e o coeficiente global de transferência — não são específicas deste equipamento: são as do método $\epsilon$--NTU e da definição de resistência térmica global, formulação-padrão de análise de trocadores de calor \cite[Cap.~11]{incropera}, aqui apenas particularizada para o par ar comprimido/água de resfriamento. A Figura~\ref{fig:14-1} mostra o aftercooler em perspectiva 3D, com um cabeçote aberto expondo o espelho tubular — é justamente essa superfície de tubos, multiplicada pelo número de unidades no feixe, que compõe a área $A$ da Equação~\eqref{eq:s14-2} adiante, e cuja obstrução progressiva (incrustação, depósito) é o que a monitoração de $U$ detecta.
+
+	\begin{figure}[h!tbp]
+		\centering
+		\includegraphics[width=0.75\textwidth]{figuras/fig_14_1_aftercooler.pdf}
+		\caption[Trocador de calor casco-tubo, feixe de tubos exposto]{Aftercooler (trocador casco-tubo), em perspectiva 3D — cabeçote aberto expondo o espelho tubular, bocais de ar (quente/resfriado) e de água de resfriamento. Esquema ilustrativo, não um desenho de projeto.}
+		\label{fig:14-1}
+	\end{figure}
+
 	\begin{itemize}
 		\item \textbf{Efetividade Térmica ($\epsilon_{ac}$):} Mesma lógica de efetividade já usada no intercooler e no resfriador de óleo: a Equação~\eqref{eq:s14-1} compara a queda de temperatura real do ar ($T_{d,hp} - T_{ac,out}$) com a máxima queda teoricamente possível, limitada pela temperatura de entrada da água de resfriamento ($T_{d,hp} - T_{w,in}$):
 		\begin{equation}\label{eq:s14-1}
@@ -2008,7 +2045,15 @@ Este documento une termodinâmica clássica, mecânica e aprendizado de máquina
 	\end{itemize}
 	
 	\subsection{Modelagem da Condensação e Separação de Umidade}
-	A redução da temperatura sob alta pressão provoca a transição de fase do vapor d'água para o estado líquido.
+	A redução da temperatura sob alta pressão provoca a transição de fase do vapor d'água para o estado líquido. A Figura~\ref{fig:14-2} esquematiza o separador ciclônico logo a seguir descrito: o ar úmido entra tangencialmente, o corpo cônico acelera o escoamento em espiral e a força centrífuga lança as gotículas mais densas contra a parede, de onde escorrem para o dreno na base, enquanto o ar já separado sai pelo tubo central (\textit{vortex finder}) no topo — é exatamente essa velocidade tangencial excessiva, mencionada no item seguinte, que compromete essa separação e causa o arraste.
+
+	\begin{figure}[h!tbp]
+		\centering
+		\includegraphics[width=0.42\textwidth]{figuras/fig_14_2_separador.pdf}
+		\caption[Separador ciclônico de condensado]{Separador ciclônico de condensado, em perspectiva 3D — entrada tangencial, corpo cônico, saída de ar central e dreno de condensado na base. Esquema ilustrativo, não um desenho de projeto.}
+		\label{fig:14-2}
+	\end{figure}
+
 	\begin{itemize}
 		\item \textbf{Taxa de Condensação Mássica ($\dot{m}_{cond}$):} Toda a água que o ar carregava na entrada, acima do que ele ainda consegue reter na saturação à temperatura de saída, precipita como líquido — a Equação~\eqref{eq:s14-3} calcula essa massa de condensado como a vazão de ar seco vezes a queda na razão de umidade:
 		\begin{equation}\label{eq:s14-3}
@@ -2291,7 +2336,14 @@ HI_{des} = \frac{\Delta P_{nom}}{\Delta P_{real}} \cdot \frac{PDP_{target} + 273
 \clearpage
 \section{Distribuição e Armazenamento (Header e Vasos Pulmão)}
 
-Nesta etapa, o Gêmeo Digital gerencia a integração de múltiplos compressores operando em paralelo e a distribuição do ar comprimido para os diferentes setores da unidade offshore. O sistema utiliza uma lógica de controle escalonada para garantir que, em cenários de perda de geração ou vazamentos críticos, o suprimento para os sistemas de segurança seja preservado através do fechamento seletivo de ramais.
+Nesta etapa, o Gêmeo Digital gerencia a integração de múltiplos compressores operando em paralelo e a distribuição do ar comprimido para os diferentes setores da unidade offshore. O sistema utiliza uma lógica de controle escalonada para garantir que, em cenários de perda de geração ou vazamentos críticos, o suprimento para os sistemas de segurança seja preservado através do fechamento seletivo de ramais. A Figura~\ref{fig:16-1} mostra o vaso pulmão vertical típico dessa etapa — orientação preferida em plataformas offshore pela menor área de piso ocupada frente a um vaso horizontal de mesmo volume — com casco cilíndrico, cabeças toriesféricas, pernas de apoio, bocal de entrada (vindo da rede de descarga dos compressores, próximo à base), bocal de saída (para o coletor de distribuição setorizado (\textit{header}), próximo ao topo), a PSV que protege esse mesmo vaso (Tabela~\ref{tab:16-1}) e o dreno de condensado na base.
+
+\begin{figure}[h!tbp]
+	\centering
+	\includegraphics[width=0.48\textwidth]{figuras/fig_16_1_vaso_pulmao.pdf}
+	\caption[Vaso pulmão vertical (\textit{air receiver})]{Vaso pulmão vertical (\textit{air receiver}), em perspectiva 3D — casco, cabeças toriesféricas, pernas de apoio, bocais de entrada/saída, PSV e dreno. Esquema ilustrativo, não um desenho de projeto.}
+	\label{fig:16-1}
+\end{figure}
 
 \subsection{Dinâmica de Fluxo e Header de Distribuição Setorizada}
 
@@ -2512,7 +2564,14 @@ Este capítulo estabelece a síntese definitiva do Gêmeo Digital, integrando a 
 
 \subsection{Matriz Abrangente de Variáveis, Localização e Instrumentação}
 
-A observabilidade total do sistema — condição necessária para que o Filtro de Kalman Estendido do Capítulo 21 consiga estimar o estado interno da máquina — é garantida pelo monitoramento combinado de variáveis \textbf{reais}, lidas diretamente de um sensor físico, e \textbf{virtuais} (\textit{soft-sensors}), calculadas pelo modelo a partir das primeiras. A Tabela~\ref{tab:18-1} consolida esse mapeamento completo em seis colunas: o \textbf{ponto} de instalação (rotulado de A a I ao longo do trem de compressão, do MCC ao \textit{header} de distribuição), o \textbf{subsistema} correspondente, a \textbf{grandeza} monitorada, o \textbf{símbolo} usado no equacionamento deste documento, a \textbf{unidade} SI adotada e a \textbf{função} daquela medição no diagnóstico.
+A observabilidade total do sistema — condição necessária para que o Filtro de Kalman Estendido do Capítulo 21 consiga estimar o estado interno da máquina — é garantida pelo monitoramento combinado de variáveis \textbf{reais}, lidas diretamente de um sensor físico, e \textbf{virtuais} (\textit{soft-sensors}), calculadas pelo modelo a partir das primeiras. A Tabela~\ref{tab:18-1} consolida esse mapeamento completo em seis colunas: o \textbf{ponto} de instalação (rotulado de A a I ao longo do trem de compressão, do MCC ao \textit{header} de distribuição), o \textbf{subsistema} correspondente, a \textbf{grandeza} monitorada, o \textbf{símbolo} usado no equacionamento deste documento, a \textbf{unidade} SI adotada e a \textbf{função} daquela medição no diagnóstico. Antes da tabela em si, a Figura~\ref{fig:18-1} localiza esses nove pontos na própria ordem física do trem — do MCC/relé (A) ao \textit{header} (I) —, com os principais símbolos de cada ponto, para orientar a leitura detalhada que segue.
+
+\begin{figure}[h!tbp]
+	\centering
+	\includegraphics[width=0.80\textwidth]{figuras/fig_18_1_instrumentacao.pdf}
+	\caption[Localização dos pontos de instrumentação A-I]{Localização dos nove pontos de instrumentação (A-I) ao longo da ordem física do trem de compressão, com os principais símbolos monitorados em cada um.}
+	\label{fig:18-1}
+\end{figure}
 
 Duas leituras dessa tabela são úteis. Na horizontal, ela funciona como especificação de instrumentação: cada linha corresponde a um requisito de projeto verificável na lista de instrumentos da planta. Na vertical, agrupada por ponto, ela revela a densidade de medição de cada subsistema — e é aí que se identificam as lacunas de observabilidade, isto é, os pontos onde o Gêmeo Digital depende inteiramente de inferência por modelo porque não há sensor físico disponível. Essas lacunas não são falhas de projeto: instrumentar diretamente a câmara de compressão de um rotor girando a milhares de RPM é impraticável, e é justamente por isso que o \textit{soft-sensor} existe. Mas elas precisam estar explícitas, porque determinam onde a incerteza do modelo (Capítulo 25) é maior e onde a validação física do PIML (Capítulo 23) é mais crítica.
 
@@ -3200,7 +3259,7 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	Segundo, o treinamento de PINNs é notoriamente mais difícil de convergir que o de redes convencionais. O panorama de otimização é mal condicionado, e patologias de gradiente entre os termos são frequentes — daí a necessidade do balanceamento adaptativo descrito acima.
 
-	Terceiro, o benchmarking do campo ainda é imaturo: comparações justas entre PINNs e solvers numéricos clássicos são escassas, e para problemas em que já existe um solver rápido e confiável, a PINN pode não oferecer vantagem alguma. Neste projeto a justificativa é específica e deve ser mantida à vista: substituir simulações CFD caras por um modelo substituto (\textit{surrogate}) que responde em milissegundos, viabilizando o uso em laço de controle — e não superar o CFD em acurácia.
+	Terceiro, o benchmarking do campo ainda é imaturo: comparações justas entre PINNs e solvers numéricos clássicos são escassas, e para problemas em que já existe um solver rápido e confiável, a PINN pode não oferecer vantagem alguma. Neste projeto a justificativa é específica e deve ser mantida à vista: substituir simulações CFD caras por um modelo substituto (\textit{surrogate model}) que responde em milissegundos, viabilizando o uso em laço de controle — e não superar o CFD em acurácia.
 
 	\subsection{Divisão de Papéis entre PIML e EKF}
 
@@ -3916,6 +3975,66 @@ Esta seção descreve a extensão metodológica, não uma implementação de ref
 \textbf{Diretriz Técnica Final:} Nenhum dos sete algoritmos da Tabela~\ref{tab:29-2}, isolado, sustentaria o diagnóstico deste capítulo — é a cadeia completa, cada elo consumindo a saída do anterior, que transforma três desvios individualmente irrelevantes numa janela de manutenção quantificada com incerteza. Esse é o argumento central deste documento, e a razão de a Parte I (física verificável) ter precedido a Parte II (algoritmos que dependem inteiramente dessa física para terem qualquer validade): um Gêmeo Digital que pulasse a Parte I e treinasse o EKF, o VAE e o PIML direto sobre dados históricos, sem o modelo físico como espinha dorsal, não teria como distinguir desgaste de folga de incrustação de intercooler no exemplo acima — teria, na melhor das hipóteses, um alarme genérico sem causa-raiz, exatamente o que este documento se propôs a evitar desde o Capítulo 1. A Equação~\eqref{eq:s29-2} aponta o caminho de generalização dessa mesma arquitetura para além do cenário único: o princípio de resíduo mínimo que resolve este capítulo já é, em essência, uma busca sobre hipóteses — só falta estendê-la, com dados sintéticos sistemáticos, ao catálogo inteiro da Tabela~\ref{tab:28-2}.
 
 % --- Fim do Capítulo 29 ---
+
+\clearpage
+\section*{Glossário de Anglicismos}
+\addcontentsline{toc}{section}{Glossário de Anglicismos}
+
+Os termos abaixo são empregados no texto no original inglês por serem de uso consolidado na literatura técnica de compressores de parafuso e de Gêmeos Digitais. A primeira ocorrência de cada um no corpo do livro aparece na forma ``termo em português (\textit{termo em inglês})'', mantendo o original acessível ao leitor familiarizado com a terminologia internacional.
+
+\begin{longtable}{p{4.0cm} p{10.0cm}}
+\toprule
+\textbf{Termo (inglês)} & \textbf{Significado em português} \\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{{\bfseries Glossário de Anglicismos (continuação)}} \\
+\toprule
+\textbf{Termo (inglês)} & \textbf{Significado em português} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\textit{aftercooler} & Resfriador final do ar comprimido, posicionado após o estágio de alta pressão (HP). \\
+\textit{airend} & Elemento compressor propriamente dito; par de rotores helicoidais onde ocorre a compressão. \\
+\textit{backlash} & Folga angular deliberada entre os flancos dos dentes de uma engrenagem. \\
+\textit{blow-by} & Passagem de gás comprimido através das folgas de vedação, sem fazer trabalho útil. \\
+\textit{blow-down} & Alívio rápido de pressão interna do compressor para permitir partida em vazio. \\
+\textit{blow-hole} & Triângulo de fuga formado entre rotor macho, fêmea e carcaça em compressores de parafuso. \\
+\textit{bull gear} & Coroa principal da caixa multiplicadora, acionada pelo motor. \\
+\textit{canopy} & Invólucro acústico do pacote compressor; barreira de ruído e gabinete de ventilação. \\
+\textit{check valve} & Válvula de retenção; permite fluxo em um único sentido. \\
+\textit{choked flow} & Escoamento bloqueado ou sônico, em que a vazão deixa de depender da pressão a jusante. \\
+\textit{coating} & Revestimento superficial dos rotores ou componentes. \\
+\textit{derating} & Desclassificação ou redução da capacidade nominal por condição adversa de operação. \\
+\textit{discharge port} & Porta ou aresta de descarga do rotor; ponto onde o gás comprimido é liberado. \\
+\textit{fluting} & Craterização em pista de rolamento causada por correntes de eixo (EDM). \\
+\textit{fouling} & Incrustação ou acúmulo de depósitos em superfícies de troca térmica. \\
+\textit{gearbox} & Caixa multiplicadora de velocidade; conjunto de engrenagens entre motor e rotores. \\
+\textit{header} & Coletor de distribuição de ar comprimido; ramal principal que alimenta os setores da planta. \\
+\textit{hood} & Invólucro ou gabinete do pacote compressor, frequentemente com ventilação forçada. \\
+\textit{intercooler} & Resfriador intermediário entre os estágios LP e HP. \\
+\textit{load shedding} & Alívio de carga seletivo; desligamento de consumidores de menor prioridade em contingência. \\
+\textit{model drift} & Deriva do modelo de aprendizado de máquina causada por mudança na distribuição dos dados de entrada. \\
+\textit{noise floor} & Nível de ruído de fundo de um espectro de vibração. \\
+\textit{offloading} & Sobrecarga térmica do sistema de resfriamento causada por demanda de outros consumidores. \\
+\textit{oil-free} & Isento de óleo; compressor em que o óleo não entra em contato com o ar de processo. \\
+\textit{pitting} & Fadiga de contato superficial em engrenamentos ou pistas de rolamento. \\
+\textit{pre-heating} & Pré-aquecimento do ar de sucção pelo calor de fuga de câmaras de alta pressão. \\
+\textit{rubbing} & Contato metal-metal entre rotor e carcaça. \\
+\textit{scuffing} & Escamamento ou adereço causado por falha do filme de óleo em engrenagens. \\
+\textit{setpoint} & Valor de ajuste ou consigna de um controlador. \\
+\textit{shaft grounding} & Aterramento de eixo; dispositivo que dá caminho de baixa impedância para correntes parasitas. \\
+\textit{skid} & Base estrutural montada do pacote compressor, pronta para instalação. \\
+\textit{soft-sensors} & Sensores virtuais; grandezas inferidas pelo modelo a partir de outras medições. \\
+\textit{space heaters} & Aquecedores anticondensação instalados no enrolamento do motor parado. \\
+\textit{spalling} & Lascamento de material em pistas ou elementos rolantes de rolamento. \\
+\textit{standby} & Estado de reserva; máquina parada e disponível para partida. \\
+\textit{stuck open} & Travado aberto; falha de válvula que impede o fechamento completo. \\
+\textit{surrogate model} & Modelo substituto rápido, treinado para aproximar um simulador mais custoso. \\
+\textit{timing gears} & Engrenagens de sincronismo que mantêm a relação de fase entre os rotores. \\
+\textit{trip} & Disparo de proteção; desligamento automático comandado por relé ou lógica de segurança. \\
+\bottomrule
+\end{longtable}
 
 \newpage
 \begin{thebibliography}{99}
