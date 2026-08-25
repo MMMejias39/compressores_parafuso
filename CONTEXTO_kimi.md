@@ -8,17 +8,21 @@ as convenções, o estado atual e a postura esperada de colaboração.
 
 ## 2. Visão geral
 
-Este repositório contém dois artefatos principais que andam juntos:
+Este repositório contém três artefatos principais que andam juntos:
 
-1. **O livro** (`compressores.tex` → `compressores.pdf`): *Gêmeo Digital de
-   Sistemas de Compressão Offshore*, Volume II da coleção *Enciclopédia de
-   Máquinas Rotodinâmicas*. Trata de compressores de parafuso rotativo isentos
-   de óleo em plantas offshore: física dos componentes (motor, gearbox,
-   rotores, resfriamento, secagem PSA, vasos, instrumentação) e metodologia de
-   Gêmeo Digital (EKF, VAE, PIML, MPC, PSO, catálogo de falhas).
-2. **O aplicativo** (`aplicativo/`): simulador web em Streamlit que implementa
-   boa parte do livro. Cada equação do código cita a equação correspondente no
-   livro. Tem 7 abas, incluindo a nova aba "Painel de Falhas".
+1. **O livro — Volume I** (`teorias.tex` → `teorias.pdf`): *Fundamentos de
+   Mecânica do Contínuo, Termofluidos e Sistemas de Medição*, Volume I da
+   coleção *Enciclopédia de Máquinas Rotodinâmicas*. Reúne os fundamentos de
+   mecânica do contínuo, termodinâmica, mecânica dos fluidos, transferência de
+   calor, sistemas de transferência, eletricidade, mecânica e instrumentação.
+2. **O livro — Volume II** (`compressores.tex` → `compressores.pdf`): *Gêmeo
+   Digital de Sistemas de Compressão Offshore*, Volume II da mesma coleção.
+   Trata de compressores de parafuso rotativo isentos de óleo em plantas
+   offshore e a metodologia de Gêmeo Digital (EKF, VAE, PIML, MPC, PSO,
+   catálogo de falhas).
+3. **O aplicativo** (`aplicativo/`): simulador web em Streamlit que implementa
+   boa parte do Volume II. Cada equação do código cita a equação correspondente
+   no livro. Tem 7 abas, incluindo a nova aba "Painel de Falhas".
 
 Objetivo declarado: menor consumo energético, menor CO2eq e manutenção preditiva
 baseada em condição real.
@@ -26,10 +30,12 @@ baseada em condição real.
 ## 3. Estrutura do repositório
 
 ```
-├── compressores.tex          # fonte do livro
-├── compressores.pdf          # PDF gerado
+├── teorias.tex               # fonte do Volume I
+├── teorias.pdf               # PDF gerado do Volume I
+├── compressores.tex          # fonte do Volume II
+├── compressores.pdf          # PDF gerado do Volume II
 ├── apresentacao_compressores.tex / .pdf  # apresentação Beamer derivada
-├── CONTEXTO.md               # histórico cronológico do livro
+├── CONTEXTO.md               # histórico cronológico dos livros
 ├── CONTEXTO_app.md           # histórico cronológico do app
 ├── CONTEXTO_kimi.md          # este arquivo
 ├── README.md                 # entrada geral do repositório
@@ -69,15 +75,22 @@ Sobre autoria: a direção intelectual, o juízo de engenharia, a arquitetura do
 
 ## 5. Convenções técnicas
 
-### Livro (`compressores.tex`)
+### Livros (`teorias.tex` e `compressores.tex`)
 
 - Compilar com `pdflatex` 3 vezes.
-- Equações numeradas com `\label{eq:s<cap>-<n>}`.
+- Volume I: equações numeradas com `\label{eq:v1-c<cap>-<n>}`.
+- Volume II: equações numeradas com `\label{eq:s<cap>-<n>}`.
 - Figuras em `figuras/fig_<cap>_<n>_<desc>.pdf`.
 - Três larguras de figura: 0.60, 0.75, 0.80 `\textwidth` para gráficos; 0.55
   para fotos verticais/estreitas.
 - `longtable` para tabelas longas.
-- Nomenclatura centralizada no início.
+- Nomenclatura centralizada no início. Colisões de símbolo entre capítulos são
+  sinalizadas na própria tabela, no formato "não confundir com..."; quando uma
+  colisão é mantida de propósito (por compatibilidade com o Volume II ou com a
+  literatura da disciplina), isso é declarado na abertura do capítulo.
+- Referência nova só entra depois de conferida contra a fonte real. Quando o
+  Volume II já traz o `bibitem` validado, copie-o *verbatim* em vez de
+  redigir outro.
 
 ### App (`aplicativo/`)
 
@@ -90,7 +103,27 @@ Sobre autoria: a direção intelectual, o juízo de engenharia, a arquitetura do
 
 ## 6. Estado atual (resumo)
 
-### Livro
+### Livro — Volume I (`teorias.tex`)
+- Criado em 23/08/2026: esqueleto completo com capa, prefácio, sumário,
+  nomenclatura, 10 capítulos e bibliografia.
+- 58 páginas (24/08/2026), compilação limpa em 3 passagens, 0 referências
+  indefinidas, 2 overfull hbox preexistentes e menores que 5 pt.
+- **Expansão em andamento, capítulo a capítulo.** Já expandidos ao padrão
+  "base física → hipótese com limites de validade → relações constitutivas →
+  especializações": Cap. 2 Mecânica do Contínuo (725 linhas), Cap. 3
+  Termodinâmica (464), Cap. 7 Fundamentos de Eletricidade (1005, reescrito em
+  24/08/2026).
+- **Ainda no esqueleto da primeira versão** — listas de fórmulas sem base
+  física, sem limites de validade e sem ligação com o Volume II: Cap. 4
+  Fluidos (86 linhas), Cap. 5 Transferência de Calor (92), Cap. 6 Sistemas
+  (55), Cap. 8 Mecânica (67), Cap. 9 Instrumentação (76). Sugestão registrada
+  em `CONTEXTO.md`: continuar pelo Cap. 8, par natural do Cap. 7.
+- Sem nenhuma figura até o momento; `scripts/gen_figuras.py` é do Volume II.
+- Ao expandir um capítulo, siga o Cap. 2 como modelo de estrutura e o Cap. 7
+  como modelo de ligação com o Volume II (ver as duas tabelas de fechamento da
+  Seção 7.11).
+
+### Livro — Volume II (`compressores.tex`)
 - Última entrega: glossário bilíngue de anglicismos (seção não numerada entre
   Cap. 29 e a bibliografia, páginas 174–175 do PDF).
 - Antes disso: substituição de fotos reais por renders 3D (Figs. 4.1, 13.1,
@@ -109,8 +142,8 @@ Sobre autoria: a direção intelectual, o juízo de engenharia, a arquitetura do
 
 1. Ler `README.md`, `CONTEXTO.md` (fim) e `CONTEXTO_app.md` (fim).
 2. Verificar `git status` para saber o que ficou pendente.
-3. Se for mexer no livro: compilar 3× e inspecionar visualmente as páginas
-   afetadas.
+3. Se for mexer nos livros (`teorias.tex` ou `compressores.tex`): compilar 3×
+   e inspecionar visualmente as páginas afetadas.
 4. Se for mexer no app: rodar `pytest tests/` e abrir o Streamlit no
    navegador.
 5. Atualizar os `CONTEXTO*.md` correspondentes ao final da sessão, se o autor
@@ -128,4 +161,4 @@ Antes de declarar uma tarefa concluída:
 
 ---
 
-*Última atualização: 23/08/2026.*
+*Última atualização: 24/08/2026.*

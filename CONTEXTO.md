@@ -3252,3 +3252,151 @@ forma natural e o cabeçalho de continuação funciona corretamente na página
 seguinte.
 
 **Nada foi commitado ainda** — aguardando revisão do autor, como sempre.
+
+
+## Criação do Volume I — Fundamentos Teóricos (23/08/2026)
+
+Iniciado o **Volume I** da coleção *Enciclopédia de Máquinas Rotodinâmicas*:
+`teorias.tex` / `teorias.pdf`. O documento segue a mesma classe `article`,
+pacotes, identidade visual e convenções de numeração do Volume II
+(`compressores.tex`).
+
+**Título:** *Fundamentos de Mecânica do Contínuo, Termofluidos e Sistemas de
+Medição — Bases Teóricas para Máquinas Rotodinâmicas*.
+
+**Estrutura atual (esqueleto completo):**
+- Front matter: capa, dedicatória, prefácio, sumário, lista de figuras,
+  lista de tabelas, nomenclatura transversal.
+- 10 capítulos:
+  1. Introdução ao Volume I
+  2. Mecânica do Contínuo
+  3. Termodinâmica
+  4. Mecânica dos Fluidos
+  5. Transferência de Calor
+  6. Sistemas de Transferência de Massa e Energia
+  7. Fundamentos de Eletricidade
+  8. Fundamentos de Mecânica
+  9. Instrumentação e Medição
+  10. Síntese e Ligação com Máquinas Rotodinâmicas
+- Back matter: bibliografia com 14 referências gerais.
+
+Cada capítulo contém introdução motivadora, subseções temáticas, equações
+fundamentais numeradas com padrão `eq:v1-c<cap>-<n>` e uma ou mais tabelas de
+resumo. O conteúdo é intencionalmente resumido: trata-se de uma primeira
+versão navegável e uniforme, pronta para expansão pelo autor com sua própria
+didática e aprofundamento.
+
+**Notação:** mantida coerente com o Volume II sempre que possível, para que o
+leitor possa transitar entre os volumes sem redefinir símbolos. Grandezas
+vetoriais/tensoriais usam notação de negrito ($\mathbf{v}$,
+$\boldsymbol{\sigma}$).
+
+**Verificação:** compilação limpa em 3 passagens, 23 páginas, 0 referências
+indefinidas, 0 labels duplicados (fora o `page.1` conhecido). Nenhum overfull
+hbox severo (>20 pt). Houve um overfull inicial de 185 pt na tabela de
+sensores (Cap. 9), corrigido reduzindo as colunas e o tamanho da fonte da
+tabela. Alguns underfulls menores permanecem em células estreitas, aceitáveis
+para uma primeira versão.
+
+**Integração:** `README.md` atualizado para listar os dois volumes como
+artefatos separados e mencionar `teorias.tex`/`teorias.pdf` nas instruções de
+compilação.
+
+**Nada foi commitado ainda** — aguardando revisão do autor, como sempre.
+
+## Volume I — Reescrita do Cap. 7, Fundamentos de Eletricidade (24/08/2026)
+
+**Motivação (palavras do autor):** o Volume I precisava "melhorar a base
+teórica de elétrica", e o capítulo estava "indo muito à frente" do tratamento
+dado à Física e à Mecânica do Contínuo. O diagnóstico se confirmou na leitura:
+o Cap. 2 parte de Newton, Noether e do número de Knudsen antes de escrever
+qualquer equação de campo, enquanto o Cap. 7 começava direto na lei de Ohm — ou
+seja, entrava na disciplina depois do ponto em que as perguntas estruturais já
+teriam sido respondidas.
+
+**O que foi feito.** O Cap. 7 foi reescrito do zero, de 81 para ~1005 linhas
+(de 2 para 15 páginas no PDF), seguindo a mesma arquitetura do Cap. 2: base
+física → hipótese com critério quantitativo e limites de validade → relações
+constitutivas → especializações. Onze subseções, todas com `label`
+`sub:v1-c7-<slug>`, e 30 equações `eq:v1-c7-<n>`:
+
+- **7.1 Bases físicas** — conservação de carga como o caso $\mathcal{B}$ =
+  carga da Eq. (1.1) (prometido na introdução do volume e até então não
+  cumprido), Maxwell, Lorentz e Poynting. A força de Lorentz fecha
+  explicitamente a promessa deixada em `sub:v1-c2-bases`, que listava "ausência
+  de campos eletromagnéticos acoplados ao movimento" entre os limites da base
+  mecânica e remetia ao Cap. 7.
+- **7.2 Hipótese de parâmetros concentrados** — contraparte elétrica da
+  hipótese do contínuo: critério $\ell/\lambda_{em}\ll1$, Kirchhoff derivada de
+  Maxwell (e não postulada), e três modos de falha — reflexão de onda em cabo
+  longo, efeito pelicular, capacitâncias parasitas. É a seção que dá base física
+  aos três mecanismos de falha elétrica do Vol. II que a teoria de circuitos não
+  descreve.
+- **7.3 Relações constitutivas** — $\sigma_e(T)$, saturação magnética,
+  histerese e Steinmetz, com o mesmo estatuto epistemológico da
+  Seção `sub:v1-c2-constitutivas`: são medidas, não deduzidas.
+- **7.4–7.6** — fasores (com as duas condições de morte: linearidade e
+  frequência única), triângulo de potências, por que trifásico entrega potência
+  instantânea constante, THD e fator de distorção, componentes simétricas.
+- **7.7–7.10** — conversão eletromecânica por coenergia; torque como **tensão
+  de Maxwell** no entreferro, isto é, um vetor tensão no sentido do teorema de
+  Cauchy (`sub:v1-c2-tensao`) — daí o torque ser proporcional ao volume do
+  rotor; campo girante e máquina de indução; $V/f$ e tensão de modo comum;
+  perdas segregadas e observabilidade.
+- **7.11 Síntese** — duas tabelas de fechamento: premissas de cada resultado
+  (formato da Tab. 3.2) e um mapa "o que o Volume II usa → onde nasce aqui".
+
+**Resultados do Vol. II que deixaram de ser asserção e passaram a ter origem:**
+a perda de rotor igual a $s\,P_{ag}$ (Eq. 4.11) é derivada da repartição da
+potência de entreferro; a "baixa impedância de sequência negativa" que sustenta
+os índices de desbalanço NEMA (Eq. 4.8) ganha a razão física e o fator de
+amplificação de 5 a 6×; e a $V_{\text{modo\_comum}}$ do divisor capacitivo do
+EDM (Eq. 4.13) é derivada da topologia de seis chaves do inversor de dois
+níveis, em vez de assumida.
+
+**Correções de consistência entre volumes feitas de passagem:**
+- `n_s`: o Vol. I trazia $60f/p$ com $p$ = *pares* de polos e o Vol. II traz
+  $120f/p$ com $p$ = *polos*. Cada um correto isoladamente, incompatíveis entre
+  si. Padronizado pela convenção do Vol. II.
+- Cap. 8: $T = I\alpha$ colidia com temperatura ($T$, Caps. 3–5) e com corrente
+  ($I$, Cap. 7). Passou a $\tau = J_p\,\alpha$, e $E_c = \frac{1}{2}J_p\omega^2$,
+  alinhado ao $J_p$ já adotado no Vol. II.
+- Dentro do próprio Cap. 7, $\rho$ apareceria como massa específica,
+  resistividade e densidade de carga. Resolvido com $\rho$, $\rho_e$ e $\rho_q$.
+
+**Nomenclatura** ampliada com ~25 símbolos elétricos, cada colisão sinalizada no
+estilo já usado na tabela ("não confundir com..."), mais $J_p$ e $\tau$ na
+tabela mecânica. Duas colisões foram mantidas **de propósito** e estão
+declaradas na abertura do Cap. 7: $s$ (escorregamento × entropia específica) e
+$p$ (número de polos × pressão) — trocá-las isolaria o volume do Vol. II e da
+literatura de máquinas elétricas.
+
+**Bibliografia:** nenhuma referência nova foi inventada. Os três `bibitem`
+elétricos (`erdman`, `iec60034`, `nemamg1`) foram copiados *verbatim* do
+`compressores.tex`, onde o autor já os havia validado. As ordenadas exatas da
+curva de *derating* da NEMA MG 1 foram deliberadamente **não** citadas — só a
+forma qualitativa; se forem para o texto, devem ser copiadas da Parte 14 da
+norma. Se em algum momento forem desejadas fontes para Park/dq e eletrônica de
+potência, os candidatos naturais são Krause e Mohan, a conferir edição/ano
+antes de inserir.
+
+**Verificação:** `pdflatex` 3 passagens, 58 páginas, 0 referências ou citações
+indefinidas, 0 *overfull hbox* novo. Os dois que restam (0,8 pt no Cap. 2 e
+4,8 pt na tabela de sensores do Cap. 9) são preexistentes.
+
+**Estado real do Volume I após esta sessão** (o registro de 23/08/2026 acima,
+de "23 páginas, conteúdo resumido", está desatualizado): os Caps. 2 (Mecânica
+do Contínuo, 725 linhas) e 3 (Termodinâmica, 464 linhas) já haviam sido
+expandidos em sessão anterior não registrada aqui; o Cap. 7 (1005 linhas) foi
+expandido agora. **Continuam no esqueleto da primeira versão**, com listas de
+fórmulas sem base física, sem limites de validade e sem ligação com o Vol. II:
+Cap. 4 Fluidos (86 linhas), Cap. 5 Transferência de Calor (92), Cap. 6 Sistemas
+(55), Cap. 8 Mecânica (67) e Cap. 9 Instrumentação (76). A ordem sugerida para
+continuar é começar pelo Cap. 8, por ser o par natural do 7 — o torque que o
+Cap. 7 entrega entra ali — e por sustentar boa parte do catálogo de falhas do
+Vol. II.
+
+**Figuras:** o Volume I ainda não tem nenhuma. Duas ajudariam o Cap. 7 (curva
+torque–escorregamento e mapa do regime concentrado × propagação), mas
+introduzir a primeira figura do volume implica criar um gerador próprio —
+`scripts/gen_figuras.py` é do Volume II — e é decisão do autor.
