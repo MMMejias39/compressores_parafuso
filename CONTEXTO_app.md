@@ -1596,3 +1596,25 @@ EKF/VAE/PIML sobre ele para conferir se o algoritmo do livro de fato
 capturaria a falha; combinações de múltiplas falhas simultâneas (Eq. 29.2
 do livro, treino multi-mecanismo) seguem como pendência já documentada
 acima, sem gerador sistemático de dataset.
+
+---
+
+## Sessão 27/08/2026 — Transição para Rust 2.0, Vasos de Pressão ASME VIII, Trens Dinâmicos e Telemetria PI
+
+**Principais Implementações e Padronizações:**
+1. **Nova Aplicação Rust 2.0 (`compressor2/`)**:
+   - Desenvolvido workspace Cargo com `sim_core` (motor termodinâmico/IA) e `app` (servidor Axum + SPA Web).
+   - Suíte de 25 testes unitários em Rust cobrindo toda a física e convergência de algoritmos.
+2. **7 Nós Termodinâmicos & Pressão Atmosférica**:
+   - Ponto A (Atmosfera, $P_A = P_{amb}$) e Ponto B (Sucção pós-filtro sub-atmosférica com $\Delta P_{filtro}$).
+   - Sincronizado em Rust e Python (`sistema.rs` e `sistema.py`).
+3. **Visão Transiente e Vasos de Pressão ASME VIII Div. 1**:
+   - Equação diferencial contínua $\frac{dP}{dt} = \frac{RT}{V}(\dot{m}_{comp} - \dot{m}_{dem})$ acoplada à rampa VSD e histerese.
+   - Rastreamento estrutural de PMTA ($10.0\text{ bar}$) e $P_{mín}$ crítica ($6.0\text{ bar}$), com parametrização de $T_{sim}$ e $\Delta t$.
+4. **Topologia de Trens de Compressores em Paralelo**:
+   - Configuração dinâmica de $1$ a $12$ compressores e FAD unitário ($5\dots 80\text{ m}^3/\text{min}$).
+   - Presets industriais rápidos (*Padrão Industrial, FPSO Offshore, Grande Porte, Duplex*).
+5. **Telemetria OSIsoft PI System & ISA 18.2**:
+   - Mapeamento das 26+ tags da Tabela 18.1, gerador sintético e importador com validação EKF.
+6. **Auditoria de Acessibilidade Visual e Alto Contraste (WCAG 2.1 AA)**:
+   - Auditada automaticamente via Chrome Headless em todas as 7 telas com 0 falhas nos modos Claro e Escuro.

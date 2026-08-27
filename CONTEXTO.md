@@ -3400,3 +3400,24 @@ Vol. II.
 torque–escorregamento e mapa do regime concentrado × propagação), mas
 introduzir a primeira figura do volume implica criar um gerador próprio —
 `scripts/gen_figuras.py` é do Volume II — e é decisão do autor.
+
+---
+
+## Sessão 27/08/2026 — Reescrita Rust 2.0, Vasos de Pressão ASME VIII, Nós Termodinâmicos, Telemetria PI, Trens de Compressores e Auditoria Visual WCAG AA
+
+**Objetivos e Entregas Realizadas:**
+1. **Reescrita e Portabilidade Completa em Rust (Axum + Vanilla JS/Tailwind/Chart.js)**:
+   - Criado o workspace Cargo `compressor2/` contendo as crates `sim_core` e `app`.
+   - Implementada toda a termodinâmica, psicrometria, modelos de subsistemas, algoritmos de IA (EKF, PSO, MPC, Classificador causal bayesiano $\hat{m}_{falha}$) e supervisório de frota em Rust com 25 testes unitários aprovados (`cargo test --workspace`).
+2. **Formalização dos 7 Nós Termodinâmicos e Pressão Atmosférica**:
+   - Ponto A (Atmosfera/Ambiente, $P_A = P_{amb}$) e Ponto B (Sucção sub-atmosférica pós-filtro, $P_B = P_{amb} - \Delta P_{filtro} < P_{amb}$) modelados com depressão quadrática.
+   - Sincronização entre Rust e Python (`sistema.rs` e `sistema.py`).
+3. **Visão Transiente de Compressores e Vasos de Pressão (ASME VIII Div. 1)**:
+   - Integração diferencial contínua $\frac{dP_{vaso}}{dt} = \frac{RT}{V_{vaso}}(\dot{m}_{comp} - \dot{m}_{dem})$.
+   - Rastreamento estrutural de PMTA ($10.0\text{ bar}$) e $P_{mín}$ crítica ($6.0\text{ bar}$), com monitoramento de $(\frac{dP}{dt})_{max}$ e controle de horizonte $T_{sim}$ e passo $\Delta t$.
+4. **Topologia Flexível de Trens de Compressores & Paralelismo**:
+   - Configuração dinâmica de $1$ a $12$ compressores em paralelo, com FAD unitário customizável ($5.0$ a $80.0\text{ m}^3/\text{min}$) e filosofias de redundância ($N+0, N+1, 2N$).
+5. **Telemetria OSIsoft PI System & Gestão ISA 18.2**:
+   - Catálogo de 26+ tags da Tabela 18.1, gerador sintético calibrado com ruído gaussiano e ingestão com teste NIS $\chi^2$ via EKF.
+6. **Auditoria de Acessibilidade Visual e Alto Contraste (WCAG 2.1 Nível AA)**:
+   - Auditoria automatizada via Google Chrome Headless com 0 falhas de contraste nos temas Claro e Escuro.

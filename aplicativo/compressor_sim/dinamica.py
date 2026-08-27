@@ -83,13 +83,16 @@ def simular_transiente(
     # x_c parte já no valor de regime permanente da demanda inicial (Eq. 13.7)
     x_c = min(max(dem[0] / m_dot_cap, x_c_min), 1.0) if m_dot_cap > 0 else 0.0
 
+    p_in_arr = np.empty(n)
+    p_out_arr = np.empty(n)
+    status_vaso = []
+    
+    pmta_pa = p_set * 1.25  # PMTA padrão 25% acima de P_set (ASME VIII)
+    p_amb_base = 101325.0
+    dp_dt_max = 0.0
+
     for i in range(n):
         if modo == "VSD":
-            # Eq. 13.7 define x_c = V̇_demanda/V̇_nom só em regime permanente;
-            # a resposta do inversor a um degrau de demanda não é instantânea,
-            # por isso x_c persegue o alvo como uma rampa de 1ª ordem (τ_vsd,
-            # ASSUMIDO) em vez de saltar direto — sem isso dP/dt seria sempre
-            # ~0 e a pressão da rede nunca se moveria neste modo.
             x_c_alvo = min(max(dem[i] / m_dot_cap, x_c_min), 1.0) if m_dot_cap > 0 else 0.0
             x_c += (x_c_alvo - x_c) * min(dt / tau_vsd, 1.0)
             m_in = x_c * m_dot_cap
@@ -104,10 +107,35 @@ def simular_transiente(
             m_in = m_dot_cap if carregado else 0.0
             w = w_nom * (x_c + (1.0 - x_c) * k_ul)  # Eq. 13.7
 
-        p_arr[i], m_comp[i], x_c_arr[i], w_arr[i] = p, m_in, x_c, w
+        # Perda de carga de admissão (vácuo na sucção dependente da vazão)
+        dp_admissao = 2500.0 * (x_c * x_c)
+        p_in_comp = p_amb_base - dp_admissao
+        
+        # Descarga do compressor precisa vencer a contrapressão do vaso + perda dos trocadores
+        dp_pos = 0.3e5
+        p_out_comp = p + dp_pos
+
+        if p >= pmta_pa:
+            st = "🚨 ALÍVIO / PSV ABERTA (PMTA Excedida)"
+        elif p < p_limite:
+            st = "⚠️ SUBPRESSÃO CRÍTICA (Abaixo de P_min)"
+        elif x_c > 0.8:
+            st = "⚡ CARGA PLENA (Vaso em Enchimento)"
+        elif x_c < 0.2:
+            st = "💤 ALÍVIO / DESCARREGADO"
+        else:
+            st = "✅ OPERAÇÃO ESTÁVEL"
+
+        p_arr[i], p_in_arr[i], p_out_arr[i], m_comp[i], x_c_arr[i], w_arr[i] = p, p_in_comp, p_out_comp, m_in, x_c, w
+        status_vaso.append(st)
+
         # Eq. 16.4 / 13.4 — dP/dt = R·T/V · (ṁ_in − ṁ_out)
         if i < n - 1:
-            p += R_AR * t_k / v_vaso * (m_in - dem[i]) * dt
+            dp_dt = R_AR * t_k / v_vaso * (m_in - dem[i])
+            dp_dt_abs_min = abs(dp_dt) * 60.0 / 1e5
+            if dp_dt_abs_min > dp_dt_max:
+                dp_dt_max = dp_dt_abs_min
+            p += dp_dt * dt
             p = max(p, 0.5e5)  # limite físico inferior
 
     energia_kwh = float(np.trapezoid(w_arr, t) / 3.6e6)
@@ -125,21 +153,31 @@ def simular_transiente(
         n_ciclos = 0
         f_ciclo = 0.0
 
+    t_acima_pmta = float(np.sum(p_arr > pmta_pa) * dt / 60.0)
+
     return {
         "t_min": t / 60.0,
         "p_bar": p_arr / 1e5,
+        "p_in_bar": p_in_arr / 1e5,
+        "p_out_bar": p_out_arr / 1e5,
         "m_comp": m_comp,
         "m_dem": dem,
         "x_c": x_c_arr,
         "w_kw": w_arr / 1000.0,
+        "status_vaso": status_vaso,
         "kpis": {
             "energia_kwh": energia_kwh,
             "n_ciclos": n_ciclos,
             "f_ciclo_teorica_min": f_ciclo * 60.0,
             "t_abaixo_limite_min": float(np.sum(p_arr < p_limite) * dt / 60.0),
+            "t_acima_pmta_min": t_acima_pmta,
             "p_min_bar": float(p_arr.min() / 1e5),
             "p_max_bar": float(p_arr.max() / 1e5),
+            "pmta_bar": float(pmta_pa / 1e5),
+            "p_min_critica_bar": float(p_limite / 1e5),
+            "dp_dt_max_bar_min": float(dp_dt_max),
             "modo": modo,
+            "integridade_asme_ok": t_acima_pmta == 0.0,
         },
     }
 

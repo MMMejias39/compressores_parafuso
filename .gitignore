@@ -22,3 +22,13 @@ aplicativo/iniciar_simulador.desktop
 
 # Configuração local do Claude Code (pessoal, não compartilhada)
 .claude/settings.local.json
+
+# Rust & Cargo build artifacts
+target/
+**/target/
+Cargo.lock
+
+# Node.js & Puppeteer
+node_modules/
+**/node_modules/
+

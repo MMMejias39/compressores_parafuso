@@ -1,41 +1,20 @@
-"""App Streamlit — Simulador de Sistema de Ar Comprimido (compressor de parafuso).
+"""App Streamlit — Simulador Digital Twin e Treinamento de Falhas com Dados PI.
 
-Baseado nas equações do livro "Gêmeo Digital de Sistemas de Compressão
-Offshore" (compressores.tex). Executar a partir do diretório `aplicativo/`:
+Desenvolvido para compressores de parafuso industriais em unidades offshore (FPSOs e plataformas).
+Baseado nas equações e diretrizes do livro:
+"Enciclopédia de Máquinas Rotodinâmicas — Volume II: Gêmeo Digital de Sistemas de Compressão Offshore"
 
+Executar a partir do diretório `aplicativo/`:
     venv/bin/streamlit run app.py
-
-Abas:
-- "Operação estática": ponto de operação do trem completo (cascata steady-state);
-- "Dinâmica temporal": transiente de pressão da rede com controle VSD ou
-  carga/alívio (Eqs. 13.4, 13.7, 13.8, 16.4);
-- "Secagem PSA": rodízio de N torres PSA (Eq. 15.1) com topologia
-  configurável (N vasos por compressor ou N vasos compartilhados pela
-  planta);
-- "Gêmeo Digital (EKF/PSO)": os 5 algoritmos da Parte II — EKF, VAE, PIML,
-  MPC, PSO — incluindo os dois caminhos de identificação por problema
-  inverso (EKF com estado aumentado, Cap. 28; PIML, Cap. 23.8);
-- "Painel de Falhas": 10 mecanismos de falha da Tabela 28.2 (Cap. 28.3) que
-  têm hoje um parâmetro ASSUMIDO já implementado — injeta cada um
-  isoladamente (parâmetro saudável -> valor severo) e compara os KPIs
-  resultantes contra um limiar percentual simples. Cobertura parcial e
-  documentada como tal: os outros 46 mecanismos do catálogo exigiriam
-  física ainda não modelada neste app (compressor_sim/cenarios_falha.py);
-- "Configurações": geometria de equipamento e hiperparâmetros de
-  algoritmo que não mudam de uma sessão de análise para a outra — as
-  condições de operação do momento continuam na barra lateral;
-- "Dados Medidos": upload de referência (.xlsx/.csv) com a instrumentação
-  real de uma planta, comparada contra a Tabela 18.1 do livro. Só
-  documentação — não altera a simulação.
 """
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import matplotlib
-
-matplotlib.use("Agg")  # mesmo backend do scripts/gen_figuras.py
+matplotlib.use("Agg")
 
 import matplotlib.colors
 import matplotlib.pyplot as plt
@@ -49,1886 +28,1402 @@ from compressor_sim import (
     constantes,
     dinamica,
     ekf,
+    frota_supervisorio,
     mpc,
     nucleo,
     parametros_default,
+    pi_telemetry,
     piml,
     psa_ciclo,
     pso,
     simular,
     subsistemas,
+    treinamento_falhas,
     vae,
 )
 
-# Paleta e estilo herdados de scripts/gen_figuras.py
+# Paleta e estilo industrial
 NAVY = "#1f3b57"
 BLUE = "#2b6cb0"
 RED = "#b73a3a"
 GREEN = "#2f7a4f"
+ORANGE = "#d97706"
+GRAY = "#64748b"
 
 plt.rcParams.update({
     "font.family": "DejaVu Sans",
     "font.size": 10,
     "axes.grid": True,
-    "grid.color": "#dddddd",
+    "grid.color": "#e2e8f0",
     "axes.facecolor": "white",
     "figure.facecolor": "white",
 })
 
-st.set_page_config(page_title="Simulador de Compressor de Parafuso",
-                   page_icon="🌀", layout="wide")
-
-st.title("Simulador de Sistema de Ar Comprimido — Compressor de Parafuso")
-st.caption(
-    "Trem completo: filtro → LP → intercooler → HP → aftercooler → separador → "
-    "secador PSA → vaso pulmão. Equações do livro *Gêmeo Digital de Sistemas de "
-    "Compressão Offshore* (compressores.tex)."
+st.set_page_config(
+    page_title="Gêmeo Digital & Treinamento PI — Compressor Offshore",
+    page_icon="🌀",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
+
+# ── CSS de Identidade Visual Industrial ──────────────────────────────────────
+st.markdown("""
+<style>
+/* Fonte monoespaçada para valores de telemetria */
+.mono { font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace; font-size: 0.93em; }
+
+/* Badges de alarme ISA 18.2 */
+.badge-normal  { background:#166534; color:#dcfce7; padding:2px 8px; border-radius:12px; font-size:0.78em; font-weight:600; }
+.badge-alerta  { background:#92400e; color:#fef3c7; padding:2px 8px; border-radius:12px; font-size:0.78em; font-weight:600; }
+.badge-trip    { background:#991b1b; color:#fee2e2; padding:2px 8px; border-radius:12px; font-size:0.78em; font-weight:600; }
+
+/* Card de KPI principal */
+.kpi-card { background:#f8fafc; border:1px solid #cbd5e1; border-left:4px solid #2563eb; border-radius:8px; padding:12px 16px; margin-bottom:8px; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+.kpi-label { font-size:0.78em; color:#334155; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; }
+.kpi-value { font-size:1.6em; font-weight:800; color:#0f172a; line-height:1.1; }
+.kpi-delta-ok  { font-size:0.78em; color:#166534; font-weight:600; }
+.kpi-delta-warn{ font-size:0.78em; color:#92400e; font-weight:600; }
+.kpi-delta-crit{ font-size:0.78em; color:#991b1b; font-weight:600; }
+
+/* Card de frota — urgência */
+.fleet-card         { border-radius:10px; padding:14px 18px; margin-bottom:10px; border:2px solid #cbd5e1; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+.fleet-card-ok      { border-color:#166534; background:#f0fdf4; }
+.fleet-card-warn    { border-color:#d97706; background:#fffbeb; }
+.fleet-card-crit    { border-color:#dc2626; background:#fef2f2; }
+
+/* Reforço de contraste em formulários e configurações */
+div[data-testid="stExpander"] {
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    background-color: #ffffff !important;
+}
+div[data-testid="stExpander"] summary {
+    font-weight: 700 !important;
+    color: #0f172a !important;
+}
+label[data-testid="stWidgetLabel"] {
+    color: #1e293b !important;
+    font-weight: 600 !important;
+}
+
+/* Separador de fase do treinamento */
+.fase-header { background:linear-gradient(90deg,#1f3b57,#2b6cb0); color:white; padding:8px 16px;
+               border-radius:6px; font-weight:700; font-size:1.02em; margin:12px 0 8px 0; }
+
+/* Barra de progresso personalizada */
+.progress-bar-outer { background:#e2e8f0; border-radius:6px; height:14px; overflow:hidden; }
+.progress-bar-inner { height:100%; border-radius:6px; transition:width 0.3s; }
+</style>
+""", unsafe_allow_html=True)
+
+# ── Cabeçalho Principal ───────────────────────────────────────────────────────
+col_hdr, col_status = st.columns([4, 1])
+with col_hdr:
+    st.title("🌀 Gêmeo Digital & Treinamento de Falhas")
+    st.caption(
+        "Simulação Física de Alta Fidelidade · Telemetria OSIsoft PI System · "
+        "Arena Operacional de Diagnóstico · **API 619 · ISO 1217 · ISO 8573-1 · ASME VIII**"
+    )
+with col_status:
+    from datetime import datetime as _dt
+    st.markdown(f"<div style='text-align:right;color:#64748b;font-size:0.8em;margin-top:18px;'>"
+                f"🕐 {_dt.now().strftime('%d/%m/%Y  %H:%M:%S')}<br>"
+                f"<b style='color:#166534;'>● Sistema Operacional</b></div>", unsafe_allow_html=True)
 
 defaults = parametros_default()
 
 # ---------------------------------------------------------------------------
-# Abas — criadas cedo: a aba "Configurações" precisa renderizar (e atribuir
-# suas variáveis) antes do dict `params` ser montado, porque alimenta parte
-# dele. Os corpos de tab_est/tab_din/tab_psa/tab_gd continuam mais abaixo,
-# depois de `res = simular(params)` estar pronto.
+# Inicialização de variáveis no session_state
 # ---------------------------------------------------------------------------
-tab_est, tab_din, tab_psa, tab_gd, tab_falhas, tab_config, tab_dados = st.tabs([
-    "⚙️ Operação estática", "📈 Dinâmica temporal", "🌀 Secagem PSA",
-    "🧠 Gêmeo Digital (EKF/PSO)", "🚨 Painel de Falhas", "🎛️ Configurações",
-    "📂 Dados Medidos",
-])
+if "caso_treinamento" not in st.session_state:
+    st.session_state["caso_treinamento"] = None
+if "resultado_avaliacao" not in st.session_state:
+    st.session_state["resultado_avaliacao"] = None
+if "historico_treinamento" not in st.session_state:
+    st.session_state["historico_treinamento"] = []
+if "frota_instancias" not in st.session_state:
+    st.session_state["frota_instancias"] = frota_supervisorio.criar_frota_padrao_offshore(n_maquinas=4)
+if "telemetria_pi_live" not in st.session_state:
+    st.session_state["telemetria_pi_live"] = None
 
 # ---------------------------------------------------------------------------
-# Aba "Configurações" — geometria de equipamento e hiperparâmetros de
-# algoritmo: valores que descrevem esta máquina ou este experimento, não a
-# condição de operação do momento (essa fica na barra lateral).
+# Estrutura de Abas do Aplicativo — 5 abas operacionais + Treinamento na sidebar
+# ---------------------------------------------------------------------------
+(
+    tab_frota,
+    tab_dashboard,
+    tab_diagnostico,
+    tab_sistema,
+    tab_config,
+) = st.tabs([
+    "🚢 Supervisório de Frota",
+    "📊 Dashboard do Ativo",
+    "🔬 Diagnóstico & IA",
+    "🛠️ Sistema & Dinâmica",
+    "⚙️ Configurações",
+])
+
+# Modo Treinamento — controlado via sidebar
+if "modo_treinamento" not in st.session_state:
+    st.session_state["modo_treinamento"] = False
+
+
+
+# ---------------------------------------------------------------------------
+# 1. ABA: Configurações & Parâmetros Físicos (Renderizada cedo para alimentar params)
 # ---------------------------------------------------------------------------
 with tab_config:
+    st.subheader("Parâmetros Construtivos, Geométricos e Hiperparâmetros")
     st.caption(
-        "Parâmetros que normalmente não mudam de uma sessão de análise "
-        "para a outra — geometria/constantes de equipamento e "
-        "hiperparâmetros dos algoritmos da Parte II. Para temperatura "
-        "ambiente, pressão de rede, demanda e outras condições do momento, "
-        "use a barra lateral."
+        "Configurações que descrevem a física do equipamento e algoritmos da Parte II. "
+        "Para as condições operacionais instantâneas, utilize a barra lateral."
     )
 
     cfg1, cfg2 = st.columns(2)
 
     with cfg1:
-        with st.expander("Compressor — geometria e eficiência", expanded=True):
+        with st.expander("Compressor — Geometria e Eficiência (Caps. 3, 5 e 9)", expanded=True):
             fad = st.number_input(
-                "Vazão FAD por unidade [m³/min] (assumido — não consta no livro)",
-                1.0, 100.0, defaults["fad_m3_min"], 0.5)
+                "Vazão FAD por unidade [m³/min] (ISO 1217)",
+                1.0, 100.0, defaults["fad_m3_min"], 0.5
+            )
             n_compressores = st.number_input(
-                "Compressores idênticos em paralelo (assumido)",
-                1, 10, defaults["n_compressores"], 1)
-            n_pol = st.slider("Índice politrópico n (Eq. 5.5)", 1.20, 1.40,
-                              defaults["n"], 0.01)
-            v_i = st.slider("Razão volumétrica interna V_i (Eq. 5.6)", 2.0, 7.0,
-                            defaults["v_i"], 0.1)
-            eta_mec = st.slider("Eficiência mecânica η_mec", 0.90, 1.00,
-                                defaults["eta_mec"], 0.005)
+                "Compressores em paralelo na planta (N_frota)",
+                1, 10, defaults["n_compressores"], 1
+            )
+            n_pol = st.slider("Índice politrópico n (Eq. 5.5 / Eq. 9.5)", 1.20, 1.40, defaults["n"], 0.01)
+            v_i = st.slider("Razão volumétrica interna V_i (Eq. 5.6)", 2.0, 7.0, defaults["v_i"], 0.1)
+            eta_mec = st.slider("Eficiência mecânica η_mec", 0.80, 1.00, defaults["eta_mec"], 0.005)
 
-        with st.expander("Carcaça do estágio LP — balanço térmico (Eq. 9.6)"):
-            m_carcaca = st.number_input(
-                "Massa térmica da carcaça M_c [kg] (assumido)",
-                50.0, 2000.0, defaults["m_carcaca"], 10.0)
-            c_carcaca = st.number_input(
-                "Calor específico c_c [J/(kg·K)] (assumido — ferro fundido típico)",
-                300.0, 900.0, defaults["c_carcaca"], 10.0)
-            cond_ext_carcaca = st.number_input(
-                "Condutância de convecção externa carcaça-ambiente [W/K] (assumido)",
-                1.0, 200.0, defaults["cond_ext_carcaca"], 1.0)
-            cond_arref_carcaca = st.number_input(
-                "Condutância do arrefecimento ativo/ventilação forçada [W/K] (assumido)",
-                1.0, 500.0, defaults["cond_arref_carcaca"], 1.0)
+        with st.expander("Carcaça e Rotores — Balanço Térmico e Folgas (Eqs. 9.6, 9.7, 9.16)"):
+            m_carcaca = st.number_input("Massa térmica da carcaça M_c [kg]", 50.0, 2000.0, defaults["m_carcaca"], 10.0)
+            c_carcaca = st.number_input("Calor específico c_c [J/(kg·K)]", 300.0, 900.0, defaults["c_carcaca"], 10.0)
+            cond_ext_carcaca = st.number_input("Condutância de convecção externa [W/K]", 1.0, 200.0, defaults["cond_ext_carcaca"], 1.0)
+            cond_arref_carcaca = st.number_input("Condutância do arrefecimento forçado [W/K]", 1.0, 500.0, defaults["cond_arref_carcaca"], 1.0)
+            delta_nom_um = st.number_input("Folga nominal a frio δ_nom [μm]", 50.0, 500.0, defaults["delta_nom_um"], 10.0)
 
-        with st.expander("Motor e invólucro (Hood) — Eqs. 4.10-4.12, 2.1, 2.4"):
-            hood_enclausurado = st.checkbox(
-                "Compressor dentro de invólucro acústico (Hood)?",
-                value=defaults["hood_enclausurado"],
-                help="Se marcado, a carcaça do estágio LP (Eq. 9.6) referencia "
-                     "T_hood (Eq. 2.4) em vez da temperatura ambiente externa — "
-                     "arranjo comum offshore, às vezes com o trem inteiro (motor "
-                     "a saída do 2º estágio) no mesmo invólucro por restrição "
-                     "de ruído.")
-            s_motor = st.slider("Escorregamento do motor s (assumido)",
-                                0.005, 0.05, defaults["s_motor"], 0.005,
-                                format="%.3f")
-            p_fixas_motor = st.number_input(
-                "Perdas fixas do motor P_fixas [W] (assumido — ensaio a vazio)",
-                200.0, 10000.0, defaults["p_fixas_motor"], 100.0)
-            m_dot_vent = st.number_input(
-                "Vazão de ventilação forçada do exaustor [kg/s] (assumido)",
-                0.05, 5.0, defaults["m_dot_vent"], 0.05)
-            p_loss_hood_outros = st.number_input(
-                "Perdas de VSD+gearbox no invólucro [W] (assumido — Eqs. 4.3/5.2 "
-                "não decompostas neste app)",
-                0.0, 10000.0, defaults["p_loss_hood_outros"], 100.0)
-
-        with st.expander("Tubulação interestágios (Eq. 5.15)"):
-            f_d_linha = st.number_input(
-                "Fator de atrito de Darcy f_D (assumido)",
-                0.005, 0.08, defaults["f_d_linha"], 0.005, format="%.3f")
-            l_linha = st.number_input(
-                "Comprimento do trecho LP→HP [m] (assumido)",
-                0.5, 30.0, defaults["l_linha"], 0.5)
-            d_linha = st.number_input(
-                "Diâmetro interno da linha [m] (assumido)",
-                0.02, 0.30, defaults["d_linha"], 0.01)
-
-        with st.expander("Resfriamento, vaso e rede — equipamento"):
-            ua = st.number_input("UA de projeto [W/K] (assumido)", 500.0, 20000.0,
-                                 defaults["ua_projeto"], 100.0)
-            eta_sep = st.slider("Eficiência do separador η_sep (Eq. 14.4)",
-                                0.80, 1.00, defaults["eta_sep"], 0.01)
-            purga_pct = st.slider("Purga do secador PSA [%] (:1971)", 5, 25,
-                                  int(defaults["fator_purga"] * 100))
-            v_vaso = st.number_input("Volume do vaso [m³] (assumido)", 0.5, 20.0,
-                                     defaults["v_vaso"], 0.5)
-            p_limite_bar = st.number_input("Pressão mínima da rede [bar abs]",
-                                           3.0, 8.0,
-                                           defaults["p_limite"] / 1e5, 0.1)
-
-        with st.expander("Dinâmica temporal — sintonia (aba 2)"):
-            tau_vsd = st.slider(
-                "Constante de tempo de rampa do VSD τ [s] (assumido)",
-                1.0, 30.0, dinamica.TAU_VSD, 1.0)
-            dp_db_bar = st.slider("Banda carga/alívio ΔP_db [bar]", 0.1, 1.5,
-                                  dinamica.DP_DB / 1e5, 0.1)
-
-        with st.expander("Secagem PSA — topologia e sintonia (aba 3)"):
-            topologia_psa = st.radio(
-                "Topologia do secador PSA",
-                ["N vasos por compressor", "N vasos para o sistema"],
-                help="Por compressor: cada uma das unidades em paralelo tem seu "
-                     "próprio secador dedicado (rodízio idêntico em cada uma). "
-                     "Para o sistema: um único banco de N torres compartilhado, "
-                     "dimensionado para a vazão total da planta.")
-            n_vasos_psa = st.number_input(
-                "Torres em rodízio N (assumido — mínimo do princípio PSA)",
-                2, 6, 2, 1)
-            material_psa = st.selectbox(
-                "Material dessecante (Tabela 15.2)",
-                list(constantes.MATERIAIS_DESSECANTE.keys()),
-                index=list(constantes.MATERIAIS_DESSECANTE.keys()).index(
-                    constantes.MATERIAL_PSA_DEFAULT),
-                help="Densidade e capacidade de trabalho (kg água/kg leito, "
-                     "baixa UR) de cada material — mesma Tabela 15.2 do "
-                     "livro (16/08/2026), faixas típicas de literatura/"
-                     "fabricante, ASSUMIDAS (ver constantes.py). Peneira "
-                     "molecular alcança PDP mais baixo; alumina ativada é o "
-                     "padrão de mercado para ar comprimido; sílica gel é "
-                     "fraca em baixa UR, raramente usada sozinha para "
-                     "-40 °C.")
-            _props_material = constantes.MATERIAIS_DESSECANTE[material_psa]
-            t_ads_psa = st.slider(
-                "Duração da adsorção por torre [min] (assumido)",
-                2.0, 240.0, 60.0, 1.0,
-                help="Estenda junto com regeneração/resfriamento abaixo para "
-                     "um ciclo proporcional — regeneração térmica real "
-                     "costuma levar dezenas de minutos, não os poucos "
-                     "minutos de um ciclo PSA a frio por oscilação de "
-                     "pressão.")
-            t_regen_psa = st.slider(
-                "Duração da regeneração por torre [min] (assumido)",
-                1.0, 90.0, float(_props_material["t_regen_ref_min"]), 1.0,
-                help=f"Valor de referência de {material_psa} preenchido "
-                     "automaticamente — ajuste livremente. Só o valor da "
-                     "Alumina Ativada (45 min) vem de experiência de campo "
-                     "relatada pelo autor (16/08/2026); os outros dois "
-                     "materiais reaproveitam o mesmo número por analogia, "
-                     "sem fonte própria (ver constantes.py).")
-            t_resfriamento_psa = st.slider(
-                "Resfriamento pós-regeneração [min] (assumido)",
-                0.0, 20.0, float(_props_material["t_resfriamento_ref_min"]), 1.0,
-                help="Tempo em que a torre já regenerou mas ainda está quente "
-                     "demais para voltar a adsorver com eficiência — sem essa "
-                     "fase o rodízio simularia uma troca instantânea entre "
-                     "regeneração e adsorção que não existe fisicamente. "
-                     "Faixa 5-15 min relatada pelo autor para Alumina "
-                     "Ativada (16/08/2026); outros materiais por analogia.")
-            massa_leito_psa = st.number_input(
-                "Massa do leito por torre [kg] (assumido)",
-                1.0, 5000.0, constantes.MASSA_LEITO_PSA_DEFAULT_KG, 10.0,
-                help=f"{material_psa}: densidade aparente "
-                     f"≈{_props_material['densidade_kg_m3']:.0f} kg/m³, "
-                     f"capacidade de trabalho ≈"
-                     f"{_props_material['capacidade_trabalho']*100:.0f}% "
-                     "(kg água/kg leito, baixa UR) — usados para converter a "
-                     "capacidade normalizada em massa real de água "
-                     "adsorvida (aba Secagem PSA) e, via balanço de massa "
-                     "de água (Eq. 15.14), no tempo de residência de "
-                     "projeto do leito — mais massa esgota mais devagar e "
-                     "sustenta o PDP por mais tempo.")
-            k_ads_psa = st.slider(
-                "Constante de taxa de adsorção k_ads (Eq. 15.1, Fig. 15.2)",
-                0.3, 4.0, float(_props_material["k_ads_ref"]), 0.1,
-                help=f"Valor de referência do material selecionado "
-                     f"({material_psa}) preenchido automaticamente — ajuste "
-                     "livremente se tiver um valor de ensaio próprio. "
-                     "**Não verificado contra literatura/ensaio** — só uma "
-                     "ordenação relativa plausível entre os 3 materiais "
-                     "(ver constantes.py).")
-            eps_recup_psa = st.slider(
-                "Efetividade do trocador de recuperação de calor ε (Eq. 15.11)",
-                0.0, 1.0, constantes.EPSILON_RECUP_PSA_DEFAULT, 0.05,
-                help="Fração do calor residual disponível (aftercooler + "
-                     "hood, Eq. 15.10 — óleo não modelado neste app) "
-                     "efetivamente recuperada para pré-aquecer o ar de "
-                     "regeneração, reduzindo a potência elétrica do "
-                     "aquecedor resistivo (Eq. 3.3) na mesma proporção. "
-                     "ε=0 desliga a recuperação (aquecedor 100% elétrico).")
-            forma_particula_psa = st.radio(
-                "Forma da partícula do dessecante (Eqs. 15.17/15.18)",
-                ["Esfera", "Pellet extrudado"],
-                help="Esfericidade ψ_p = 1,0 (esfera) ou ψ_p ≈ 0,8 (pellet, "
-                     "ASSUMIDO — meio da faixa 0,7-0,9 citada no livro). "
-                     "Afeta a perda de carga do leito (Eq. 15.17, equação "
-                     "de Ergun) e a cinética de adsorção k_ads (Eq. 15.18) "
-                     "em direções opostas: pellets têm mais área externa "
-                     "por volume — adsorvem mais rápido, mas também "
-                     "impõem mais perda de carga para a mesma vazão.")
-            psi_p_psa = (constantes.PSI_P_ESFERA if forma_particula_psa == "Esfera"
-                        else constantes.PSI_P_PELLET)
-            m_dot_reg_psa = st.slider(
-                "Vazão do soprador booster de regeneração [kg/s] (assumido)",
-                0.005, 0.50, constantes.M_DOT_REG_DEFAULT_KG_S, 0.005,
-                help="Vazão de ar forçada pelo soprador booster através do "
-                     "aquecedor de regeneração — fecha o coeficiente de "
-                     "convecção h (Eq. 15.15, Dittus-Boelter) e, por "
-                     "ε-NTU (Eq. 15.16), a temperatura real que o ar "
-                     "atinge ao sair do aquecedor, substituindo o antigo "
-                     "ΔT_regen assumido. Sem soprador suficiente, h cai "
-                     "para a faixa de convecção natural e o mesmo "
-                     "aquecedor de potência fixa entrega bem menos ΔT do "
-                     "que o projeto pressupõe — mas vazão maior não eleva "
-                     "essa temperatura de saída (na verdade cai "
-                     "levemente), o ganho real é na potência térmica "
-                     "total entregue ao leito.")
+        with st.expander("Motor Elétrico e Invólucro Acústico (Hood) (Eqs. 2.1, 2.4, 4.10-4.12)"):
+            hood_enclausurado = st.checkbox("Compressor dentro de invólucro acústico (Hood)?", value=defaults["hood_enclausurado"])
+            s_motor = st.slider("Escorregamento nominal s (Eq. 4.4)", 0.005, 0.08, defaults["s_motor"], 0.005, format="%.3f")
+            p_fixas_motor = st.number_input("Perdas fixas do motor P_fixas [W] (IEC 60034-2-1)", 200.0, 10000.0, defaults["p_fixas_motor"], 100.0)
+            m_dot_vent = st.number_input("Vazão de ventilação forçada do exaustor [kg/s]", 0.05, 5.0, defaults["m_dot_vent"], 0.05)
+            p_loss_hood_outros = st.number_input("Perdas de VSD + Gearbox no Hood [W]", 0.0, 10000.0, defaults["p_loss_hood_outros"], 100.0)
 
     with cfg2:
-        with st.expander("Gêmeo Digital — EKF (aba 4, Eqs. 21.2-21.8)", expanded=True):
-            st.caption(
-                "Cenário: folga do estágio LP (δ/L) e fouling do intercooler "
-                "(R_f) evoluem de um valor inicial a um final ao longo do "
-                "horizonte — o EKF nunca vê esses valores, só as medições "
-                "ruidosas de ṁ_seco e T_HP,in, e tenta reconstruí-los.")
-            n_passos_ekf = st.slider("Horizonte do EKF [passos]", 20, 2000, 60, 10,
-                                     help="Cada passo é um ciclo de varredura — o "
-                                          "intervalo real entre eles é o "
-                                          "\"Δt entre medições\" abaixo. Mecanismos "
-                                          "de falha reais (folga, incrustação) se "
-                                          "desenvolvem em semanas, não minutos — "
-                                          "aumente este valor junto com o Δt para "
-                                          "acompanhar um horizonte de dias.")
-            dt_horas_ekf = st.number_input(
-                "Δt entre medições [horas] (assumido)", 0.1, 24.0, 1.0, 0.1,
-                help="Intervalo real de tempo entre dois passos do EKF — só "
-                     "converte o eixo dos gráficos abaixo para dias, não afeta "
-                     "o cálculo do filtro (Q/R já são por-passo, não por-hora).")
-            folga_ini_ekf = st.number_input(
-                "δ/L verdadeira — início (assumido)", 0.0005, 0.02, 0.002, 0.0005,
-                format="%.4f")
-            folga_fim_ekf = st.number_input(
-                "δ/L verdadeira — fim (assumido)", 0.0005, 0.02, 0.009, 0.0005,
-                format="%.4f")
-            r_f_ini_ekf = st.number_input(
-                "R_f verdadeiro — início (assumido)", 0.0, 1e-3, 0.0, 1e-5,
-                format="%.5f")
-            r_f_fim_ekf = st.number_input(
-                "R_f verdadeiro — fim (assumido)", 0.0, 1e-3, 0.0, 1e-5,
-                format="%.5f")
-            sigma_m_dot_ekf = st.number_input(
-                "Ruído do sensor de vazão σ [kg/s] (assumido)",
-                1e-5, 5e-3, 1e-4, 1e-5, format="%.5f")
-            sigma_t_hp_ekf = st.number_input(
-                "Ruído do sensor de T_HP,in σ [°C] (assumido)",
-                0.01, 2.0, 0.05, 0.01)
-            q_folga_ekf = st.number_input(
-                "Ruído de processo Q — δ/L (assumido)",
-                1e-9, 1e-5, 1e-7, 1e-9, format="%.1e")
-            q_rf_ekf = st.number_input(
-                "Ruído de processo Q — R_f (assumido)",
-                1e-12, 1e-7, 1e-10, 1e-12, format="%.1e")
+        with st.expander("Tratamento de Ar, Resfriadores e Secador PSA (Caps. 10, 14 e 15)", expanded=True):
+            ua = st.number_input("Condutância térmica global de projeto UA [W/K]", 500.0, 20000.0, defaults["ua_projeto"], 100.0)
+            eta_sep = st.slider("Eficiência do separador ciclônico η_sep (Eq. 14.4)", 0.80, 1.00, defaults["eta_sep"], 0.01)
+            material_psa = st.selectbox("Material dessecante PSA (Tabela 15.1)", list(constantes.MATERIAIS_DESSECANTE.keys()))
+            massa_leito_psa = st.number_input("Massa do leito por torre [kg]", 10.0, 5000.0, constantes.MASSA_LEITO_PSA_DEFAULT_KG, 10.0)
+            purga_pct = st.slider("Fração de ar de purga PSA [%] (Eq. 15.2)", 5, 25, int(defaults["fator_purga"] * 100))
+            eps_recup_psa = st.slider("Efetividade de recuperação de calor residual ε (Eq. 15.10)", 0.0, 1.0, constantes.EPSILON_RECUP_PSA_DEFAULT, 0.05)
 
-        with st.expander("Gêmeo Digital — EKF com Estado Aumentado (aba 4, Cap. 28, Eqs. 28.1/28.2)"):
-            st.caption(
-                "Estado x_aug = [δ/L, R_f, K] — o coeficiente de vazamento K "
-                "(Eq. 9.3), fixo em todo o resto do app, passa a ser também "
-                "estimado. Cenário próprio (independente do EKF acima, mesmo "
-                "padrão de escopo isolado já usado no PSO/MPC): janela de "
-                "calibração com δ/L conhecida e constante, K partindo de uma "
-                "crença deliberadamente errada; depois, K \"congela\" (Q "
-                "pequeno) e δ/L volta a acompanhar deriva, como no EKF de 2 "
-                "estados.")
-            n_cal_aum = st.slider("Passos na janela de calibração", 15, 50, 30, 5)
-            n_op_aum = st.slider("Passos após a calibração", 15, 2000, 40, 10,
-                                 help="Mesmo Δt entre medições do EKF de 2 "
-                                      "estados acima — aumente para acompanhar "
-                                      "deriva de K/δ/L por vários dias após a "
-                                      "calibração.")
-            folga_cal_aum = st.number_input(
-                "δ/L conhecida na janela de calibração (assumido)",
-                0.002, 0.02, 0.010, 0.001, format="%.4f",
-                help="O efeito de K na Eq. 9.3 escala com δ/L — folgas muito "
-                     "baixas (ex. 0,002, condição de máquina nova) tornam K "
-                     "quase inobservável frente ao ruído de medição típico; "
-                     "este valor mais alto dá um sinal mais forte para a "
-                     "calibração convergir.")
-            folga_fim_aum = st.number_input(
-                "δ/L verdadeira ao fim da operação (assumido)",
-                folga_cal_aum, 0.03, 0.018, 0.001, format="%.4f")
-            k_inicial_aum = st.number_input(
-                "Crença inicial de K (assumido, != K real do app)",
-                0.005, 0.15, 0.03, 0.005, format="%.3f",
-                help=f"K real usado no restante do app: {defaults['k_folga']:.3f} "
-                     "(Eq. 9.3) — mantido diferente aqui para que a convergência "
-                     "mostrada seja identificação de verdade.")
-            sigma_m_dot_aum = st.number_input(
-                "Ruído do sensor de vazão σ [kg/s] — janela de calibração (assumido)",
-                1e-6, 5e-4, 3e-5, 1e-6, format="%.1e",
-                help="Precisão de instrumentação de bancada/comissionamento, "
-                     "mais fina que o sensor de campo do EKF acima — o sinal de "
-                     "K na Eq. 9.3 é pequeno mesmo com δ/L elevada, e precisa "
-                     "de um ruído de medição proporcionalmente baixo para ser "
-                     "identificável em poucas dezenas de ciclos.")
+        with st.expander("Vaso Pulmão e Rede de Distribuição (Caps. 13 e 16)"):
+            v_vaso = st.number_input("Volume do vaso pulmão V_tk [m³]", 0.5, 20.0, defaults["v_vaso"], 0.5)
+            p_limite_bar = st.number_input("Pressão mínima crítica da rede P_crit [bar abs]", 3.0, 8.0, defaults["p_limite"] / 1e5, 0.1)
+            dp_db_bar = st.slider("Banda morta carga/alívio ΔP_db [bar] (Eq. 13.8)", 0.1, 1.5, dinamica.DP_DB / 1e5, 0.1)
 
-        with st.expander("Gêmeo Digital — PSO (aba 4, Eqs. 24.3/24.4)"):
-            st.caption(
-                "Otimiza a pressão de setpoint da rede (π) para minimizar o "
-                "SPC (Eq. 11.11), sujeito a manter a autonomia do vaso acima "
-                "de um mínimo requerido.")
-            autonomia_min_pso = st.slider(
-                "Autonomia mínima exigida [min] (restrição)", 0.0, 30.0, 1.0, 0.5,
-                help="Com os defaults de vaso/demanda, a autonomia real fica "
-                     "abaixo de ~1,5 min em toda a faixa de π pesquisada — uma "
-                     "restrição alta (ex. 5 min) é inatingível em qualquer "
-                     "ponto, e o PSO corretamente converge para a borda "
-                     "superior da busca (menor penalidade possível, não um "
-                     "mínimo interno) já na 1ª iteração, produzindo um "
-                     "gráfico de convergência sem variação visível. O default "
-                     "de 1 min já cruza a curva de autonomia dentro da faixa "
-                     "de π, dando um ótimo interno de verdade para observar.")
-            n_particulas_pso = st.slider("Número de partículas", 10, 60, 25, 5)
-            n_iter_pso = st.slider("Número de iterações", 10, 100, 40, 5)
-            w_ini_pso = st.slider("Peso de inércia inicial w_ini", 0.5, 1.0, 0.9, 0.05)
-            w_fim_pso = st.slider("Peso de inércia final w_fim", 0.1, 0.6, 0.4, 0.05)
-            c1_pso = st.slider("Coeficiente cognitivo c1", 0.5, 3.0, 2.0, 0.1)
-            c2_pso = st.slider("Coeficiente social c2", 0.5, 3.0, 2.0, 0.1)
+        with st.expander("Hiperparâmetros de Inteligência Artificial (EKF / VAE / PIML / MPC / PSO)"):
+            n_passos_ekf = st.slider("Passos de varredura EKF", 20, 500, 60, 10)
+            dt_horas_ekf = st.number_input("Intervalo Δt EKF [horas]", 0.1, 24.0, 1.0, 0.1)
+            n_amostras_vae = st.slider("Amostras para treino do VAE", 50, 1000, 200, 50)
+            n_epocas_vae = st.slider("Épocas de treino do VAE", 10, 100, 30, 5)
+            n_amostras_piml = st.slider("Amostras de treino PIML", 50, 500, 100, 25)
+            n_epocas_piml = st.slider("Épocas PIML", 10, 100, 30, 5)
+            n_particulas_pso = st.slider("Partículas do PSO", 10, 60, 20, 5)
+            n_iter_pso = st.slider("Iterações do PSO", 10, 50, 20, 5)
 
-        with st.expander("Gêmeo Digital — VAE (aba 4, Eqs. 20.4, 22.1-22.7)"):
-            st.caption(
-                "Treinado sobre amostras sintéticas saudáveis (comissionamento, "
-                "δ/L entre 0,0018-0,0022) — não existe dado real de planta "
-                "neste projeto.")
-            n_amostras_vae = st.slider("Amostras de treino (assumido)", 200, 1000, 500, 50,
-                                       key="n_amostras_vae")
-            n_epocas_vae = st.slider("Épocas de treino", 100, 500, 300, 50, key="n_epocas_vae")
-            folga_cenario_vae = st.number_input(
-                "δ/L do cenário de teste (assumido)", 0.0005, 0.03, 0.015, 0.001,
-                format="%.4f",
-                help="Valor bem fora da faixa saudável de treino dispara a "
-                     "anomalia por padrão; reduza para ver o limite de detecção.")
-
-        with st.expander("Gêmeo Digital — PIML (aba 4, Eqs. 23.1-23.4)"):
-            st.caption(
-                "Substituto treinado para [T_LP,out, T_HP,in, ṁ_seco, "
-                "Q̇_intercooler] a partir de [π, T_amb, δ/L, R_f, FAD], com "
-                "resíduo físico do balanço de energia do intercooler "
-                "(Eq. 10.1) avaliado em pontos de colocação sem rótulo.")
-            n_amostras_piml = st.slider("Amostras de treino (assumido)", 200, 800, 400, 50,
-                                        key="n_amostras_piml")
-            n_epocas_piml = st.slider("Épocas de treino", 100, 500, 300, 50, key="n_epocas_piml")
-
-        with st.expander("Gêmeo Digital — PIML, Problema Inverso (aba 4, Cap. 23.8, Eq. 23.5)"):
-            st.caption(
-                "Em vez do balanço de energia do intercooler (Eq. 23.2), o "
-                "resíduo físico aqui é a Equação 9.3 (balanço mássico), com o "
-                "coeficiente de vazamento K tratado como incógnita Ξ — "
-                "otimizada junto aos pesos da rede, não fixa em `params_base` "
-                "como no restante do app.")
-            n_amostras_piml_inv = st.slider("Amostras de treino (assumido)", 200, 800, 400, 50,
-                                            key="n_amostras_piml_inv")
-            n_epocas_piml_inv = st.slider("Épocas de treino", 100, 500, 300, 50,
-                                          key="n_epocas_piml_inv")
-            xi_inicial_piml = st.number_input(
-                "Crença inicial de Ξ (assumido, != K real)",
-                0.005, 0.15, 0.02, 0.005, format="%.3f",
-                help=f"K real usado no restante do app: {defaults['k_folga']:.3f} "
-                     "(Eq. 9.3) — mantido diferente aqui para que a "
-                     "convergência mostrada seja identificação de verdade.")
-
-        with st.expander("Gêmeo Digital — Calibração LM (aba 4, Cap. 28.1)"):
-            st.caption(
-                "Terceiro caminho para o mesmo K: mínimos quadrados não "
-                "lineares em lote (scipy, Levenberg-Marquardt), sem filtro "
-                "nem rede neural.")
-            n_amostras_lm = st.slider("Amostras de calibração (assumido)", 20, 200, 60, 10)
-            k_inicial_lm = st.number_input(
-                "Crença inicial de K (assumido, != K real)",
-                0.005, 0.15, 0.10, 0.005, format="%.3f", key="k_inicial_lm",
-                help=f"K real usado no restante do app: {defaults['k_folga']:.3f} "
-                     "(Eq. 9.3) — mantido diferente aqui para que a "
-                     "convergência mostrada seja identificação de verdade.")
-            sigma_m_dot_lm = st.number_input(
-                "Ruído do sensor de vazão σ [kg/s] (assumido)",
-                1e-5, 5e-3, 1e-4, 1e-5, format="%.5f", key="sigma_m_dot_lm")
-            sigma_t_hp_lm = st.number_input(
-                "Ruído do sensor de T_HP,in σ [°C] (assumido)",
-                0.01, 2.0, 0.05, 0.01, key="sigma_t_hp_lm")
-
-        with st.expander("Gêmeo Digital — MPC (aba 4, Eqs. 24.1/24.2)"):
-            st.caption(
-                "Compara o MPC (antecipa a demanda futura conhecida) contra o "
-                "controle reativo já usado na aba \"Dinâmica temporal\" "
-                "(só responde à demanda do instante atual).")
-            demanda_base_mpc = st.slider(
-                "Demanda base para o teste [m³/min] (assumido)", 1.0, 8.0, 5.0, 0.5,
-                help="Mantida deliberadamente com folga em relação à capacidade "
-                     "instalada — com demanda muito perto do limite, qualquer "
-                     "controlador (MPC ou reativo) satura igualmente, e a "
-                     "comparação deixa de mostrar diferença.")
-            fator_ev_mpc = st.slider("Fator do pico de demanda", 1.1, 2.0, 1.4, 0.1)
-            horizonte_mpc = st.slider("Horizonte de simulação [min]", 5, 20, 10, 1)
-            dt_mpc = st.slider("Passo de tempo Δt [s] (assumido)", 2.0, 10.0, 5.0, 1.0)
-            n_horizonte_mpc = st.slider("Horizonte de predição H [passos]", 6, 24, 12, 2)
-            rho_mpc = st.number_input(
-                "Peso do esforço de controle ρ (Eq. 24.1)", 0.0, 1.0, 0.05, 0.01,
-                format="%.2f")
 
 # ---------------------------------------------------------------------------
-# Barra lateral — condições de operação (ajustadas com frequência)
+# Barra Lateral: Seletor de Ativo + Condições Operacionais
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    st.header("Condições de operação")
+    # Seletor de Ativo Principal
+    st.markdown("### 🔧 Ativo em Análise")
+    ativos_disponiveis = ["CMP-01", "CMP-02", "CMP-03", "CMP-04"]
+    ativo_sel = st.selectbox(
+        "Selecionar compressor",
+        ativos_disponiveis,
+        index=st.session_state.get("ativo_idx", 0),
+        label_visibility="collapsed",
+    )
+    # Atualiza idx se o usuário mudar manualmente no selectbox
+    st.session_state["ativo_idx"] = ativos_disponiveis.index(ativo_sel)
 
-    with st.expander("Ambiente", expanded=True):
-        t_amb_c = st.slider("Temperatura ambiente [°C]", 0.0, 45.0,
-                            defaults["t_amb"] - 273.15, 0.5)
-        ur_amb = st.slider("Umidade relativa [%]", 10, 100,
-                           int(defaults["ur_amb"] * 100)) / 100.0
-        p_amb_bar = st.number_input("Pressão atmosférica [bar abs]", 0.9, 1.1,
-                                    defaults["p_amb"] / 1e5, 0.005)
+    # Status rápido do ativo selecionado
+    painel_atual = st.session_state.get("painel_frota")
+    if painel_atual:
+        ativo_data = next((m for m in painel_atual if m["maquina_id"] == ativo_sel), None)
+        if ativo_data:
+            hi_v = ativo_data["hi"] * 100
+            hi_cor = "#166534" if hi_v >= 85 else ("#92400e" if hi_v >= 60 else "#991b1b")
+            st.markdown(
+                f"<div style='background:#1e293b;border-radius:8px;padding:8px 12px;margin-bottom:8px;'>"
+                f"<span style='color:#94a3b8;font-size:0.75em;'>Health Index</span><br>"
+                f"<span style='font-size:1.4em;font-weight:700;color:{hi_cor};'>{hi_v:.1f}%</span>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
 
-    with st.expander("Compressor — ponto de operação", expanded=True):
-        pi_total = st.slider("Pressão de rede [bar abs]", 5.0, 12.0,
-                             defaults["pi_total"], 0.1)
-        folga_rel = st.number_input("Folga relativa δ/L (Eq. 9.3)", 0.0, 0.02,
-                                    defaults["folga_rel"], 0.001,
-                                    format="%.3f")
+    st.markdown("---")
 
-    with st.expander("Resfriamento e secagem — estado medido/atual"):
-        t_agua_c = st.slider("Água de resfriamento [°C]", 5.0, 40.0,
-                             defaults["t_agua"] - 273.15, 0.5)
-        r_f = st.number_input("Fouling R_f equivalente (Eq. 10.5)", 0.0, 1e-3,
-                              defaults["r_f_equiv"], 1e-5, format="%.5f")
+    # Botão Modo Treinamento
+    modo_btn_label = "🎓 Sair do Treinamento" if st.session_state["modo_treinamento"] else "🎓 Entrar no Modo Treinamento"
+    if st.button(modo_btn_label, use_container_width=True):
+        st.session_state["modo_treinamento"] = not st.session_state["modo_treinamento"]
+        st.rerun()
 
-    with st.expander("Vaso pulmão e rede — demanda"):
-        demanda = st.number_input("Demanda da rede [m³/min] (assumido)",
-                                  0.0, 100.0, defaults["demanda_m3_min"], 0.5)
+    st.markdown("---")
+    st.markdown("**⚙️ Ponto de Operação**")
+    st.markdown("*Ambiente Offshore (Plataforma/FPSO)*")
 
-    with st.expander("Dinâmica temporal (aba 2)"):
-        horizonte = st.slider("Horizonte de simulação [min]", 5, 60, 15)
-        modo = st.selectbox("Modo de controle (Cap. 13)",
-                            ["VSD", "Carga/Alívio"])
-        evento = st.checkbox("Evento de pico de demanda", value=True)
-        fator_ev = st.slider("Fator do pico (×demanda)", 1.2, 3.0, 2.0, 0.1)
+    t_amb_c = st.slider("Temperatura Ambiente T_amb [°C]", 5.0, 45.0, 30.0, 0.5)
+    ur_amb_pct = st.slider("Umidade Relativa do Ar [%]", 20, 100, 80, 5)
+    p_amb_mbar = st.number_input("Pressão Atmosférica [mbar abs]", 950.0, 1050.0, 1013.25, 5.0)
 
-    with st.expander("Secagem PSA — leitura atual (aba 3)"):
-        horizonte_psa = st.slider(
-            "Horizonte de simulação PSA [min]", 10, 7200, 240, 10,
-            help="Até 7200 min (5 dias) — ciclos de regeneração térmica "
-                 "real (dezenas de minutos) precisam de um horizonte bem "
-                 "maior que os poucos minutos de um ciclo PSA a frio para "
-                 "mostrar várias trocas de torre.")
-        st.caption("Saúde do dessecante (Eq. 15.7) — valores medidos/simulados:")
-        dp_real_psa_mbar = st.slider(
-            "ΔP real do leito [mbar] (medido)", 15.0, 90.0,
-            defaults["dp_real_psa"] / 100.0, 1.0)
-        pdp_real_psa_c = st.slider(
-            "PDP real [°C] (medido)", -45.0, 10.0,
-            float(defaults["pdp_real_c"]), 1.0)
+    st.markdown("---")
+    st.markdown("**Geração e Compressão**")
+    pi_rede = st.slider("Razão de Pressão Global π = P2/P1 (Eq. 5.14)", 5.0, 11.0, 8.0, 0.1)
+    f_vsd = st.slider("Frequência de Alimentação VSD [Hz]", 25.0, 70.0, 60.0, 1.0)
+    demanda_m3_min = st.slider("Demanda de Ar da Planta [m³/min]", 1.0, float(fad * n_compressores), 8.0, 0.5)
+    t_agua_c = st.slider("Temp. Água de Resfriamento T_w,in [°C]", 10.0, 40.0, 25.0, 0.5)
 
+    st.markdown("---")
+    st.markdown("**Estado do Gêmeo Digital (Estados Ocultos)**")
+    folga_rel_input = st.slider("Folga Relativa LP δ/L [μm/m] (Eq. 9.3)", 0.001, 0.025, 0.002, 0.001, format="%.4f")
+    rf_fouling_input = st.slider("Resistência Fouling Intercooler R_f [m²K/W]", 0.0, 0.002, 0.0, 0.0001, format="%.4f")
+
+    zeta_filtro_input = st.slider("Perda de Carga do Filtro ζ (Eq. 5.4)", 1.0, 15.0, 2.5, 0.5)
+
+# Montagem do dicionário de parâmetros completo
 params = {
-    **defaults,
     "t_amb": t_amb_c + 273.15,
-    "ur_amb": ur_amb,
-    "p_amb": p_amb_bar * 1e5,
-    "pi_total": pi_total,
+    "ur_amb": ur_amb_pct / 100.0,
+    "p_amb": p_amb_mbar * 100.0,
+    "pi_total": pi_rede,
+    "f_vsd": f_vsd,
+    "demanda_m3_min": demanda_m3_min,
+    "t_agua": t_agua_c + 273.15,
+    "folga_rel": folga_rel_input,
+    "r_f_equiv": rf_fouling_input,
+    "zeta_filtro": zeta_filtro_input,
     "fad_m3_min": fad,
     "n_compressores": n_compressores,
     "n": n_pol,
     "v_i": v_i,
     "eta_mec": eta_mec,
-    "folga_rel": folga_rel,
-    "psi_p": psi_p_psa,
     "m_carcaca": m_carcaca,
     "c_carcaca": c_carcaca,
     "cond_ext_carcaca": cond_ext_carcaca,
     "cond_arref_carcaca": cond_arref_carcaca,
+    "delta_nom_um": delta_nom_um,
     "hood_enclausurado": hood_enclausurado,
     "s_motor": s_motor,
     "p_fixas_motor": p_fixas_motor,
     "m_dot_vent": m_dot_vent,
     "p_loss_hood_outros": p_loss_hood_outros,
-    "f_d_linha": f_d_linha,
-    "l_linha": l_linha,
-    "d_linha": d_linha,
-    "t_agua": t_agua_c + 273.15,
     "ua_projeto": ua,
-    "r_f_equiv": r_f,
     "eta_sep": eta_sep,
+    "material_psa": material_psa,
+    "massa_leito_psa": massa_leito_psa,
     "fator_purga": purga_pct / 100.0,
-    "v_vaso": v_vaso,
-    "demanda_m3_min": demanda,
-    "p_limite": p_limite_bar * 1e5,
-    "dp_real_psa": dp_real_psa_mbar * 100.0,
-    "pdp_real_c": pdp_real_psa_c,
     "eps_recup_psa": eps_recup_psa,
+    "v_vaso": v_vaso,
+    "p_limite": p_limite_bar * 1e5,
 }
 
-res = simular(params)
-k = res["kpis"]
-pw = res["potencias"]
+# Execução da simulação física central
+res_sim = simular(params)
+snapshot_pi = pi_telemetry.extrair_snapshot_pi(res_sim, params, prefixo="CMP01", adicionar_ruido=True)
 
-for aviso in res["avisos"]:
-    st.warning(aviso)
 
-# ===========================================================================
-# Aba 1 — Operação estática
-# ===========================================================================
-with tab_est:
-    st.subheader("Indicadores principais (por unidade)")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Potência por unidade", f"{pw['w_total'] / 1000:.1f} kW")
-    c2.metric("SPC (Eq. 11.11)", f"{k['spc']:.2f} kW·min/m³")
-    c3.metric("η global (Eqs. 5.12/5.13)", f"{k['eta_global'] * 100:.1f} %")
-    c4.metric("Descarga HP", f"{k['t_descarga_hp_c']:.0f} °C")
-
-    c5, c6, c7, c8 = st.columns(4)
-    c5.metric("Condensado (1 unidade)", f"{k['condensado_total_kg_h']:.1f} kg/h")
-    c6.metric("Purga do secador", f"{k['purga_pct']:.0f} %")
-    c7.metric("P intermediária", f"{k['p_intermediaria_bar']:.2f} bar abs")
-    c8.metric("Autonomia do vaso",
-              f"{k['autonomia_min']:.1f} min" if np.isfinite(k["autonomia_min"])
-              else "∞ (sem demanda)")
-
-    st.subheader(f"Planta — {pw['n_compressores']} compressor"
-                 f"{'es' if pw['n_compressores'] != 1 else ''} em paralelo")
-    p1, p2, p3 = st.columns(3)
-    p1.metric("Potência total da planta", f"{pw['w_total_planta'] / 1000:.1f} kW")
-    p2.metric("Capacidade total instalada (FAD)",
-             f"{k['fad_total_m3_min']:.1f} m³/min")
-    p3.metric("Condensado total da planta",
-             f"{k['condensado_total_planta_kg_h']:.1f} kg/h")
-
-    st.subheader("Pontos de estado ao longo do trem (uma unidade representativa)")
-    st.dataframe(
-        [{"Ponto": no["nome"], "P [bar abs]": round(no["p_bar"], 3),
-          "T [°C]": round(no["t_c"], 1),
-          "PDP [°C]": round(no["pdp_c"], 2),
-          "ṁ ar seco [kg/s]": round(no["m_dot"], 4),
-          "ṁ total (ar+água) [kg/s]": round(no["m_dot_total"], 4),
-          "W [kg/kg]": round(no["w"], 6)} for no in res["nos"]],
-        width="stretch", hide_index=True,
-    )
-    st.caption(
-        "PDP (ponto de orvalho sob pressão, Eqs. 10.6+10.7) é a mesma "
-        "leitura que um sensor T_dp reportaria em cada ponto — sobe com a "
-        "compressão (mesmo W, mais concentrado sob maior pressão) e cai de "
-        "volta à própria temperatura nos pontos saturados pelos "
-        "trocadores (intercooler, aftercooler). ṁ ar seco é invariante à "
-        "condensação (convenção padrão de psicrometria — só a água muda de "
-        "fase); ṁ total é quem realmente cai a cada ponto de condensação e "
-        "de novo, por outro motivo (purga), no secador PSA. Estes valores "
-        "valem igualmente para cada um dos "
-        f"{pw['n_compressores']} compressores em paralelo — todos operam "
-        "no mesmo ponto por serem modelados como idênticos (ver "
-        "\"Planta\" acima)."
+# Banner de Modo Treinamento (visível em todas as abas)
+if st.session_state["modo_treinamento"]:
+    st.markdown(
+        "<div style='background:#7c3aed;color:#fff;padding:10px 18px;border-radius:8px;"
+        "margin-bottom:12px;font-weight:700;font-size:1em;letter-spacing:0.04em;'>"
+        "🎓 MODO TREINAMENTO ATIVO — Os dados abaixo são sintéticos. "
+        "Saia pelo botão na barra lateral para retornar ao modo operacional.</div>",
+        unsafe_allow_html=True,
     )
 
-    g1, g2 = st.columns(2)
+# ===========================================================================
+# 2. ABA: DASHBOARD DIGITAL TWIN & TELEMETRIA PI
+# ===========================================================================
+with tab_dashboard:
+    _ativos_lista = ["CMP-01", "CMP-02", "CMP-03", "CMP-04"]
+    _ativo_nome = _ativos_lista[st.session_state.get("ativo_idx", 0)]
+    st.subheader(f"📊 Dashboard — {_ativo_nome}")
+    st.caption("Pontos A a I (Tabela 18.1) · Telemetria PI em tempo real · Balanço exergético (Eq. 17.3)")
 
-    with g1:
-        st.subheader("Perfil de pressão, temperatura e ponto de orvalho no trem")
-        nomes = [no["nome"].replace(" (pós-intercooler)", "\n(pós-intercooler)")
-                 .replace(" (pós-filtro)", "\n(pós-filtro)")
-                 .replace(" (pós-secador)", "\n(pós-secador)")
-                 for no in res["nos"]]
-        x = np.arange(len(nomes))
-        press = [no["p_bar"] for no in res["nos"]]
-        temps = [no["t_c"] for no in res["nos"]]
-        pdps = [no["pdp_c"] for no in res["nos"]]
-
-        fig, ax1 = plt.subplots(figsize=(6.2, 3.6))
-        ax1.plot(x, press, "o-", color=BLUE, label="Pressão [bar abs]")
-        ax1.set_ylabel("Pressão [bar abs]", color=BLUE)
-        ax1.tick_params(axis="y", labelcolor=BLUE)
-        ax2 = ax1.twinx()
-        ax2.plot(x, temps, "s--", color=RED, label="Temperatura [°C]")
-        ax2.plot(x, pdps, "^:", color=GREEN, label="PDP [°C]")
-        ax2.set_ylabel("Temperatura / PDP [°C]", color=RED)
-        ax2.tick_params(axis="y", labelcolor=RED)
-        ax2.grid(False)
-        linhas = ax1.get_lines() + ax2.get_lines()
-        ax2.legend(linhas, [l.get_label() for l in linhas],
-                  fontsize=7, loc="upper right")
-        ax1.set_xticks(x)
-        ax1.set_xticklabels(nomes, fontsize=7, rotation=20, ha="right")
-        fig.tight_layout()
-        st.pyplot(fig)
-        st.caption(
-            "A distância vertical entre a linha de Temperatura (vermelha) "
-            "e a de PDP (verde) é a margem até o ar começar a condensar "
-            "naquele ponto — onde as duas se tocam, o ar está saturado "
-            "(100% UR), como acontece por construção logo após o "
-            "intercooler e o aftercooler."
+    # Faixa de alarmes ativos (se houver)
+    _alarmes_ativos = [t for t, d in snapshot_pi.items() if d.get("status_alarme") in ("ALARME", "TRIP")]
+    if _alarmes_ativos:
+        st.markdown(
+            f"<div style='background:#991b1b;color:#fff;padding:8px 14px;border-radius:6px;"
+            f"margin-bottom:8px;font-weight:700;'>⚠️ {len(_alarmes_ativos)} TAG(S) EM ALARME — "
+            f"{', '.join(_alarmes_ativos[:4])}{'...' if len(_alarmes_ativos)>4 else ''}</div>",
+            unsafe_allow_html=True,
         )
 
-    with g2:
-        st.subheader("Curva em “V” — perdas V_i (Eqs. 5.8/5.9)")
-        p0 = params["p_amb"]
-        v_dot = params["fad_m3_min"] / 60.0
-        pi_i = nucleo.razao_pressao_interna(params["v_i"], params["n"])
-        pi_arr = np.linspace(0.5 * pi_i, 1.8 * pi_i, 200)
-        perdas = [nucleo.perda_vi(p0, v_dot / pi, pi, params["v_i"], params["n"])
-                  / 1000.0 for pi in pi_arr]
-        pi_op = np.sqrt(params["pi_total"])
-        perda_op = nucleo.perda_vi(p0, v_dot / pi_op, pi_op, params["v_i"],
-                                   params["n"]) / 1000.0
 
-        fig2, ax = plt.subplots(figsize=(6.2, 3.6))
-        ax.plot(pi_arr, perdas, color=NAVY, label="Perda V_i (estágio)")
-        ax.axvline(pi_i, color=GREEN, ls=":", label=f"π_i = {pi_i:.2f}")
-        ax.plot([pi_op], [perda_op], "o", color=RED,
-                label=f"Ponto operante (π = {pi_op:.2f})")
-        ax.set_xlabel("Razão de pressão operante π do estágio")
-        ax.set_ylabel("Perda [kW]")
-        ax.legend(fontsize=8)
-        fig2.tight_layout()
-        st.pyplot(fig2)
+    # ── Nível 1: 3 KPIs Grandes ──────────────────────────────────────────────
+    _w_kw   = res_sim['potencias']['w_total_planta'] / 1000.0
+    _spc    = res_sim['kpis']['spc']
+    _eta    = res_sim['kpis']['eta_global'] * 100.0
+    _exerg  = max(0.0, (res_sim['potencias']['w_total'] - res_sim['potencias']['w_isotermico']) / 1000.0)
+    _co2    = _w_kw * 0.40
+    _pdp    = res_sim['nos'][5]['pdp_c']
 
-    st.subheader("Sensibilidade — potência × pressão de setpoint (Eq. 13.9)")
-    pi_range = np.arange(5.0, 12.01, 0.25)
-    potencias = []
-    for pi_r in pi_range:
-        r = simular({**params, "pi_total": float(pi_r)})
-        potencias.append(r["potencias"]["w_total"] / 1000.0)
+    kp1, kp2, kp3 = st.columns(3)
+    kp1.markdown(
+        f"<div class='kpi-card'><div class='kpi-label'>⚡ Potência Elétrica Total</div>"
+        f"<div class='kpi-value'>{_w_kw:.1f} <span style='font-size:0.55em'>kW</span></div>"
+        f"<div class='kpi-delta-ok'>ISO 1217 — Equação 11.11</div></div>", unsafe_allow_html=True)
+    kp2.markdown(
+        f"<div class='kpi-card'><div class='kpi-label'>📊 Consumo Específico (SPC)</div>"
+        f"<div class='kpi-value'>{_spc:.3f} <span style='font-size:0.45em'>kW·m⁻³·min</span></div>"
+        f"<div class='kpi-delta-ok'>Norma ISO 1217 — Eq. 11.11</div></div>", unsafe_allow_html=True)
+    kp3.markdown(
+        f"<div class='kpi-card'><div class='kpi-label'>🎯 Eficiência Global η</div>"
+        f"<div class='kpi-value'>{_eta:.1f} <span style='font-size:0.55em'>%</span></div>"
+        f"<div class='kpi-delta-ok'>W_isotérmico / W_real — Eq. 5.13</div></div>", unsafe_allow_html=True)
 
-    fig3, ax3 = plt.subplots(figsize=(6.2, 3.2))
-    ax3.plot(pi_range, potencias, color=BLUE)
-    w_ref = pw["w_total"] / 1000.0
-    ax3.plot([pi_total], [w_ref], "o", color=RED, label="Ponto operante")
-    ax3.set_xlabel("Pressão de rede [bar abs]")
-    ax3.set_ylabel("Potência por unidade [kW]")
-    ax3.legend(fontsize=8)
-    fig3.tight_layout()
-    st.pyplot(fig3)
-    delta_1bar = (np.interp(pi_total + 1.0, pi_range, potencias) - w_ref)
+    # ── Nível 2: 4 KPIs Secundários ──────────────────────────────────────────
+    ks1, ks2, ks3, ks4 = st.columns(4)
+    ks1.metric("🔥 Exergia Destruída İ", f"{_exerg:.1f} kW", help="Irreversibilidade — Eq. 17.3")
+    ks2.metric("🌿 Emissão CO₂", f"{_co2:.1f} kg/h", help="Fator 0.40 kg CO₂/kWh — Eq. 17.5")
+    _pdp_delta = _pdp - (-40.0)
+    _delta_col = "normal" if _pdp_delta < 0 else "inverse"
+    ks3.metric("💧 PDP — Ponto de Orvalho", f"{_pdp:.1f} °C",
+               delta=f"{_pdp_delta:+.1f} vs Classe 2 (ISO 8573-1)", delta_color=_delta_col)
+    _ni_alm = sum(1 for t in snapshot_pi.values() if t["status_alarme"] != "NORMAL")
+    ks4.metric("🚨 Alarmes ISA 18.2 Ativos", str(_ni_alm),
+               delta="⚠️ Verificar tags" if _ni_alm > 0 else "✅ Todos normais",
+               delta_color="inverse" if _ni_alm > 0 else "normal")
+
+    st.divider()
+
+    # ── Perfis Termodinâmicos + Tabela de Nós ────────────────────────────────
+    st.markdown("### 🗺️ Perfis Termodinâmicos ao Longo do Trem (Pontos A – I)")
+    col_diag, col_nodes = st.columns([1.4, 1.0])
+
+    with col_diag:
+        nomes_nos = [n["nome"] for n in res_sim["nos"]]
+        p_bar_nos = [n["p_bar"] for n in res_sim["nos"]]
+        t_c_nos   = [n["t_c"]   for n in res_sim["nos"]]
+
+        fig_diag, (ax_p, ax_t) = plt.subplots(2, 1, figsize=(8.5, 4.5), sharex=True)
+
+        # Faixa de compressão preenchida
+        ax_p.fill_between(range(len(nomes_nos)), p_bar_nos, alpha=0.12, color=BLUE)
+        ax_p.plot(range(len(nomes_nos)), p_bar_nos, marker="o", ms=7, color=BLUE, lw=2.5, label="Pressão [bar abs]")
+        ax_p.set_ylabel("Pressão [bar abs]")
+        ax_p.legend(loc="upper left", fontsize=8)
+
+        ax_t.fill_between(range(len(nomes_nos)), t_c_nos, alpha=0.10, color=RED)
+        ax_t.plot(range(len(nomes_nos)), t_c_nos, marker="s", ms=7, color=RED, lw=2.5, label="Temperatura [°C]")
+        ax_t.set_ylabel("Temperatura [°C]")
+        ax_t.set_xticks(range(len(nomes_nos)))
+        ax_t.set_xticklabels(nomes_nos, rotation=28, ha="right", fontsize=8)
+        ax_t.legend(loc="upper left", fontsize=8)
+
+        fig_diag.tight_layout()
+        st.pyplot(fig_diag)
+
+    with col_nodes:
+        st.markdown("**📋 Status dos Nós de Processo**")
+        df_nos = pd.DataFrame([
+            {
+                "Ponto": n["nome"],
+                "P [bar]": f"{n['p_bar']:.2f}",
+                "T [°C]": f"{n['t_c']:.1f}",
+                "ṁ [kg/s]": f"{n['m_dot_total']:.4f}",
+                "PDP [°C]": f"{n['pdp_c']:.1f}",
+            }
+            for n in res_sim["nos"]
+        ])
+        st.dataframe(df_nos, width="stretch", hide_index=True)
+
+        st.markdown(f"""
+        <div style='background:#f0f4f8;border-radius:8px;padding:10px 14px;margin-top:8px;'>
+        <b>Circuito de Lubrificação</b><br>
+        <span class='mono'>T_ret_óleo:</span> <b>{res_sim['kpis'].get('t_carcaca_c', 0.0)+5:.1f} °C</b><br>
+        <span class='mono'>T_carcaça:</span> <b>{res_sim['kpis']['t_carcaca_c']:.1f} °C</b><br>
+        <span class='mono'>HI Dessecante:</span> <b>{res_sim['kpis']['hi_des']:.3f}</b>
+        </div>""", unsafe_allow_html=True)
+
+    st.divider()
+
+    # ── Tags PI agrupadas por subsistema em expanders ─────────────────────────
+    st.markdown("### 🏷️ Telemetria Industrial — Tags PI por Subsistema (OSIsoft PI System)")
+
+    # Agrupar tags por subsistema
+    _grupos: dict[str, list] = {}
+    for tag_id, tag_item in snapshot_pi.items():
+        sub = tag_item["subsistema"]
+        _grupos.setdefault(sub, []).append(tag_item)
+
+    # Ícones por subsistema
+    _icones = {
+        "Painel Elétrico / MCC": "⚡",
+        "Transmissão / Eixos": "⚙️",
+        "Compressão Estágio LP": "🔵",
+        "Intercooler": "❄️",
+        "Compressão Estágio HP": "🔴",
+        "Aftercooler": "🌊",
+        "Secagem PSA": "💨",
+        "Filtragem de Linha": "🔲",
+        "Vaso de Pressão (Air Receiver)": "🫧",
+        "Header / Distribuição": "🔀",
+        "Circuito de Lubrificação": "🟡",
+        "Gêmeo Digital (Saúde)": "🧠",
+    }
+
+    for sub_nome, tags in _grupos.items():
+        tem_alarme = any(t["status_alarme"] != "NORMAL" for t in tags)
+        icone = _icones.get(sub_nome, "📍")
+        label = f"{icone} {sub_nome}  {'⚠️' if tem_alarme else '✅'}"
+
+        with st.expander(label, expanded=tem_alarme):
+            rows = []
+            for t in tags:
+                st_txt = t["status_alarme"]
+                if "Trip" in st_txt or "Crítico" in st_txt:
+                    badge_html = f"<span class='badge-trip'>🔴 TRIP</span>"
+                elif "Alerta" in st_txt:
+                    badge_html = f"<span class='badge-alerta'>🟡 ALERTA</span>"
+                else:
+                    badge_html = f"<span class='badge-normal'>🟢 OK</span>"
+                rows.append({
+                    "Tag": t["tag"],
+                    "Descrição": t["descricao"],
+                    "Valor": f"{t['valor']:.4g}",
+                    "Unidade": t["unidade"],
+                    "Status": st_txt,
+                    "Qualidade": t["qualidade"],
+                })
+            st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+
+
+
+
+# ===========================================================================
+# MODO TREINAMENTO — Exibido como painel flutuante quando ativado pela sidebar
+# ===========================================================================
+if st.session_state["modo_treinamento"]:
+    st.markdown("---")
+    st.subheader("🎯 Arena de Treinamento de Falhas e Diagnóstico Operacional")
     st.caption(
-        f"Reduzir o setpoint em 1 bar economiza ≈ {delta_1bar:.1f} kW "
-        f"({delta_1bar / w_ref * 100:.1f} % da potência atual) — cf. “regra "
-        f"dos 7 %/bar” (:1746)."
+        "Ambiente de capacitação para engenheiros de confiabilidade e operadores offshore. "
+        "Analise os sintomas da telemetria PI, identifique a causa-raiz física e aplique as ações prescritivas normatizadas."
     )
 
-    st.subheader("Motor (Eqs. 4.10-4.12) e invólucro/Hood (Eqs. 2.1, 2.4)")
-    m1, m2, m3, m4 = st.columns(4)
-    m1.metric("η_mot", f"{k['eta_mot'] * 100:.1f} %")
-    m2.metric("Perdas do motor", f"{k['p_perdas_mot_w']:.0f} W")
-    m3.metric("Q̇_gerado no invólucro", f"{k['q_gerado_hood_w']:.0f} W")
-    m4.metric("T_hood (regime permanente)", f"{k['t_hood_c']:.1f} °C")
-    st.caption(
-        "η_mot fecha via Eq. 4.12, com P_ag (Eq. 4.10) obtido da potência "
-        "de eixo já calculada pela cascata — simplificação que evita "
-        "reconstruir o circuito equivalente completo (Eqs. 4.4/4.5), sem "
-        "parâmetros de placa neste app. Q̇_gerado (Eq. 2.1) soma as perdas "
-        "do motor, do VSD+gearbox (não decompostas aqui — ver ASSUMIDO na "
-        "aba Configurações) e da própria carcaça; T_hood (Eq. 2.4) fecha a "
-        "temperatura de regime do ar confinado a partir da vazão de "
-        "ventilação forçada."
-    )
+    t_modo, t_estudo = st.tabs(["🕹️ Modo Desafio Cego (Exame)", "📚 Biblioteca Técnica de Mecanismos"])
 
-    st.subheader("Carcaça do estágio LP — balanço térmico (Eq. 9.6)")
-    h1, h2, h3, h4 = st.columns(4)
-    h1.metric("Q̇_int conduzido à carcaça", f"{k['q_int_carcaca_w']:.0f} W")
-    h2.metric("T_referência (Eq. 9.16)",
-             f"{k['t_ref_carcaca_c']:.1f} °C",
-             help="T_hood se enclausurado (Eq. 2.4), T_amb se a céu aberto — "
-                  "ver caixa de seleção na aba Configurações.")
-    h3.metric("T_carcaça (regime permanente)", f"{k['t_carcaca_c']:.1f} °C")
-    h4.metric("Constante de tempo τ_c", f"{k['tau_carcaca_min']:.0f} min")
-    st.caption(
-        "Regime permanente da Eq. 9.6 (dT_c/dt = 0): Q_int (proxy — perda "
-        "mecânica do estágio LP, W_LP·(1−η_mec)) se equilibra com Q_ext + "
-        "Q_arref, modelados como condutâncias lineares (Newton) para a "
-        "temperatura de referência acima. τ_c indica quão rápido a "
-        "carcaça responde a uma mudança de carga — não é um transiente "
-        "calculado ao longo do tempo nesta aba (só o valor de regime), "
-        "diferente da rampa do VSD na aba \"Dinâmica temporal\"."
-    )
-
-    st.subheader("Temperatura do rotor e folga residual térmica (Eqs. 9.7/9.18/9.19)")
-    r1, r2, r3 = st.columns(3)
-    r1.metric("T_rotor (regime permanente)", f"{k['t_rotor_c']:.1f} °C")
-    r2.metric("ΔT_rotor acima de T_amb", f"{k['delta_t_rotor_c']:.1f} K")
-    r3.metric("Folga residual térmica δ_real", f"{k['folga_residual_um']:.0f} µm",
-             help="Eq. 9.7 — δ_nom menos a dilatação térmica diferencial "
-                  "rotor/carcaça. δ_real ≤ 0 sinaliza risco de contato "
-                  "metálico (rubbing). Diagnóstico separado da folga "
-                  "relativa δ/L da aba Configurações (usada diretamente na "
-                  "eficiência volumétrica, Eq. 9.3): esta aqui é a mesma "
-                  "grandeza física vista por uma lente térmica diferente, "
-                  "não uma substituição — o EKF (aba 4) continua estimando "
-                  "δ/L a partir de medições indiretas, sem depender deste "
-                  "cálculo.")
-    st.caption(
-        "16/08/2026 — fecha a lacuna que a Eq. 9.6 sozinha (T_c) não "
-        "cobria: T_rotor (Eq. 9.19) usa a mesma forma de regime permanente "
-        "da carcaça, mas limitada por CIMA pela temperatura média do gás "
-        "(T_gas,med = média entre sucção e descarga do estágio LP), não "
-        "por baixo pela ambiente — o rotor perde calor por condução pelo "
-        "eixo, não ganha calor do ambiente. cond_rotor (h_r·A_r) e "
-        "Q̇_cond,eixo são parâmetros ASSUMIDOS (constantes.py), assim como "
-        "δ_nom e os coeficientes de dilatação térmica α_rotor/α_carcaça."
-    )
-
-    st.subheader("Tubulação interestágios (Eq. 5.15)")
-    l1, l2 = st.columns(2)
-    l1.metric("ΔP_linha (LP→HP)", f"{k['dp_linha_mbar']:.2f} mbar")
-    l2.metric("P sucção HP efetiva", f"{k['p_hp_suc_efetiva_bar']:.3f} bar abs",
-             help="P_intermediária menos ΔP_linha — diagnóstico; o restante "
-                  "da cascata ainda usa P_intermediária como sucção do "
-                  "estágio HP (simplificação já registrada no livro).")
-    st.caption(
-        "Correção de pressão por atrito distribuído na linha (Darcy-"
-        "Weisbach), separada da perda localizada do filtro/silenciador "
-        "(Eq. 5.4). Pequena em linha nova e bem dimensionada — tende a "
-        "crescer com corrosão/incrustação interna ao longo da vida da "
-        "instalação (f_D sobe), e vale acompanhar como sintoma."
-    )
-
-    with st.expander("Balanço de potência e calor"):
-        st.write({
-            "W_LP [kW]": round(pw["w_lp"] / 1000, 2),
-            "W_HP [kW]": round(pw["w_hp"] / 1000, 2),
-            "Perda V_i LP [kW]": round(pw["perda_vi_lp"] / 1000, 2),
-            "Perda V_i HP [kW]": round(pw["perda_vi_hp"] / 1000, 2),
-            "Aquecedor de regeneração [kW]": round(pw["aquecedor"] / 1000, 2),
-            "Aquecedor sem recuperação (nominal, Eq. 3.3) [kW]":
-                round(pw["aquecedor_nominal"] / 1000, 2),
-            "Calor disponível p/ recuperação, Eq. 15.10 [kW]":
-                round(pw["q_disp_regen"] / 1000, 2),
-            "Q̇ intercooler [kW]": round(pw["q_intercooler"] / 1000, 2),
-            "Q̇ aftercooler [kW]": round(pw["q_aftercooler"] / 1000, 2),
-            "W isotérmico (referência) [kW]":
-                round(pw["w_isotermico"] / 1000, 2),
-        })
-        economia_aquecedor_pct = (
-            (1.0 - pw["aquecedor"] / pw["aquecedor_nominal"]) * 100.0
-            if pw["aquecedor_nominal"] > 0 else 0.0)
-        st.caption(
-            f"Aproveitamento de calor rejeitado na regeneração (Eqs. 15.10/"
-            f"15.11, 16/08/2026) — Q_disp soma aftercooler + hood (Q_óleo "
-            "não modelado neste app); reduz **{:.0f}%** da potência "
-            "elétrica nominal do aquecedor resistivo, sem mudar o ΔT de "
-            "regeneração alvo (mesmo processo térmico, parte do calor vem "
-            "de graça em vez do aquecedor). ε ajustável na aba "
-            "Configurações → Secagem PSA.".format(economia_aquecedor_pct)
+    with t_modo:
+        col_dif, col_btn_novo = st.columns([2, 1])
+        dificuldade_sel = col_dif.select_slider(
+            "Nível de Dificuldade do Cenário",
+            options=["Iniciante", "Intermediario", "Avancado", "Mestre"],
+            value="Intermediario",
+            help="Iniciante: falhas com sintomas expressivos. Avancado/Mestre: falhas silenciosas e incipientes (desgaste de folgas, fouling leve, EDM) onde apenas a correlação de dados revela a causa-raiz."
         )
 
-# ===========================================================================
-# Aba 2 — Dinâmica temporal
-# ===========================================================================
-with tab_din:
-    # capacidade pós-secador da PLANTA (soma das n_compressores unidades) [kg/s]
-    m_dot_cap = res["nos"][-1]["m_dot"] * pw["n_compressores"]
-    rho_amb = nucleo.densidade_ar(params["p_amb"], params["t_amb"])
-    dem_base = rho_amb * demanda / 60.0          # kg/s
-    hor_s = horizonte * 60.0
-    t_ev = (0.40 * hor_s, 0.65 * hor_s) if evento else (float("inf"),) * 2
+        if col_btn_novo.button("🎲 Gerar Novo Caso Cego", type="primary"):
+            st.session_state["caso_treinamento"] = treinamento_falhas.gerar_caso_treinamento(
+                dificuldade=dificuldade_sel,
+                params_base=params,
+            )
+            st.session_state["resultado_avaliacao"] = None
 
-    din = dinamica.simular_transiente(
-        horizonte_min=horizonte,
-        m_dot_cap=m_dot_cap,
-        w_nom=pw["w_total_planta"],
-        v_vaso=params["v_vaso"],
-        t_k=params["t_amb"],
-        p_set=params["p_amb"] * params["pi_total"],
-        p_limite=params["p_limite"],
-        dem_base=dem_base,
-        t_ev=t_ev,
-        fator_ev=fator_ev,
-        modo=modo,
-        dp_db=dp_db_bar * 1e5,
-        tau_vsd=tau_vsd,
-    )
-    kd = din["kpis"]
+        caso = st.session_state["caso_treinamento"]
 
-    st.subheader(f"Transiente da rede — controle {kd['modo']}")
-    d1, d2, d3, d4 = st.columns(4)
-    d1.metric("Energia no horizonte", f"{kd['energia_kwh']:.1f} kWh")
-    d2.metric("Pressão mín./máx.",
-              f"{kd['p_min_bar']:.2f} / {kd['p_max_bar']:.2f} bar")
-    d3.metric("Tempo abaixo do limite", f"{kd['t_abaixo_limite_min']:.1f} min")
-    if modo == "Carga/Alívio":
-        d4.metric("Ciclos carga/alívio", f"{kd['n_ciclos']} "
-                  f"(teórico: {kd['f_ciclo_teorica_min']:.1f}/min, Eq. 13.8)")
-    else:
-        d4.metric("Ciclos carga/alívio", "— (VSD)")
+        if caso is not None:
+            st.markdown(
+                f"<div class='fase-header'>📡 FASE 1 — OBSERVAÇÃO   "
+                f"<span style='font-size:0.85em;font-weight:400;'>Cenário: Nível {caso['dificuldade']} "
+                f"| Analise a telemetria e identifique os desvios</span></div>",
+                unsafe_allow_html=True
+            )
 
-    if kd["t_abaixo_limite_min"] > 0:
-        st.error("A rede ficou abaixo da pressão mínima de instrumentação — "
-                 "capacidade insuficiente durante o evento.")
+            # Exibição dos gráficos temporais do caso cego
+            df_pi_caso = caso["df_serie_pi"]
 
-    e1, e2 = st.columns(2)
+            col_g1, col_g2 = st.columns(2)
+            with col_g1:
+                fig_c1, ax_c1 = plt.subplots(figsize=(7.5, 3.2))
+                ax_c1.plot(df_pi_caso["Passo"], df_pi_caso["CMP01:LP_TDISC"], color=RED, label="CMP01:LP_TDISC [°C]")
+                ax_c1.plot(df_pi_caso["Passo"], df_pi_caso["CMP01:HP_TDISC"], color=ORANGE, label="CMP01:HP_TDISC [°C]")
+                ax_c1.axvline(15, color=GRAY, ls=":", label="Início da Ocorrência")
+                ax_c1.set_xlabel("Tempo [Passos]")
+                ax_c1.set_ylabel("Temperatura [°C]")
+                ax_c1.legend(fontsize=8)
+                ax_c1.set_title("Evolução Térmica dos Estágios", fontsize=10)
+                fig_c1.tight_layout()
+                st.pyplot(fig_c1)
 
-    with e1:
-        fig4, ax4 = plt.subplots(figsize=(6.2, 3.4))
-        ax4.plot(din["t_min"], din["p_bar"], color=NAVY, label="P da rede")
-        p_set_bar = params["pi_total"] * params["p_amb"] / 1e5
-        if modo == "Carga/Alívio":
-            ax4.axhline(p_set_bar + dp_db_bar / 2, color=GREEN, ls=":",
-                        label="Banda carga/alívio")
-            ax4.axhline(p_set_bar - dp_db_bar / 2, color=GREEN, ls=":")
+            with col_g2:
+                fig_c2, ax_c2 = plt.subplots(figsize=(7.5, 3.2))
+                ax_c2.plot(df_pi_caso["Passo"], df_pi_caso["CMP01:ELE_I"], color=BLUE, label="CMP01:ELE_I [A]")
+                ax_c2.plot(df_pi_caso["Passo"], df_pi_caso["CMP01:MEC_VIB_RMS"], color=NAVY, label="CMP01:MEC_VIB_RMS [mm/s]")
+                ax_c2.axvline(15, color=GRAY, ls=":", label="Início da Ocorrência")
+                ax_c2.set_xlabel("Tempo [Passos]")
+                ax_c2.set_ylabel("Corrente / Vibração")
+                ax_c2.legend(fontsize=8)
+                ax_c2.set_title("Evolução Eletromecânica", fontsize=10)
+                fig_c2.tight_layout()
+                st.pyplot(fig_c2)
+
+            col_g3, col_g4 = st.columns(2)
+            with col_g3:
+                fig_c3, ax_c3 = plt.subplots(figsize=(7.5, 3.2))
+                ax_c3.plot(df_pi_caso["Passo"], df_pi_caso["CMP01:PSA_TDP"], color=GREEN, label="CMP01:PSA_TDP [°C]")
+                ax_c3.axhline(-40.0, color=RED, ls="--", label="Limite Classe 2 (-40°C)")
+                ax_c3.axvline(15, color=GRAY, ls=":", label="Início da Ocorrência")
+                ax_c3.set_xlabel("Tempo [Passos]")
+                ax_c3.set_ylabel("PDP [°C]")
+                ax_c3.legend(fontsize=8)
+                ax_c3.set_title("Ponto de Orvalho (Secador PSA)", fontsize=10)
+                fig_c3.tight_layout()
+                st.pyplot(fig_c3)
+
+            with col_g4:
+                fig_c4, ax_c4 = plt.subplots(figsize=(7.5, 3.2))
+                ax_c4.plot(df_pi_caso["Passo"], df_pi_caso["CMP01:TK_PTK"], color=BLUE, label="CMP01:TK_PTK [bar]")
+                ax_c4.plot(df_pi_caso["Passo"], df_pi_caso["CMP01:IC_PINT"], color=NAVY, label="CMP01:IC_PINT [bar]")
+                ax_c4.axvline(15, color=GRAY, ls=":", label="Início da Ocorrência")
+                ax_c4.set_xlabel("Tempo [Passos]")
+                ax_c4.set_ylabel("Pressão [bar]")
+                ax_c4.legend(fontsize=8)
+                ax_c4.set_title("Pressões de Processo e Vaso Pulmão", fontsize=10)
+                fig_c4.tight_layout()
+                st.pyplot(fig_c4)
+
+            # Painel com as últimas leituras de telemetria
+            with st.expander("🔍 Ver Telemetria Instantânea das Tags PI (Snapshot do Caso)", expanded=False):
+                st.dataframe(
+                    pd.DataFrame([
+                        {
+                            "Tag": t_name,
+                            "Valor": f"{t_data['valor']:.3g} {t_data['unidade']}",
+                            "Status": t_data["status_alarme"],
+                            "Subsistema": t_data["subsistema"],
+                        }
+                        for t_name, t_data in caso["snapshot_final_pi"].items()
+                    ]),
+                    width="stretch",
+                    hide_index=True,
+                )
+
+            st.markdown("<div class='fase-header'>📝 FASE 3 — DIAGNÓSTICO   <span style='font-size:0.85em;font-weight:400;'>Preencha o formulário com sua análise técnica</span></div>", unsafe_allow_html=True)
+
+            with st.form("form_diagnostico_treinamento"):
+                fc1, fc2 = st.columns(2)
+                
+                subsistemas_lista = [
+                    "Geração / Estágio LP", "Resfriamento Intermediário", "Admissão e Filtragem",
+                    "Pacote / Invólucro (Hood)", "Tratamento / Secagem PSA", "Transmissão e Mancais",
+                    "Painel Elétrico / Motor", "Painel Elétrico / Mancais", "Armazenamento e Segurança",
+                    "Tratamento Primário / Drenagem", "Header / Distribuição"
+                ]
+                sub_escolhido = fc1.selectbox("1. Qual o Subsistema Afetado?", subsistemas_lista)
+
+                mecanismos_opcoes = {m.id: f"{m.nome} ({m.capitulo})" for m in treinamento_falhas.CATALOGO_FALHAS_TREINAMENTO}
+                mec_id_escolhido = fc2.selectbox(
+                    "2. Qual a Causa-Raiz / Mecanismo Específico?",
+                    options=list(mecanismos_opcoes.keys()),
+                    format_func=lambda k: mecanismos_opcoes[k]
+                )
+
+                fc3, fc4 = st.columns(2)
+                sev_escolhida = fc3.radio(
+                    "3. Nível de Severidade Diagnosticado",
+                    ["Leve/Incipiente", "Moderada/Alerta", "Severa/Crítica"],
+                    horizontal=True
+                )
+
+                acoes_disponiveis = [m.acao_prescritiva for m in treinamento_falhas.CATALOGO_FALHAS_TREINAMENTO]
+                acao_escolhida = fc4.selectbox("4. Qual a Ação Prescritiva Recomendada?", acoes_disponiveis)
+
+                btn_submeter = st.form_submit_button("🏁 Submeter Avaliação Diagnóstica", type="primary")
+
+            if btn_submeter:
+                st.session_state["resultado_avaliacao"] = treinamento_falhas.avaliar_diagnostico_usuario(
+                    caso=caso,
+                    subsistema_escolhido=sub_escolhido,
+                    mecanismo_id_escolhido=mec_id_escolhido,
+                    severidade_escolhida=sev_escolhida,
+                    acao_escolhida=acao_escolhida,
+                )
+                # Salva no histórico de tentativas
+                st.session_state["historico_treinamento"].append({
+                    "Timestamp": datetime.now().strftime("%H:%M:%S"),
+                    "Dificuldade": caso["dificuldade"],
+                    "Mecanismo Real": caso["mecanismo_gabarito"].nome,
+                    "Mecanismo Indicado": mecanismos_opcoes[mec_id_escolhido],
+                    "Score": st.session_state["resultado_avaliacao"]["score_total"],
+                    "Status": "Aprovado" if st.session_state["resultado_avaliacao"]["aprovado"] else "Reprovado",
+                })
+
+            # Exibição do Parecer da Avaliação
+            if st.session_state["resultado_avaliacao"] is not None:
+                av = st.session_state["resultado_avaliacao"]
+                st.markdown("<div class='fase-header'>🏆 FASE 4 — RESULTADO & GABARITO</div>", unsafe_allow_html=True)
+
+                score = av["score_total"]
+                # Barra de progresso visual com cor dinâmica
+                score_cor = "#166534" if score >= 70 else ("#92400e" if score >= 50 else "#991b1b")
+                st.markdown(f"""
+                <div style='margin-bottom:4px;'><b>Pontuação Total: {score:.0f} / 100</b></div>
+                <div class='progress-bar-outer'>
+                  <div class='progress-bar-inner' style='width:{score}%;background:{score_cor};'></div>
+                </div>""", unsafe_allow_html=True)
+
+                sc1, sc2, sc3, sc4 = st.columns(4)
+                sc1.metric("Subsistema", f"{av['pts_subsistema']:.0f}/25 pts")
+                sc2.metric("Mecanismo", f"{av['pts_mecanismo']:.0f}/45 pts")
+                sc3.metric("Severidade", f"{av['pts_severidade']:.0f}/15 pts")
+                sc4.metric("Ação Prescritiva", f"{av['pts_acao']:.0f}/15 pts")
+
+                if av["aprovado"]:
+                    st.success(f"✅ **{av['classificacao']}**")
+                else:
+                    st.error(f"❌ **{av['classificacao']}**")
+
+                with st.expander("🔬 Ver Gabarito Completo e Fundamentação Física"):
+                    st.markdown(f"**Mecanismo Real**: `{av['gabarito_mecanismo'].nome}` ({av['gabarito_mecanismo'].capitulo} — {av['gabarito_mecanismo'].eq_ref})")
+                    st.markdown(f"**Normas Aplicáveis**: `{av['normas']}`")
+                    st.markdown(f"**Explicação Técnica**: {av['explicacao_tecnica']}")
+                    st.markdown(f"**Ação Recomendada Correta**: {av['acao_esperada']}")
+                    st.markdown("**Sintomas Típicos Esperados:**")
+                    for s in av["sintomas_chave"]:
+                        st.markdown(f"- {s}")
+
+                col_next, _ = st.columns([1, 3])
+                if col_next.button("▶️ Próximo Caso", type="primary"):
+                    st.session_state["caso_treinamento"] = None
+                    st.session_state["resultado_avaliacao"] = None
+                    st.rerun()
+
         else:
-            ax4.axhline(p_set_bar, color=GREEN, ls=":", label="Setpoint")
-        ax4.axhline(params["p_limite"] / 1e5, color=RED, ls="--",
-                    label="P mínima da rede")
-        ax4.set_xlabel("Tempo [min]")
-        ax4.set_ylabel("Pressão [bar abs]")
-        ax4.legend(fontsize=8)
-        fig4.tight_layout()
-        st.pyplot(fig4)
+            st.info("Clique em **'🎲 Gerar Novo Caso Cego'** acima para iniciar uma rodada de treinamento.")
 
-        fig6, ax6 = plt.subplots(figsize=(6.2, 3.0))
-        ax6.plot(din["t_min"], din["w_kw"], color=BLUE)
-        ax6.set_xlabel("Tempo [min]")
-        ax6.set_ylabel("Potência [kW]")
-        ax6.set_title("Potência instantânea (Eq. 13.7)", fontsize=10)
-        fig6.tight_layout()
-        st.pyplot(fig6)
+        # Histórico da Sessão com gráfico de radar de competências
+        if st.session_state["historico_treinamento"]:
+            st.divider()
+            st.markdown("### 📈 Histórico de Desempenho do Operador nesta Sessão")
+            df_hist = pd.DataFrame(st.session_state["historico_treinamento"])
+            st.dataframe(df_hist, width="stretch", hide_index=True)
 
-    with e2:
-        fig5, ax5 = plt.subplots(figsize=(6.2, 3.4))
-        ax5.plot(din["t_min"], din["m_comp"], color=BLUE,
-                 label="ṁ compressor (pós-secador)")
-        ax5.plot(din["t_min"], din["m_dem"], color=RED, ls="--",
-                 label="ṁ demanda")
-        ax5.set_xlabel("Tempo [min]")
-        ax5.set_ylabel("Vazão mássica [kg/s]")
-        ax5.legend(fontsize=8)
-        fig5.tight_layout()
-        st.pyplot(fig5)
+            # Mini gráfico de scores ao longo das tentativas
+            if len(df_hist) > 1:
+                fig_hist, ax_hist = plt.subplots(figsize=(8.0, 2.5))
+                cores_hist = [GREEN if s >= 70 else (ORANGE if s >= 50 else RED) for s in df_hist["Score"]]
+                ax_hist.bar(range(len(df_hist)), df_hist["Score"], color=cores_hist, width=0.55)
+                ax_hist.axhline(70, color=GREEN, ls="--", lw=1.2, label="Aprovação (70 pts)")
+                ax_hist.set_xlabel("Tentativa #")
+                ax_hist.set_ylabel("Score (pts)")
+                ax_hist.set_ylim(0, 105)
+                ax_hist.legend(fontsize=8)
+                ax_hist.set_title("Evolução de Desempenho nas Tentativas", fontsize=10)
+                fig_hist.tight_layout()
+                st.pyplot(fig_hist)
 
-        fig7, ax7 = plt.subplots(figsize=(6.2, 3.0))
-        energia_t = np.concatenate(
-            [[0.0], np.cumsum(np.diff(din["t_min"]) *
-                              (din["w_kw"][1:] + din["w_kw"][:-1]) / 2.0 / 60.0)])
-        ax7.plot(din["t_min"], energia_t, color=GREEN)
-        ax7.set_xlabel("Tempo [min]")
-        ax7.set_ylabel("Energia acumulada [kWh]")
-        fig7.tight_layout()
-        st.pyplot(fig7)
 
-    if evento:
+    with t_estudo:
+        st.markdown("### 📚 Catálogo Completo de Mecanismos de Falha e Diagnóstico")
+        st.caption("Consulte os 15+ mecanismos de falha detalhados com suas equações físicas e diretrizes normativas.")
+
+        for mec in treinamento_falhas.CATALOGO_FALHAS_TREINAMENTO:
+            with st.expander(f"🔹 {mec.nome} [{mec.subsistema}] — {mec.capitulo} ({mec.eq_ref})"):
+                st.markdown(f"**Descrição Física**: {mec.descricao_fisica}")
+                st.markdown(f"**Detecção Primária**: `{mec.deteccao_primaria}` | **Dificuldade**: `{mec.dificuldade}`")
+                st.markdown(f"**Norma de Referência**: `{mec.norma_referencia}`")
+                st.markdown(f"**Ação Prescritiva**: {mec.acao_prescritiva}")
+                st.markdown(f"**Equacionamento e Fundamentação**: {mec.explicacao_tecnica}")
+                st.markdown("**Sintomas na Telemetria PI:**")
+                for sint in mec.sintomas_pi:
+                    st.markdown(f"- {sint}")
+
+
+# ===========================================================================
+# 3. ABA: DIAGNÓSTICO & IA — Laboratório + Motores de IA
+# ===========================================================================
+with tab_diagnostico:
+    st.subheader("🔬 Diagnóstico & Inteligência Artificial")
+    st.caption("Laboratório de injeção de falhas, classificador m̂_falha e motores de IA do Gêmeo Digital.")
+
+    td1, td2 = st.tabs(["🚨 Laboratório de Falhas & Classificador m̂_falha", "🧠 Motores de IA (EKF · VAE · PIML · MPC · PSO)"])
+
+    with td1:
+        st.markdown("#### Laboratório de Injeção de Falhas & Classificador m̂_falha (Eq. 29.2)")
         st.caption(
-            f"Evento de pico: demanda ×{fator_ev:.1f} entre "
-            f"{0.40 * horizonte:.0f} min e {0.65 * horizonte:.0f} min. "
-            "Balanço de massa no vaso: Eq. 16.4; modulação de potência: "
-            "Eq. 13.7; ciclagem teórica: Eq. 13.8."
+            "Injete falhas de forma interativa, compare a telemetria real (PI) contra o Gêmeo Digital "
+            "e execute a classificação automática de causa-raiz por resíduo mínimo ponderado."
         )
 
-    st.subheader("Pressão e temperatura em cada ponto do trem, ao longo do tempo")
-    x_c_ativo = din["x_c"] > 0.02  # abaixo disso, compressor tratado como parado
-    cores_pontos = plt.cm.tab10(np.linspace(0, 1, len(res["nos"])))
-    figP, (axP, axT) = plt.subplots(1, 2, figsize=(12.6, 3.6))
-    for idx, no in enumerate(res["nos"]):
-        p_serie = np.where(x_c_ativo, no["p_bar"], np.nan)
-        t_serie = np.where(x_c_ativo, no["t_c"], np.nan)
-        axP.plot(din["t_min"], p_serie, color=cores_pontos[idx], lw=1.4,
-                 label=no["nome"])
-        axT.plot(din["t_min"], t_serie, color=cores_pontos[idx], lw=1.4,
-                 label=no["nome"])
-    axP.set_xlabel("Tempo [min]")
-    axP.set_ylabel("Pressão [bar abs]")
-    axT.set_xlabel("Tempo [min]")
-    axT.set_ylabel("Temperatura [°C]")
-    axP.legend(fontsize=6.5, ncol=2, loc="center left")
-    figP.tight_layout()
-    st.pyplot(figP)
+        col_l1, col_l2 = st.columns([1.5, 1.0])
+
+        with col_l1:
+            falhas_opcoes = {m.id: f"{m.nome} ({m.subsistema})" for m in treinamento_falhas.CATALOGO_FALHAS_TREINAMENTO}
+            falha_lab_id = st.selectbox("Mecanismo a Injetar", list(falhas_opcoes.keys()), format_func=lambda k: falhas_opcoes[k])
+            mec_lab = treinamento_falhas.buscar_mecanismo_por_id(falha_lab_id)
+
+            sev_lab_pct = st.slider("Severidade da Falha Injetada [%]", 0, 100, 75, 5)
+            sev_lab = sev_lab_pct / 100.0
+
+        with col_l2:
+            st.markdown(f"**Mecanismo**: `{mec_lab.nome}`")
+            st.markdown(f"**Equação**: `{mec_lab.eq_ref}` | **Capítulo**: `{mec_lab.capitulo}`")
+            st.markdown(f"**Parâmetro Físico**: `{mec_lab.parametro}` → valor severo: `{mec_lab.valor_severo}`")
+            st.markdown(f"**Norma**: `{mec_lab.norma_referencia}`")
+
+        # Execução da simulação saudável vs falha
+        p_saudavel = dict(params)
+        p_falha_lab = dict(params)
+        val_ini_lab = params.get(mec_lab.parametro, 0.0)
+        p_falha_lab[mec_lab.parametro] = val_ini_lab + sev_lab * (mec_lab.valor_severo - val_ini_lab)
+
+        res_saudavel_lab = simular(p_saudavel)
+        res_falha_lab = simular(p_falha_lab)
+
+        snap_saudavel_lab = pi_telemetry.extrair_snapshot_pi(res_saudavel_lab, p_saudavel, adicionar_ruido=False)
+        snap_falha_lab = pi_telemetry.extrair_snapshot_pi(res_falha_lab, p_falha_lab, adicionar_ruido=True)
+
+        vetor_z_lab = {tag: info["valor"] for tag, info in snap_falha_lab.items()}
+
+        # Classificador Multi-Mecanismo m̂_falha
+        ranking_m_falha = treinamento_falhas.classificar_m_falha_minimo_residuo(vetor_z_lab, p_saudavel)
+
+        st.divider()
+
+        # Exibição do Classificador Automático
+        st.markdown("### 🤖 Diagnóstico Automático via Gêmeo Digital (Classificador m̂_falha)")
+        st.caption("Busca sobre todas as hipóteses m ∈ M por resíduo mínimo normalizado ponderado (Eq. 29.2 do livro).")
+
+        top_m = ranking_m_falha[0]
+        top_mec = top_m["mecanismo"]
+
+        dc1, dc2, dc3 = st.columns(3)
+        dc1.metric("1º Diagnóstico (Mais Provável)", top_mec.nome, delta=f"{top_m['probabilidade_pct']:.1f}% confiança")
+        dc2.metric("Resíduo Ponderado J(m)", f"{top_m['custo_j']:.3f}", help="Menor valor indica melhor ajuste físico")
+        dc3.metric("Classificação de Acerto", "✅ EXATO" if top_mec.id == mec_lab.id else "⚠️ DISCREPÂNCIA")
+
+        # Gráfico de Probabilidade dos Top Candidatos
+        col_p, col_sh = st.columns(2)
+        with col_p:
+            top5_candidatos = ranking_m_falha[:5]
+            fig_prob, ax_prob = plt.subplots(figsize=(7.0, 3.2))
+            nomes_top5 = [item["mecanismo"].nome[:28] + "…" for item in top5_candidatos]
+            probs_top5 = [item["probabilidade_pct"] for item in top5_candidatos]
+            cores_top5 = [GREEN if item["mecanismo"].id == mec_lab.id else BLUE for item in top5_candidatos]
+            bars = ax_prob.barh(nomes_top5[::-1], probs_top5[::-1], color=cores_top5[::-1], height=0.55)
+            ax_prob.set_xlabel("Probabilidade [%]")
+            ax_prob.set_xlim(0, 100)
+            for bar, val in zip(bars, probs_top5[::-1]):
+                ax_prob.text(val + 1.5, bar.get_y() + bar.get_height()/2.0, f"{val:.1f}%", va="center", fontsize=8)
+            ax_prob.set_title("Top-5 Hipóteses Diagnosticadas", fontsize=10)
+            fig_prob.tight_layout()
+            st.pyplot(fig_prob)
+
+        with col_sh:
+            # Gráfico SHAP de Atribuição de Tags
+            st.markdown("**🔬 Explicabilidade — Contribuição das Tags PI (Eq. 25.4)**")
+            tags_residuos = top_m["residuos_tags"]
+            tags_ordenadas = sorted(tags_residuos.items(), key=lambda x: x[1], reverse=True)[:8]
+            fig_shap, ax_shap = plt.subplots(figsize=(7.0, 3.2))
+            t_nomes = [t[0] for t in tags_ordenadas]
+            t_pesos = [t[1] for t in tags_ordenadas]
+            ax_shap.bar(t_nomes, t_pesos, color=ORANGE, width=0.5)
+            ax_shap.set_ylabel("Impacto no Resíduo J(m)")
+            ax_shap.set_title("Top Tags PI Determinantes", fontsize=10)
+            plt.setp(ax_shap.get_xticklabels(), rotation=35, ha="right", fontsize=7)
+            fig_shap.tight_layout()
+            st.pyplot(fig_shap)
+
+    with td2:
+        st.markdown("#### Motores de Inteligência Artificial do Gêmeo Digital (Parte II)")
+        st.caption("Execução e validação dos 5 algoritmos fundamentais: EKF, VAE, PIML, MPC e PSO.")
+
+        tg1, tg2, tg3, tg4, tg5 = st.tabs([
+            "1. EKF & EKF Aumentado", "2. VAE (Espaço Latente)", "3. PIML (Física Informada)",
+            "4. MPC (Controle Preditivo)", "5. PSO (Otimização Global)"
+        ])
+
+        with tg1:
+            st.markdown("#### Filtro de Kalman Estendido — EKF (Eqs. 21.2–21.8)")
+            folga_true_ekf = np.linspace(0.002, 0.009, n_passos_ekf)
+            rf_true_ekf = np.zeros(n_passos_ekf)
+            res_ekf = ekf.simular_ekf(
+                params_base=params,
+                folga_true=folga_true_ekf,
+                r_f_true=rf_true_ekf,
+                sigma_m_dot=1e-4,
+                sigma_t_hp=0.05,
+                q_proc_diag=(1e-7, 1e-10),
+                x0=(0.002, 0.0),
+                p0_diag=(1e-6, 1e-10),
+                seed=42,
+            )
+
+            fig_ekf, (ax_e1, ax_e2) = plt.subplots(1, 2, figsize=(11.0, 3.2))
+            eixo_t = np.arange(n_passos_ekf) * dt_horas_ekf / 24.0
+
+            ax_e1.plot(eixo_t, res_ekf["folga_true"] * 1000.0, color=GREEN, label="δ/L real (oculto)")
+            ax_e1.plot(eixo_t, res_ekf["x_hat"][:, 0] * 1000.0, color=BLUE, label="δ/L estimado EKF")
+            ax_e1.fill_between(
+                eixo_t,
+                (res_ekf["x_hat"][:, 0] - 2 * res_ekf["std"][:, 0]) * 1000.0,
+                (res_ekf["x_hat"][:, 0] + 2 * res_ekf["std"][:, 0]) * 1000.0,
+                color=BLUE, alpha=0.2, label="IC 95%"
+            )
+            ax_e1.set_xlabel("Tempo [dias]")
+            ax_e1.set_ylabel("Folga Relativa [μm/m]")
+            ax_e1.legend(fontsize=7)
+            ax_e1.set_title("Estimação de Folga LP (δ)", fontsize=10)
+
+            ax_e2.plot(eixo_t, res_ekf["nis"], color=NAVY, label="NIS medido")
+            ax_e2.axhline(7.0, color=GREEN, ls="--", label="Média esperada (df=7)")
+            ax_e2.axhline(14.07, color=RED, ls=":", label="Limiar 95% χ²")
+            ax_e2.set_xlabel("Tempo [dias]")
+            ax_e2.set_ylabel("NIS (Eq. 21.7)")
+            ax_e2.legend(fontsize=7)
+            ax_e2.set_title("Auditoria Estatística NIS", fontsize=10)
+            fig_ekf.tight_layout()
+            st.pyplot(fig_ekf)
+
+        with tg2:
+            st.markdown("#### Redução de Dimensionalidade & Detecção de Anomalia via VAE (Cap. 22)")
+            @st.cache_resource
+            def _obter_vae_treinado(_p, _chave):
+                X_tr = vae.gerar_dataset_saudavel(n_amostras_vae, _p, seed=42)
+                info = vae.treinar(X_tr, n_epocas=n_epocas_vae, lr=1e-3, beta=0.1)
+                X_val = vae.gerar_dataset_saudavel(50, _p, seed=99)
+                e_val = vae.erro_reconstrucao(info, X_val)
+                limiar = float(np.percentile(e_val, 99.0))
+                return info, limiar
+
+            info_vae, limiar_vae = _obter_vae_treinado(params, (round(params["t_amb"], 1), n_amostras_vae, n_epocas_vae))
+            feat_atual = vae.extrair_features(res_sim)[None, :]
+            e_atual = float(vae.erro_reconstrucao(info_vae, feat_atual)[0])
+
+            vc1, vc2 = st.columns(2)
+            vc1.metric("Erro de Reconstrução E_rec Atual", f"{e_atual:.2f}")
+            vc2.metric("Limiar de Disparo (Eq. 22.6)", f"{limiar_vae:.2f}")
+
+            if e_atual > limiar_vae:
+                st.warning("⚠️ Operação fora do padrão saudável (Anomalia detectada pelo VAE)")
+            else:
+                st.success("✅ Operação dentro da distribuição de normalidade do VAE")
+
+        with tg3:
+            st.markdown("#### Physics-Informed Machine Learning — PIML (Cap. 23)")
+            st.caption("Rede neural treinada sob restrições físicas de conservação de energia e balanço térmico.")
+            @st.cache_resource
+            def _obter_piml_treinado(_p, _chave):
+                faixas = {"pi_total": (6.0, 10.0), "t_amb_c": (10.0, 40.0), "folga_rel": (0.001, 0.02), "r_f_equiv": (0.0, 5e-4), "fad_m3_min": (8.0, 12.0)}
+                entradas_tr, saidas_tr = piml.gerar_dataset(n_amostras_piml, _p, faixas, seed=0)
+                info = piml.treinar(entradas_tr, saidas_tr, faixas, n_epocas=n_epocas_piml, lr=1e-2)
+                return info
+
+            info_piml = _obter_piml_treinado(params, (round(params["t_amb"], 1), n_amostras_piml, n_epocas_piml))
+            fig_piml, ax_pi = plt.subplots(figsize=(8.5, 2.8))
+            ax_pi.plot(info_piml["hist_data"], color=BLUE, label="L_data (Erro de Dados)")
+            ax_pi.plot(info_piml["hist_fisica"], color=RED, label="L_physics (Resíduo de Conservação)")
+            ax_pi.set_yscale("log")
+            ax_pi.set_xlabel("Época")
+            ax_pi.set_ylabel("Perda (log)")
+            ax_pi.legend(fontsize=8)
+            fig_piml.tight_layout()
+            st.pyplot(fig_piml)
+
+        with tg4:
+            st.markdown("#### Controle Preditivo Baseado em Modelo — MPC (Cap. 24)")
+            r_mpc = mpc.simular_mpc(
+                horizonte_min=30, dt=1.0, n_horizonte=10,
+                m_dot_cap=res_sim["nos"][-1]["m_dot"] * params["n_compressores"],
+                v_vaso=params["v_vaso"], t_k=params["t_amb"],
+                p_set=params["p_amb"] * params["pi_total"],
+                dem_base=0.15, t_ev=(10*60, 20*60), fator_ev=1.3,
+                rho=0.1, x_c_min=dinamica.X_C_MIN,
+                w_nom=res_sim["potencias"]["w_total_planta"], eta_vsd=dinamica.ETA_VSD
+            )
+            fig_mpc, ax_mpc = plt.subplots(figsize=(8.5, 2.8))
+            ax_mpc.plot(r_mpc["t_min"], r_mpc["p_bar"], color=BLUE, label="MPC (Antecipativo)")
+            ax_mpc.axhline(params["p_amb"] * params["pi_total"] / 1e5, color=GREEN, ls=":", label="Referência")
+            ax_mpc.set_xlabel("Tempo [min]")
+            ax_mpc.set_ylabel("Pressão [bar abs]")
+            ax_mpc.legend(fontsize=8)
+            fig_mpc.tight_layout()
+            st.pyplot(fig_mpc)
+
+        with tg5:
+            st.markdown("#### Otimização por Enxame de Partículas — PSO (Cap. 24.2)")
+            st.caption("Minimiza o SPC (Consumo Específico) variando a razão de pressão π — Eqs. 24.3 e 24.4.")
+            if st.button("🚀 Otimizar Setpoint de Pressão via PSO"):
+                def _custo_spc(x):
+                    _p = dict(params)
+                    _p["pi_total"] = float(x[0])
+                    return simular(_p)["kpis"]["spc"]
+
+                r_pso = pso.otimizar(
+                    func_custo=_custo_spc,
+                    limite_inf=[6.0],
+                    limite_sup=[10.0],
+                    n_particulas=n_particulas_pso,
+                    n_iter=n_iter_pso,
+                    seed=42,
+                )
+                pi_otimo = float(r_pso["g_best"][0])
+                spc_otimo = float(r_pso["g_best_custo"])
+                st.success(f"✅ Ótimo Global: **π* = {pi_otimo:.2f}** | SPC Mínimo = **{spc_otimo:.4f} kW·m⁻³·min**")
+
+                fig_pso, ax_pso = plt.subplots(figsize=(8.0, 2.5))
+                ax_pso.plot(r_pso["historico_custo"], color=BLUE, lw=2)
+                ax_pso.set_xlabel("Iteração PSO")
+                ax_pso.set_ylabel("SPC (Custo)")
+                ax_pso.set_title("Convergência do PSO — g_best por Iteração", fontsize=10)
+                fig_pso.tight_layout()
+                st.pyplot(fig_pso)
+
+
+
+
+# ===========================================================================
+# 4. ABA: FROTA OFFSHORE — Supervisório de Múltiplos Compressores
+# ===========================================================================
+with tab_frota:
+    st.subheader("🚢 Painel Supervisório de Frota Offshore (Seção 26.6)")
     st.caption(
-        "Linhas constantes enquanto o compressor está ativo — neste "
-        "modelo, P e T de cada ponto do trem dependem só do ponto de "
-        "operação fixo (pressão de rede, temperaturas ambiente/água), não "
-        "da vazão instantânea: um compressor de deslocamento positivo a "
-        "razão de pressão fixa entrega o mesmo perfil P/T em qualquer "
-        "fração de carga do VSD, só a vazão mássica muda (gráfico "
-        "\"Vazão mássica\" acima). O que de fato varia aqui é **quando** "
-        "cada ponto está ativo: no modo Carga/Alívio, as linhas somem "
-        "durante os intervalos de alívio (compressor parado, sem fluxo) — "
-        "o padrão liga/desliga é o sinal relevante, não a forma da curva. "
-        "Para ver P/T variando de verdade, seria preciso um cenário onde "
-        "a própria pressão de rede (setpoint) ou as temperaturas de "
-        "referência mudassem no tempo — não modelado nesta aba."
+        "Monitoramento integrado de múltiplos compressores em paralelo na plataforma. "
+        "Priorização por urgência, Health Index composto (Eq. 26.4), NIS (Eq. 21.7) e RUL bayesiano."
     )
 
-# ===========================================================================
-# Aba 3 — Secagem PSA (ciclo de torres)
-# ===========================================================================
-with tab_psa:
-    m_dot_unidade = res["nos"][-1]["m_dot"]  # vazão pós-secador de UMA unidade
-    if topologia_psa == "N vasos por compressor":
-        m_dot_psa = m_dot_unidade
-        legenda_topologia = (
-            f"cada um dos {pw['n_compressores']} compressores tem seu próprio "
-            f"secador dedicado de {n_vasos_psa} torres — o gráfico abaixo é "
-            f"idêntico em todas as unidades (mesmo ponto de operação)."
-        )
-    else:
-        m_dot_psa = m_dot_unidade * pw["n_compressores"]
-        legenda_topologia = (
-            f"um único banco de {n_vasos_psa} torres compartilhado, "
-            f"dimensionado para a vazão total da planta "
-            f"({pw['n_compressores']} compressores somados)."
+    col_btn_f, col_info_f = st.columns([1, 3])
+    if col_btn_f.button("🔄 Executar Ciclo de Varredura da Frota (t_k)", type="primary"):
+        st.session_state["painel_frota"] = frota_supervisorio.executar_ciclo_supervisorio_frota(
+            st.session_state["frota_instancias"], dt_dias=1.0
         )
 
-    p_low_psa = params["p_amb"]
-    p_high_psa = params["p_amb"] * params["pi_total"]
+    painel_frota = st.session_state.get(
+        "painel_frota",
+        frota_supervisorio.executar_ciclo_supervisorio_frota(st.session_state["frota_instancias"], dt_dias=0.0)
+    )
 
-    # --- Soprador booster: fecha h (Dittus-Boelter, Eq. 15.15) e T_reg,in
-    # (ε-NTU, Eq. 15.16) a partir da vazão do booster, substituindo o
-    # antigo delta_t_regen assumido por um valor calculado. Forma da
-    # partícula (Eq. 15.18) corrige k_ads antes de entrar no ciclo.
-    # 16/08/2026.
-    t_upstream_regen_c = res["nos"][4]["t_c"]
-    h_aquecedor = subsistemas.coef_conveccao_forcada(
-        m_dot_reg_psa, constantes.D_H_AQUECEDOR_M, constantes.MU_AR_REGEN,
-        constantes.K_AR_REGEN, constantes.PR_AR, aquecendo=True)
-    ua_aquecedor = h_aquecedor * constantes.A_AQUECEDOR_M2
-    t_reg_in_c = subsistemas.saida_trocador(
-        t_upstream_regen_c, constantes.T_ELEM_MAX_C, ua_aquecedor,
-        m_dot_reg_psa * constantes.CP_AR)
-    delta_t_regen_calc = t_reg_in_c - t_upstream_regen_c
-    k_ads_efetivo = subsistemas.k_ads_por_forma(k_ads_psa, psi_p_psa)  # Eq. 15.18
+    # Resumo rápido
+    n_crit = sum(1 for m in painel_frota if m["hi"] < 0.60)
+    n_alrt = sum(1 for m in painel_frota if 0.60 <= m["hi"] < 0.85)
+    n_ok   = sum(1 for m in painel_frota if m["hi"] >= 0.85)
+    col_info_f.markdown(
+        f"**Visão Geral da Frota** — "
+        f"<span style='color:#166534;font-weight:700;'>✅ {n_ok} Normais</span>  "
+        f"<span style='color:#92400e;font-weight:700;'>⚠️ {n_alrt} Atenção</span>  "
+        f"<span style='color:#991b1b;font-weight:700;'>🔴 {n_crit} Críticos</span>",
+        unsafe_allow_html=True
+    )
 
-    # --- Potência do soprador booster (Eq. 15.6, SEC_dry): perda de carga
-    # do leito na vazão de regeneração (Ergun, Eq. 15.17) vezes vazão
-    # volumétrica, sobre a eficiência do soprador.
-    rho_ar_regen = nucleo.densidade_ar(p_high_psa, t_upstream_regen_c + 273.15)
-    area_vaso_psa = np.pi * params["d_vaso_psa"] ** 2 / 4.0
-    v_s_regen = m_dot_reg_psa / (rho_ar_regen * area_vaso_psa)
-    dp_leito_regen = subsistemas.perda_carga_ergun(
-        params["mu_ar_psa"], v_s_regen, rho_ar_regen, psi_p_psa,
-        params["d_p_particula"], params["porosidade_leito"],
-        params["l_leito_psa"])
-    w_booster = (m_dot_reg_psa / rho_ar_regen) * dp_leito_regen / constantes.ETA_SOPRADOR_BOOSTER
-    sec_dry_com_booster_kj_kg = subsistemas.sec_dry(
-        res["potencias"]["aquecedor"] + w_booster, 0.0,
-        res["potencias"]["m_dot_util"]) / 1000.0
+    st.markdown("### 📋 Status dos Ativos (Ordenado por Urgência)")
 
-    r_psa = psa_ciclo.simular_ciclo_psa(
-        horizonte_min=horizonte_psa,
-        m_dot_ar=m_dot_psa,
-        t_ads_min=t_ads_psa,
-        t_regen_min=t_regen_psa,
-        t_resfriamento_min=t_resfriamento_psa,
-        n_vasos=n_vasos_psa,
-        k_ads=k_ads_efetivo,
+    for item in painel_frota:
+        hi_val = item["hi"]
+        # Classe CSS do card baseada no HI
+        if hi_val >= 0.85:
+            card_class = "fleet-card fleet-card-ok"
+            status_emoji = "🟢"
+            hi_cor = "#166534"
+        elif hi_val >= 0.60:
+            card_class = "fleet-card fleet-card-warn"
+            status_emoji = "🟡"
+            hi_cor = "#92400e"
+        else:
+            card_class = "fleet-card fleet-card-crit"
+            status_emoji = "🔴"
+            hi_cor = "#991b1b"
+
+        st.markdown(f"<div class='{card_class}'>", unsafe_allow_html=True)
+
+        c1, c2, c3, c4, c5, c6 = st.columns([1.8, 1.0, 1.0, 1.2, 1.0, 0.9])
+        c1.markdown(
+            f"<div style='font-size:1.1em;font-weight:700;'>{status_emoji} {item['nome']}</div>"
+            f"<div style='font-size:0.8em;color:#64748b;'>{item['maquina_id']}</div>",
+            unsafe_allow_html=True
+        )
+
+        # Barra de HI proporcional
+        hi_pct = hi_val * 100
+        c2.markdown(
+            f"<div style='font-size:0.75em;color:#64748b;'>Health Index (HI)</div>"
+            f"<div style='font-size:1.3em;font-weight:700;color:{hi_cor};'>{hi_pct:.1f}%</div>"
+            f"<div class='progress-bar-outer'><div class='progress-bar-inner' "
+            f"style='width:{hi_pct:.0f}%;background:{hi_cor};'></div></div>",
+            unsafe_allow_html=True
+        )
+        c3.metric("NIS (χ²)", f"{item['nis']:.2f}", help=item["nis_status"])
+        c4.metric("RUL", f"{item['rul_estimado_dias']:.0f} dias",
+                  help=f"IC 95%: [{item['rul_ic_min']:.0f}, {item['rul_ic_max']:.0f}] dias")
+        c5.metric("SPC", f"{item['consumo_spc']:.3f}", help="kW·m⁻³·min")
+
+        # Botão Analisar — seleciona o ativo e direciona ao Dashboard
+        _btn_key = f"analisar_{item['maquina_id']}"
+        if c6.button("🔍 Analisar", key=_btn_key, help=f"Abrir Dashboard de {item['maquina_id']}"):
+            _mapa_id = {"CMP-01": 0, "CMP-02": 1, "CMP-03": 2, "CMP-04": 3}
+            st.session_state["ativo_idx"] = _mapa_id.get(item["maquina_id"], 0)
+            st.toast(f"✅ {item['maquina_id']} selecionado — Acesse a aba 📊 Dashboard do Ativo", icon="🔍")
+            st.rerun()
+
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        if item["tem_alarmes"]:
+            st.warning(f"⚠️ **{item['maquina_id']}**: {len(item['alarmes'])} tag(s) em alarme ISA 18.2")
+            with st.expander(f"Ver alarmes — {item['maquina_id']}"):
+                st.dataframe(pd.DataFrame(item["alarmes"]), width="stretch", hide_index=True)
+
+
+    # Gráficos de Frota
+    st.divider()
+    st.markdown("### 📊 Análise Comparativa de Desempenho e RUL")
+    col_f1, col_f2 = st.columns(2)
+
+    with col_f1:
+        fig_f1, ax_f1 = plt.subplots(figsize=(7.0, 3.2))
+        ids_maq = [m["maquina_id"] for m in painel_frota]
+        his_maq = [m["hi"] * 100 for m in painel_frota]
+        cores_maq = [GREEN if h >= 85 else (ORANGE if h >= 60 else RED) for h in his_maq]
+        bars_f1 = ax_f1.bar(ids_maq, his_maq, color=cores_maq, width=0.45)
+        ax_f1.axhline(85.0, color=GREEN, ls="--", lw=1.0, label="Normal (85%)")
+        ax_f1.axhline(60.0, color=ORANGE, ls="--", label="Atenção (60%)")
+        ax_f1.axhline(40.0, color=RED, ls=":", label="Crítico (40%)")
+        for bar, val in zip(bars_f1, his_maq):
+            ax_f1.text(bar.get_x() + bar.get_width()/2, val + 1.5, f"{val:.0f}%", ha="center", fontsize=8)
+        ax_f1.set_ylabel("Health Index [%]")
+        ax_f1.set_ylim(0, 108)
+        ax_f1.legend(fontsize=7)
+        ax_f1.set_title("Health Index por Ativo da Frota", fontsize=10)
+        fig_f1.tight_layout()
+        st.pyplot(fig_f1)
+
+    with col_f2:
+        fig_f2, ax_f2 = plt.subplots(figsize=(7.0, 3.2))
+        ruls_maq = [m["rul_estimado_dias"] for m in painel_frota]
+        err_min = [m["rul_estimado_dias"] - m["rul_ic_min"] for m in painel_frota]
+        err_max = [m["rul_ic_max"] - m["rul_estimado_dias"] for m in painel_frota]
+        yerr = [err_min, err_max]
+        ax_f2.errorbar(ids_maq, ruls_maq, yerr=yerr, fmt="o", ms=8, color=BLUE, ecolor=NAVY, elinewidth=2, capsize=5)
+        for xi, yi in zip(ids_maq, ruls_maq):
+            ax_f2.text(xi, yi + 3, f"{yi:.0f}d", ha="center", fontsize=8)
+        ax_f2.set_ylabel("RUL [dias]")
+        ax_f2.set_title("Prognóstico RUL com Incerteza 95% (Eq. 19.10)", fontsize=10)
+        fig_f2.tight_layout()
+        st.pyplot(fig_f2)
+
+
+
+# ===========================================================================
+# 5. ABA: SISTEMA & DINÂMICA — Dinâmica Temporal, PSA, Conector PI
+# ===========================================================================
+with tab_sistema:
+    st.subheader("🛠️ Sistema & Dinâmica")
+    st.caption("Dinâmica temporal da rede, ciclagem PSA e integração com OSIsoft PI System.")
+
+    ts1, ts2, ts3 = st.tabs(["📈 Dinâmica Temporal", "🌀 Secagem PSA", "📂 Conector PI System"])
+
+    with ts1:
+        st.markdown("#### 📈 Visão Transiente de Vasos de Pressão & Trens de Compressão")
+        st.caption("Evolução temporal contínua da pressão no vaso P_vaso(t), sucção P_in(t) e descarga P_out(t) frente a perturbações de demanda, monitorando conformidade com a PMTA (ASME VIII) e P_mín.")
+
+        col_d1, col_d2 = st.columns(2)
+        with col_d1:
+            duracao_min = st.slider("Duração da Simulação [min]", 10, 120, 30, 5)
+        with col_d2:
+            modo_controle = st.radio("Modo de Modulação do Compressor", ["VSD (Inversor / Rampa 1ª Ordem)", "Carga / Alívio (Histerese)"], horizontal=True)
+
+        rho_amb = nucleo.densidade_ar(params["p_amb"], params["t_amb"])
+        dem_base_kg_s = rho_amb * params["demanda_m3_min"] / 60.0
+        m_cap_kg_s = res_sim["nos"][-1]["m_dot"] * params["n_compressores"]
+        p_set_pa = params["p_amb"] * params["pi_total"]
+
+        res_trans = dinamica.simular_transiente(
+            horizonte_min=duracao_min,
+            m_dot_cap=m_cap_kg_s,
+            w_nom=res_sim["potencias"]["w_total_planta"],
+            v_vaso=params["v_vaso"],
+            t_k=params["t_amb"],
+            p_set=p_set_pa,
+            p_limite=params["p_limite"],
+            dem_base=dem_base_kg_s,
+            t_ev=(duracao_min * 60 * 0.3, duracao_min * 60 * 0.6),
+            fator_ev=1.35,
+            modo="VSD" if "VSD" in modo_controle else "CARGA_ALIVIO",
+            dp_db=dp_db_bar * 1e5,
+        )
+
+        kpts = res_trans["kpis"]
+        asme_ok = kpts["integridade_asme_ok"]
+        
+        # Cards de Integridade ASME VIII
+        tc1, tc2, tc3, tc4, tc5 = st.columns(5)
+        tc1.metric("🛡️ Integridade ASME VIII", "✅ NORMAL" if asme_ok else "🚨 ALÍVIO PSV", help="ASME Seção VIII Div. 1")
+        tc2.metric("🔴 PMTA Máx. Admissível", f"{kpts['pmta_bar']:.1f} bar", help="Pressão Máxima de Projeto do Vaso")
+        tc3.metric("🟠 P_mín Crítica de Rede", f"{kpts['p_min_critica_bar']:.1f} bar", help="Pressão Mínima Operacional")
+        tc4.metric("⏱️ Máxima Taxa dP/dt", f"{kpts['dp_dt_max_bar_min']:.2f} bar/min", help="Taxa de variação no vaso")
+        tc5.metric("⚡ Energia Consumida", f"{kpts['energia_kwh']:.1f} kWh", help="Consumo no período")
+
+        # Gráfico 1: Pressões de Vaso, Descarga e Sucção
+        fig_trans, (ax_tp, ax_tw) = plt.subplots(2, 1, figsize=(10.5, 5.2), sharex=True)
+        ax_tp.plot(res_trans["t_min"], res_trans["p_bar"], color=BLUE, lw=2.2, label="P_vaso (Vaso Pulmão) [bar abs]")
+        ax_tp.plot(res_trans["t_min"], res_trans["p_out_bar"], color="#8b5cf6", lw=1.5, ls="--", label="P_out (Descarga Compressor) [bar abs]")
+        ax_tp.plot(res_trans["t_min"], res_trans["p_in_bar"], color="#06b6d4", lw=1.5, label="P_in (Sucção / Vácuo Admissão) [bar abs]")
+        ax_tp.axhline(kpts["pmta_bar"], color=RED, ls="--", lw=1.5, label=f"PMTA Máx. ASME VIII ({kpts['pmta_bar']:.1f} bar)")
+        ax_tp.axhline(kpts["p_min_critica_bar"], color=ORANGE, ls=":", lw=1.5, label=f"P_mín Crítica ({kpts['p_min_critica_bar']:.1f} bar)")
+        ax_tp.set_ylabel("Pressão [bar abs]", fontweight="bold")
+        ax_tp.set_title("1. Perfil Temporal de Pressões e Limites Estruturais de Projeto", fontsize=10, fontweight="bold")
+        ax_tp.legend(fontsize=8, loc="upper right")
+
+        # Gráfico 2: Balanço de Vazões Mássicas e Potência
+        ax_tw.plot(res_trans["t_min"], res_trans["m_comp"], color=GREEN, lw=1.8, label="ṁ_comp (Vazão Gerada) [kg/s]")
+        ax_tw.plot(res_trans["t_min"], res_trans["m_dem"], color=RED, lw=1.8, ls="--", label="ṁ_demanda (Consumo Planta) [kg/s]")
+        ax_tw.set_xlabel("Tempo [min]", fontweight="bold")
+        ax_tw.set_ylabel("Vazão [kg/s]", color=GREEN, fontweight="bold")
+        ax_tw.tick_params(axis='y', labelcolor=GREEN)
+
+        ax_tw2 = ax_tw.twinx()
+        ax_tw2.plot(res_trans["t_min"], res_trans["w_kw"], color="#eab308", lw=1.5, ls="-.", label="Potência Elétrica [kW]")
+        ax_tw2.set_ylabel("Potência [kW]", color="#b45309", fontweight="bold")
+        ax_tw2.tick_params(axis='y', labelcolor="#b45309")
+        ax_tw.set_title("2. Balanço Dinâmico de Vazão Mássica e Potência Elétrica [kW]", fontsize=10, fontweight="bold")
+
+        lines_1, labels_1 = ax_tw.get_legend_handles_labels()
+        lines_2, labels_2 = ax_tw2.get_legend_handles_labels()
+        ax_tw.legend(lines_1 + lines_2, labels_1 + labels_2, fontsize=8, loc="upper right")
+
+        fig_trans.tight_layout()
+        st.pyplot(fig_trans)
+
+    with ts2:
+        st.markdown("#### 🌀 Sistema de Secagem PSA — Ciclagem e Rodízio de Vasos (Cap. 15)")
+        st.caption(
+            "Simulação dinâmica de N torres em rodízio contínuo (Adsorção, Regeneração e Resfriamento). "
+            "Cinética de adsorção exponencial (Eq. 15.1), recuperação de capacidade (Eq. 15.12), conformidade ISO 8573-1."
+        )
+
+        col_pcfg1, col_pcfg2, col_pcfg3 = st.columns(3)
+        with col_pcfg1:
+            n_vasos_sim = st.slider("Número de Torres em Rodízio (N_vasos)", 2, 6, 2, 1,
+                                    help="Mínimo 2 torres para operação PSA alternada.")
+            topologia_psa = st.radio("Topologia de Instalação", ["N vasos por compressor", "N vasos para o sistema"],
+                                 horizontal=True)
+    with col_pcfg2:
+        t_ads_sim = st.slider("Duração da Adsorção [min]", 2.0, 180.0, 60.0, 5.0)
+        t_regen_sim = st.slider("Duração da Regeneração [min]", 1.0, 90.0, 45.0, 5.0)
+    with col_pcfg3:
+        t_resf_sim = st.slider("Tempo de Resfriamento [min]", 0.0, 30.0, 10.0, 1.0)
+        horiz_psa_min = st.slider("Horizonte de Simulação [min]", 30, 360, 180, 15)
+
+    # Determina vazão de ar que chega ao secador PSA
+    m_dot_ar_psa = res_sim["nos"][4]["m_dot"]
+    if "sistema" in topologia_psa:
+        m_dot_ar_psa *= float(params.get("n_compressores", 1))
+
+    props_m = constantes.MATERIAIS_DESSECANTE[material_psa]
+    p_low_psa = float(params.get("p_amb", 101325.0))
+    p_high_psa = res_sim["nos"][4]["p_bar"] * 1e5
+
+    sim_psa = psa_ciclo.simular_ciclo_psa(
+        horizonte_min=float(horiz_psa_min),
+        m_dot_ar=m_dot_ar_psa,
+        t_ads_min=float(t_ads_sim),
+        t_regen_min=float(t_regen_sim),
+        t_resfriamento_min=float(t_resf_sim),
+        n_vasos=n_vasos_sim,
+        k_ads=float(props_m["k_ads_ref"]),
         p_low=p_low_psa,
         p_high=p_high_psa,
         fator_purga=params["fator_purga"],
-        t_entrada_c=res["nos"][4]["t_c"],
-        delta_t_regen=delta_t_regen_calc,
-        pdp_entrada_c=res["nos"][4]["pdp_c"],
-        capacidade_trabalho=_props_material["capacidade_trabalho"],
+        t_entrada_c=res_sim["nos"][4]["t_c"],
+        delta_t_regen=constantes.DELTA_T_REGEN,
+        pdp_entrada_c=res_sim["nos"][4]["pdp_c"],
+        capacidade_trabalho=props_m["capacidade_trabalho"],
         massa_leito_kg=massa_leito_psa,
-    )
-    kp = r_psa["kpis"]
-
-    st.caption(
-        f"Soprador booster ({m_dot_reg_psa:.3f} kg/s, {forma_particula_psa.lower()} "
-        f"ψ_p={psi_p_psa:.2f}): h={h_aquecedor:.0f} W/(m²K) (Eq. 15.15) → "
-        f"T_reg,in={t_reg_in_c:.1f} °C, ΔT_regen calculado={delta_t_regen_calc:.1f} K "
-        f"(Eq. 15.16, substitui o antigo valor assumido) — k_ads efetivo "
-        f"{k_ads_efetivo:.2f} (Eq. 15.18) — potência do booster "
-        f"≈{w_booster:.0f} W (Eq. 15.17, Ergun) — SEC_dry com booster "
-        f"≈{sec_dry_com_booster_kj_kg:.1f} kJ/kg (vs. "
-        f"{k['sec_dry_kj_kg']:.1f} kJ/kg sem, no card abaixo)."
+        dt_min=0.05,
     )
 
-    st.subheader(f"Rodízio de {n_vasos_psa} torres — {topologia_psa.lower()}")
-    st.caption(
-        f"Topologia escolhida: {legenda_topologia} Ciclo por torre: "
-        f"{kp['t_ciclo_min']:.1f} min (adsorção + regeneração + resfriamento)."
-    )
+    kpis_psa = sim_psa["kpis"]
 
-    if kp["tempo_sem_secagem_min"] > 0:
+    # Alerta se houver janela sem secagem (todas as torres em regeneração/resfriamento)
+    if kpis_psa["tempo_sem_secagem_min"] > 0:
         st.error(
-            f"Cobertura de secagem **interrompida** por "
-            f"{kp['tempo_sem_secagem_min']:.1f} min no horizonte simulado — "
-            f"em alguns instantes nenhuma das {n_vasos_psa} torres está "
-            "disponível para adsorver (todas regenerando/resfriando ao "
-            "mesmo tempo). Ar não tratado passaria direto. Aumente N de "
-            "torres, reduza o resfriamento/regeneração, ou aumente a "
-            "duração da adsorção."
-        )
-    if kp["q_min"] < 0.05:
-        st.warning(
-            f"Capacidade mínima do leito caiu para {kp['q_min']*100:.1f}% de "
-            "q_eq ao fim da adsorção — próximo do esgotamento (risco de "
-            "*breakthrough*, ver Tabela 15.1). Considere ciclo mais curto ou "
-            "mais torres em rodízio."
-        )
-
-    d1, d2, d3, d4, d5 = st.columns(5)
-    d1.metric("Trocas no horizonte", f"{kp['n_trocas']}")
-    d2.metric("Capacidade mín. do leito (fim da adsorção)",
-             f"{kp['q_min'] * 100:.1f}% de q_eq")
-    d3.metric("Purga de regeneração (Eq. 15.2)",
-             f"{kp['purga_media_kg_s'] * 3600:.1f} kg/h")
-    d4.metric("Torres adsorvendo simultaneamente (mín.)",
-             f"{kp['n_adsorvendo_min']}")
-    d5.metric("Tempo de residência de projeto (Eq. 15.14)",
-             f"{kp['t_res_calc_min']:.1f} min",
-             help="Derivado da massa/capacidade do leito e da carga de "
-                  "umidade do ar de entrada (16/08/2026) — não é mais um "
-                  "valor independente. Aumentar a massa do leito (aba "
-                  "Configurações) aumenta este valor e, com ele, quanto "
-                  "tempo o PDP fica sustentado perto do alvo.")
-
-    st.subheader("Indicadores Globais de Performance (Cap. 15)")
-    e1, e2, e3 = st.columns(3)
-    e1.metric("SEC_dry (Eq. 15.6)", f"{k['sec_dry_kj_kg']:.1f} kJ/kg",
-             help="Só a parcela do aquecedor de regeneração — este app não "
-                  "modela o secador de tambor rotativo (HOC) do Cap. 15, "
-                  "então Ẇ_drum é sempre 0 aqui.")
-    e2.metric("HI_des (Eq. 15.7)", f"{k['hi_des']:.2f}",
-             help=f"1,0 = leito saudável (ΔP real, na barra lateral, igual "
-                  f"ao ΔP nominal calculado por Ergun — Eq. 15.17, "
-                  f"{k['dp_nom_psa_calc_bar']*1000:.0f} mbar na geometria/"
-                  "vazão/forma de partícula atuais, 16/08/2026 — substitui "
-                  "o antigo valor fixo de 300 mbar). Cai conforme ΔP real e "
-                  "PDP real se afastam do nominal/alvo.")
-    e3.metric("η_purge (Eq. 15.9)", f"{k['purga_pct']:.1f} %")
-    if k["hi_des"] < 0.7:
-        st.warning(
-            f"HI_des = {k['hi_des']:.2f} — dessecante degradado (ΔP real "
-            "ou PDP real distantes do nominal/alvo definidos na barra "
-            "lateral). Ver Tabela 15.1 (Matriz de Diagnóstico de Falhas)."
-        )
-
-    st.subheader("Capacidade de adsorção e temperatura do leito por torre (Eq. 15.1)")
-    fig8, ax8 = plt.subplots(figsize=(9.0, 3.6))
-    cores_torres = plt.cm.tab10(np.linspace(0, 1, n_vasos_psa))
-    for i in range(n_vasos_psa):
-        ax8.plot(r_psa["t_min"], r_psa["q_norm"][i], color=cores_torres[i],
-                 label=f"Torre {i + 1}", lw=1.6)
-    ax8.set_xlabel("Tempo [min]")
-    ax8.set_ylabel(r"$q_d \, / \, q_{eq}$")
-    ax8.set_ylim(-0.05, 1.05)
-    ax8b = ax8.twinx()
-    for i in range(n_vasos_psa):
-        ax8b.plot(r_psa["t_min"], r_psa["temp_c"][i], color=cores_torres[i],
-                  ls="--", lw=1.0, alpha=0.6)
-    ax8b.set_ylabel("Temperatura do leito [°C] (tracejado)")
-    ax8b.grid(False)
-    ax8.legend(fontsize=8, ncol=min(n_vasos_psa, 4), loc="lower left")
-    fig8.tight_layout()
-    st.pyplot(fig8)
-    st.caption(
-        "Linha cheia: capacidade normalizada, recuperação exponencial de "
-        "1ª ordem na regeneração (Eq. 15.12 do livro, 16/08/2026 — eixo "
-        "esquerdo). Linha tracejada: temperatura do leito (eixo direito) "
-        "— sobe durante a regeneração (aquecedor, ΔT_regen) e desce no "
-        "resfriamento, mesma forma exponencial por analogia física, não "
-        "por uma equação própria do livro (que fecha a cinética de "
-        "capacidade, não a dinâmica térmica do leito). Pressão de "
-        f"entrada/saída do secador é constante no horizonte simulado: "
-        f"{p_high_psa / 1e5:.2f} bar abs (alta) e {p_low_psa / 1e5:.2f} "
-        "bar abs (purga, à pressão ambiente)."
-    )
-
-    st.subheader(f"Água adsorvida por torre [kg] — {material_psa}")
-    fig_agua, ax_agua = plt.subplots(figsize=(9.0, 3.0))
-    for i in range(n_vasos_psa):
-        ax_agua.plot(r_psa["t_min"], r_psa["agua_adsorvida_kg"][i],
-                    color=cores_torres[i], lw=1.6, label=f"Torre {i + 1}")
-    ax_agua.axhline(_props_material["capacidade_trabalho"] * massa_leito_psa,
-                    color=RED, ls=":",
-                    label="Capacidade máx. (leito saturado)")
-    ax_agua.set_xlabel("Tempo [min]")
-    ax_agua.set_ylabel("Água adsorvida [kg]")
-    ax_agua.legend(fontsize=8, ncol=min(n_vasos_psa + 1, 5), loc="upper right")
-    fig_agua.tight_layout()
-    st.pyplot(fig_agua)
-    st.caption(
-        f"Massa real de água retida no leito (Eq. 15.13 do livro, "
-        "16/08/2026 — alternativa ao balanço mássico rigoroso da Eq. 15.3, "
-        "útil sem sensor contínuo de W_out), não só a fração normalizada "
-        f"do gráfico acima: (1 − capacidade normalizada) × capacidade de "
-        f"trabalho ({_props_material['capacidade_trabalho']*100:.0f}% para "
-        f"{material_psa}, Tabela 15.2) × massa do leito "
-        f"({massa_leito_psa:.0f} kg/torre, aba Configurações). Zera ao fim "
-        "de cada regeneração (água expulsa pelo ar de purga quente) e "
-        "cresce de novo ao longo da adsorção seguinte."
-    )
-
-    st.subheader("Ponto de orvalho na saída do secador ao longo do tempo")
-    fig_pdp, ax_pdp = plt.subplots(figsize=(9.0, 3.0))
-    ax_pdp.plot(r_psa["t_min"], r_psa["pdp_saida_c"], color=NAVY, lw=1.6,
-               label="PDP de saída (estimado)")
-    ax_pdp.axhline(defaults["pdp_real_c"], color=GREEN, ls=":",
-                   label=f"Alvo ISO 8573-1 Classe 2 ({defaults['pdp_real_c']:.0f} °C)")
-    ax_pdp.set_xlabel("Tempo [min]")
-    ax_pdp.set_ylabel("PDP de saída [°C]")
-    ax_pdp.legend(fontsize=8, loc="upper right")
-    fig_pdp.tight_layout()
-    st.pyplot(fig_pdp)
-    st.caption(
-        "Simplificação de modelagem, não uma equação do livro (o Cap. 15 "
-        "só fecha o KPI estático HI_des, Eq. 15.7 — não uma série temporal "
-        "de PDP): a cada instante, a torre relevante é a que está "
-        "adsorvendo com a menor capacidade normalizada restante — "
-        "interpolação linear entre o PDP alvo (leito \"novo\") e o PDP de "
-        "entrada do secador (nenhuma remoção, o mesmo limite de um "
-        "*breakthrough* total ou de um intervalo sem nenhuma torre "
-        "disponível). Serrilhado esperado: cada troca de torre reinicia a "
-        "curva de degradação daquele leito. Pico máximo neste horizonte: "
-        f"{kp['pdp_saida_max_c']:.1f} °C."
-    )
-
-    st.subheader("Chaveamento entre torres")
-    # 0 = Adsorvendo, 1 = Regenerando, 2 = Resfriando
-    mapa_estado = {"Adsorvendo": 0, "Regenerando": 1, "Resfriando": 2}
-    estado_num = np.vectorize(mapa_estado.get)(r_psa["estado"]).astype(float)
-    cmap_estado = matplotlib.colors.ListedColormap([BLUE, RED, "#d9a441"])
-    fig9, ax9 = plt.subplots(figsize=(9.0, 0.9 + 0.5 * n_vasos_psa))
-    ax9.imshow(
-        estado_num, aspect="auto", cmap=cmap_estado, vmin=-0.5, vmax=2.5,
-        extent=[r_psa["t_min"][0], r_psa["t_min"][-1], n_vasos_psa - 0.5, -0.5],
-    )
-    ax9.set_yticks(range(n_vasos_psa))
-    ax9.set_yticklabels([f"Torre {i + 1}" for i in range(n_vasos_psa)])
-    ax9.set_xlabel("Tempo [min]")
-    ax9.set_title("Azul = adsorvendo · Vermelho = regenerando · "
-                  "Laranja = resfriando (fora de serviço)", fontsize=9)
-    fig9.tight_layout()
-    st.pyplot(fig9)
-
-    st.subheader("Vazão de purga de regeneração (Eq. 15.2)")
-    fig10, ax10 = plt.subplots(figsize=(9.0, 2.6))
-    ax10.plot(r_psa["t_min"], r_psa["m_purge_kg_s"] * 3600.0, color=RED, lw=1.6)
-    ax10.set_xlabel("Tempo [min]")
-    ax10.set_ylabel("Purga [kg/h]")
-    fig10.tight_layout()
-    st.pyplot(fig10)
-    st.caption(
-        "Com rodízio contínuo (sempre exatamente 1 torre regenerando), a "
-        "purga é aproximadamente constante — uma queda para zero ou um pico "
-        "acima desse patamar sinalizaria falha de chaveamento (ver "
-        "Tabela 15.1)."
-    )
-
-# ===========================================================================
-# Aba 4 — Gêmeo Digital (EKF/PSO)
-# ===========================================================================
-with tab_gd:
-    st.subheader("Estimação de Estado via EKF (Eqs. 21.2, 21.4, 21.7, 21.8)")
-    st.caption(
-        "Estado x = [δ/L, R_f] — os dois únicos estados do vetor da Eq. 21.2 "
-        "com contraparte calculável neste app (δ/L via Eq. 9.3, R_f via "
-        "Eq. 10.5). Medição z = [ṁ_seco, T_HP,in], com ruído gaussiano "
-        "simulado. O filtro parte sempre de uma crença de comissionamento "
-        "(δ/L=0,002, R_f=0 — \"como novo\"), independente dos valores "
-        "verdadeiros configurados na aba Configurações, para que a convergência "
-        "abaixo seja estimação de verdade, não o filtro \"sabendo\" a resposta."
-    )
-
-    folga_true_ekf = np.linspace(folga_ini_ekf, folga_fim_ekf, n_passos_ekf)
-    r_f_true_ekf = np.linspace(r_f_ini_ekf, r_f_fim_ekf, n_passos_ekf)
-    r_ekf = ekf.simular_ekf(
-        params_base=params,
-        folga_true=folga_true_ekf,
-        r_f_true=r_f_true_ekf,
-        sigma_m_dot=sigma_m_dot_ekf,
-        sigma_t_hp=sigma_t_hp_ekf,
-        q_proc_diag=(q_folga_ekf, q_rf_ekf),
-        x0=(0.002, 0.0),
-        p0_diag=(1e-4, 1e-6),
-    )
-    passos_ekf = np.arange(n_passos_ekf)
-    t_dias_ekf = passos_ekf * dt_horas_ekf / 24.0
-
-    f1, f2 = st.columns(2)
-    with f1:
-        figekf1, axekf1 = plt.subplots(figsize=(6.2, 3.4))
-        axekf1.plot(t_dias_ekf, r_ekf["folga_true"], color=GREEN, ls="--",
-                    label="δ/L verdadeira")
-        axekf1.plot(t_dias_ekf, r_ekf["x_hat"][:, 0], color=BLUE,
-                    label="δ/L estimada (EKF)")
-        banda_inf = r_ekf["x_hat"][:, 0] - r_ekf["std"][:, 0]
-        banda_sup = r_ekf["x_hat"][:, 0] + r_ekf["std"][:, 0]
-        axekf1.fill_between(t_dias_ekf, banda_inf, banda_sup, color=BLUE,
-                            alpha=0.2, label="±1σ (P_k|k)")
-        axekf1.set_xlabel("Tempo [dias]")
-        axekf1.set_ylabel("δ/L")
-        axekf1.legend(fontsize=8)
-        figekf1.tight_layout()
-        st.pyplot(figekf1)
-
-    with f2:
-        figekf2, axekf2 = plt.subplots(figsize=(6.2, 3.4))
-        axekf2.plot(t_dias_ekf, r_ekf["r_f_true"], color=GREEN, ls="--",
-                    label="R_f verdadeiro")
-        axekf2.plot(t_dias_ekf, r_ekf["x_hat"][:, 1], color=BLUE,
-                    label="R_f estimado (EKF)")
-        banda_inf_rf = r_ekf["x_hat"][:, 1] - r_ekf["std"][:, 1]
-        banda_sup_rf = r_ekf["x_hat"][:, 1] + r_ekf["std"][:, 1]
-        axekf2.fill_between(t_dias_ekf, banda_inf_rf, banda_sup_rf, color=BLUE,
-                            alpha=0.2, label="±1σ (P_k|k)")
-        axekf2.set_xlabel("Tempo [dias]")
-        axekf2.set_ylabel("R_f [m²K/W]")
-        axekf2.legend(fontsize=8)
-        figekf2.tight_layout()
-        st.pyplot(figekf2)
-
-    st.caption(
-        f"Horizonte total simulado: {n_passos_ekf} passos × "
-        f"{dt_horas_ekf:.1f} h/passo ≈ **{t_dias_ekf[-1]:.1f} dias** — a "
-        "mesma escala de tempo (semanas) usada no cenário do Capítulo 29 "
-        "para desgaste gradual de folga."
-    )
-
-    g1, g2, g3 = st.columns(3)
-    g1.metric("δ/L estimada (final)", f"{r_ekf['x_hat'][-1, 0]:.4f}",
-             help=f"Verdadeira: {r_ekf['folga_true'][-1]:.4f}")
-    g2.metric("R_f estimado (final)", f"{r_ekf['x_hat'][-1, 1]:.5f}",
-             help=f"Verdadeiro: {r_ekf['r_f_true'][-1]:.5f}")
-    g3.metric("NIS médio (Eq. 21.7)", f"{np.mean(r_ekf['nis']):.2f}",
-             help="Esperado em torno de n_z=2 (duas medições) se o filtro "
-                  "estiver bem calibrado — muito acima indica modelo/Q "
-                  "subestimados, muito abaixo indica filtro conservador "
-                  "demais.")
-
-    figekf3, axekf3 = plt.subplots(figsize=(9.0, 2.4))
-    axekf3.plot(t_dias_ekf, r_ekf["nis"], color=NAVY, lw=1.2)
-    axekf3.axhline(2.0, color=RED, ls=":", label="n_z = 2 (esperado)")
-    axekf3.set_xlabel("Tempo [dias]")
-    axekf3.set_ylabel("NIS")
-    axekf3.legend(fontsize=8)
-    figekf3.tight_layout()
-    st.pyplot(figekf3)
-    st.caption(
-        "NIS (Normalized Innovation Squared, Eq. 21.7) audita o próprio "
-        "filtro sem conhecer o estado verdadeiro — é a estatística que um "
-        "Gêmeo Digital real usaria para saber se pode confiar na "
-        "estimativa acima. Mesma leitura operacional do Capítulo 21: NIS "
-        "consistentemente alto sinaliza Q subestimada ou modelo defasado; "
-        "consistentemente baixo, filtro excessivamente conservador."
-    )
-
-    st.divider()
-    st.subheader("EKF com Estado Aumentado — Calibração de K (Cap. 28, Eqs. 28.1/28.2)")
-    st.caption(
-        "Problema inverso resolvido online: o coeficiente de vazamento K "
-        "(Eq. 9.3), fixo em todo o resto deste app, entra no próprio vetor "
-        "de estado do EKF. Na janela de calibração (fundo cinza), δ/L é "
-        "tratada como conhecida (Q quase nulo) para que K convirja; depois, "
-        "K \"congela\" (Q pequeno) e δ/L volta a acompanhar deriva livre."
-    )
-
-    folga_true_aum = np.concatenate([
-        np.full(n_cal_aum, folga_cal_aum),
-        np.linspace(folga_cal_aum, folga_fim_aum, n_op_aum),
-    ])
-    n_total_aum = n_cal_aum + n_op_aum
-    r_f_true_aum = np.zeros(n_total_aum)
-    k_true_aum = np.full(n_total_aum, defaults["k_folga"])
-    r_aum = ekf.simular_ekf_aumentado(
-        params_base=params,
-        folga_true=folga_true_aum,
-        r_f_true=r_f_true_aum,
-        k_true=k_true_aum,
-        sigma_m_dot=sigma_m_dot_aum,
-        sigma_t_hp=sigma_t_hp_ekf,
-        q_proc_calibracao=(1e-10, 1e-10, 1e-5),
-        q_proc_operacao=(1e-6, 1e-10, 1e-11),
-        x0=(folga_cal_aum, 0.0, k_inicial_aum),
-        p0_diag=(1e-10, 1e-6, 1e-3),
-        n_passos_calibracao=n_cal_aum,
-    )
-    passos_aum = np.arange(n_total_aum)
-    t_dias_aum = passos_aum * dt_horas_ekf / 24.0
-    fim_cal_dias = n_cal_aum * dt_horas_ekf / 24.0
-
-    a1, a2 = st.columns(2)
-    with a1:
-        figaum1, axaum1 = plt.subplots(figsize=(6.2, 3.4))
-        axaum1.axvspan(0, fim_cal_dias, color="#dddddd", alpha=0.5, label="Janela de calibração")
-        axaum1.axhline(defaults["k_folga"], color=GREEN, ls="--", label="K real")
-        axaum1.plot(t_dias_aum, r_aum["x_hat"][:, 2], color=BLUE, label="K estimado (EKF)")
-        banda_k = r_aum["std"][:, 2]
-        axaum1.fill_between(t_dias_aum, r_aum["x_hat"][:, 2] - banda_k,
-                            r_aum["x_hat"][:, 2] + banda_k, color=BLUE, alpha=0.2)
-        axaum1.set_xlabel("Tempo [dias]")
-        axaum1.set_ylabel("K (Eq. 9.3)")
-        axaum1.legend(fontsize=8)
-        figaum1.tight_layout()
-        st.pyplot(figaum1)
-
-    with a2:
-        figaum2, axaum2 = plt.subplots(figsize=(6.2, 3.4))
-        axaum2.axvspan(0, fim_cal_dias, color="#dddddd", alpha=0.5)
-        axaum2.plot(t_dias_aum, r_aum["folga_true"], color=GREEN, ls="--", label="δ/L verdadeira")
-        axaum2.plot(t_dias_aum, r_aum["x_hat"][:, 0], color=BLUE, label="δ/L estimada")
-        axaum2.set_xlabel("Tempo [dias]")
-        axaum2.set_ylabel("δ/L")
-        axaum2.legend(fontsize=8)
-        figaum2.tight_layout()
-        st.pyplot(figaum2)
-
-    st.caption(
-        f"Δt entre medições: {dt_horas_ekf:.1f} h (mesmo valor do EKF de 2 "
-        f"estados acima) — janela de calibração de {fim_cal_dias:.1f} dias, "
-        f"operação acompanhada por mais {t_dias_aum[-1] - fim_cal_dias:.1f} "
-        "dias depois."
-    )
-
-    b1, b2, b3 = st.columns(3)
-    b1.metric("K estimado (fim da calibração)", f"{r_aum['x_hat'][n_cal_aum - 1, 2]:.4f}",
-             help=f"K real: {defaults['k_folga']:.4f} — crença inicial: {k_inicial_aum:.4f}")
-    b2.metric("K estimado (fim da operação)", f"{r_aum['x_hat'][-1, 2]:.4f}",
-             help="Deve continuar perto do valor calibrado, mesmo com δ/L "
-                  "variando livremente depois.")
-    b3.metric("δ/L estimada (fim)", f"{r_aum['x_hat'][-1, 0]:.4f}",
-             help=f"Verdadeira: {r_aum['folga_true'][-1]:.4f}")
-    st.caption(
-        "Tabela 28.1 do livro (Seção 28.2): antes desta calibração, K estava "
-        "na categoria (iv) — desconhecido/valor de catálogo. Depois, passa "
-        "para a categoria (iii) — calibrável na janela saudável — com a "
-        "proveniência explícita registrada, em vez de herdado implicitamente."
-    )
-
-    st.divider()
-    st.subheader("Otimização de Setpoint via PSO (Eqs. 24.3/24.4)")
-    st.caption(
-        "Minimiza o SPC (Eq. 11.11) variando a pressão de setpoint da rede "
-        "π, sujeito a manter a autonomia do vaso (Eq. 16.5) acima do "
-        "mínimo definido na aba Configurações — restrição imposta por "
-        "penalidade, já que o PSO básico não trata restrições nativamente."
-    )
-
-    if st.button("🔄 Rodar PSO"):
-        def _custo_pso(x: np.ndarray) -> float:
-            pi_cand = float(x[0])
-            r_cand = simular({**params, "pi_total": pi_cand})
-            spc_cand = r_cand["kpis"]["spc"]
-            autonomia_cand = r_cand["kpis"]["autonomia_min"]
-            penalidade = 0.0
-            if np.isfinite(autonomia_cand) and autonomia_cand < autonomia_min_pso:
-                penalidade = 1e3 * (autonomia_min_pso - autonomia_cand)
-            return spc_cand + penalidade
-
-        st.session_state["r_pso"] = pso.otimizar(
-            _custo_pso, limite_inf=[5.0], limite_sup=[12.0],
-            n_particulas=n_particulas_pso, n_iter=n_iter_pso,
-            w_ini=w_ini_pso, w_fim=w_fim_pso, c1=c1_pso, c2=c2_pso)
-
-    if "r_pso" in st.session_state:
-        r_pso = st.session_state["r_pso"]
-        pi_otimo = float(r_pso["g_best"][0])
-        res_otimo = simular({**params, "pi_total": pi_otimo})
-
-        p1, p2, p3 = st.columns(3)
-        p1.metric("π ótimo encontrado", f"{pi_otimo:.2f} bar abs")
-        p2.metric("SPC no ótimo", f"{res_otimo['kpis']['spc']:.2f} kW·min/m³",
-                 help=f"SPC no π atual da barra lateral: {k['spc']:.2f} "
-                      "kW·min/m³")
-        p3.metric("Autonomia no ótimo",
-                 f"{res_otimo['kpis']['autonomia_min']:.1f} min"
-                 if np.isfinite(res_otimo["kpis"]["autonomia_min"])
-                 else "∞ (sem demanda)")
-
-        figpso, axpso = plt.subplots(figsize=(9.0, 2.8))
-        axpso.plot(r_pso["historico_custo"], color=BLUE, lw=1.6)
-        axpso.set_xlabel("Iteração")
-        axpso.set_ylabel("Custo de g_best (SPC + penalidade)")
-        figpso.tight_layout()
-        st.pyplot(figpso)
-        st.caption(
-            "Convergência do enxame: o custo de g_best nunca piora entre "
-            "iterações (Eqs. 24.3/24.4 só atualizam g_best quando a nova "
-            "posição é melhor). Sem restrição de autonomia ativa, o "
-            "mínimo tende à menor pressão pesquisada — SPC cresce com π "
-            "pela mesma \"regra dos 7 %/bar\" já discutida no Capítulo de "
-            "Trem de Potência; é a restrição de autonomia mínima que "
-            "impede o otimizador de simplesmente zerar o setpoint."
+            f"🚨 **ALERTA DE PROJETO (Subdimensionamento)**: Existe um intervalo total de "
+            f"**{kpis_psa['tempo_sem_secagem_min']:.1f} minutos** sem nenhuma torre em adsorção "
+            f"(tempo de regeneração + resfriamento excessivo para o número de torres). O ar passará sem secagem!"
         )
     else:
-        st.info("Clique em \"Rodar PSO\" para otimizar — não roda "
-                "automaticamente a cada mudança de slider, por ser mais "
-                "custoso que o resto do app.")
+        st.success(
+            f"✅ **Cobertura Contínua Garantida**: Mínimo de **{kpis_psa['n_adsorvendo_min']} torre(s)** "
+            f"secando ar ininterruptamente ao longo de todo o ciclo."
+        )
+
+    # Cartões de Métricas da Ciclagem
+    pk1, pk2, pk3, pk4, pk5 = st.columns(5)
+    pk1.metric("Tempo de Ciclo (T_ciclo)", f"{kpis_psa['t_ciclo_min']:.1f} min")
+    pk2.metric("Tempo Residência Calc.", f"{kpis_psa['t_res_calc_min']:.1f} min", help="Tempo para saturação total do leito (Eq. 15.6)")
+    pk3.metric("Ponto de Orvalho Máx.", f"{kpis_psa['pdp_saida_max_c']:.1f} °C", delta=f"{kpis_psa['pdp_saida_max_c'] - (-40.0):+.1f} vs -40°C")
+    pk4.metric("Purga Média", f"{kpis_psa['purga_media_kg_s']*1000:.1f} g/s")
+    pk5.metric("Massa Água Retida Máx.", f"{kpis_psa['agua_adsorvida_max_kg']:.2f} kg/torre")
 
     st.divider()
-    st.subheader("Detecção de Anomalia via VAE (Eqs. 20.4, 22.1-22.7)")
-    st.caption(
-        "Autoencoder variacional treinado sobre pontos de operação "
-        "saudáveis sintéticos (não há dado real de planta neste "
-        "projeto). O erro de reconstrução E_rec funciona como sensor "
-        "virtual de anomalia — o limiar de disparo (Eq. 22.6) é "
-        "calibrado estatisticamente sobre um conjunto de validação "
-        "saudável, não escolhido à mão."
-    )
 
-    @st.cache_resource(show_spinner="Treinando VAE...")
-    def _treinar_vae_cache(_params_base, chave, n_amostras, n_epocas):
-        ds_treino = vae.gerar_dataset_saudavel(n_amostras, _params_base, seed=0)
-        ds_val = vae.gerar_dataset_saudavel(max(80, n_amostras // 3), _params_base, seed=1)
-        info_treinado = vae.treinar(ds_treino, n_epocas=n_epocas)
-        limiar_calibrado = vae.calibrar_limiar(info_treinado, ds_val, n_desvios=3.0)
-        e_val_calc = vae.erro_reconstrucao(info_treinado, ds_val)
-        return info_treinado, limiar_calibrado, e_val_calc
+    # 1. Diagrama de Gantt / Cronograma de Fases das Torres PSA
+    st.markdown("### 📊 Cronograma de Rodízio e Estados Operacionais das Torres (Gantt)")
+    
+    t_psa = sim_psa["t_min"]
+    estado_psa = sim_psa["estado"]  # shape (n_vasos, n_pontos)
 
-    chave_vae = (round(params["t_amb"], 1), round(params["pi_total"], 2),
-                round(params["fad_m3_min"], 2), n_amostras_vae, n_epocas_vae)
-    info_vae, limiar_vae, e_val_vae = _treinar_vae_cache(
-        params, chave_vae, n_amostras_vae, n_epocas_vae)
-
-    feat_saudavel = vae.extrair_features(res)[None, :]
-    e_saudavel = float(vae.erro_reconstrucao(info_vae, feat_saudavel)[0])
-    p_cenario_vae = {**params, "folga_rel": folga_cenario_vae}
-    feat_cenario = vae.extrair_features(simular(p_cenario_vae))[None, :]
-    e_cenario = float(vae.erro_reconstrucao(info_vae, feat_cenario)[0])
-
-    v1, v2, v3 = st.columns(3)
-    v1.metric("E_rec — ponto de operação atual", f"{e_saudavel:.2f}")
-    v2.metric(f"E_rec — cenário δ/L={folga_cenario_vae:.4f}", f"{e_cenario:.2f}",
-             delta=f"{e_cenario - limiar_vae:+.2f} vs. limiar")
-    v3.metric("Limiar de disparo (Eq. 22.6)", f"{limiar_vae:.2f}")
-    if e_cenario > limiar_vae:
-        st.warning(f"Cenário de teste classificado como **anômalo** — "
-                   f"E_rec ({e_cenario:.2f}) > limiar ({limiar_vae:.2f}).")
-    else:
-        st.success(f"Cenário de teste dentro do esperado — "
-                   f"E_rec ({e_cenario:.2f}) ≤ limiar ({limiar_vae:.2f}).")
-
-    figvae, (axv1, axv2) = plt.subplots(1, 2, figsize=(12.4, 3.2))
-    axv1.plot(info_vae["historico_loss"], color=BLUE)
-    axv1.set_xlabel("Época")
-    axv1.set_ylabel("Perda (ELBO)")
-    axv1.set_title("Convergência do treino", fontsize=10)
-
-    axv2.hist(e_val_vae, bins=20, color=BLUE, alpha=0.6,
-             label="E_rec (validação saudável)")
-    axv2.axvline(limiar_vae, color=RED, ls="--", label="limiar")
-    axv2.axvline(e_cenario, color=GREEN, ls="-", label="cenário de teste")
-    axv2.set_xlabel("E_rec")
-    axv2.set_ylabel("Contagem")
-    axv2.legend(fontsize=7)
-    axv2.set_title("Distribuição saudável vs. cenário", fontsize=10)
-    figvae.tight_layout()
-    st.pyplot(figvae)
-    st.caption(
-        "Nenhuma das 12 variáveis de entrada precisa isoladamente cruzar "
-        "um limiar próprio para o VAE sinalizar — é a combinação "
-        "conjunta que se afasta da distribuição aprendida na operação "
-        "saudável (a mesma lógica do achado que motivou o Capítulo 28 "
-        "do livro)."
-    )
-
-    st.divider()
-    st.subheader("Modelo Substituto PIML (Eqs. 23.1-23.4)")
-    st.caption(
-        "Rede treinada para prever T_LP,out, T_HP,in, ṁ_seco e "
-        "Q̇_intercooler a partir do ponto de operação, com um resíduo "
-        "físico (balanço de energia do intercooler, Eq. 10.1) penalizado "
-        "em pontos de colocação sem rótulo — inclusive fora da faixa "
-        "rotulada de treino."
-    )
-
-    _FAIXAS_PIML_APP = {
-        "pi_total": (6.0, 10.0), "t_amb_c": (10.0, 40.0),
-        "folga_rel": (0.001, 0.02), "r_f_equiv": (0.0, 5e-4),
-        "fad_m3_min": (8.0, 12.0),
+    fig_gantt, ax_gantt = plt.subplots(figsize=(11.0, max(2.5, 0.7 * n_vasos_sim + 1.2)))
+    cores_estado = {
+        "Adsorvendo": BLUE,
+        "Regenerando": ORANGE,
+        "Resfriando": GREEN,
     }
 
-    @st.cache_resource(show_spinner="Treinando o substituto PIML...")
-    def _treinar_piml_cache(_params_base, chave, n_amostras, n_epocas):
-        entradas_tr, saidas_tr = piml.gerar_dataset(
-            n_amostras, _params_base, _FAIXAS_PIML_APP, seed=0)
-        info_treinado = piml.treinar(entradas_tr, saidas_tr, _FAIXAS_PIML_APP,
-                                     n_epocas=n_epocas, lr=1e-2)
-        entradas_tst, saidas_tst = piml.gerar_dataset(
-            max(20, n_amostras // 10), _params_base, _FAIXAS_PIML_APP, seed=99)
-        return info_treinado, entradas_tst, saidas_tst
+    for i in range(n_vasos_sim):
+        y_pos = n_vasos_sim - 1 - i
+        for estado_nome, cor in cores_estado.items():
+            mask = estado_psa[i] == estado_nome
+            if np.any(mask):
+                ax_gantt.fill_between(
+                    t_psa, y_pos - 0.35, y_pos + 0.35,
+                    where=mask, color=cor, alpha=0.85, step="mid"
+                )
 
-    chave_piml = (round(params["t_amb"], 1), n_amostras_piml, n_epocas_piml)
-    info_piml, entradas_teste_piml, saidas_teste_piml = _treinar_piml_cache(
-        params, chave_piml, n_amostras_piml, n_epocas_piml)
-
-    pred_piml = piml.prever(info_piml, entradas_teste_piml)
-    erro_piml = np.abs(pred_piml - saidas_teste_piml).mean(axis=0)
-    residuo_piml = piml.residuo_fisico_real(info_piml, entradas_teste_piml)
-
-    pi1, pi2, pi3 = st.columns(3)
-    pi1.metric("Erro médio T_LP,out", f"{erro_piml[0]:.2f} °C")
-    pi2.metric("Erro médio ṁ_seco", f"{erro_piml[2] * 1000:.2f} g/s")
-    pi3.metric("Resíduo físico médio |F|", f"{np.abs(residuo_piml).mean():.1f} W",
-              help="O livro é explícito (Cap. 23, \"Limitações e "
-                   "Cautelas\") que essa penalização é fraca, não uma "
-                   "garantia — o resíduo deve ser medido, não presumido "
-                   "nulo.")
-
-    figpiml, (axp1, axp2) = plt.subplots(1, 2, figsize=(12.4, 3.2))
-    axp1.plot(info_piml["hist_data"], color=BLUE, label="L_data")
-    axp1.plot(info_piml["hist_fisica"], color=RED, label="L_physics")
-    axp1.set_yscale("log")
-    axp1.set_xlabel("Época")
-    axp1.set_ylabel("Perda (escala log)")
-    axp1.legend(fontsize=8)
-    axp1.set_title("Convergência das duas perdas", fontsize=10)
-
-    axp2.plot(info_piml["hist_lambda"], color=NAVY)
-    axp2.set_xlabel("Época")
-    axp2.set_ylabel("λ")
-    axp2.set_title("Balanceamento adaptativo de λ (Eq. 23.4)", fontsize=10)
-    figpiml.tight_layout()
-    st.pyplot(figpiml)
-    st.caption(
-        "λ parte de 0,1 e se ajusta pela razão entre as magnitudes dos "
-        "gradientes de L_data e L_physics — sem essa normalização, o "
-        "resíduo físico (medido em watts, ordens de grandeza acima do "
-        "erro de dados já padronizado) satura a rede logo no 1º passo de "
-        "treino (ver CONTEXTO_app.md para o diagnóstico completo)."
-    )
-
-    st.divider()
-    st.subheader("PIML — Identificação por Problema Inverso (Cap. 23.8, Eq. 23.5)")
-    st.caption(
-        "Em vez do resíduo de energia do intercooler acima, aqui o resíduo "
-        "físico é a Equação 9.3 (balanço mássico), e o coeficiente de "
-        "vazamento Ξ é otimizado junto aos pesos da rede — não fixo em "
-        "`params_base`. Mesmo mecanismo de identificação da Seção 28.1 do "
-        "livro (EKF aumentado), por um caminho offline: um treino em lote "
-        "sobre dados dispersos, em vez de um ciclo sequencial online."
-    )
-
-    @st.cache_resource(show_spinner="Identificando Ξ via problema inverso...")
-    def _treinar_piml_inv_cache(_params_base, chave, n_amostras, n_epocas, xi0):
-        entradas_tr, saidas_tr = piml.gerar_dataset(
-            n_amostras, _params_base, _FAIXAS_PIML_APP, seed=0)
-        return piml.treinar_com_identificacao(
-            entradas_tr, saidas_tr, _FAIXAS_PIML_APP, params_base=_params_base,
-            xi_inicial=xi0, n_epocas=n_epocas, lr=1e-2)
-
-    chave_piml_inv = (round(params["t_amb"], 1), n_amostras_piml_inv,
-                      n_epocas_piml_inv, xi_inicial_piml)
-    info_piml_inv = _treinar_piml_inv_cache(
-        params, chave_piml_inv, n_amostras_piml_inv, n_epocas_piml_inv, xi_inicial_piml)
-
-    pv1, pv2, pv3 = st.columns(3)
-    pv1.metric("Ξ estimado", f"{info_piml_inv['xi_estimado']:.4f}",
-              help=f"K real usado no restante do app: {defaults['k_folga']:.4f}")
-    pv2.metric("Crença inicial de Ξ", f"{xi_inicial_piml:.4f}")
-    pv3.metric("Erro |Ξ_estimado − K_real|",
-              f"{abs(info_piml_inv['xi_estimado'] - defaults['k_folga']):.4f}")
-
-    figpimlinv, axpi = plt.subplots(figsize=(9.0, 2.8))
-    axpi.axhline(defaults["k_folga"], color=GREEN, ls="--", label="K real")
-    axpi.axhline(xi_inicial_piml, color="#999999", ls=":", label="Ξ inicial")
-    axpi.plot(info_piml_inv["hist_xi"], color=BLUE, label="Ξ (durante o treino)")
-    axpi.set_xlabel("Época")
-    axpi.set_ylabel("Ξ")
-    axpi.legend(fontsize=8)
-    figpimlinv.tight_layout()
-    st.pyplot(figpimlinv)
-    st.caption(
-        "O efeito de K/Ξ na Equação 9.3 é pequeno frente às demais "
-        "variações do ponto de operação — identificação por problema "
-        "inverso é um problema mais mal-condicionado que o EKF sequencial "
-        "acima, e a estimativa converge para perto do valor real, mas com "
-        "ruído residual maior. Reduzir o ruído sintético de rotulagem ou "
-        "aumentar a faixa de δ/L amostrada (barra lateral) melhora a "
-        "identificação, pelo mesmo motivo do slider de δ/L de calibração "
-        "do EKF aumentado acima."
-    )
-
-    st.divider()
-    st.subheader("Calibração em Lote via Levenberg-Marquardt (Cap. 28.1, scipy)")
-    st.caption(
-        "Terceiro caminho para o mesmo K — sem filtro, sem rede neural: "
-        "mínimos quadrados não lineares em lote (`scipy.optimize."
-        "least_squares(method='lm')`), direto contra o modelo físico "
-        "`sistema.simular()`, pelos mesmos dois canais do EKF aumentado "
-        "(ṁ_seco, T_HP,in). Viável aqui porque a incógnita é só K — 1 "
-        "parâmetro; inviável para o PIML acima, cujas incógnitas são os "
-        "pesos da rede inteira, não 1 escalar."
-    )
-
-    @st.cache_resource(show_spinner="Calibrando K via Levenberg-Marquardt...")
-    def _calibrar_lm_cache(_params_base, chave, n_amostras, k0, sigma_m, sigma_t):
-        entradas_lm, saidas4_lm = piml.gerar_dataset(
-            n_amostras, _params_base, _FAIXAS_PIML_APP, seed=7)
-        saidas2_lm = saidas4_lm[:, [2, 1]]  # [m_dot_seco, t_hp_in]
-        rng_lm = np.random.default_rng(11)
-        ruido_lm = np.stack([
-            rng_lm.normal(0.0, sigma_m, size=len(saidas2_lm)),
-            rng_lm.normal(0.0, sigma_t, size=len(saidas2_lm)),
-        ], axis=1)
-        return calib_lm.calibrar_k_lm(
-            entradas_lm, saidas2_lm + ruido_lm, _params_base, k_inicial=k0)
-
-    chave_lm = (round(params["t_amb"], 1), n_amostras_lm, k_inicial_lm,
-               sigma_m_dot_lm, sigma_t_hp_lm)
-    info_lm = _calibrar_lm_cache(
-        params, chave_lm, n_amostras_lm, k_inicial_lm, sigma_m_dot_lm, sigma_t_hp_lm)
-
-    lm1, lm2, lm3, lm4 = st.columns(4)
-    lm1.metric("K estimado", f"{info_lm['k_estimado']:.4f}",
-              help=f"K real usado no restante do app: {defaults['k_folga']:.4f}")
-    lm2.metric("Erro |K_estimado − K_real|",
-              f"{abs(info_lm['k_estimado'] - defaults['k_folga']):.4f}")
-    lm3.metric("Avaliações do modelo físico", info_lm["n_avaliacoes"])
-    lm4.metric("Convergiu?", "Sim" if info_lm["sucesso"] else "Não")
-    st.caption(
-        f"scipy: \"{info_lm['mensagem']}\" — compare o número de avaliações "
-        "acima contra épocas × amostras dos dois treinos PIML mais acima: "
-        "para 1 parâmetro só, LM converge em poucas dezenas de avaliações "
-        "do modelo físico, ordens de grandeza mais barato que treinar uma "
-        "rede — o preço é não escalar: o mesmo método não serve para "
-        "calibrar os pesos de uma rede neural."
-    )
-
-    st.divider()
-    st.subheader("MPC vs. Controle Reativo (Eqs. 24.1/24.2)")
-
-    rho_amb_gd = nucleo.densidade_ar(params["p_amb"], params["t_amb"])
-    dem_base_mpc = rho_amb_gd * demanda_base_mpc / 60.0
-    m_dot_cap_gd = res["nos"][-1]["m_dot"] * pw["n_compressores"]
-    p_set_mpc = params["p_amb"] * params["pi_total"]
-    hor_s_mpc = horizonte_mpc * 60.0
-    t_ev_mpc = (0.4 * hor_s_mpc, 0.65 * hor_s_mpc)
-
-    r_mpc = mpc.simular_mpc(
-        horizonte_min=horizonte_mpc, dt=dt_mpc, n_horizonte=n_horizonte_mpc,
-        m_dot_cap=m_dot_cap_gd, v_vaso=params["v_vaso"], t_k=params["t_amb"],
-        p_set=p_set_mpc, dem_base=dem_base_mpc, t_ev=t_ev_mpc,
-        fator_ev=fator_ev_mpc, rho=rho_mpc, x_c_min=dinamica.X_C_MIN,
-        w_nom=pw["w_total_planta"], eta_vsd=dinamica.ETA_VSD)
-    r_reativo_mpc = dinamica.simular_transiente(
-        horizonte_min=horizonte_mpc, m_dot_cap=m_dot_cap_gd,
-        w_nom=pw["w_total_planta"], v_vaso=params["v_vaso"],
-        t_k=params["t_amb"], p_set=p_set_mpc, p_limite=params["p_limite"],
-        dem_base=dem_base_mpc, t_ev=t_ev_mpc, fator_ev=fator_ev_mpc,
-        modo="VSD", dp_db=0.5e5)
-
-    p_ref_bar_mpc = p_set_mpc / 1e5
-    desvio_mpc = float(np.mean(np.abs(r_mpc["p_bar"] - p_ref_bar_mpc)))
-    desvio_reativo = float(np.mean(np.abs(r_reativo_mpc["p_bar"] - p_ref_bar_mpc)))
-
-    mm1, mm2, mm3 = st.columns(3)
-    mm1.metric("Desvio médio — MPC", f"{desvio_mpc * 1000:.1f} mbar")
-    mm2.metric("Desvio médio — reativo (VSD)", f"{desvio_reativo * 1000:.1f} mbar")
-    melhora_mpc = (1.0 - desvio_mpc / desvio_reativo) * 100.0 if desvio_reativo > 0 else 0.0
-    mm3.metric("Melhora do MPC", f"{melhora_mpc:.0f} %")
-
-    figmpc, axmpc = plt.subplots(figsize=(9.0, 3.4))
-    axmpc.plot(r_mpc["t_min"], r_mpc["p_bar"], color=BLUE, label="MPC (antecipa)")
-    axmpc.plot(r_reativo_mpc["t_min"], r_reativo_mpc["p_bar"], color=RED, ls="--",
-              label="Reativo (rampa 1ª ordem)")
-    axmpc.axhline(p_ref_bar_mpc, color=GREEN, ls=":", label="Referência")
-    axmpc.set_xlabel("Tempo [min]")
-    axmpc.set_ylabel("Pressão da rede [bar abs]")
-    axmpc.legend(fontsize=8)
-    figmpc.tight_layout()
-    st.pyplot(figmpc)
-    st.caption(
-        "Mesmo evento de demanda, dois controladores: o reativo (mesmo da "
-        "aba \"Dinâmica temporal\") só responde à demanda do instante "
-        "atual; o MPC otimiza a sequência de x_c ao longo do horizonte H "
-        "com a demanda futura conhecida (Eq. 24.1) e por isso antecipa o "
-        "evento em vez de correr atrás dele. Demanda base mantida com "
-        "folga (aba Configurações) — perto da capacidade máxima, qualquer "
-        "controlador satura igualmente e a comparação perde sentido."
-    )
-
-# ===========================================================================
-# Aba "Dados Medidos" — inventário de instrumentação real da planta
-# ===========================================================================
-with tab_dados:
-    st.subheader("Inventário de instrumentação medida")
-    st.caption(
-        "Envie a planilha de instrumentação da sua instalação — pontos "
-        "efetivamente medidos em campo — para comparar contra a matriz de "
-        "referência do livro (Tabela 18.1): mostra quais dos 9 pontos "
-        "padrão (A-I) já têm sensor físico nesta planta e quais dependem "
-        "de inferência por modelo (soft-sensor). Este upload é só "
-        "referência/documentação — não altera a simulação nas outras abas."
-    )
-
-    _REFERENCIA_TAB18_1 = [
-        {"Ponto": "A", "Localização": "MCC / Relé", "Variável": "Tensão de Linha", "Tag": "V_L", "Unidade": "V"},
-        {"Ponto": "A", "Localização": "MCC / Relé", "Variável": "Corrente de Fase", "Tag": "I", "Unidade": "A"},
-        {"Ponto": "A", "Localização": "MCC / Relé", "Variável": "Frequência", "Tag": "f", "Unidade": "Hz"},
-        {"Ponto": "A", "Localização": "MCC / Relé", "Variável": "Fator de Potência", "Tag": "cos φ", "Unidade": "-"},
-        {"Ponto": "B", "Localização": "Transmissão", "Variável": "Velocidade Angular", "Tag": "ω", "Unidade": "rad/s"},
-        {"Ponto": "B", "Localização": "Transmissão", "Variável": "Torque no Eixo", "Tag": "τ", "Unidade": "N·m"},
-        {"Ponto": "B", "Localização": "Transmissão", "Variável": "Vibração Global", "Tag": "v_rms", "Unidade": "mm/s"},
-        {"Ponto": "B", "Localização": "Transmissão", "Variável": "Tensão no Dente", "Tag": "σ_b", "Unidade": "MPa"},
-        {"Ponto": "C", "Localização": "Estágio LP", "Variável": "Pressão Sucção", "Tag": "P_s,lp", "Unidade": "bar"},
-        {"Ponto": "C", "Localização": "Estágio LP", "Variável": "Temp. Descarga", "Tag": "T_d,lp", "Unidade": "°C"},
-        {"Ponto": "C", "Localização": "Estágio LP", "Variável": "Folga Interna", "Tag": "δ_lp", "Unidade": "μm"},
-        {"Ponto": "D", "Localização": "Intercooler", "Variável": "Temp. Água In", "Tag": "T_w,in", "Unidade": "°C"},
-        {"Ponto": "D", "Localização": "Intercooler", "Variável": "Delta Pressão", "Tag": "ΔP_ic", "Unidade": "bar"},
-        {"Ponto": "D", "Localização": "Intercooler", "Variável": "Vazão Condensado", "Tag": "ṁ_c", "Unidade": "kg/h"},
-        {"Ponto": "E", "Localização": "Estágio HP", "Variável": "Pressão Descarga", "Tag": "P_d,hp", "Unidade": "bar"},
-        {"Ponto": "E", "Localização": "Estágio HP", "Variável": "Temp. Descarga", "Tag": "T_d,hp", "Unidade": "°C"},
-        {"Ponto": "E", "Localização": "Estágio HP", "Variável": "Folga Interna", "Tag": "δ_hp", "Unidade": "μm"},
-        {"Ponto": "E", "Localização": "Estágio HP", "Variável": "Posição Axial", "Tag": "δ_ax", "Unidade": "μm"},
-        {"Ponto": "F", "Localização": "Aftercooler", "Variável": "Temp. Saída", "Tag": "T_ac,out", "Unidade": "°C"},
-        {"Ponto": "G", "Localização": "Secador PSA", "Variável": "Ponto de Orvalho", "Tag": "T_dp", "Unidade": "°C"},
-        {"Ponto": "G", "Localização": "Secador PSA", "Variável": "Vazão de Purga", "Tag": "ṁ_p", "Unidade": "kg/s"},
-        {"Ponto": "H", "Localização": "Vaso Pulmão", "Variável": "Pressão Vaso", "Tag": "P_tk", "Unidade": "bar"},
-        {"Ponto": "H", "Localização": "Vaso Pulmão", "Variável": "Nível Condensado", "Tag": "L_tk", "Unidade": "%"},
-        {"Ponto": "I", "Localização": "Header", "Variável": "Vazão de Demanda", "Tag": "ṁ_tot", "Unidade": "kg/s"},
-        {"Ponto": "I", "Localização": "Header", "Variável": "Status Ramal", "Tag": "δ_i", "Unidade": "bin"},
+    # Legenda customizada
+    from matplotlib.patches import Patch
+    legend_elements = [
+        Patch(facecolor=BLUE, label="Adsorvendo (Em serviço / Secando)"),
+        Patch(facecolor=ORANGE, label="Regenerando (Aquecimento + Purga)"),
+        Patch(facecolor=GREEN, label="Resfriando (Standby Térmico)"),
     ]
+    ax_gantt.legend(handles=legend_elements, loc="upper right", fontsize=8)
+    ax_gantt.set_yticks(range(n_vasos_sim))
+    ax_gantt.set_yticklabels([f"Torre {n_vasos_sim - i}" for i in range(n_vasos_sim)])
+    ax_gantt.set_xlabel("Tempo Decorrido [min]")
+    ax_gantt.set_xlim(0, horiz_psa_min)
+    ax_gantt.set_title("Rodízio Round-Robin das Torres PSA ao Longo do Tempo", fontsize=10)
+    fig_gantt.tight_layout()
+    st.pyplot(fig_gantt)
 
-    with st.expander("Matriz de referência do livro — Tabela 18.1 (9 pontos, A-I)"):
-        st.dataframe(_REFERENCIA_TAB18_1, width="stretch", hide_index=True)
+    st.divider()
 
-    _exemplo_path = Path(__file__).parent / "exemplos" / "instrumentacao_exemplo.csv"
-    if _exemplo_path.exists():
+    # 2. Curvas Dinâmicas de Capacidade e Temperatura dos Leitos
+    st.markdown("### 📈 Curvas Dinâmicas de Capacidade e Temperatura dos Leitos")
+    col_c1, col_c2 = st.columns(2)
+
+    with col_c1:
+        fig_cap, ax_cap = plt.subplots(figsize=(7.5, 3.4))
+        for i in range(n_vasos_sim):
+            ax_cap.plot(t_psa, sim_psa["q_norm"][i], label=f"Torre {i+1}", lw=1.8)
+        ax_cap.axhline(0.2, color=RED, ls=":", label="Limite de Esgotamento (20%)")
+        ax_cap.set_xlabel("Tempo [min]")
+        ax_cap.set_ylabel("Capacidade Dinâmica Normalizada (q_d / q_eq)")
+        ax_cap.set_ylim(0, 1.05)
+        ax_cap.legend(fontsize=7, loc="lower right")
+        ax_cap.set_title("Evolução da Capacidade Adsortiva (Eq. 15.1 / Eq. 15.12)", fontsize=10)
+        fig_cap.tight_layout()
+        st.pyplot(fig_cap)
+
+    with col_c2:
+        fig_temp_psa, ax_temp_psa = plt.subplots(figsize=(7.5, 3.4))
+        for i in range(n_vasos_sim):
+            ax_temp_psa.plot(t_psa, sim_psa["temp_c"][i], label=f"Torre {i+1}", lw=1.8)
+        ax_temp_psa.set_xlabel("Tempo [min]")
+        ax_temp_psa.set_ylabel("Temperatura do Leito [°C]")
+        ax_temp_psa.legend(fontsize=7, loc="upper right")
+        ax_temp_psa.set_title("Ciclo Térmico de Aquecimento e Resfriamento", fontsize=10)
+        fig_temp_psa.tight_layout()
+        st.pyplot(fig_temp_psa)
+
+    col_c3, col_c4 = st.columns(2)
+
+    with col_c3:
+        fig_pdp, ax_pdp = plt.subplots(figsize=(7.5, 3.4))
+        ax_pdp.plot(t_psa, sim_psa["pdp_saida_c"], color=BLUE, lw=2, label="PDP de Saída [°C]")
+        ax_pdp.axhline(-40.0, color=RED, ls="--", label="Classe 2 ISO 8573-1 (-40 °C)")
+        ax_pdp.axhline(-70.0, color=GREEN, ls=":", label="Classe 1 ISO 8573-1 (-70 °C)")
+        ax_pdp.set_xlabel("Tempo [min]")
+        ax_pdp.set_ylabel("Ponto de Orvalho sob Pressão [°C]")
+        ax_pdp.legend(fontsize=7)
+        ax_pdp.set_title("Ponto de Orvalho Combinado Entregue à Rede", fontsize=10)
+        fig_pdp.tight_layout()
+        st.pyplot(fig_pdp)
+
+    with col_c4:
+        fig_pur, ax_pur = plt.subplots(figsize=(7.5, 3.4))
+        ax_pur.plot(t_psa, sim_psa["m_purge_kg_s"] * 1000.0, color=ORANGE, lw=2, label="Vazão de Purga [g/s]")
+        ax_pur.set_xlabel("Tempo [min]")
+        ax_pur.set_ylabel("Vazão de Purga Total [g/s]")
+        ax_pur.legend(fontsize=7)
+        ax_pur.set_title("Demanda Instantânea de Ar de Purga (Eq. 15.2)", fontsize=10)
+        fig_pur.tight_layout()
+        st.pyplot(fig_pur)
+
+
+    with ts3:
+        st.markdown("#### 📂 Conector OSIsoft PI System & Gerador de Séries Temporais")
+        st.caption(
+            "Integração industrial com telemetria PI, visualização de tendências históricas, "
+            "geração de datasets com ruído e exportador/importador compatível com PI Vision e PI Web API."
+        )
+
+    t_exp, t_imp, t_cat = st.tabs(["📤 Gerador & Exportador PI", "📥 Importador de Telemetria", "📑 Catálogo de Tags"])
+
+    with t_exp:
+        st.markdown("#### Gerar Série Temporal Sintética no Padrão PI")
+        col_p1, col_p2, col_p3 = st.columns(3)
+        passos_pi = col_p1.slider("Número de Passos (Amostras)", 20, 200, 60, 10)
+        dt_pi_min = col_p2.number_input("Intervalo Δt [minutos]", 0.5, 60.0, 1.0, 0.5)
+        prefixo_pi = col_p3.text_input("Prefixo do Ativo PI", "CMP01")
+
+        df_telemetria = pi_telemetry.gerar_serie_temporal_pi(
+            params_base=params,
+            n_passos=passos_pi,
+            dt_minutos=dt_pi_min,
+            prefixo=prefixo_pi,
+        )
+
+        st.dataframe(df_telemetria.head(10), width="stretch")
+
+        csv_pi_data = pi_telemetry.exportar_pi_csv(df_telemetria)
         st.download_button(
-            "⬇️ Baixar exemplo (.csv, os 9 pontos da Tabela 18.1)",
-            data=_exemplo_path.read_bytes(),
-            file_name="instrumentacao_exemplo.csv",
+            label="⬇️ Baixar Telemetria Gerada (.csv padrão OSIsoft PI)",
+            data=csv_pi_data,
+            file_name=f"telemetria_pi_{prefixo_pi}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
             mime="text/csv",
-            help="Mesmo arquivo em aplicativo/exemplos/ — baixe, apague as "
-                 "linhas que não se aplicam à sua planta e reenvie abaixo "
-                 "para ver a comparação de cobertura.")
+        )
 
-    arquivo_medidas = st.file_uploader(
-        "Planilha de instrumentação desta planta (.xlsx ou .csv)",
-        type=["xlsx", "csv"],
-        help="Colunas esperadas: Ponto, Localização, Variável, Tag, Unidade "
-             "(Função é opcional) — mesmo layout da Tabela 18.1 do livro.")
+    with t_imp:
+        st.markdown("#### Carregar Arquivo de Telemetria Externa")
+        arq_upload = st.file_uploader("Selecione arquivo CSV ou Excel de telemetria", type=["csv", "xlsx"])
+        if arq_upload is not None:
+            df_up = pi_telemetry.carregar_telemetria_arquivo(arq_upload)
+            st.success(f"Arquivo carregado com sucesso: {len(df_up)} registros e {len(df_up.columns)} colunas.")
+            st.dataframe(df_up.head(10), width="stretch")
 
-    if arquivo_medidas is not None:
-        df_medidas = None
-        try:
-            if arquivo_medidas.name.lower().endswith(".csv"):
-                df_medidas = pd.read_csv(arquivo_medidas)
-            else:
-                df_medidas = pd.read_excel(arquivo_medidas)
-        except Exception as e:
-            st.error(f"Não foi possível ler o arquivo: {e}")
-
-        if df_medidas is not None:
-            st.subheader(f"{len(df_medidas)} variáveis carregadas")
-            st.dataframe(df_medidas, width="stretch", hide_index=True)
-
-            colunas_norm = {str(c).strip().lower(): c for c in df_medidas.columns}
-            col_ponto = colunas_norm.get("ponto")
-            if col_ponto is not None:
-                pontos_cobertos = {
-                    str(p).strip().upper() for p in df_medidas[col_ponto].dropna()}
-                pontos_ref = "ABCDEFGHI"
-                faltando = [p for p in pontos_ref if p not in pontos_cobertos]
-
-                cob1, cob2 = st.columns(2)
-                cob1.metric("Pontos cobertos",
-                           f"{len(set(pontos_ref) & pontos_cobertos)}/9")
-                cob2.metric("Pontos sem sensor nesta planilha", len(faltando))
-
-                if faltando:
-                    st.warning(
-                        "Sem cobertura nesta planilha: " + ", ".join(faltando) +
-                        " — o Gêmeo Digital depende de inferência por modelo "
-                        "(soft-sensor) nesses pontos, não de leitura direta "
-                        "(mesma lógica de lacunas de observabilidade da "
-                        "Tabela 18.1 do livro).")
-                else:
-                    st.success(
-                        "Todos os 9 pontos de referência (A-I) têm ao menos "
-                        "uma variável coberta nesta planilha.")
-            else:
-                st.info(
-                    "Coluna \"Ponto\" não encontrada — mostrando a planilha "
-                    "como enviada, sem comparação de cobertura contra a "
-                    "Tabela 18.1.")
-
-# ===========================================================================
-# Aba "Painel de Falhas" — cenários de falha isolada, um mecanismo por vez
-# (compressor_sim/cenarios_falha.py)
-# ===========================================================================
-with tab_falhas:
-    st.subheader("Cenários de falha isolada")
-    st.caption(
-        "Cruza o catálogo de mecanismos de falha do livro (Tabela 28.2, "
-        "Cap. 28.3 — 56 mecanismos) com os parâmetros ASSUMIDO já "
-        f"implementados no simulador: {len(cenarios_falha.CATALOGO_CENARIOS)} "
-        "de 56 têm hoje física suficiente para uma injeção isolada (os "
-        "outros exigiriam espectro de vibração, correntes por fase ou "
-        "circuito de óleo — nada disso modelado neste app ainda). Cada "
-        "cenário roda a cascata duas vezes — os parâmetros atuais desta "
-        "sessão (condição saudável) contra o mesmo ponto de operação com "
-        "um único parâmetro deslocado até um valor severo — e compara o "
-        "indicador que o próprio livro associa àquele mecanismo. **Não** "
-        "roda o EKF/VAE/PIML sobre o cenário: mostra a física da falha, "
-        "não testa se o algoritmo do livro (coluna \"Detecção primária\") "
-        "de fato a capturaria em campo."
-    )
-
-    severidade_pct_falha = st.slider(
-        "Severidade global do cenário [%]", 0, 100, 100, 5,
-        help="Interpola cada parâmetro entre o valor saudável atual (0%) "
-             "e o valor severo definido no cenário (100%).")
-
-    if st.button("🔄 Rodar cenários de falha"):
-        st.session_state["resultados_falha"] = cenarios_falha.rodar_todos_cenarios(
-            params, severidade=severidade_pct_falha / 100.0)
-
-    if "resultados_falha" in st.session_state:
-        resultados_falha = st.session_state["resultados_falha"]
-
-        n_criticos = sum(1 for r in resultados_falha
-                         if r["status"] == cenarios_falha.CRITICO)
-        n_alertas = sum(1 for r in resultados_falha
-                        if r["status"] == cenarios_falha.ALERTA)
-        n_ok = len(resultados_falha) - n_criticos - n_alertas
-
-        f1, f2, f3 = st.columns(3)
-        f1.metric("🔴 Crítico", n_criticos)
-        f2.metric("⚠️ Alerta", n_alertas)
-        f3.metric("✅ OK", n_ok)
-
-        _EMOJI_STATUS = {
-            cenarios_falha.OK: "✅",
-            cenarios_falha.ALERTA: "⚠️",
-            cenarios_falha.CRITICO: "🔴",
-        }
-        df_falhas = pd.DataFrame([
+    with t_cat:
+        st.markdown("#### Matriz Completa de Tags PI Industriais (Tabela 18.1)")
+        cat_tags = pi_telemetry.obter_catalogo_tags_pi(prefixo="CMP01")
+        df_cat = pd.DataFrame([
             {
-                "Status": f"{_EMOJI_STATUS[r['status']]} {r['status']}",
-                "Mecanismo": r["nome"],
-                "Cap./Eq.": f"{r['capitulo']} ({r['eq_ref']})",
-                "Parâmetro alterado": r["parametro"],
-                "Saudável → Falha": f"{r['valor_saudavel']:.4g} → {r['valor_falha']:.4g}",
-                "Indicador": r["kpi_path"][-1],
-                "Δ%": f"{r['delta_pct']:+.1f}%",
-                "Detecção primária (livro)": r["deteccao_primaria"],
+                "Tag": t.tag,
+                "Descrição": t.descricao,
+                "Ponto": t.ponto,
+                "Subsistema": t.subsistema,
+                "Unidade": t.unidade,
+                "Tipo": t.tipo,
+                "Faixa": f"[{t.faixa_min}, {t.faixa_max}]",
+                "Alarme L/LL": f"{t.alarme_l}/{t.alarme_ll}" if t.alarme_l else "-",
+                "Alarme H/HH": f"{t.alarme_h}/{t.alarme_hh}" if t.alarme_h else "-",
             }
-            for r in resultados_falha
+            for t in cat_tags
         ])
-        st.dataframe(df_falhas, width="stretch", hide_index=True)
-
-        with st.expander("Descrição física de cada mecanismo"):
-            for cenario, r in zip(cenarios_falha.CATALOGO_CENARIOS, resultados_falha):
-                st.markdown(
-                    f"**{_EMOJI_STATUS[r['status']]} {r['nome']}** "
-                    f"({r['capitulo']}, {r['eq_ref']}) — {cenario['descricao']}")
-    else:
-        st.info("Clique em \"Rodar cenários de falha\" para gerar o painel.")
+        st.dataframe(df_cat, width="stretch", hide_index=True)

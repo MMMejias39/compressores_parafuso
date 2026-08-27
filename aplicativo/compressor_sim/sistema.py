@@ -345,30 +345,34 @@ def simular(par: dict | None = None) -> dict:
     # É a MESMA leitura que um sensor T_dp reportaria naquele ponto do trem;
     # calculada para os 6 pontos por igual, para nenhum acessório do fluxo
     # ficar sem essa grandeza.
+    pdp_amb_c = nucleo.temp_orvalho_de_w(w_amb, p["p_amb"])
     pdp_admissao_c = nucleo.temp_orvalho_de_w(w_amb, p0)
     pdp_pos_inter_c = nucleo.temp_orvalho_de_w(w_hp_in, p_inter)
     pdp_pos_after_c = nucleo.temp_orvalho_de_w(w_pos_sep, p_rede)
     pdp_pos_secador_c = nucleo.temp_orvalho_de_w(w_pos_secador, p_rede)
 
     nos = [
-        {"nome": "Admissão (pós-filtro)", "p_bar": p0 / 1e5,
+        {"nome": "A: Atmosfera (Ambiente)", "p_bar": p["p_amb"] / 1e5,
+         "t_c": p["t_amb"] - 273.15, "m_dot": m_dot_seco, "w": w_amb,
+         "m_dot_total": m_dot_seco * (1.0 + w_amb), "pdp_c": pdp_amb_c},
+        {"nome": "B: Sucção LP (Pós-Filtro)", "p_bar": p0 / 1e5,
          "t_c": p["t_amb"] - 273.15, "m_dot": m_dot_seco, "w": w_amb,
          "m_dot_total": m_dot_seco * (1.0 + w_amb), "pdp_c": pdp_admissao_c},
-        {"nome": "Descarga LP", "p_bar": p_inter / 1e5,
+        {"nome": "C: Descarga LP", "p_bar": p_inter / 1e5,
          "t_c": t_lp_out - 273.15, "m_dot": m_dot_seco, "w": w_amb,
          "m_dot_total": m_dot_seco * (1.0 + w_amb),
          "pdp_c": nucleo.temp_orvalho_de_w(w_amb, p_inter)},
-        {"nome": "Entrada HP (pós-intercooler)", "p_bar": p_inter / 1e5,
+        {"nome": "D: Entrada HP (Pós-Interc.)", "p_bar": p_inter / 1e5,
          "t_c": t_hp_in - 273.15, "m_dot": m_dot_seco, "w": w_hp_in,
          "m_dot_total": m_dot_seco * (1.0 + w_hp_in), "pdp_c": pdp_pos_inter_c},
-        {"nome": "Descarga HP", "p_bar": p_rede / 1e5,
+        {"nome": "E: Descarga HP", "p_bar": p_rede / 1e5,
          "t_c": t_hp_out - 273.15, "m_dot": m_dot_seco, "w": w_hp_in,
          "m_dot_total": m_dot_seco * (1.0 + w_hp_in),
          "pdp_c": nucleo.temp_orvalho_de_w(w_hp_in, p_rede)},
-        {"nome": "Saída aftercooler", "p_bar": p_rede / 1e5,
+        {"nome": "F: Saída Aftercooler", "p_bar": p_rede / 1e5,
          "t_c": t_pos_after - 273.15, "m_dot": m_dot_seco, "w": w_pos_sep,
          "m_dot_total": m_dot_seco * (1.0 + w_pos_sep), "pdp_c": pdp_pos_after_c},
-        {"nome": "Rede (pós-secador)", "p_bar": p_rede / 1e5,
+        {"nome": "G: Rede (Pós-Secador)", "p_bar": p_rede / 1e5,
          "t_c": t_pos_after - 273.15, "m_dot": m_dot_util, "w": w_pos_secador,
          "m_dot_total": m_dot_util * (1.0 + w_pos_secador),
          "pdp_c": pdp_pos_secador_c},

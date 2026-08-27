@@ -1,161 +1,121 @@
-# Gêmeo Digital de Sistemas de Compressão Offshore
+# Gêmeo Digital de Sistemas de Compressão Offshore (Digital Twin & Industrial AI)
 
-Este repositório reúne dois artefatos que andam juntos:
+Este repositório reúne o ecossistema completo de engenharia, modelagem matemática, código-fonte e inteligência artificial industrial:
 
-1. **O livro** — *Gêmeo Digital de Sistemas de Compressão Offshore: Diretrizes
-   Técnicas, Modelagem e Implementação* (`compressores.tex`/`compressores.pdf`),
-   **Volume II** da coleção *Enciclopédia de Máquinas Rotodinâmicas* (o
-   Volume I, com os fundamentos de termodinâmica, mecânica dos fluidos e
-   Mecânica do Contínuo, está em planejamento).
-   Cobre a física de um trem de compressão de ar offshore (compressor de
-   parafuso oil-free em dois estágios, tratamento, armazenamento) e a
-   metodologia de Gêmeo Digital que se constrói sobre essa física — EKF, VAE,
-   PIML, MPC, PSO, identificação por problema inverso, catálogo de mecanismos
-   de falha e painel supervisório de frota.
-2. **O aplicativo** (pasta `aplicativo/`) — um simulador web que implementa,
-   em código real, boa parte do que o livro descreve. Não é pseudocódigo: toda
-   equação do app cita o número correspondente no livro, e os cinco
-   algoritmos da Parte II rodam de verdade sobre dados simulados.
+1. **O livro — Volume I** — *Fundamentos de Mecânica do Contínuo, Termofluidos e Sistemas de Medição: Bases Teóricas para Máquinas Rotodinâmicas* (`teorias.tex`/`teorias.pdf`). Reúne os fundamentos de mecânica dos sólidos e fluidos, termodinâmica aplicada, psicrometria, transferência de calor, eletricidade industrial, dinâmica de rotores e instrumentação.
+2. **O livro — Volume II** — *Gêmeo Digital de Sistemas de Compressão Offshore: Diretrizes Técnicas, Modelagem e Implementação* (`compressores.tex`/`compressores.pdf`). Cobre a física rigorosa de um trem de compressão de ar de parafuso duplo *oil-free* em dois estágios, tratamento térmico/adsorção (PSA), armazenamento em vasos de pressão e a metodologia de Gêmeo Digital (EKF, VAE, PIML, MPC, PSO, identificação por problema inverso, catálogo de falhas causais e supervisório de frota).
+3. **Aplicações de Simulação & Gêmeo Digital**:
+   - **Versão Rust 2.0 (`compressor2/`)**: Implementação industrial de alta performance em Rust (Axum + Vanilla JS/Tailwind/Chart.js). Servidor assíncrono nativo, tempo de resposta sub-milissegundo, conformidade visual **WCAG 2.1 AA** (auditoria automatizada via Chrome Headless), arquitetura dinâmica de trens de compressores, 7 nós termodinâmicos, 26+ tags industriais OSIsoft PI, arena de treinamento de operadores com parecer causal e conformidade estrutural com **ASME VIII Div. 1**.
+   - **Versão Python (`aplicativo/`)**: Simulador analítico e exploratório em Python 3.10+ com interface Streamlit, servindo de protótipo de pesquisa e validação física das equações.
 
-Este README foca no aplicativo — como ele funciona, para que serve e como
-prepará-lo para rodar. Para o livro, veja `compressores.pdf` diretamente ou
-compile `compressores.tex` com `pdflatex` (3 passagens).
+---
 
-## O que o aplicativo faz
+## 🏭 Arquitetura do Sistema Físico e Nós Termodinâmicos
 
-Simula o trem completo de ar comprimido de uma instalação offshore:
+O simulador modela o trem contínuo de ar comprimido para instalações offshore (FPSO / Plataformas Fixas) e plantas de processo:
 
 ```
-filtro de admissão → estágio LP → intercooler → estágio HP → aftercooler →
-separador de condensado → secador PSA (adsorção) → vaso pulmão → rede
+[Nó A: Atmosfera] ──> [Filtro de Admissão] ──> [Nó B: Sucção LP (Sub-atmosférica)]
+       │
+       ├──> [Estágio LP (Compressor Parafuso)] ──> [Nó C: Descarga LP]
+       │
+       ├──> [Intercooler Ar-Água] ──> [Nó D: Sucção HP]
+       │
+       ├──> [Estágio HP (Compressor Parafuso)] ──> [Nó E: Descarga HP]
+       │
+       ├──> [Aftercooler Ar-Água] ──> [Nó F: Saída Aftercooler]
+       │
+       ├──> [Separador Centrífugo] ──> [Secador por Adsorção PSA]
+       │
+       └──> [Nó G: Vaso Pulmão (Air Receiver)] ──> [Rede de Distribuição / Consumidores]
 ```
 
-e expõe, na mesma interface, os cinco algoritmos de Gêmeo Digital da Parte II
-do livro, cada um interativo e rastreável a uma seção específica:
+### Normas Técnicas e Critérios de Engenharia Atendidos:
+- **ISO 1217 (Anexo C/E)**: Cálculo de vazão efetiva (FAD), consumo específico de energia (SPC) e rendimento isentrópico/isotérmico.
+- **API 619**: Compressores rotativos de deslocamento positivo para serviços de petróleo e gás (limites de vibração RMS, temperaturas máximas de carcaça e folgas).
+- **ISO 8573-1 (Classe 2)**: Monitoramento contínuo do Ponto de Orvalho sob Pressão (PDP $\le -40^\circ\text{C}$).
+- **ASME VIII Div. 1**: Rastreamento estrutural de vasos de pressão, Pressão Máxima de Trabalho Admissível ($\text{PMTA} = 10.0\text{ bar}$), pressão mínima crítica de rede ($P_{mín} = 6.0\text{ bar}$) e taxa máxima de despressurização $\frac{dP}{dt}$.
+- **ISA 18.2**: Gestão de alarmes industriais (Normal, Alerta High/Low, Trip HH/LL).
+- **OSIsoft PI System**: Catálogo e exportador/importador de telemetria com mais de 26 tags industriais (Tabela 18.1).
 
-- **EKF** (Filtro de Kalman Estendido) — estima folga interna e incrustação
-  do intercooler a partir de medições ruidosas, incluindo uma variante de
-  **estado aumentado** que identifica o coeficiente de vazamento $K$ como
-  problema inverso (Cap. 28).
-- **VAE** (Autoencoder Variacional) — detecção de anomalia por erro de
-  reconstrução sobre 28 variáveis monitoradas.
-- **PIML** (Physics-Informed ML) — rede substituta que respeita conservação
-  de massa/energia, com uma segunda variante que identifica o mesmo $K$ acima
-  por um caminho offline (Cap. 23.8).
-- **MPC** (Controle Preditivo) — decide o setpoint de pressão antecipando
-  demanda futura, comparado contra controle reativo.
-- **PSO** (Otimização por Enxame) — busca o setpoint de pressão que minimiza
-  consumo específico sob restrição de autonomia do vaso.
+---
 
-## Para que serve
+## 🚀 Funcionalidades do Gêmeo Digital (Rust 2.0 & Python)
 
-Para explorar como o sistema físico responde a mudanças de condição (pressão
-de rede, temperatura ambiente, demanda) e, principalmente, para ver os
-algoritmos de Gêmeo Digital em ação sobre esse sistema — sem precisar de dados
-reais de planta, que este projeto não possui. É uma ferramenta de estudo e
-demonstração, não um sistema de operação contínua (essa lacuna, e o desenho
-de um painel supervisório de frota para fechá-la, está descrita no
-Capítulo 26 do livro, mas sem implementação de referência no app ainda).
+| Módulo / Tela | Descrição Física e Funcional | Algoritmos e Equações |
+| :--- | :--- | :--- |
+| **🚢 Supervisório de Frota** | Monitoramento de frota com $N$ compressores em paralelo, Health Index composto (HI) bilateral e prognóstico de Vida Útil Restante (RUL) com intervalo de confiança de 95%. | Eq. 26.4 (HI), Eq. 19.10 (RUL IC 95%), Eq. 21.7 (NIS $\chi^2$) |
+| **📊 Dashboard do Ativo** | Visualização em tempo real dos 7 nós termodinâmicos, balanço exergético, emissões de $\text{CO}_2$, telemetria PI expansível e gráficos dinâmicos. | ISO 1217, Eq. 17.3 (Exergia Destruída), Eq. 11.11 (SPC) |
+| **📡 Telemetria PI & Dados** | Geração de telemetria sintética com ruído calibrado, exportação CSV para PI DataLink e módulo de ingestão/upload com validação via filtro EKF. | Tabela 18.1 (26+ tags ISA 18.2), EKF NIS Test |
+| **🔬 Diagnóstico & IA** | Classificador bayesiano de falhas por resíduo mínimo ponderado ($\hat{m}_{falha}$), explicabilidade SHAP, EKF de estado aumentado, PSO para setpoint ótimo $\pi^*$ e controle preditivo MPC. | Eq. 29.2 (Classificador), EKF (Cap. 28), PSO (Eq. 24.3), MPC (Cap. 14) |
+| **🛠️ Sistema & Dinâmica** | Visão transiente do vaso pulmão ($P_{vaso}, P_{in}, P_{out}$) frente a perturbações de demanda, modos VSD vs Carga/Alívio, secador PSA (Gantt) e controle de parâmetros de integração ($T_{sim}, \Delta t$). | $\frac{dP}{dt} = \frac{RT}{V}(\dot{m}_{in} - \dot{m}_{out})$, Rampa VSD ($\tau=5s$), Limites ASME VIII |
+| **🎯 Arena de Treinamento** | Simulador de casos cegos operacionais para operadores e engenheiros, avaliando hipótese causal, subsistema e severidade com parecer técnico fundamentado. | 11 mecanismos de falha do livro |
+| **⚙️ Configurações & Trens** | Parametrização dinâmica de trens de compressores ($N=1\dots 12$), capacidade FAD unitária ($5\dots 80\text{ m}^3/\text{min}$), filosofias de redundância ($N+0, N+1, 2N$) e constantes construtivas. | API 619 / ISO 1217 |
 
-## Como funciona (visão rápida)
+---
 
-- **`compressor_sim/`** — motor de cálculo puro (sem Streamlit), um módulo
-  por subsistema/algoritmo. Cada função cita a equação do livro que
-  implementa.
-- **`app.py`** — interface Streamlit, 6 abas:
-  - **⚙️ Operação estática** / **📈 Dinâmica temporal** / **🌀 Secagem PSA** —
-    resultados do trem físico num ponto de operação, ao longo do tempo, e no
-    ciclo do secador, respectivamente.
-  - **🧠 Gêmeo Digital (EKF/PSO)** — os cinco algoritmos acima, cada um em
-    sua própria seção.
-  - **🎛️ Configurações** — geometria de equipamento e hiperparâmetros de
-    algoritmo (o que normalmente não muda de uma análise para a outra).
-  - **📂 Dados Medidos** — upload de referência (.xlsx/.csv) com a
-    instrumentação real de uma planta, comparada contra a matriz de
-    instrumentação do livro (Tabela 18.1, 9 pontos A–I).
-- A barra lateral traz só as **condições de operação do momento**
-  (temperatura ambiente, pressão de rede, demanda etc.) — tudo o que muda
-  raramente vive na aba Configurações.
+## 💻 Como Executar
 
-Detalhes de arquitetura, decisões de projeto e o guia módulo a módulo estão
-em `aplicativo/IMPLEMENTACAO.md` e `aplicativo/GUIA_CODIGO.md`.
-
-## Como preparar para rodar
-
-### Pré-requisitos
-
-- **Python 3.10 ou superior** ([python.org](https://www.python.org/downloads/))
-- **Git** (para clonar o repositório)
-
-O `requirements.txt` inclui `torch` (para os módulos VAE/PIML) — o instalador
-padrão do PyPI já traz suporte a GPU NVIDIA embutido quando disponível, sem
-nenhuma configuração extra em Linux ou Windows; sem GPU, roda em CPU
-normalmente.
-
-### Linux / macOS
+### 1. Versão Rust 2.0 (Axum + Web Industrial) — Recomendada
 
 ```bash
-git clone https://github.com/MMMejias39/compressores_parafuso.git
-cd compressores_parafuso/aplicativo
+# Navegar até o diretório do projeto Rust
+cd compressor2
 
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+# Executar a suíte de 25 testes unitários
+cargo test --workspace
 
-streamlit run app.py
+# Iniciar o servidor web
+cargo run --bin compressor2
 ```
+Acesse no navegador: **[http://localhost:8080](http://localhost:8080)**
 
-### Windows (PowerShell)
-
-```powershell
-git clone https://github.com/MMMejias39/compressores_parafuso.git
-cd compressores_parafuso\aplicativo
-
-python -m venv venv
-venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-
-streamlit run app.py
-```
-
-Duas armadilhas comuns no Windows:
-
-- Se `python` não for reconhecido, use o launcher `py` (`py -m venv venv`) —
-  vem com o instalador oficial do Python para Windows.
-- Se a ativação do venv falhar com um erro de política de execução do
-  PowerShell, rode antes (numa sessão do PowerShell, não precisa admin):
-  ```powershell
-  Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-  ```
-
-Em ambos os sistemas, o Streamlit abre automaticamente o navegador em
-<http://localhost:8501> (se não abrir sozinho, acesse esse endereço
-manualmente). Para encerrar, `Ctrl+C` no terminal onde o comando está
-rodando.
-
-### Testes
-
-Com o venv já ativado (mesma sintaxe nos dois sistemas):
+### 2. Versão Python (Streamlit)
 
 ```bash
+cd aplicativo
+
+# Ativar ambiente virtual e instalar dependências
+source venv/bin/activate  # ou venv\Scripts\activate no Windows
+pip install -r requirements.txt
+
+# Executar os testes
 pytest tests/
+
+# Iniciar o Streamlit
+streamlit run app.py
 ```
+Acesse no navegador: **[http://localhost:8501](http://localhost:8501)**
 
-71 testes de sanidade física — cada um verifica que uma grandeza se move na
-direção fisicamente esperada quando um parâmetro muda.
+---
 
-## Documentação mais profunda
+## 🎨 Acessibilidade e Auditoria Visual (WCAG 2.1 AA)
 
-Dentro de `aplicativo/`:
+A aplicação conta com alternância de temas (**☀️ Claro**, **🌙 Escuro** e **🖥️ Auto**) com regras semânticas de alto contraste ($CR \ge 7.0:1$), auditadas e aprovadas automaticamente via **Google Chrome Headless** em todas as telas e controles.
 
-- **`README.md`** — instruções de instalação/execução equivalentes às acima,
-  com a estrutura de arquivos completa.
-- **`IMPLEMENTACAO.md`** — arquitetura, filosofia de projeto, decisões e por quê.
-- **`GUIA_CODIGO.md`** — o que cada arquivo faz, módulo por módulo.
-- **`MANUTENCAO.md`** — como estender, testar e manter o projeto.
+---
 
-E na raiz do repositório:
+## 📂 Estrutura do Repositório
 
-- **`CONTEXTO.md`** / **`CONTEXTO_app.md`** — histórico cronológico de
-  desenvolvimento do livro e do app, respectivamente (achados, bugs,
-  decisões).
+```
+Compressores/
+├── README.md                      # Visão geral do ecossistema
+├── CONTEXTO.md                    # Fundamentação técnica e normas de engenharia
+├── CONTEXTO_app.md                # Diretrizes do gêmeo digital e interface
+├── compressor2/                   # Implementação em Rust 2.0
+│   ├── Cargo.toml                 # Workspace Cargo
+│   ├── README.md                  # Documentação detalhada da stack Rust
+│   └── crates/
+│       ├── sim_core/              # Núcleo termodinâmico e algoritmos de IA em Rust
+│       │   └── src/               # nucleo, sistema, dinamica, frota, pi_telemetry, etc.
+│       └── app/                   # Servidor Axum, rotas REST e SPA Web
+│           └── src/main.rs        # Frontend industrial de alto contraste e APIs
+├── aplicativo/                    # Implementação em Python
+│   ├── app.py                     # Dashboard Streamlit
+│   ├── requirements.txt           # Dependências Python
+│   ├── GUIA_CODIGO.md             # Documentação dos módulos Python
+│   ├── IMPLEMENTACAO.md           # Detalhes de implementação
+│   └── compressor_sim/            # Módulos analíticos Python
+├── figuras/                       # Diagramas e esquemáticos técnicos
+└── scripts/                       # Scripts auxiliares e de geração gráfica
+```

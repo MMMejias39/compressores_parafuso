@@ -86,7 +86,6 @@ venv\Scripts\pytest tests/
 
 ```
 aplicativo/
-├── app.py                  # interface Streamlit (6 abas — ver GUIA_CODIGO.md)
 ├── compressor_sim/
 │   ├── constantes.py       # propriedades do ar e defaults (origem citada)
 │   ├── nucleo.py           # estágios de compressão, motor, hood, carcaça, psicrometria
@@ -94,13 +93,21 @@ aplicativo/
 │   ├── sistema.py          # cascata completa: simular(params) -> resultados
 │   ├── dinamica.py         # simulação transiente do vaso/rede (VSD ou carga/alívio)
 │   ├── psa_ciclo.py        # rodízio de N torres do secador PSA
-│   ├── ekf.py               # Filtro de Kalman Estendido (+ estado aumentado, Cap. 28.1)
-│   ├── vae.py               # Autoencoder Variacional (detecção de anomalia)
-│   ├── piml.py              # Physics-Informed ML (+ problema inverso, Cap. 23.8)
-│   ├── mpc.py               # Controle Preditivo Baseado em Modelo
-│   └── pso.py               # Otimização por Enxame de Partículas
-├── tests/test_simulador.py # testes de sanidade (pytest, 71 testes)
-└── requirements.txt
+│   ├── pi_telemetry.py     # telemetria OSIsoft PI, 26+ tags industriais (Tabela 18.1)
+│   ├── treinamento_falhas.py # classificador m̂_falha (Eq. 29.2), arena de treinamento operacional
+│   ├── frota_supervisorio.py # supervisório de frota offshore (N_frota), HI composto e RUL bayesiano
+│   ├── ekf.py              # Filtro de Kalman Estendido (+ estado aumentado, Cap. 28.1)
+│   ├── vae.py              # Autoencoder Variacional (detecção de anomalia)
+│   ├── piml.py             # Physics-Informed ML (+ problema inverso, Cap. 23.8)
+│   ├── mpc.py              # Controle Preditivo Baseado em Modelo
+│   ├── pso.py              # Otimização por Enxame de Partículas
+│   ├── calib_lm.py         # Calibração via Levenberg-Marquardt
+│   └── cenarios_falha.py   # 10 cenários de falha isolada (Cap. 28.3)
+├── tests/
+│   ├── test_simulador.py   # testes de sanidade da física e dos algoritmos de IA
+│   └── test_pi_treinamento.py # testes de telemetria PI, diagnóstico e supervisório
+└── exemplos/
+    └── instrumentacao_exemplo.csv # exemplo dos 9 pontos de medição da Tabela 18.1
 ```
 
 Ver `GUIA_CODIGO.md` para o que cada módulo faz em detalhe.

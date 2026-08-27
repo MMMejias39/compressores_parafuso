@@ -1,0 +1,18 @@
+[package]
+name = "compressor2"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+sim_core = { path = "../sim_core" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+rand = { workspace = true }
+axum = { version = "0.7", features = ["macros"] }
+tokio = { version = "1", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["fs", "cors"] }
+
+[dev-dependencies]
+axum-test = "14"
+sim_core = { path = "../sim_core" }

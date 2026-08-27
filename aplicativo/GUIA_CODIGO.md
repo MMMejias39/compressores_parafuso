@@ -279,38 +279,45 @@ genérica — recebe qualquer `func_custo(x)`; no app, minimiza o SPC variando
 a pressão de setpoint, com a restrição de autonomia mínima imposta por
 penalidade (PSO básico não trata restrições nativamente).
 
+## `compressor_sim/pi_telemetry.py` — Telemetria OSIsoft PI System
+
+Implementa o ecossistema de dados industriais no padrão OSIsoft PI System para as
+26+ variáveis da Tabela 18.1 do livro (Pontos A a I, mais circuito de óleo e KPIs).
+- `obter_catalogo_tags_pi(prefixo)`: catálogo estruturado de tags (ex.: `CMP01:LP_PSUC`, `CMP01:ELE_I`, `CMP01:PSA_TDP`), unidades, faixas de engenharia e limites de alarme ISA 18.2 (L, LL, H, HH).
+- `extrair_snapshot_pi(res, params)`: mapeia os nós e potências da simulação física em leituras de tags PI instantâneas com ruído gaussiano calibrado e status de qualidade (*Good/Bad/Substituted*).
+- `gerar_serie_temporal_pi(...)`: sintetizador dinâmico de séries temporais com flutuações ambientais (T_amb diurna/noturna), injeção controlada de falhas (degrau, rampa, senoidal) e ruído de instrumentação.
+- `exportar_pi_csv(df)` e `carregar_telemetria_arquivo(arquivo)`: conectores diretos para exportação/importação de logs de telemetria compatíveis com PI Vision e PI Web API.
+
+## `compressor_sim/treinamento_falhas.py` — Arena Operacional & Classificador m̂_falha
+
+Módulo central para capacitação operacional e diagnóstico de causa-raiz.
+- `CATALOGO_FALHAS_TREINAMENTO`: 15+ mecanismos de falha detalhados da Tabela 28.2 (desgaste de folgas LP/HP, fouling de intercooler/aftercooler, colmatagem de filtros, falha de hood, desbalanço elétrico, EDM em rolamentos, calço hidráulico por dreno entupido, vazamento no header, falhas em PSVs).
+- `classificar_m_falha_minimo_residuo(vetor_z, params)`: implementa a busca por resíduo mínimo ponderado $\hat{m}_{falha}$ (Eq. 29.2 do livro):
+  $$\hat{m}_{\text{falha}} = \arg\min_{m \in \mathcal{M}} \frac{1}{n_z} \sum_{j=1}^{n_z} \left(\frac{z_j - \hat{z}_j^{(m)}}{\sigma_j}\right)^2$$
+  calculando ranking de probabilidades (softmax) e decomposição de importância tipo SHAP por tag (Eq. 25.4).
+- `gerar_caso_treinamento(dificuldade)` e `avaliar_diagnostico_usuario(...)`: motor da Arena de Treinamento Cego com 4 níveis de dificuldade, cálculo de pontuação (0 a 100 pts) em 4 eixos (Subsistema, Causa-Raiz, Severidade, Ação Prescritiva) e emissão de parecer técnico citando normas (API 619, ISO 1217, ISO 8573-1, ASME VIII).
+
+## `compressor_sim/frota_supervisorio.py` — Supervisão de Frota e RUL Bayesiano
+
+Implementa a arquitetura de supervisão contínua da frota offshore descrita na Seção 26.6 do livro.
+- `MaquinaFrota` e `criar_frota_padrao_offshore(n_maquinas=4)`: gerencia o estado persistente de N compressores operando em paralelo no FPSO.
+- `calcular_health_index_composto(residuos)`: implementa a Equação 26.4 do livro com penalidades ponderadas e saturações bilaterais (evitando compensação artificial entre indicadores degradados e saudáveis).
+- `projetar_rul_probabilistico(historico_folga)`: calcula a Vida Útil Remanescente com intervalo de confiança de 95% via regressão estocástica (Eq. 19.10 / Eq. 29.1).
+- `executar_ciclo_supervisorio_frota(...)`: executa o laço de varredura $t_k$, audita a consistência estatística do EKF via $NIS \sim \chi^2_7$ (Eq. 21.7) e ordena as máquinas por urgência de intervenção (*Alarme ativo primeiro, depois menor HI*).
+
 ## `app.py` — interface Streamlit
 
-Ponto de entrada. Estrutura, desde 16/08/2026 (reorganização em 6 abas —
-ver `CONTEXTO_app.md`): `defaults = parametros_default()` primeiro, depois
-`st.tabs([...])` já criado cedo (retorna 6 objetos de aba, incluindo
-`tab_config`), depois `with tab_config:` reunindo geometria de equipamento
-e hiperparâmetros de algoritmo (tudo que **não muda com frequência** — o
-oposto da barra lateral), depois `with st.sidebar:` só com as condições de
-operação do momento (ambiente, pressão de rede, demanda, estado
-medido/atual), depois `params = {...}` reunindo tudo num único dicionário
-passado a `sistema.simular()`, depois os corpos de
-`tab_est`/`tab_din`/`tab_psa`/`tab_gd`/`tab_dados`, cada um num bloco
-`with tab_x:` que executa a cada rerun do Streamlit independente de qual
-aba está visualmente selecionada (relevante para testar via `AppTest` — ver
-`MANUTENCAO.md`). A ordem importa: `tab_config` precisa renderizar (e
-atribuir suas variáveis Python) **antes** de `params = {...}` ser montado,
-porque alimenta parte dele — mover um widget de volta para a barra lateral
-ou para uma aba não muda o escopo Python (o script inteiro roda top-a-
-baixo a cada rerun), só onde ele aparece na UI. `tab_dados` (upload de
-planilha de instrumentação) é só leitura/comparação contra a Tabela 18.1
-do livro — não escreve em `params`. Seções caras (treino de VAE/PIML)
-usam `@st.cache_resource` chaveado pelos parâmetros relevantes. Tema
-visual em `.streamlit/config.toml` (paleta igual à de
-`scripts/gen_figuras.py`).
+Ponto de entrada do simulador web e da arena de treinamento, estruturado em 9 abas dedicadas:
+1. **📊 Dashboard Digital Twin & PI**: nós de processo A-I, balanço exergético (Eq. 17.3), pegada de $\text{CO}_2$ (Eq. 17.5) e grid ao vivo de tags PI com alarmes ISA.
+2. **🎯 Arena de Treinamento de Falhas**: modo desafio cego em 4 níveis de dificuldade, submissão de diagnósticos, pontuação e biblioteca técnica.
+3. **🚨 Laboratório & Diagnóstico m̂_falha**: injeção interativa de falhas e classificador multi-mecanismo (Eq. 29.2) com explicabilidade SHAP.
+4. **🚢 Supervisório de Frota (FPSO)**: monitoramento simultâneo de 4 compressores, $HI$ composto, auditoria $NIS$ e $RUL$.
+5. **🧠 Motores de IA do Gêmeo**: EKF, EKF Aumentado (Cap. 28), VAE (Cap. 22), PIML (Cap. 23), MPC e PSO (Cap. 24).
+6. **📈 Dinâmica Temporal**: transiente de rede, controle VSD vs Carga/Alívio.
+7. **🌀 Secagem PSA**: rodízio de torres, diagrama de Gantt de fases (Adsorvendo, Regenerando, Resfriando), curvas de $q_d/q_{eq}$, temperatura e PDP.
+8. **📂 Conector PI System & Dados**: gerador/exportador de telemetria e importador de arquivos externos.
+9. **🎛️ Configurações & Física**: geometria do equipamento, materiais e hiperparâmetros de IA.
 
-## `tests/test_simulador.py`
+## `tests/test_simulador.py` e `tests/test_pi_treinamento.py`
 
-Um bloco por módulo, na mesma ordem deste guia. Convenção: toda função
-pública de `compressor_sim/` tem pelo menos um teste de sanidade física
-(a grandeza se move na direção fisicamente esperada quando um parâmetro
-muda) — não apenas "não lança exceção". Testes de EKF/PIML/VAE fixam
-tolerâncias **calibradas numericamente** antes de escrever o `assert`
-(rodar o cenário via `python -c`, observar a convergência, só então
-escolher a margem) — nunca uma tolerância arbitrária que possa mascarar
-regressão real ou, pior, ser frágil por acaso.
+Suíte completa com **102 testes automatizados** cobrindo a física, a termodinâmica, todos os algoritmos de IA da Parte II, a geração de tags PI, o classificador multi-mecanismo, a arena de treinamento e a supervisão de frota. Rodar com `pytest tests/`.
