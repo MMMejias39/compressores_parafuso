@@ -49,8 +49,8 @@ def _rotular(entradas: np.ndarray, params_base: dict) -> np.ndarray:
              "t_amb": float(t_amb_c) + 273.15, "folga_rel": max(float(folga_rel), 0.0),
              "r_f_equiv": max(float(r_f_equiv), 0.0), "fad_m3_min": float(fad)}
         res = sistema.simular(p)
-        saidas[i] = [res["nos"][1]["t_c"], res["nos"][2]["t_c"],
-                    res["nos"][0]["m_dot"], res["potencias"]["q_intercooler"]]
+        saidas[i] = [res["nos"][2]["t_c"], res["nos"][3]["t_c"],
+                    res["nos"][1]["m_dot"], res["potencias"]["q_intercooler"]]
     return saidas
 
 

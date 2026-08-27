@@ -47,8 +47,8 @@ def extrair_features(res: dict) -> np.ndarray:
     nos = res["nos"]
     k = res["kpis"]
     vals = [
-        nos[0]["t_c"], nos[0]["m_dot"], nos[1]["t_c"], nos[2]["t_c"],
-        nos[3]["t_c"], nos[5]["p_bar"], k["eta_v_lp"], k["eta_global"],
+        nos[1]["t_c"], nos[1]["m_dot"], nos[2]["t_c"], nos[3]["t_c"],
+        nos[4]["t_c"], nos[6]["p_bar"], k["eta_v_lp"], k["eta_global"],
         k["spc"], k["efetividade_intercooler"], k["condensado_total_kg_h"],
         k["t_carcaca_c"],
     ]

@@ -46,14 +46,15 @@ def medicao(x: np.ndarray, params_base: dict) -> np.ndarray:
          "folga_rel": max(float(folga_rel), 0.0),
          "r_f_equiv": max(float(r_f_equiv), 0.0)}
     res = sistema.simular(p)
-    m_dot_seco = res["nos"][0]["m_dot"]
-    t_hp_in = res["nos"][2]["t_c"]
+    m_dot_seco = res["nos"][1]["m_dot"]
+    t_hp_in = res["nos"][3]["t_c"]  # Nó D: Sucção HP (saída intercooler)
     return np.array([m_dot_seco, t_hp_in])
 
 
 def passo_ekf(x_hat: np.ndarray, p_cov: np.ndarray, z: np.ndarray,
              params_base: dict, q_proc: np.ndarray, r_meas: np.ndarray,
              medicao_fn=medicao):
+
     """Um ciclo de predição-correção do EKF — Eq. 21.4.
 
     Modelo de transição f(x) = x (passeio aleatório): o livro não fecha uma
@@ -149,8 +150,8 @@ def medicao_aumentada(x_aug: np.ndarray, params_base: dict) -> np.ndarray:
          "r_f_equiv": max(float(r_f_equiv), 0.0),
          "k_folga": max(float(k_folga), 0.0)}
     res = sistema.simular(p)
-    m_dot_seco = res["nos"][0]["m_dot"]
-    t_hp_in = res["nos"][2]["t_c"]
+    m_dot_seco = res["nos"][1]["m_dot"]
+    t_hp_in = res["nos"][3]["t_c"]
     return np.array([m_dot_seco, t_hp_in])
 
 

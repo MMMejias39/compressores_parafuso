@@ -26,6 +26,7 @@ pub mod ekf;
 pub mod pi_telemetry;
 pub mod frota;
 pub mod treinamento;
+pub mod calib_lm;
 
 // Re-exportações de conveniência
 pub use sistema::{simular, Params, ResultadoSistema};
@@ -34,6 +35,8 @@ pub use psa_ciclo::simular_ciclo_psa;
 pub use dinamica::simular_transiente;
 pub use mpc::simular_mpc;
 pub use ekf::simular_ekf;
+pub use calib_lm::{calibrar_parametros_lm, ResultadoCalibLm};
 pub use pi_telemetry::{extrair_snapshot_pi, exportar_csv, SnapshotTag, TagPI};
 pub use frota::{criar_frota_padrao_offshore, criar_frota_com_capacidade, executar_ciclo_supervisorio_frota, MaquinaFrota, PainelMaquina};
 pub use treinamento::{gerar_caso_cego, avaliar_resposta, classificar_falha, CasoCego, MecanismoFalha};
+

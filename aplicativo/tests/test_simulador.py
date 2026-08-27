@@ -239,7 +239,7 @@ def test_simular_defaults_plausivel():
     assert 0.0 <= k["efetividade_intercooler"] <= 1.0
     assert k["condensado_total_kg_h"] >= 0.0
     assert k["autonomia_min"] > 0.0
-    assert len(res["nos"]) == 6
+    assert len(res["nos"]) == 7
     for no in res["nos"]:
         assert "pdp_c" in no and "m_dot_total" in no
 
@@ -295,12 +295,12 @@ def test_pdp_secador_bate_com_pdp_real_medido():
 
 
 def test_pdp_sobe_ao_longo_da_compressao_sem_condensar():
-    # Admissão -> Descarga LP: mesma W (ainda não condensou), mas a pressão
+    # Sucção LP -> Descarga LP: mesma W (ainda não condensou), mas a pressão
     # subiu -> PDP tem que subir também
     res = simular()
-    admissao, descarga_lp = res["nos"][0], res["nos"][1]
-    assert admissao["w"] == pytest.approx(descarga_lp["w"])
-    assert descarga_lp["pdp_c"] > admissao["pdp_c"]
+    suc_lp, descarga_lp = res["nos"][1], res["nos"][2]
+    assert suc_lp["w"] == pytest.approx(descarga_lp["w"])
+    assert descarga_lp["pdp_c"] > suc_lp["pdp_c"]
 
 
 def test_n_compressores_escala_totais_sem_afetar_por_unidade():

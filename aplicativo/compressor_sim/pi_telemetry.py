@@ -631,19 +631,19 @@ def extrair_snapshot_pi(
     sigma_b = 120.0 * (torque_eixo / 530.0) if torque_eixo > 0 else 120.0
     
     # Ponto LP e HP
-    p_suc_lp = nos[0]["p_bar"]
-    t_disc_lp = nos[1]["t_c"]
-    p_int = nos[1]["p_bar"]
+    p_suc_lp = nos[1]["p_bar"]
+    t_disc_lp = nos[2]["t_c"]
+    p_int = nos[2]["p_bar"]
     t_w_in = float(params.get("t_agua", 298.15)) - 273.15
-    dp_ic = (nos[1]["p_bar"] - nos[2]["p_bar"]) * 1000.0  # mbar
+    dp_ic = (nos[2]["p_bar"] - nos[3]["p_bar"]) * 1000.0  # mbar
     m_cond_ic = kpis["condensado_total_kg_h"] * 0.5
     
-    p_disc_hp = nos[3]["p_bar"]
-    t_disc_hp = nos[3]["t_c"]
-    t_ac_out = nos[4]["t_c"]
+    p_disc_hp = nos[4]["p_bar"]
+    t_disc_hp = nos[4]["t_c"]
+    t_ac_out = nos[5]["t_c"]
     
     # Secagem e Vaso
-    t_dp = nos[5].get("pdp_c", kpis.get("pdp_alvo_c", -40.0))
+    t_dp = nos[6].get("pdp_c", kpis.get("pdp_alvo_c", -40.0))
     m_purge = nos[-1]["m_dot"] * float(params.get("fator_purga", 0.15))
     dp_filt = kpis["dp_filtro_mbar"]
     p_tk = nos[-1]["p_bar"]
