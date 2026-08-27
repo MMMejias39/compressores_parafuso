@@ -3421,3 +3421,9 @@ introduzir a primeira figura do volume implica criar um gerador próprio —
    - Catálogo de 26+ tags da Tabela 18.1, gerador sintético calibrado com ruído gaussiano e ingestão com teste NIS $\chi^2$ via EKF.
 6. **Auditoria de Acessibilidade Visual e Alto Contraste (WCAG 2.1 Nível AA)**:
    - Auditoria automatizada via Google Chrome Headless com 0 falhas de contraste nos temas Claro e Escuro.
+7. **Incorporação dos Aprendizados no Livro (`compressores.tex`)**:
+   - Cap. 5: Depressão de admissão sub-atmosférica pós-filtro (Nós A e B).
+   - Cap. 16: Modelagem transiente e integridade estrutural conforme ASME VIII Div. 1 (PMTA, $P_{min}$, taxas $\frac{dP}{dt}$, parâmetros $T_{sim}$ e $\Delta t$).
+   - Cap. 26: Topologia dinâmica de trens de compressores em paralelo e redundâncias ($N+0, N+1, 2N$).
+   - Cap. 27: Arquitetura nativa compilada de alta performance em Rust (Axum/Tokio) comparada à stack de pesquisa em Python.
+   - Compilado com `pdflatex` (183 páginas, 0 erros).

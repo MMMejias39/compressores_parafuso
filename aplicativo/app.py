@@ -1133,11 +1133,16 @@ with tab_sistema:
         st.markdown("#### 📈 Visão Transiente de Vasos de Pressão & Trens de Compressão")
         st.caption("Evolução temporal contínua da pressão no vaso P_vaso(t), sucção P_in(t) e descarga P_out(t) frente a perturbações de demanda, monitorando conformidade com a PMTA (ASME VIII) e P_mín.")
 
-        col_d1, col_d2 = st.columns(2)
+        col_d1, col_d2, col_d3 = st.columns(3)
         with col_d1:
-            duracao_min = st.slider("Duração da Simulação [min]", 10, 120, 30, 5)
+            duracao_min = st.slider("Duração da Simulação (T_sim) [min]", 10, 120, 30, 5)
         with col_d2:
+            dt_s = st.selectbox("Passo de Integração (Δt)", [0.1, 0.5, 1.0, 2.0], index=1, format_func=lambda x: f"{x} s ({1/x:.0f} Hz)" if x < 1 else f"{x} s")
+        with col_d3:
             modo_controle = st.radio("Modo de Modulação do Compressor", ["VSD (Inversor / Rampa 1ª Ordem)", "Carga / Alívio (Histerese)"], horizontal=True)
+
+        n_passos_calc = int(duracao_min * 60.0 / dt_s)
+        st.caption(f"⚙️ **Resolvedor Numérico:** Balanço Diferencial Contínuo dP/dt = (RT/V)·(ṁ_in - ṁ_out) [Euler Explícito] | **N = {n_passos_calc:,} passos** | **Δt = {dt_s}s** | **T_sim = {duracao_min} min**")
 
         rho_amb = nucleo.densidade_ar(params["p_amb"], params["t_amb"])
         dem_base_kg_s = rho_amb * params["demanda_m3_min"] / 60.0
@@ -1157,6 +1162,7 @@ with tab_sistema:
             fator_ev=1.35,
             modo="VSD" if "VSD" in modo_controle else "CARGA_ALIVIO",
             dp_db=dp_db_bar * 1e5,
+            dt=dt_s,
         )
 
         kpts = res_trans["kpis"]
