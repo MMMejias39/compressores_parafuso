@@ -3551,3 +3551,46 @@ com o PDF novo (watcher em background + reforço manual; md5 confere com
 divergentes).
 
 **Nada foi commitado** — regra permanente.
+
+## Volume I — Reescrita do Cap. 5, Transferência de Calor (09/09/2026)
+
+**Motivação.** Pedido do autor: "o capítulo V ainda parece muito cru, precisa
+de maiores informações de descrição e até gráfica". O esqueleto anterior
+(88 linhas, 9 equações soltas, 1 tabela) foi substituído por uma redação
+completa, com figuras — mesmo padrão das reescritas dos Caps. 4 e 6.
+
+**Subseções** (labels `sub:v1-c5-<slug>`): 5.1 modos de transferência, com
+Tabela 5.1 de ordens de grandeza de $h$; 5.2 condução — Fourier, paredes
+plana e cilíndrica, circuitos térmicos (Figura 5.1, TikZ), resistência de
+contato; 5.3 convecção — Newton, camada limite, Nusselt e correlações
+(inclui Dittus–Boelter como exemplo); 5.4 radiação — Stefan-Boltzmann,
+fator de vista, linearização em $h_r$; 5.5 regime transiente — número de
+Biot e capacitância global, ponte explícita para a constante de tempo
+$\tau_a$ do Cap. 6; 5.6 trocadores — LMTD com Figura 5.2 (perfis
+paralelo/contracorrente, TikZ), fator $F$, incrustação, método
+$\varepsilon$-NTU com Figura 5.3 (gráfico pgfplots, contracorrente,
+$C_r = 0 / 0{,}5 / 0{,}75$); 5.7 síntese — Tabelas 5.3 (premissas) e 5.4
+(ligação com o Volume II). 19 equações `eq:v1-c5-1` a `eq:v1-c5-19`.
+
+**Figuras.** Três, todas vetoriais e versionadas no próprio .tex (sem
+arquivos externos): circuito térmico e perfis em TikZ puro; gráfico
+$\varepsilon$-NTU em pgfplots 1.18 (presente no TeX Live da máquina).
+`\\usepackage{tikz}` e `\\usepackage{pgfplots}` adicionados ao preâmbulo.
+
+**Nomenclatura.** 12 linhas novas na tabela de Termodinâmica/Calor:
+$Nu$, $Pr$, $Bi$, $L_c$, $U$ (com nota de colisão contra a incerteza $U$
+do Cap. 9), $\Delta T_{ml}$, $F$, $C_{min}$/$C_{max}$, $C_r$, $NTU$,
+$R_f$, $T_s$/$T_\infty$. Símbolos reutilizados sem colisão: $\varepsilon$
+(efetividade, já existente), $\tau$ via remissão a $\tau_a$ do Cap. 6.
+
+**Verificação.** `pdflatex` 3 passagens: **78 páginas** (era 71), **0
+erros, 0 referências indefinidas, 0 labels duplicados**. Overfulls apenas
+os dois baseline (0,8 pt Cap. 2; 4,8 pt Cap. 9) — dois overfulls novos
+(46,9 pt no circuito térmico, 5,5 pt na Tabela 5.4) foram corrigidos
+(compactação do TikZ e `p{5,6cm}`→`p{4,9cm}`) antes da verificação final.
+Páginas 43–52 do PDF renderizadas via `pdftoppm` e inspecionadas: as três
+figuras e as quatro tabelas sem corte. Backups: `main_antes_cap5.bak` em
+`/tmp/vol1_build/`.
+
+**Nada de marcas de IA** em texto, comentários ou metadados — verificação
+mantida. **Nada commitado além do descrito** — regra permanente.

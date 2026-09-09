@@ -19,6 +19,9 @@
 \usepackage{titlesec}
 \usepackage{tabularx}
 \usepackage{longtable}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 
 \hyphenation{
   off-shore Off-shore
@@ -231,7 +234,22 @@ ordem em negrito ($\boldsymbol{\sigma}$), e componentes indicadas por
 	$\dot{W}$ & Potência (trabalho por unidade de tempo) & W & 2, 3, 8 \\
 	$k$ & Condutividade térmica & W\,m$^{-1}$\,K$^{-1}$ & 5 \\
 	$h$ (latino) & Coeficiente de convecção de calor & W\,m$^{-2}$\,K$^{-1}$ & 5 \\
-	$\varepsilon$ (griego) & Efetividade de trocador de calor & adimensional & 5 \\ \bottomrule
+	$\varepsilon$ (griego) & Efetividade de trocador de calor & adimensional & 5 \\
+	$h_0$ & Entalpia de estagnação específica ($h_0 = h + v^2/2 + gz$) & J\,kg$^{-1}$ & 6 \\
+	$C_a$ & Capacitância de acúmulo (massa, energia ou carga por unidade de potencial) & unidade da grandeza & 6 \\
+	$\tau_a$ & Constante de tempo de 1ª ordem (distinta do torque $\tau$, Cap. 8) & s & 6 \\
+	$Nu$ & Número de Nusselt ($hL/k$) & adimensional & 5 \\
+	$Pr$ & Número de Prandtl & adimensional & 5 \\
+	$Bi$ & Número de Biot ($hL_c/k$) & adimensional & 5 \\
+	$L_c$ & Comprimento característico (transiente) & m & 5 \\
+	$U$ (latino) & Coeficiente global de transferência de calor (não confundir com $U$, incerteza, Cap. 9) & W\,m$^{-2}$\,K$^{-1}$ & 5 \\
+	$\Delta T_{ml}$ & Diferença média logarítmica de temperatura & K & 5 \\
+	$F$ & Fator de correção da LMTD (multipassagem/crossflow) & adimensional & 5 \\
+	$C_{min}$, $C_{max}$ & Capacitâncias térmicas do trocador ($\dot m c_p$) & W\,K$^{-1}$ & 5 \\
+	$C_r$ & Razão de capacitâncias ($C_{min}/C_{max}$) & adimensional & 5 \\
+	$NTU$ & Número de unidades de transferência ($UA/C_{min}$) & adimensional & 5 \\
+	$R_f$ & Fator de incrustação (fouling) & m$^2$\,K\,W$^{-1}$ & 5 \\
+	$T_s$, $T_\infty$ & Temperatura da superfície e do fluido distante & K & 5 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Grandezas Elétricas e de Instrumentação}
@@ -280,7 +298,7 @@ ordem em negrito ($\boldsymbol{\sigma}$), e componentes indicadas por
 	\toprule
 	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
 	\endhead
-	$W$ & Razão de umidade (massa de vapor/massa de ar seco) & kg\,kg$^{-1}$ & 11 \\
+	$W$ & Razão de umidade (massa de vapor/massa de ar seco) & kg\,kg$^{-1}$ & 6, 11 \\
 	$\phi$ & Umidade relativa & adimensional & 11 \\
 	$P_{\text{sat}}$ & Pressão de saturação do vapor d'água & Pa & 11 \\
 	$T_{dp}$ & Ponto de orvalho & K, $^{\circ}$C & 11 \\
@@ -2259,80 +2277,170 @@ Tabela~\ref{tab:v1-c4-2} existe para isso.
 %=============================================================================
 \section{Transferência de Calor}\label{sec:calor}
 
-\subsection{Modos de transferência de calor}
+O Capítulo~\ref{sec:termodinamica} registrou o calor $\dot{Q}$ como uma das
+duas formas de energia em trânsito e fixou o que a primeira lei permite
+quantificar; o Capítulo~\ref{sec:sistemas} escreverá os balanços que o
+transportam através de fronteiras. Este capítulo responde a uma pergunta que
+nenhum dos dois faz: \emph{com que rapidez} a energia térmica atravessa uma
+parede, uma carcaça ou um trocador. A distinção importa: a termodinâmica diz
+que o calor flui do quente para o frio e quanto vale o total; a transferência
+de calor diz em quanto tempo ele chega --- e é o tempo que dimensiona
+intercoolers, aftercoolers, trocadores de óleo e a capacidade de resfriamento
+do conjunto.
 
-A transferência de calor ocorre por três modos: condução, convecção e
-radiação. Em máquinas rotodinâmicas, os três estão presentes, embora a
-convecção forçada domine em trocadores de calor e resfriadores.
+Os três modos de transferência --- condução, convecção e radiação --- estão
+presentes em toda planta de ar comprimido. O intercooler troca calor entre o
+gás e a água por convecção forçada dos dois lados; a carcaça do compressor
+conduz o calor do interior até a superfície externa, onde a convecção natural
+e a radiação o dissipam; o aftercooler e o resfriador de óleo repetem o
+esquema com outros pares fluido--fluido. A construção do capítulo segue a
+ordem em que os modos entram num projeto: cada um recebe uma \emph{lei de
+taxa}; as leis se combinam em \emph{circuitos térmicos}; o regime transiente
+introduz a capacitância térmica, que é a ponte para a dinâmica do
+Capítulo~\ref{sec:sistemas}; e o trocador de calor --- a aplicação dominante
+desta coleção --- fecha o capítulo com os dois métodos clássicos de cálculo.
 
-\subsection{Condução}
+\subsection{Modos de transferência de calor}\label{sub:v1-c5-modos}
 
-A condução em meios isotrópicos é descrita pela lei de Fourier:
-\begin{equation}\label{eq:v1-c5-1}
-\mathbf{q} = -k \, \nabla T,
-\end{equation}
-onde $k$ é a condutividade térmica do material.
+\textbf{Condução} é a transferência de energia por contato direto, sem
+transporte macroscópico de matéria: ocorre em sólidos e em fluidos em
+repouso, e sua velocidade depende do material. Microscopicamente, a energia
+se propaga por vibrações da rede cristalina (isolantes) e por elétrons livres
+(condutores metálicos) --- o mesmo mecanismo que explica por que o cobre
+conduz bem calor \emph{e} eletricidade.
 
-Para uma parede plana unidimensional em regime permanente, o fluxo de calor é
-\begin{equation}\label{eq:v1-c5-2}
-q'' = \frac{k}{L}(T_1 - T_2).
-\end{equation}
+\textbf{Convecção} é a transferência combinada de condução junto à parede e
+de transporte pela corrente de fluido. Divide-se em \emph{natural}, movida
+pela flutuabilidade do próprio fluido aquecido (carcaças expostas ao ar
+ambiente), e \emph{forçada}, movida por ventilador, bomba ou jato (o gás
+comprimido atravessando um intercooler). Na convecção forçada, a taxa de
+troca é tão maior quanto maior a velocidade do fluido --- relação que o
+Volume~II usa para ajustar o dimensionamento de resfriadores à vazão real.
 
-Em coordenadas cilíndricas (tubos), a resistência térmica por unidade de
-comprimento é
-\begin{equation}\label{eq:v1-c5-3}
-R'_{cond} = \frac{\ln(r_2/r_1)}{2\pi k}.
-\end{equation}
+\textbf{Radiação} é a emissão de energia eletromagnética por toda matéria a
+temperatura acima do zero absoluto; não exige meio material e, por isso, é o
+único modo que atravessa o vácuo. A potência emitida cresce com a quarta
+potência da temperatura absoluta --- o que a torna irrelevante em
+superfícies mornas e dominante em superfícies muito quentes, como a descarga
+de um estágio de alta.
 
-\subsection{Convecção}
-
-A convecção obedece à lei do resfriamento de Newton:
-\begin{equation}\label{eq:v1-c5-4}
-q'' = h\,(T_s - T_\infty),
-\end{equation}
-onde $h$ é o coeficiente de transferência de calor por convecção e $T_s$ e
-$T_\infty$ são as temperaturas da superfície e do fluido longe dela.
-
-O coeficiente $h$ é geralmente obtido por correlações adimensionais, como
-\begin{equation}\label{eq:v1-c5-5}
-Nu = C \, Re^m \, Pr^n,
-\end{equation}
-com constantes $C$, $m$ e $n$ que dependem da geometria e do regime.
-
-\subsection{Radiação}
-
-A radiação térmica entre duas superfícies cinzas grandes e próximas é
-\begin{equation}\label{eq:v1-c5-6}
-q'' = \varepsilon_r \, \sigma \, (T_1^4 - T_2^4),
-\end{equation}
-onde $\varepsilon_r$ é a emissividade efetiva, $\sigma$ é a constante de
-Stefan-Boltzmann e as temperaturas devem estar em Kelvin.
-
-\subsection{Trocadores de calor}
-
-A taxa de transferência de calor em um trocador pode ser calculada por
-\begin{equation}\label{eq:v1-c5-7}
-\dot{Q} = U \, A \, \Delta T_{ml},
-\end{equation}
-onde $U$ é o coeficiente global de transferência de calor, $A$ é a área de
-troca e $\Delta T_{ml}$ é a diferença média logarítmica de temperatura (LMTD):
-\begin{equation}\label{eq:v1-c5-8}
-\Delta T_{ml} = \frac{\Delta T_1 - \Delta T_2}{\ln(\Delta T_1 / \Delta T_2)}.
-\end{equation}
-
-O método da efetividade-NTU fornece uma alternativa quando as temperaturas de
-saída não são conhecidas:
-\begin{equation}\label{eq:v1-c5-9}
-\varepsilon = \frac{\dot{Q}}{\dot{Q}_{max}}, \qquad
-NTU = \frac{UA}{C_{min}}.
-\end{equation}
-A relação entre $\varepsilon$, $NTU$ e $C_r = C_{min}/C_{max}$ depende da
-configuração do trocador (paralelo, contracorrente, casco-tubo etc.).
+A convecção tem um caráter que a distingue dos outros dois modos: seu
+coeficiente $h$ não é propriedade do material nem do fluido sozinhos, mas do
+\emph{par} fluido--superfície--movimento, e varre várias ordens de
+grandeza. A Tabela~\ref{tab:v1-c5-1} dá as faixas de uso corrente; é ela que
+autoriza a regra prática de que trocar calor com água é muito mais fácil do
+que com ar --- e por que um resfriador a ar precisa de área muito maior que
+um de água para o mesmo dever térmico.
 
 \begin{table}[H]
 \centering
-\caption{Resistências térmicas em série para uma parede composta.}
+\caption[Ordens de grandeza do coeficiente de convecção $h$.]{Ordens de
+grandeza do coeficiente de convecção $h$ para diferentes regimes e pares
+fluido--superfície.}
 \label{tab:v1-c5-1}
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Regime} & $\bm{h}$ \textbf{(W\,m$^{-2}$\,K$^{-1}$)} \\
+\midrule
+Convecção natural em gás & 5 -- 25 \\
+Convecção forçada em gás & 25 -- 250 \\
+Convecção forçada em líquido & 50 -- 20\,000 \\
+Ebulição e condensação & 2\,500 -- 100\,000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Condução}\label{sub:v1-c5-conducao}
+
+A lei de taxa da condução é a \textbf{lei de Fourier}, que relaciona o fluxo
+de calor à temperatura: o calor flui no sentido \emph{decrescente} de
+temperatura, com taxa proporcional ao gradiente. Para um meio isotrópico, a
+Equação~\eqref{eq:v1-c5-1}:
+\begin{equation}\label{eq:v1-c5-1}
+\mathbf{q} = -k \, \nabla T,
+\end{equation}
+onde $\mathbf{q}$ é o vetor fluxo de calor (W\,m$^{-2}$), $k$ a
+condutividade térmica do material (W\,m$^{-1}$\,K$^{-1}$) e o sinal negativo
+codifica a direção: do quente para o frio.
+
+Integrando a Equação~\eqref{eq:v1-c5-1} numa parede plana de espessura $L$
+com $k$ constante e temperaturas impostas $T_1$ e $T_2$ nas faces, obtém-se o
+fluxo da Equação~\eqref{eq:v1-c5-2}:
+\begin{equation}\label{eq:v1-c5-2}
+q'' = \frac{k}{L}(T_1 - T_2).
+\end{equation}
+A forma sugere uma analogia com a lei de Ohm: o fluxo é proporcional à
+``tensão'' ($T_1 - T_2$) e inversamente proporcional a uma ``resistência''.
+Definindo a resistência térmica de condução plana, Equação~\eqref{eq:v1-c5-3}:
+\begin{equation}\label{eq:v1-c5-3}
+R_{cond} = \frac{L}{k\,A},
+\end{equation}
+com $A$ a área da parede, o fluxo total $\dot{Q} = q''A$ escreve-se como
+$(T_1 - T_2)/R_{cond}$, exatamente como uma corrente elétrica. A analogia
+não é curiosidade: é a ferramenta de projeto para paredes compostas, tubos e
+carcaças, porque permite somar resistências em série e em paralelo como num
+circuito.
+
+Para paredes cilíndricas --- o caso dos tubos, corpos de intercooler e
+casquilhos --- a área cresce com o raio, e a integração da lei de Fourier em
+coordenadas cilíndricas dá a resistência por unidade de comprimento da
+Equação~\eqref{eq:v1-c5-4}:
+\begin{equation}\label{eq:v1-c5-4}
+R'_{cond} = \frac{\ln(r_2/r_1)}{2\pi k},
+\end{equation}
+onde $r_1$ e $r_2$ são os raios interno e externo. Num tubo de comprimento
+$L$, a resistência total é $R_{cond} = R'_{cond}/L$. Note que a espessura
+entra através do logaritmo do \emph{quociente} de raios, e não linearmente
+como na parede plana --- diferença que importa em isolamentos espessos.
+
+A Figura~\ref{fig:v1-c5-1} mostra o circuito térmico de uma parede composta
+com convecção nas duas faces: película interna (fluido quente $\to$ parede),
+duas camadas condutivas e película externa (parede $\to$ ambiente). Como as
+resistências estão em série --- o mesmo fluxo atravessa todas ---, o total é
+a soma, Equação~\eqref{eq:v1-c5-5}:
+\begin{equation}\label{eq:v1-c5-5}
+\dot{Q} = \frac{T_{\infty,1} - T_{\infty,2}}
+{R_{w,1} + R_{k,1} + R_{k,2} + R_{w,2}} .
+\end{equation}
+A grande vantagem do esquema é o diagnóstico que ele permite: a resistência
+dominante é a maior do circuito, e é nela que o esforço de projeto deve
+incidir. Entre um gás e a água, a película do lado do gás quase sempre domina
+--- por isso aletas, turbulizadores e maiores velocidades são aplicados do
+lado do gás. A Tabela~\ref{tab:v1-c5-2} consolida as resistências dos modos
+elementares, incluindo a forma linearizada da radiação
+(Seção~\ref{sub:v1-c5-radiacao}).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\footnotesize, box/.style={draw, minimum width=1.2cm,
+minimum height=0.55cm}]
+\node at (0,0) {$T_{\infty,1}$};
+\node[box] (rw1) at (1.5,0) {$R_{w,1}$};
+\node at (3,0) {$T_1$};
+\node[box] (rk1) at (4.5,0) {$R_{k,1}$};
+\node at (6,0) {$T_2$};
+\node[box] (rk2) at (7.5,0) {$R_{k,2}$};
+\node at (9,0) {$T_3$};
+\node[box] (rw2) at (10.5,0) {$R_{w,2}$};
+\node at (12,0) {$T_{\infty,2}$};
+\foreach \a/\b in {0.5/0.9, 2.1/2.55, 3.45/3.9, 5.1/5.55, 6.45/6.9,
+7.95/8.4, 9.45/9.9, 10.95/11.4}
+  \draw (\a,0) -- (\b,0);
+\draw[->, thick] (0.5,-0.85) -- (11.4,-0.85)
+  node[midway, below=2pt] {$\dot{Q}$};
+\end{tikzpicture}
+\caption[Circuito térmico de uma parede composta com convecção nas faces.]{%
+Circuito térmico de uma parede composta com convecção nas faces: as
+resistências em série somam-se, e o fluxo $\dot{Q}$ é comum a todas.}
+\label{fig:v1-c5-1}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption[Resistências térmicas dos modos elementares.]{Resistências
+térmicas dos modos elementares para inclusão em circuitos em série e em
+paralelo.}
+\label{tab:v1-c5-2}
 \begin{tabular}{@{}lll@{}}
 \toprule
 \textbf{Modo} & \textbf{Resistência} & \textbf{Unidade} \\
@@ -2340,66 +2448,677 @@ configuração do trocador (paralelo, contracorrente, casco-tubo etc.).
 Condução plana & $R = L/(kA)$ & K\,W$^{-1}$ \\
 Condução cilíndrica & $R = \ln(r_2/r_1)/(2\pi k L)$ & K\,W$^{-1}$ \\
 Convecção & $R = 1/(hA)$ & K\,W$^{-1}$ \\
+Radiação (linearizada) & $R = 1/(h_r A)$, \
+$h_r = \varepsilon_r \sigma (T_1 + T_2)(T_1^2 + T_2^2)$ & K\,W$^{-1}$ \\
 Global & $1/(UA) = \sum R_i$ & K\,W$^{-1}$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
+Entre superfícies sólidas em contato mecânico existe ainda a
+\textbf{resistência de contato}: as superfícies reais tocam-se apenas nos
+picos da rugosidade, e o calor atravessa os vazios por radiação e por gás
+intersticial. Em juntas de carcaças e assentos de tubos ela pode dominar o
+circuito; a engenharia a reduz com pasta térmica, juntas metálicas ou
+pressão de controle --- nunca deve ser ignorada em medições de temperatura de
+parede.
+
+\subsection{Convecção}\label{sub:v1-c5-conveccao}
+
+A lei de taxa da convecção é a \textbf{lei do resfriamento de Newton},
+Equação~\eqref{eq:v1-c5-6}:
+\begin{equation}\label{eq:v1-c5-6}
+q'' = h\,(T_s - T_\infty),
+\end{equation}
+onde $T_s$ é a temperatura da superfície, $T_\infty$ a do fluido
+suficientemente longe dela e $h$ o coeficiente de transferência de calor por
+convecção. Como antecipado na Tabela~\ref{tab:v1-c5-1}, $h$ não é
+propriedade: o mesmo ar, na mesma peça, troca dez vezes mais calor em fluxo
+forçado turbulento do que em repouso.
+
+O mecanismo físico esconde-se na \emph{camada limite térmica}, a região junto
+à parede onde o fluido retarda e a temperatura transita de $T_s$ para
+$T_\infty$: o calor conduz-se através dessa película fina e é depois
+arrastado pela corrente. Quanto mais fina a película (velocidade maior,
+turbulência maior), maior o $h$. Todo o conteúdo operativo da convecção
+está, portanto, em prever $h$ --- e isso se faz com grupos adimensionais,
+herdando a análise dimensional do Capítulo~\ref{sec:continuo}.
+
+O grupo central é o \textbf{número de Nusselt}, a razão entre a troca real e
+a que haveria por pura condução através da camada limite,
+Equação~\eqref{eq:v1-c5-7}:
+\begin{equation}\label{eq:v1-c5-7}
+Nu = \frac{h\,L}{k},
+\end{equation}
+com $L$ o comprimento característico da geometria (diâmetro do tubo,
+comprimento da placa). Correlações experimentais expressam o Nusselt em
+função do Reynolds e do Prandtl, Equação~\eqref{eq:v1-c5-8}:
+\begin{equation}\label{eq:v1-c5-8}
+Nu = C \, Re^m \, Pr^n,
+\end{equation}
+com constantes $C$, $m$ e $n$ que dependem da geometria, do regime
+(laminar/turbulento) e da faixa de Reynolds --- por exemplo, o clássico
+Dittus--Boelter para tubos lisos em regime turbulento, $Nu = 0{,}023\,
+Re^{0{,}8}\,Pr^{0{,}4}$, que o Volume~II aplica ao lado do gás dos
+intercoolers. A premissa prática: usar correlação fora da faixa de validade
+(baixo Reynolds, fluido não-newtoniano, geometria distante do tubo liso)
+invalida o número obtido --- as condições de validade valem tanto quanto a
+fórmula.
+
+\subsection{Radiação}\label{sub:v1-c5-radiacao}
+
+Toda superfície emite potência proporcional à quarta potência de sua
+temperatura absoluta. Para duas superfícies cinzas grandes e próximas --- a
+aproximação que cobre a maioria das trocas entre carcaça e ambiente de
+instalação ---, o fluxo líquido é a Equação~\eqref{eq:v1-c5-9}:
+\begin{equation}\label{eq:v1-c5-9}
+q'' = \varepsilon_r \, \sigma \, (T_1^4 - T_2^4),
+\end{equation}
+onde $\varepsilon_r$ é a emissividade efetiva do par (função das
+emissividades das duas superfícies), $\sigma = 5{,}67\times 10^{-8}$
+W\,m$^{-2}$\,K$^{-4}$ é a constante de Stefan--Boltzmann e as temperaturas
+\textbf{devem estar em Kelvin} --- a razão entre temperaturas só tem sentido
+físico na escala absoluta, como registrado na
+Seção~\ref{sub:v1-c6-bases}. A dependência em $T^4$ tem consequência
+prática direta: entre 300~K e 400~K, a emissão quase triplica
+($(400/300)^4 \approx 3{,}2$), e por isso a radiação, desprezível num motor
+morno, torna-se relevante perto de suas classes de isolação mais quentes.
+
+Duas extensões cobrem os casos em que a aproximação das grandes superfícies
+não serve. Para corpos pequenos dentro de cavidades (um sensor numa carcaça,
+um painel numa sala), o que vale é a emissividade do corpo pequeno vezes a
+irradiação da cavidade --- a cavidade comporta-se quase como corpo negro.
+Para pares de superfícies arbitrárias, entra o \textbf{fator de vista}
+$F_{12}$, a fração da radiação que sai de 1 e alcança 2 diretamente, função
+apenas da geometria. Em ambos os casos o fluxo continua dependendo de $T^4$
+nas temperaturas absolutas.
+
+A forma $T_1^4 - T_2^4$ fatora-se como $(T_1 - T_2)(T_1 + T_2)(T_1^2 +
+T_2^2)$, o que permite \emph{linearizar} a radiação num coeficiente $h_r$ e
+tratá-la como uma resistência de convecção a mais no circuito térmico ---
+forma já registrada na Tabela~\ref{tab:v1-c5-2}. Para diferenças de
+temperatura moderadas em torno de uma temperatura média conhecida, é assim
+que a radiação entra nos balanços de carcaça do Volume~II.
+
+\subsection{Regime transiente: a capacitância térmica}\label{sub:v1-c5-transiente}
+
+Os modos anteriores descrevem taxas; nada diz sobre quanto tempo um corpo
+leva para responder. Quando um corpo de massa $m$, calor específico $c$ e
+volume $V$ troca calor com o ambiente, sua temperatura obedece ao balanço de
+energia com acúmulo --- exatamente o esquema do
+Capítulo~\ref{sec:sistemas} aplicado a um corpo sólido. Se a condução
+interna é muito mais rápida que a convecção na superfície, o corpo pode ser
+tratado como \textbf{corpo com capacitância global}: temperatura uniforme em
+cada instante, evoluindo no tempo.
+
+O critério de validade é o \textbf{número de Biot}, a razão entre a
+resistência de condução interna e a de convecção superficial,
+Equação~\eqref{eq:v1-c5-10}:
+\begin{equation}\label{eq:v1-c5-10}
+Bi = \frac{h\,L_c}{k},
+\end{equation}
+onde $L_c = V/A_s$ é o comprimento característico do corpo. Para $Bi < 0{,}1$,
+a temperatura interna fica uniforme a menos de 5\,\% e a capacitância global
+é legítima. Carcaças de compressores, com metal grosso e convecção fraca do
+ar ambiente, estão tipicamente nesse regime --- o que é a base dos modelos de
+temperatura de carcaça do Volume~II.
+
+O balanço $\rho c V \, dT/dt = -hA_s (T - T_\infty)$ tem solução
+exponencial, Equação~\eqref{eq:v1-c5-11}:
+\begin{equation}\label{eq:v1-c5-11}
+\frac{T(t) - T_\infty}{T_0 - T_\infty} =
+\exp\!\left(-\frac{t}{\tau}\right),
+\qquad
+\tau = \frac{\rho\,c\,V}{h\,A_s},
+\end{equation}
+onde $\tau$ é a constante de tempo térmica: o tempo para a diferença de
+temperatura cair para $1/e \approx 37\,\%$ do valor inicial. A
+Equação~\eqref{eq:v1-c5-11} é um caso particular da resposta de primeira
+ordem da Equação~\eqref{eq:v1-c6-8}, com capacitância $C_a = \rho c V$ e
+condutância $k = h A_s$: a mesma matemática que governa o vaso pulmão
+governará a carcaça. A leitura física é direta --- \emph{massa grande e
+convecção fraca respondem devagar} --- e explica por que o superaquecimento
+de um compressor se desenvolve em dezenas de minutos, tempo suficiente para
+a proteção térmica atuar.
+
+Quando $Bi > 0{,}1$, o corpo deixa de ser isotérmico e a temperatura interna
+se torna campo: a solução envolve a condução transiente (sólido semi-infinito
+com função erro para tempos curtos, séries para corpos finitos). O Volume~I
+registra o limite de validade e deixa as soluções de campo para a literatura
+clássica; para a dinâmica de máquinas, a capacitância global cobre os casos
+de interesse.
+
+\subsection{Trocadores de calor}\label{sub:v1-c5-trocadores}
+
+O trocador de calor é o componente em que tudo o que este capítulo construiu
+se aplica junto: é um volume de controle (Capítulo~\ref{sec:sistemas}) cujas
+paredes são circuitos térmicos (Seção~\ref{sub:v1-c5-conducao}) cujos lados
+trocam por convecção (Seção~\ref{sub:v1-c5-conveccao}) com fluidos cujas
+temperaturas mudam ao longo da área. Intercoolers, aftercoolers e
+resfriadores de óleo são trocadores de correntes alternadas; a
+diferença entre eles é o par de fluidos e o dever térmico, nunca a
+física.
+
+O ponto de partida é sempre o balanço global de energia em regime
+permanente, Equação~\eqref{eq:v1-c5-12}: o que um fluido perde, o outro
+ganha (perdas para o ambiente desprezadas, premissa razoável em trocador
+isolado).
+\begin{equation}\label{eq:v1-c5-12}
+\dot{Q} = C_h\,(T_{h,i} - T_{h,o}) = C_c\,(T_{c,o} - T_{c,i}),
+\qquad C = \dot{m}\,c_p ,
+\end{equation}
+onde os índices $h$ e $c$ marcam quente e frio e $C$ é a \emph{capacitância
+térmica} do fluxo (W\,K$^{-1}$) --- quanto de energia o fluxo carrega por
+grau de temperatura. O balanço fecha qualquer trocador, conhecendo-se as
+temperaturas; o projeto começa quando elas não são todas conhecidas.
+
+A equação de taxa relaciona o dever térmico à área e ao coeficiente global
+$U$, que condensa as resistências das películas e da parede em série
+(Tabela~\ref{tab:v1-c5-2}), Equação~\eqref{eq:v1-c5-13}:
+\begin{equation}\label{eq:v1-c5-13}
+\dot{Q} = U \, A \, \Delta T_{ml}.
+\end{equation}
+A diferença de temperatura de acionamento não é constante ao longo do
+trocador: o quente esfria e o frio aquece, e $\Delta T$ varre um intervalo
+entre as extremidades. Usar a média aritmética das extremidades superestima
+a troca; a média correta é a \textbf{diferença média logarítmica} (LMTD),
+Equação~\eqref{eq:v1-c5-14}, com $\Delta T_1$ e $\Delta T_2$ as diferenças
+nas duas extremidades:
+\begin{equation}\label{eq:v1-c5-14}
+\Delta T_{ml} = \frac{\Delta T_1 - \Delta T_2}{\ln(\Delta T_1 / \Delta T_2)}.
+\end{equation}
+A Figura~\ref{fig:v1-c5-2} mostra por que a configuração importa: no
+contracorrente o frio encontra o quente já frio e sai quente, aproximando-se
+da temperatura de entrada do quente sem cruzá-la --- o contracorrente extrai
+mais troca da mesma área e permite que o fluido processado saia abaixo da
+temperatura de saída do refrigerante, o que o paralelo jamais permite.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\footnotesize,
+  perfil/.style={thick},
+  eixos/.style={->}]
+% --- (a) paralelo ---
+\begin{scope}[xshift=0cm]
+\draw[eixos] (0,0) -- (4.6,0) node[below left=1pt] {$x$};
+\draw[eixos] (0,0) -- (0,3.1) node[above left=1pt] {$T$};
+\draw[perfil] (0.1,2.7) -- (4.3,1.7) node[pos=0,left] {$T_{h,i}$};
+\draw[perfil] (0.1,0.5) -- (4.3,1.3) node[pos=0,left] {$T_{c,i}$};
+\draw[<->] (0.12,2.55) -- (0.12,0.62) node[midway,right=1pt] {$\Delta T_1$};
+\draw[<->] (4.28,1.75) -- (4.28,1.38) node[midway,right=1pt] {$\Delta T_2$};
+\node at (2.3,-0.55) {(a) Paralelo};
+\end{scope}
+% --- (b) contracorrente ---
+\begin{scope}[xshift=7cm]
+\draw[eixos] (0,0) -- (4.6,0) node[below left=1pt] {$x$};
+\draw[eixos] (0,0) -- (0,3.1) node[above left=1pt] {$T$};
+\draw[perfil] (0.1,2.7) -- (4.3,1.7) node[pos=0,left] {$T_{h,i}$};
+\draw[perfil] (0.1,1.5) -- (4.3,0.3) node[pos=1,right] {$T_{c,i}$};
+\draw[<->] (0.12,2.55) -- (0.12,1.55) node[midway,right=1pt] {$\Delta T_1$};
+\draw[<->] (4.28,1.75) -- (4.28,0.45) node[midway,left=1pt] {$\Delta T_2$};
+\node at (2.3,-0.55) {(b) Contracorrente};
+\end{scope}
+\end{tikzpicture}
+\caption[Perfis de temperatura em trocadores de correntes alternadas.]{%
+Perfis de temperatura ao longo de trocadores de correntes alternadas. No
+contracorrente (b), o fluido frio entra pelo lado do quente já esfriado, e a
+diferença de temperatura se distribui de modo mais favorável.}
+\label{fig:v1-c5-2}
+\end{figure}
+
+A LMTD exata vale para paralelo puro e contracorrente puro. Configurações
+industriais --- casco e tubo com passagens múltiplas, crossflow com
+mistura --- recebem um fator de correção experimental $F$,
+Equação~\eqref{eq:v1-c5-15}:
+\begin{equation}\label{eq:v1-c5-15}
+\dot{Q} = U \, A \, F \, \Delta T_{ml,\text{cc}},
+\end{equation}
+onde $\Delta T_{ml,\text{cc}}$ é a LMTD do contracorrente equivalente.
+Regra de projeto consagrada: manter $F > 0{,}8$; abaixo disso, o trocador
+fica sensível a pequenas perturbações de vazão, e a configuração deve ser
+repensada. Os diagramas de $F$ em função das efetividades de cada passagem
+estão nas tabelas clássicas e no Volume~II.
+
+Com o tempo de operação, as superfícies incrustam: algas na água de
+circulação, óleo carbonizado, poeira entre aletas. O efeito é uma resistência
+nova em série, o \textbf{fator de incrustação} $R_f$, que degrada o
+coeficiente global conforme a Equação~\eqref{eq:v1-c5-16}:
+\begin{equation}\label{eq:v1-c5-16}
+\frac{1}{U_{sujo}} = \frac{1}{U_{limpo}} + R_f .
+\end{equation}
+Como $R_f$ cresce ao longo da vida, o trocador se projeta com margem
+(margem de fouling) e se monitora pela evolução do $U$ efetivo ---
+degradação anômala de $U$ é um dos diagnósticos de falha que o Volume~II
+automatiza.
+
+Resta o segundo método de cálculo, o da \textbf{efetividade--NTU}, útil
+quando as temperaturas de saída não são conhecidas --- o problema da
+\emph{avaliação} (dado o trocador, quanto troca?) em oposição ao do
+\emph{dimensionamento} (dado o dever, qual área?), que é o território natural
+da LMTD. Definem-se, Equação~\eqref{eq:v1-c5-17}:
+\begin{equation}\label{eq:v1-c5-17}
+\varepsilon = \frac{\dot{Q}}{\dot{Q}_{max}},
+\qquad
+\dot{Q}_{max} = C_{min}\,(T_{h,i} - T_{c,i}),
+\qquad
+NTU = \frac{U\,A}{C_{min}},
+\qquad
+C_r = \frac{C_{min}}{C_{max}} .
+\end{equation}
+O dever máximo é o que haveria se o fluido de menor capacitância passasse por
+a mudança de temperatura totalmente disponível. Para o contracorrente, a
+relação fechada é a Equação~\eqref{eq:v1-c5-18}:
+\begin{equation}\label{eq:v1-c5-18}
+\varepsilon = \frac{1 - \exp\!\left[-\,NTU\,(1 - C_r)\right]}
+{1 - C_r \, \exp\!\left[-\,NTU\,(1 - C_r)\right]} ,
+\end{equation}
+cuja leitura acompanha a Figura~\ref{fig:v1-c5-3}: para $C_r \to 0$
+(condensação ou ebulição, capacitância efetivamente infinita de um lado), a
+efetividade $\varepsilon = 1 - e^{-NTU}$ depende só do NTU; para $C_r \to 1$
+(trocador de iguais), o contracorrente ainda alcança $\varepsilon \to 1$ para
+NTU grande, enquanto o paralelo estagna em 50\,\% --- a vantagem formal do
+contracorrente. As relações para paralelo, casco e tubo e crossflow seguem a
+mesma forma com outras expressões, tabeladas na literatura clássica e usadas
+no Volume~II.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=11cm, height=7.5cm, xlabel={$NTU$},
+ylabel={Efetividade $\varepsilon$}, xmin=0, xmax=5, ymin=0, ymax=1.02,
+xtick={0,1,2,3,4,5}, ytick={0,0.2,0.4,0.6,0.8,1},
+grid=both, minor tick num=1, legend pos=south east,
+legend style={font=\small}, label style={font=\small}]
+\addplot[domain=0:5, samples=120, thick] {1-exp(-x)};
+\addplot[domain=0:5, samples=120, thick, dashed]
+  {(1-exp(-(1-0.5)*x))/(1-0.5*exp(-(1-0.5)*x))};
+\addplot[domain=0:5, samples=120, thick, dotted]
+  {(1-exp(-(1-0.75)*x))/(1-0.75*exp(-(1-0.75)*x))};
+\legend{$C_r = 0$ (fase mudança), $C_r = 0{,}5$, $C_r = 0{,}75$}
+\end{axis}
+\end{tikzpicture}
+\caption[Efetividade de trocadores contracorrente em função do NTU.]{%
+Efetividade de trocadores de correntes alternadas em contracorrente, em
+função do NTU, para três razões de capacitância. O ganho de efetividade
+diminui com o NTU: a cada unidade adicional compra menos troca que a
+anterior.}
+\label{fig:v1-c5-3}
+\end{figure}
+
+\subsection{Síntese: premissas e ligação com o Volume II}\label{sub:v1-c5-sintese}
+
+A Tabela~\ref{tab:v1-c5-3} consolida os resultados centrais do capítulo com
+as premissas de que cada um depende --- leitura obrigatória antes de aplicar
+qualquer fórmula fora do contexto em que foi obtida.
+
+\begin{table}[H]
+\centering
+\caption{Resultados centrais do Capítulo 5 e as premissas de que dependem.}
+\label{tab:v1-c5-3}
+\begin{tabular}{@{}llp{6.2cm}@{}}
+\toprule
+\textbf{Resultado} & \textbf{Equação} & \textbf{Premissas} \\
+\midrule
+Lei de Fourier & \eqref{eq:v1-c5-1} & Meio isotrópico, regime qualquer \\
+Parede plana & \eqref{eq:v1-c5-2}, \eqref{eq:v1-c5-3} & 1-D, $k$ constante, regime permanente \\
+Parede cilíndrica & \eqref{eq:v1-c5-4} & 1-D radial, $k$ constante \\
+Circuito em série & \eqref{eq:v1-c5-5} & Regime permanente, $q$ comum a todas \\
+Lei de Newton & \eqref{eq:v1-c5-6} & $h$ constante, $T_\infty$ uniforme \\
+Correlação de convecção & \eqref{eq:v1-c5-8} & Faixa de validade da correlação \\
+Radiação cinza & \eqref{eq:v1-c5-9} & Superfícies grandes e próximas, $T$ em K \\
+Capacitância global & \eqref{eq:v1-c5-10}, \eqref{eq:v1-c5-11} & $Bi < 0{,}1$, $h$ e $c$ constantes \\
+LMTD & \eqref{eq:v1-c5-13}, \eqref{eq:v1-c5-14} & Regime permanente, U constante, puro \\
+Fator $F$ & \eqref{eq:v1-c5-15} & Configurações com mistura; $F > 0{,}8$ \\
+Incrustação & \eqref{eq:v1-c5-16} & $R_f$ uniforme, em série com as outras \\
+Efetividade--NTU & \eqref{eq:v1-c5-17}, \eqref{eq:v1-c5-18} & Regime permanente, contracorrente \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A Tabela~\ref{tab:v1-c5-4} fecha o capítulo do lado da aplicação: cada modelo
+dinâmico do Volume~II que envolve temperatura pousa num resultado deste
+capítulo. A cadeia completa é a promessa do volume: lei de taxa (aqui),
+balanço sobre volume de controle (Capítulo~\ref{sec:sistemas}), modelo
+dinâmico (Volume~II).
+
+\begin{table}[H]
+\centering
+\caption[Correspondência entre os fundamentos deste capítulo e os modelos do
+Volume II.]{Correspondência entre os fundamentos deste capítulo e os modelos
+dinâmicos do Volume~II.}
+\label{tab:v1-c5-4}
+\begin{tabular}{@{}lp{4.9cm}l@{}}
+\toprule
+\textbf{O que o Volume~II usa} & \textbf{Fundamento aqui} & \textbf{Seção} \\
+\midrule
+Dimensionamento de intercooler e aftercooler & $\dot{Q} = UA\,\Delta T_{ml}$
+com $F$ e margem de fouling & \ref{sub:v1-c5-trocadores} \\
+Avaliação de trocador em operação & Método $\varepsilon$--NTU,
+Equação~\eqref{eq:v1-c5-18} & \ref{sub:v1-c5-trocadores} \\
+Perdas de carga térmica da carcaça & Circuito
+condução--convecção--radiação, Eq.~\eqref{eq:v1-c5-5} e
+Tabela~\ref{tab:v1-c5-2} & \ref{sub:v1-c5-conducao} \\
+Temperatura de carcaça em regime e transiente & Capacitância global,
+Equações~\eqref{eq:v1-c5-10} e \eqref{eq:v1-c5-11} &
+\ref{sub:v1-c5-transiente} \\
+Coeficientes do lado do gás & Correlações adimensionais,
+Equação~\eqref{eq:v1-c5-8} & \ref{sub:v1-c5-conveccao} \\
+Degradação de desempenho ao longo da vida & Fator de incrustação,
+Equação~\eqref{eq:v1-c5-16} & \ref{sub:v1-c5-trocadores} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 %=============================================================================
 % CAPÍTULO 6 — SISTEMAS DE TRANSFERÊNCIA DE MASSA E ENERGIA
 %=============================================================================
 \section{Sistemas de Transferência de Massa e Energia}\label{sec:sistemas}
 
-\subsection{Volumes de controle}
+Este capítulo é onde os balanços dos capítulos anteriores se tornam contas.
+O Capítulo~\ref{sec:continuo} escreveu as leis de balanço na forma diferencial
+--- válida ponto a ponto --- e o Capítulo~\ref{sec:termodinamica} acrescentou
+o que a segunda lei permite e proíbe; a promessa registrada na introdução
+deste volume era a forma \emph{integral sobre volumes de controle finitos}, e
+é ela que se cumpre aqui. Nenhuma lei nova entra: entra o acúmulo. A partir
+deste capítulo, o que se acumula dentro de uma fronteira passa a ser tão
+calculável quanto o que a atravessa --- e é essa possibilidade que sustenta
+toda a dinâmica do Volume~II: o vaso pulmão que ganha e perde pressão, o
+secador que satura, a carcaça que esquenta, a frota que equilibra demanda.
 
-A análise de sistemas de transferência de massa e energia baseia-se na
-formulção de volumes de controle. Um volume de controle é uma região fixa no
-espaço através da qual massa, energia e momento podem fluir. As equações de
-balanço para um volume de controle em regime permanente são:
+\subsection{Bases físicas: do balanço diferencial ao volume de controle
+finito}\label{sub:v1-c6-bases}
 
-\textbf{Massa:}
+O ponto de partida rigoroso é o teorema de transporte de Reynolds,
+Equação~\eqref{eq:v1-c2-19}: a taxa de variação de uma grandeza extensiva
+dentro de uma região que se move com o fluido se decompõe em variação dentro
+de uma região fixa mais o fluxo líquido através de sua fronteira. Aplicado a
+uma região fixa arbitrária --- o \textbf{volume de controle} ---, e escrito
+para a grandeza genérica $\mathcal{B}$ do Capítulo~\ref{sec:continuo}, o
+resultado é a Equação~\eqref{eq:v1-c6-1}:
 \begin{equation}\label{eq:v1-c6-1}
-\sum_e \dot{m}_e = \sum_s \dot{m}_s.
+\frac{d\mathcal{B}_{VC}}{dt} = \sum_e \dot{\mathcal{B}}_e -
+\sum_s \dot{\mathcal{B}}_s + \dot{\mathcal{B}}_{\text{ger}} ,
 \end{equation}
+onde $d\mathcal{B}_{VC}/dt$ é a taxa de acúmulo dentro da fronteira,
+$\dot{\mathcal{B}}_e$ e $\dot{\mathcal{B}}_s$ são os transportes convectivos
+de $\mathcal{B}$ nas entradas e saídas, e $\dot{\mathcal{B}}_{\text{ger}}$ é a
+taxa de geração interna. A Equação~\eqref{eq:v1-c6-1} é o esquema mnemônico da
+introdução do volume, agora com cada termo definido operacionalmente: para
+calculá-lo, basta conhecer os campos nos trechos que cruzam a fronteira --- não
+mais em todo o interior.
 
-\textbf{Energia:}
+O que a passagem do diferencial para o integral custa é resolução espacial: a
+Equação~\eqref{eq:v1-c6-1} devolve um número (a taxa de acúmulo do total), não
+um campo. É exatamente o que a engenharia de sistemas precisa: vasos, tanques
+e redes são caracterizados por variáveis médias --- pressão, nível,
+temperatura de mistura --- e as perdas de informação dentro da fronteira são
+absorvidas pelas relações constitutivas já estudadas (estado, calor,
+atrito). O restante do capítulo especializa a
+Equação~\eqref{eq:v1-c6-1}, uma vez por grandeza.
+
+\subsection{O balanço de massa e a contabilidade de
+espécies}\label{sub:v1-c6-massa}
+
+Para a massa total não há geração, e a especialização da
+Equação~\eqref{eq:v1-c6-1} em regime permanente é a
+Equação~\eqref{eq:v1-c6-2}:
 \begin{equation}\label{eq:v1-c6-2}
-\dot{Q} - \dot{W} = \sum_s \dot{m}_s\left(h_s + \frac{v_s^2}{2} + gz_s\right) - \sum_e \dot{m}_e\left(h_e + \frac{v_e^2}{2} + gz_e\right).
+\sum_e \dot{m}_e = \sum_s \dot{m}_s .
 \end{equation}
+Trivial de escrever, a equação é a ferramenta de verificação mais usada de
+toda a engenharia de processos: se as vazões não fecham, o modelo (ou a
+medição) está errado --- o Volume~II usa esse fechamento como teste de
+sanidade permanente do Gêmeo Digital.
 
-\textbf{Quantidade de movimento:}
+A massa total esconde composição, e a composição é o que interessa quando o
+sistema transfere uma espécie entre fases. Para a água no ar comprimido ---
+a espécie que move todo o tratamento de condensado e secagem do Volume~II ---
+o balanço em regime permanente, por unidade de tempo, é a
+Equação~\eqref{eq:v1-c6-3}:
 \begin{equation}\label{eq:v1-c6-3}
-\sum \mathbf{F} = \sum_s \dot{m}_s \mathbf{v}_s - \sum_e \dot{m}_e \mathbf{v}_e.
+\dot{m}_{w,\text{ent}} = \dot{m}_{w,\text{sai}} + \dot{m}_{w,\text{retida}},
 \end{equation}
+onde $\dot{m}_{w,\text{retida}}$ é a água que deixa o fluxo gasoso: condensado
+drenado num trocador, vapor adsorvido num leito de dessecante. A contabilidade
+usa a razão de umidade $W$ (massa de vapor por massa de ar seco, da tabela de
+psicrometria deste volume), de modo que $\dot{m}_w = W\,\dot{m}_{\text{ar
+seco}}$ e cada trocador do trem fecha o seu balanço individualmente. É a
+Equação~\eqref{eq:v1-c6-3} somada ao longo da cascata que produz a massa
+acumulada no leito do secador PSA do Volume~II (Equação 15.3), e é ela que
+distingue, no diagnóstico, ``o intercooler condensa pouco porque a água não
+chegou'' de ``o intercooler condensa pouco porque degradou''.
 
-\subsection{Regimes permanente e transiente}
+\subsection{O balanço de energia para escoamentos em regime
+permanente}\label{sub:v1-c6-energia}
 
-Em regime permanente, as propriedades em qualquer ponto do volume de controle
-não variam com o tempo. Em regime transiente, o acúmulo deve ser considerado:
+Para a energia, a especialização da Equação~\eqref{eq:v1-c6-1} em regime
+permanente --- a equação de escoamento permanente de energia, forma com a
+qual quase toda máquina é contabilizada --- é a Equação~\eqref{eq:v1-c6-4}:
 \begin{equation}\label{eq:v1-c6-4}
-\frac{dM_{VC}}{dt} = \sum_e \dot{m}_e - \sum_s \dot{m}_s.
+\dot{Q} - \dot{W}_{\text{eixo}} = \sum_s \dot{m}_s\,h_{0,s} -
+\sum_e \dot{m}_e\,h_{0,e},
 \end{equation}
+onde $h_0 = h + v^2/2 + gz$ é a \textbf{entalpia de estagnação específica} ---
+a entalpia mais as parcelas cinética e potencial, convencionadas juntas porque
+só a soma é transportada de forma conservativa através da fronteira. As
+premissas são declaradas, não implícitas: regime permanente (o acúmulo é
+nulo), uma seção de entrada e uma de saída por corrente, propriedades
+uniformes em cada seção, e trabalho apenas de eixo --- trabalho de fluxo
+($p\,v$) já incorporado na entalpia.
 
-Aplicado à energia:
+Duas simplificações dominam as máquinas desta coleção e convém justificá-las
+em vez de assumi-las. A parcela cinética é desprezível frente à entálpica
+quando $v^2/2 \ll |\Delta h|$: num trem de compressão, $\Delta h$ é da ordem de
+$10^5\,$J\,kg$^{-1}$ e $v^2/2$ da ordem de $10^2$--$10^3\,$J\,kg$^{-1}$ --- três
+ordens de grandeza abaixo, absorvida pela incerteza. A parcela potencial segue
+o mesmo argumento para elevações de skid. Com isso, a
+Equação~\eqref{eq:v1-c6-4} se reduz ao balanço $\dot{Q} - \dot{W} \approx
+\Delta(\dot{m}h)$ que o Volume~II aplica elemento a elemento, e o trabalho de
+eixo recupera o trabalho de compressão do
+Capítulo~\ref{sec:termodinamica}: para um compressor adiabático, $\dot{W} =
+\dot{m}(h_2 - h_1)$, que no gás ideal é $\dot{m}\,c_p\,(T_2 - T_1)$.
+
+\subsection{O balanço de quantidade de
+movimento}\label{sub:v1-c6-momento}
+
+A especialização da Equação~\eqref{eq:v1-c6-1} para a quantidade de movimento
+em regime permanente é a Equação~\eqref{eq:v1-c6-5}:
 \begin{equation}\label{eq:v1-c6-5}
-\frac{dE_{VC}}{dt} = \dot{Q} - \dot{W} + \sum_e \dot{m}_e\theta_e - \sum_s \dot{m}_s\theta_s,
+\sum \mathbf{F} = \sum_s \dot{m}_s\,\mathbf{v}_s -
+\sum_e \dot{m}_e\,\mathbf{v}_e ,
 \end{equation}
-onde $\theta = h + v^2/2 + gz$ representa a entalpia de estagnação específica.
+onde o lado esquerdo agrega as forças de pressão nas seções e as forças de
+contato e de corpo sobre o conteúdo do volume de controle --- e, por reação,
+sobre as paredes e suportes que o delimitam. É a mesma equação que o
+Capítulo~\ref{sec:fluidos} escreveu na forma integral,
+Equação~\eqref{eq:v1-c4-6}, agora posicionada na contabilidade de sistemas:
+curvas, flanges de válvulas de bloqueio rápido e suportes de tubulação são
+dimensionados por ela, e forças de reação de alívio são o carregamento
+dinâmico que os suportes do Volume~II precisam suportar sem deformação
+permanente.
 
-\subsection{Sistemas de armazenamento e distribuição}
+\subsection{Regime transiente e a noção de
+capacitância}\label{sub:v1-c6-transiente}
 
-Vasos de pressão, tanques e redes de tubulações são exemplos de sistemas de
-armazenamento e distribuição. Para um vaso de volume $V$ contendo gás ideal,
-a equação de estado fornece
+Fora do regime permanente, o lado esquerdo da
+Equação~\eqref{eq:v1-c6-1} deixa de ser nulo --- e é ele que modela a
+inércia dos sistemas. Para a massa, a Equação~\eqref{eq:v1-c6-6}:
 \begin{equation}\label{eq:v1-c6-6}
-P\,V = m\,R\,T.
+\frac{dm_{VC}}{dt} = \sum_e \dot{m}_e - \sum_s \dot{m}_s ,
+\end{equation}
+e para a energia, a Equação~\eqref{eq:v1-c6-7}:
+\begin{equation}\label{eq:v1-c6-7}
+\frac{dE_{VC}}{dt} = \dot{Q} - \dot{W} + \sum_e \dot{m}_e\,h_{0,e} -
+\sum_s \dot{m}_s\,h_{0,s} .
 \end{equation}
 
-A derivada temporal da pressão em um vaso com entrada e saída é obtida
-combinando a conservação de massa com a equação de estado, resultado usado no
-cálculo de autonomia de sistemas de ar comprimido.
+A forma dessas equações explica um padrão que se repete em toda a coleção:
+sistemas com acúmulo respondem de primeira ordem. Se o desequilíbrio entre
+entradas e saídas for proporcional ao desvio de uma variável de estado (a
+válvula que corrige o nível, o controlador que persegue o setpoint), a
+Equação~\eqref{eq:v1-c6-6} se fecha como um sistema de primeira ordem cuja
+solução a um degrau é exponencial, com constante de tempo $\tau_a$ igual à
+razão entre a capacitância de acúmulo $C_a$ (quanto a variável armazena por
+unidade de desvio) e a condutância de correção (quanto o atuador desloca por
+unidade de desvio), Equação~\eqref{eq:v1-c6-8}:
+\begin{equation}\label{eq:v1-c6-8}
+\tau_a = \frac{C_a}{k},
+\qquad
+y(t) = y_\infty + \bigl(y_0 - y_\infty\bigr)\,e^{-t/\tau_a}.
+\end{equation}
+O subscrito em $\tau_a$ é deliberado: $\tau$ sozinho é o torque dos
+Capítulos~\ref{sec:eletrica} e~\ref{sec:mecanica}, e o Volume~II herdou a
+mesma disciplina de subscritos ($\tau_{th}$, $\tau_{bd}$, $\tau_c$). As
+constantes de tempo que governam a dinâmica da máquina no Volume~II ---
+$\tau_{vsd}$ da rampa do inversor (Equação 4.3), $\tau_{bd}$ do \textit{blow-
+down} (Equação 13.5), $\tau_c$ da carcaça (Equação 9.16) --- são todas casos
+particulares da Equação~\eqref{eq:v1-c6-8}: capacitância no numerador,
+condutância de correção no denominador.
 
+\subsection{Sistemas de armazenamento: o vaso
+pulmão}\label{sub:v1-c6-vaso}
+
+O volume de controle com acúmulo mais importante do Volume~II é o mais
+simples deste: um vaso fechado de volume $V$ contendo gás. A equação de
+estado do gás ideal, Equação~\eqref{eq:v1-c6-9}, fecha o conteúdo:
+\begin{equation}\label{eq:v1-c6-9}
+p\,V = m\,R\,T .
+\end{equation}
+Combinando a Equação~\eqref{eq:v1-c6-9} com o balanço de massa transiente da
+Equação~\eqref{eq:v1-c6-6} sob a hipótese de temperatura uniforme e quase
+constante (justificada pela grande capacidade térmica do casco metálico
+frente à massa de gás em eventos lentos), obtém-se a equação que governa a
+pressão do vaso, Equação~\eqref{eq:v1-c6-10}:
+\begin{equation}\label{eq:v1-c6-10}
+\frac{dp}{dt} = \frac{R\,T}{V}\left(\dot{m}_{\text{ent}} -
+\dot{m}_{\text{sai}}\right) .
+\end{equation}
+A Equação~\eqref{eq:v1-c6-10} é literalmente a equação de dinâmica do vaso
+pulmão do Volume~II (Equação 16.4): com $\dot{m}_{\text{ent}}$ dada pela
+capacidade do compressor e $\dot{m}_{\text{sai}}$ pela demanda da rede, ela
+integrada passo a passo produz o transiente que o supervisório exibe. É a
+mesma estrutura do balanço do VSD e do \textit{blow-down}: uma capacitância
+($V/RT$, quanto o vaso armazena por unidade de pressão) igualada aos fluxos de
+fronteira.
+
+A outra pergunta que o sistema de armazenamento responde é por quanto tempo a
+pressão se sustenta sem reposição. Para vazão de saída constante
+$\dot{m}_{\text{sai}}$ e entrada nula, a integração da
+Equação~\eqref{eq:v1-c6-10} entre a pressão máxima de trabalho $p_{\text{max}}$
+e a mínima admissível $p_{\text{min}}$ dá a autonomia, Equação~\eqref{eq:v1-c6-11}:
+\begin{equation}\label{eq:v1-c6-11}
+t_{\text{aut}} = \frac{V}{R\,T}\,\frac{p_{\text{max}} - p_{\text{min}}}{\dot{m}_{\text{sai}}} ,
+\end{equation}
+que é a Equação 16.5 do Volume~II na forma usada para dimensionar o vaso
+entre a PMTA e a pressão mínima da rede. As duas pressões limite não são
+escolha deste capítulo: vêm do código de vasos de pressão (ASME~VIII, citado
+no Volume~II) --- o balanço as usa, a norma as fixa. E a hipótese isotérmica
+tem seu próprio limite de validade: em despressurização rápida (alívio de
+emergência), o gás não troca calor a tempo, a evolução se aproxima do
+adiabático, $pV^{\gamma} = \text{const.}$, e a
+Equação~\eqref{eq:v1-c6-10} superestima a pressão retida --- restrição que o
+Volume~II registra ao tratar de \textit{blow-down}.
+
+\subsection{Sistemas em série: a cascata de volumes de
+controle}\label{sub:v1-c6-cascata}
+
+A última especialização não é de grandeza, mas de arquitetura. Um trem de
+compressão é uma cadeia de volumes de controle em que a saída de cada um é
+entrada do próximo, e a concatenação dos balanços tem três propriedades que o
+Volume~II usa o tempo inteiro. A primeira é a \textbf{conservação global}: a
+soma dos balanços locais se cancela nas fronteiras internas (o que sai do
+intercooler é exatamente o que entra no estágio HP), de modo que o balanço do
+trem inteiro tem apenas as fronteiras externas --- qualquer discrepância
+intermediária é erro de modelagem, nunca física. A segunda é a dos
+\textbf{nós}: os pontos de concatenação (sucção, descarga LP, saída de cada
+trocador) são os lugares onde o estado é único e mensurável, e é sobre eles
+que se organiza a instrumentação do Volume~II (pontos A--I da Tabela 18.1). A
+terceira é a \textbf{acumulação distribuída}: em cada elemento, o que entra
+menos o que sai é o que acumula (condensado, água adsorvida, energia térmica
+na carcaça), e o somatório desses acúmulos parciais fecha, globalmente, com o
+balanço total.
+
+A Equação~\eqref{eq:v1-c6-12} condensa a regra operacional da cascata:
+\begin{equation}\label{eq:v1-c6-12}
+\underbrace{\sum_j \left( \text{ent}_j - \text{sai}_j \right)}_{\text{locais}} =
+\underbrace{\text{ent}_{\text{global}} - \text{sai}_{\text{global}}}_{\text{fronteiras externas}} ,
+\end{equation}
+válida para massa, para cada espécie e para energia. É a
+Equação~\eqref{eq:v1-c6-12} que permite ao Gêmeo Digital reconstruir grandezas
+não medidas (condensado total, perda global) a partir de leituras esparsas, e
+é ela que transforma ``fechamento de balanço'' em critério de saúde do
+próprio modelo.
+
+\subsection{Síntese: premissas e ligação com o Volume
+II}\label{sub:v1-c6-sintese}
+
+A Tabela~\ref{tab:v1-c6-1} lista os resultados centrais do capítulo com as
+premissas de que dependem, no mesmo formato das tabelas de síntese dos
+Capítulos~\ref{sec:termodinamica}, \ref{sec:eletrica} e~\ref{sec:mecanica},
+e serve como lista de verificação antes de aplicar qualquer um deles fora do
+contexto em que foi obtido.
+
+\begin{table}[H]
+\centering
+\caption[Premissas dos resultados do capítulo]{Resultados centrais do
+Capítulo~\ref{sec:sistemas} e as premissas de que dependem.}
+\label{tab:v1-c6-1}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Resultado} & \textbf{Equação} & \textbf{Premissas} \\
+\midrule
+Balanço geral de volumes de controle & \eqref{eq:v1-c6-1} & Região fixa; fluxos convectivos nas seções \\
+Massa em regime permanente & \eqref{eq:v1-c6-2} & Sem acúmulo; sem geração \\
+Balanço de espécie (água) & \eqref{eq:v1-c6-3} & $W$ definida; retida contabilizada separadamente \\
+Energia em regime permanente & \eqref{eq:v1-c6-4} & Seções uniformes; trabalho só de eixo; $v^2/2,\ gz \ll \Delta h$ \\
+Quantidade de movimento & \eqref{eq:v1-c6-5} & Regime permanente; momento médio nas seções \\
+Acúmulo de massa/energia & \eqref{eq:v1-c6-6}, \eqref{eq:v1-c6-7} & Propriedades uniformes no interior \\
+Resposta de primeira ordem & \eqref{eq:v1-c6-8} & Desequilíbrio proporcional ao desvio \\
+Dinâmica do vaso pulmão & \eqref{eq:v1-c6-10} & Gás ideal; $T$ quase constante; eventos lentos \\
+Autonomia do vaso & \eqref{eq:v1-c6-11} & Saída constante; entrada nula; isotérmico \\
+Cascata em série & \eqref{eq:v1-c6-12} & Fronteiras internas sem perda de continuidade \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+A Tabela~\ref{tab:v1-c6-2} explicita a função do capítulo na coleção: cada
+modelo dinâmico que o Volume~II usa tem aqui a sua origem no balanço sobre
+volumes de controle.
+
+\begin{table}[H]
+\centering
+\caption[Ligação com o Volume II]{Correspondência entre os fundamentos deste
+capítulo e os modelos dinâmicos do Volume II.}
+\label{tab:v1-c6-2}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{O que o Volume II usa} & \textbf{Fundamento aqui} & \textbf{Seção} \\
+\midrule
+Dinâmica do vaso pulmão (Eq.\ 16.4) & Balanço de massa + estado; Eq.~\eqref{eq:v1-c6-10} & \ref{sub:v1-c6-vaso} \\
+Autonomia até $P_{\text{mín}}$ (Eq.\ 16.5) & Integração do acúmulo; Eq.~\eqref{eq:v1-c6-11} & \ref{sub:v1-c6-vaso} \\
+Rampa do VSD, $\tau_{vsd}$ (Eq.\ 4.3) & Primeira ordem; capacitância/condutância & \ref{sub:v1-c6-transiente} \\
+\textit{Blow-down}, $\tau_{bd}$ (Eq.\ 13.5) & Primeira ordem; limite adiabático & \ref{sub:v1-c6-transiente}, \ref{sub:v1-c6-vaso} \\
+Carcaça do estágio LP, $\tau_c$ (Eq.\ 9.16) & Acúmulo de energia; Eq.~\eqref{eq:v1-c6-7} & \ref{sub:v1-c6-transiente} \\
+Balanço de água do secador PSA (Eq.\ 15.3) & Contabilidade de espécies; Eq.~\eqref{eq:v1-c6-3} & \ref{sub:v1-c6-massa} \\
+Fechamento de balanço como diagnóstico & Cascata; Eq.~\eqref{eq:v1-c6-12} & \ref{sub:v1-c6-cascata} \\
+Forças em suportes e alívio & Momento; Eq.~\eqref{eq:v1-c6-5} & \ref{sub:v1-c6-momento} \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+O aviso final espelha o dos capítulos anteriores, agora com sinal trocado:
+aqui as equações são tão simples que o risco não é o de não saber aplicá-las,
+mas o de esquecer que têm premissas. A Equação~\eqref{eq:v1-c6-10} sem a
+hipótese de lentidão superestima a pressão num alívio; a
+Equação~\eqref{eq:v1-c6-4} com vazão variável deixa de ser permanente; a
+Equação~\eqref{eq:v1-c6-12} só fecha se as fronteiras internas forem de fato
+contínuas --- uma válvula que vaza entre dois nós introduz uma fonte que ela
+não prevê. Ler a premissa antes da fórmula é a tarefa; a
+Tabela~\ref{tab:v1-c6-1} é o instrumento.
 
 %=============================================================================
 % CAPÍTULO 7 — FUNDAMENTOS DE ELETRICIDADE
