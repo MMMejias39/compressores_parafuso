@@ -295,12 +295,17 @@ ordem em negrito ($\boldsymbol{\sigma}$), e componentes indicadas por
 	\toprule
 	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
 	\endhead
-	$Ma$ & Número de Mach & adimensional & 12 \\
-	$a$ & Velocidade do som no meio & m\,s$^{-1}$ & 12, 15 \\
+	$Ma$ & Número de Mach & adimensional & 4, 12 \\
+	$a$ & Velocidade do som no meio & m\,s$^{-1}$ & 4, 12, 15 \\
 	$\Phi$ & Função de escoamento compressível & adimensional & 12 \\
 	$r$ & Razão de pressão crítica/normalizada & adimensional & 12 \\
 	$K$ & Coeficiente de perda localizada & adimensional & 12 \\
-	$k_p$ & Permeabilidade do meio poroso & m$^2$ & 12 \\ \bottomrule
+	$k_p$ & Permeabilidade do meio poroso & m$^2$ & 4, 12 \\
+	$Re$ & Número de Reynolds (inércia/viscosidade) & adimensional & 4 \\
+	$f_D$ & Fator de atrito de Darcy & adimensional & 4 \\
+	$\zeta$ & Coeficiente de perda de carga localizada & adimensional & 4 \\
+	$\delta_{cl}$ & Espessura da camada limite (distinta da folga $\delta$ do Vol.~II) & m & 4 \\
+	$\varepsilon_r$ & Rugosidade absoluta de parede (não confundir com a deformação $\varepsilon$) & m & 4 \\ \bottomrule
 \end{longtable}
 
 \subsection*{Grandezas de Lubrificação e Tribologia}
@@ -1827,85 +1832,426 @@ Gouy-Stodola & \eqref{eq:v1-c3-28} & Ambiente de referência fixo ($T_0$, $p_0$)
 %=============================================================================
 \section{Mecânica dos Fluidos}\label{sec:fluidos}
 
-\subsection{Escoamento de fluidos}
+Este capítulo dá corpo à promessa da introdução: a mecânica dos fluidos é o
+balanço de quantidade de movimento do Capítulo~\ref{sec:continuo} fechado com
+uma relação constitutiva viscosa, e a termodinâmica do
+Capítulo~\ref{sec:termodinamica} é o que decide quando o escoamento pode ser
+tratado como incompressível. A ordem é a de todo o volume: primeiro de onde
+vêm as equações, depois com que hipóteses elas se tornam manuseáveis, e só
+então as especializações que a engenharia de máquinas realmente usa --- balanço
+integral, perda de carga, escoamento compressível em restrições, meios porosos
+e escoamentos em rotação. Cada resultado carrega as premissas explícitas: em
+fluidos, mais do que em qualquer outro capítulo deste volume, é a hipótese ---
+e não a equação --- que determina onde o modelo deixa de valer.
 
-A mecânica dos fluidos estuda o movimento de fluidos e suas interações com
-fronteiras. Para um fluido newtoniano, as equações de Navier-Stokes são
-obtidas substituindo a lei constitutiva na conservação da quantidade de
-movimento:
+\subsection{Bases físicas: Navier-Stokes como balanço de quantidade de
+movimento}\label{sub:v1-c4-bases}
+
+A equação de \textbf{Navier-Stokes} não é postulada: é a equação de balanço de
+quantidade de movimento, Equação~\eqref{eq:v1-c2-24} do
+Capítulo~\ref{sec:continuo}, depois de substituídas as tensões desconhecidas
+pela lei constitutiva do fluido newtoniano, Equação~\eqref{eq:v1-c2-31}. Tudo
+o que ela afirma é: a taxa de acumulação mais o fluxo convectivo de quantidade
+de movimento igualam o gradiente de pressão, as tensões viscosas e as forças
+de corpo. Para um fluido newtoniano compressível, o resultado é a
+Equação~\eqref{eq:v1-c4-1}:
 \begin{equation}\label{eq:v1-c4-1}
 \rho\frac{D\mathbf{v}}{Dt} = -\nabla p + \mu\nabla^2\mathbf{v} +
-\left(\lambda + \mu\right)\nabla\left(\nabla\cdot\mathbf{v}\right) + \rho\mathbf{g}.
+\left(\lambda_v + \mu\right)\nabla\left(\nabla\cdot\mathbf{v}\right) + \rho\mathbf{g},
 \end{equation}
-
-Para fluidos incompressíveis e com viscosidade constante, essa equação
-simplifica-se para
+onde $\rho$ é a massa específica, $\mathbf{v}$ o campo de velocidades, $p$ a
+pressão, $\mu$ a viscosidade dinâmica (a mesma $\mu$ que aparece como primeira
+constante de Lamé no Capítulo~\ref{sec:continuo}), $\lambda_v$ a segunda
+viscosidade e $\mathbf{g}$ a aceleração da gravidade. Sob as duas hipóteses
+que organizam quase toda a prática de engenharia --- viscosidade constante e
+divergente de velocidade desprezível ---, ela se reduz à
+Equação~\eqref{eq:v1-c4-2}:
 \begin{equation}\label{eq:v1-c4-2}
 \rho\frac{D\mathbf{v}}{Dt} = -\nabla p + \mu\nabla^2\mathbf{v} + \rho\mathbf{g}.
 \end{equation}
 
-\subsection{Equação de Bernoulli}
+Convém ser honesto sobre o que essas equações \emph{não} dão. Elas são um
+sistema acoplado de quatro equações (três componentes de momento mais a
+continuidade) para quatro incógnitas, não lineares no termo convectivo, e a
+solução direta de um escoamento turbulento de interesse industrial exigiria
+resolver todas as escalas de movimento até as viscosas --- custo que nenhuma
+aplicação de engenharia sustenta. O que a engenharia faz, e que as seções
+seguintes detalham, é nunca resolvê-las: integra-as sobre volumes de controle,
+média-as no tempo, ou as substitui por relações promediadas quando há
+microestrutura. Cada uma dessas operações é legítima \emph{sob hipóteses
+declaradas} --- e é a elas que as tabelas de síntese deste capítulo se referem.
 
-Para escoamento permanente, incompressível, inviscido e ao longo de uma linha
-de corrente, a equação de Bernoulli relaciona pressão, velocidade e altura:
+Os dois eixos de simplificação que dominam a análise de máquinas são
+independentes e merecem nomes próprios. O primeiro é viscoso versus
+inviscido: o termo $\mu\nabla^2\mathbf{v}$ importa onde os gradientes de
+velocidade são grandes, isto é, junto a paredes e em folgas --- e pode ser
+desprezido no núcleo do escoamento. O segundo é compressível versus
+incompressível: decidido não por conveniência, mas pelo número de Mach, como
+mostra a próxima seção.
+
+\subsection{A hipótese da incompressibilidade e o número de
+Mach}\label{sub:v1-c4-incompressivel}
+
+A condição de incompressibilidade é uma afirmação sobre o campo de velocidades,
+não sobre o fluido: a massa específica de uma partícula não muda ao longo de
+seu movimento, o que para a continuidade do
+Capítulo~\ref{sec:continuo} se traduz na Equação~\eqref{eq:v1-c4-3}:
 \begin{equation}\label{eq:v1-c4-3}
-\frac{P}{\rho g} + \frac{v^2}{2g} + z = \text{constante}.
+\nabla\cdot\mathbf{v} = 0 .
 \end{equation}
-
-Em forma de pressão,
+O critério quantitativo que a autoriza vem da termodinâmica: em um escoamento
+isentrópico, a variação relativa de massa específica entre dois pontos é da
+ordem de $Ma^2/2$, onde $Ma$ é o número de Mach local. A hipótese é
+conservadoramente adotada enquanto a Equação~\eqref{eq:v1-c4-4} valer:
 \begin{equation}\label{eq:v1-c4-4}
-P + \frac{1}{2}\rho v^2 + \rho g z = \text{constante}.
+Ma = \frac{v}{a} \lesssim 0{,}3 ,
 \end{equation}
+com $a$ a velocidade do som no meio --- $a \approx 343\,$m\,s$^{-1}$ em ar a
+$20\,^{\circ}$C. Abaixo desse limiar, a variação de densidade é inferior a
+cerca de $5\,\%$ e pode ser absorvida pela incerteza de qualquer outro dado do
+problema.
 
-\subsection{Escoamento em dutos}
+A fronteira não é acadêmica nesta coleção: ela atravessa o próprio objeto do
+Volume~II. Na admissão de um compressor --- dutos, filtro, silenciador --- as
+velocidades típicas mantêm $Ma$ abaixo de $0{,}1$, e todo o tratamento é
+incompressível com propriedades avaliadas nas condições locais. Já dentro do
+elemento compressor a densidade do ar \textbf{muda por design}: é isso que a
+compressão é. O mesmo capítulo do Volume~II que usa Bernoulli incompressível
+para o filtro usa o número de Mach de ponta do rotor como limite de projeto
+das folgas, porque é o regime do escoamento \emph{de fuga} pela folga que
+decide se o modelo de vazamento linear ainda se aplica. Saber onde a linha
+$Ma = 0{,}3$ passa é, literalmente, saber qual equação abrir.
 
-Para dutos circulares em regime permanente, a perda de carga distribuída é
-dada pela equação de Darcy-Weisbach:
+\subsection{Balanço integral: o que a engenharia realmente
+calcula}\label{sub:v1-c4-integral}
+
+A primeira operação sobre as equações de campo é integrá-las sobre um volume
+de controle fixo, usando o teorema de transporte de Reynolds da
+Equação~\eqref{eq:v1-c2-19}. O resultado para a massa é a equação da
+continuidade em forma integral, Equação~\eqref{eq:v1-c4-5}:
 \begin{equation}\label{eq:v1-c4-5}
-\Delta P = f_D \, \frac{L}{D} \, \frac{\rho v^2}{2},
+\frac{\partial}{\partial t}\int_{VC}\rho\,dV +
+\int_{SC}\rho\,\mathbf{v}\cdot\mathbf{n}\,dA = 0 ,
 \end{equation}
-onde $f_D$ é o fator de atrito de Darcy, $L$ é o comprimento do duto e $D$ é o
-diâmetro interno.
+que em regime permanente com uma entrada e uma saída se reduz à afirmação de
+que a vazão mássica é a mesma em qualquer seção: $\dot{m} = \rho_1 A_1 v_1 =
+\rho_2 A_2 v_2$. É essa equação --- e não a de Navier-Stokes --- que fecha
+todos os balanços de vazão do Volume~II, do cálculo da densidade de admissão
+ao balanço de massa do vaso pulmão.
 
-O número de Reynolds define o regime do escoamento:
+A integração da quantidade de movimento produz o resultado que liga o fluido
+à estrutura: a força que o escoamento exerce sobre o volume de controle é o
+fluxo líquido de quantidade de movimento através das seções mais as forças de
+pressão, Equação~\eqref{eq:v1-c4-6}:
 \begin{equation}\label{eq:v1-c4-6}
-Re_D = \frac{\rho v D}{\mu} = \frac{vD}{\nu_k}.
+\sum\mathbf{F} = \int_{SC}\mathbf{v}\,\rho\,\mathbf{v}\cdot\mathbf{n}\,dA +
+\frac{\partial}{\partial t}\int_{VC}\rho\,\mathbf{v}\,dV .
 \end{equation}
-Para $Re_D < 2300$ o escoamento é laminar; para $Re_D > 4000$, turbulento.
+Curvas, flanges e suportes de tubulação são dimensionados por esta equação ---
+na versão com o termo transiente, ela é também a base do modelo de pulsação e
+de forças de reação em válvulas de bloqueio rápido.
 
-\subsection{Números adimensionais}
+Finalmente, a integração da energia para escoamento permanente,
+incompressível, com uma bomba ou compressor no trecho, produz a forma de
+trabalho da equação de Bernoulli com perdas, Equação~\eqref{eq:v1-c4-7}:
+\begin{equation}\label{eq:v1-c4-7}
+\frac{p_1}{\rho} + \frac{v_1^2}{2} + g z_1 + w_{\text{eixo}} =
+\frac{p_2}{\rho} + \frac{v_2^2}{2} + g z_2 + \Delta p_{\text{perda}}/\rho .
+\end{equation}
+Cada termo tem origem e destino físicos: $w_{\text{eixo}}$ é o trabalho
+específico entregue por (ou retirado de) o eixo, e $\Delta p_{\text{perda}}$
+agrega toda a energia mecânica convertida em calor por atrito e turbulência ---
+é o único termo da equação que a próxima seção aprende a calcular. A forma
+sem máquina e sem perda, $\tfrac{p}{\rho} + \tfrac{v^2}{2} + gz =
+\text{constante}$, é um caso particular, não o ponto de partida: usa-la onde
+há perda é o erro mais comum deste capítulo, e o Volume~II a evita sempre que
+modela filtro, tubulação ou válvula.
 
-A Tabela~\ref{tab:v1-c4-1} lista os principais grupos adimensionais usados na
-análise de escoamentos térmicos e rotodinâmicos.
+\subsection{Perda de carga: atrito distribuído e perdas
+localizadas}\label{sub:v1-c4-perda}
+
+A perda de carga distribuída --- atrito ao longo do duto --- tem forma única
+para escoamento interno estabelecido, deduzida por análise dimensional e
+confirmada por ensaio: a equação de Darcy-Weisbach, Equação~\eqref{eq:v1-c4-8}:
+\begin{equation}\label{eq:v1-c4-8}
+\Delta p = f_D\,\frac{L}{D}\,\frac{\rho v^2}{2},
+\end{equation}
+onde $f_D$ é o fator de atrito de Darcy (adimensional), $L$ o comprimento do
+trecho, $D$ o diâmetro interno e $v$ a velocidade média. O grupo adimensional
+que organiza o valor de $f_D$ é o número de Reynolds,
+Equação~\eqref{eq:v1-c4-9}:
+\begin{equation}\label{eq:v1-c4-9}
+Re_D = \frac{\rho v D}{\mu} = \frac{vD}{\nu_k},
+\end{equation}
+com $\nu_k$ a viscosidade cinemática. A faixa $Re_D < 2300$ define o regime
+laminar, $Re_D > 4000$ o turbulento, e a transição é um intervalo, não um
+número. No laminar, a solução analítica de
+Navier-Stokes para tubo circular dá $f_D = 64/Re_D$; no turbulento, $f_D$
+depende também da rugosidade relativa $\varepsilon_r/D$ ($\varepsilon_r$ é a
+rugosidade absoluta da parede --- não confundir com a deformação
+$\varepsilon$ do Capítulo~\ref{sec:continuo}) e fecha implicitamente pela
+equação de Colebrook, Equação~\eqref{eq:v1-c4-10} \cite{white2011}:
+\begin{equation}\label{eq:v1-c4-10}
+\frac{1}{\sqrt{f_D}} = -2\log_{10}\!\left(\frac{\varepsilon_r/D}{3{,}7} +
+\frac{2{,}51}{Re_D\sqrt{f_D}}\right).
+\end{equation}
+A dependência implícita não é obstáculo prático: a representação gráfica da
+Equação~\eqref{eq:v1-c4-10} é o diagrama de Moody, e suas aproximações
+explícitas têm precisão de engenharia.
+
+Junto ao atrito distribuído vêm as perdas localizadas --- entrada, saída,
+curvas, válvulas, filtros --- concentradas num ponto e modeladas pela mesma
+pressão dinâmica com um coeficiente de perda $\zeta$ próprio,
+Equação~\eqref{eq:v1-c4-11}:
+\begin{equation}\label{eq:v1-c4-11}
+\Delta p = \zeta\,\frac{\rho v^2}{2}.
+\end{equation}
+$\zeta$ é, em geral, função da geometria e do $Re$ local, mas nas máquinas
+opera quase sempre na faixa turbulenta, onde depende essencialmente da
+geometria --- daí poder ser tabelado por tipo de acessório. A perda total de
+um trecho é a soma da Equação~\eqref{eq:v1-c4-8} com as
+Equações~\eqref{eq:v1-c4-11} de cada elemento, todas na mesma pressão
+dinâmica de referência.
+
+É exatamente esta estrutura que o Volume~II usa, três vezes, com o mesmo
+formalismo e finalidades distintas: a perda localizada da
+Equação~\eqref{eq:v1-c4-11} modela o filtro de admissão e o silenciador
+(Equação 5.4 do Volume~II), com $\zeta$ crescendo por colmatação como
+parâmetro de degradação monitorado; a Darcy-Weisbach da
+Equação~\eqref{eq:v1-c4-8} modela a tubulação interestágios (Equação 5.15 do
+Volume~II), com o envelhecimento interno elevando $\varepsilon_r$ e, com ele,
+$f_D$; e o mesmo $\zeta$ localizado parametriza o assento desgastado das
+válvulas de retenção e alívio (Equação 5.16 do Volume~II), fechando a
+degradação gradual que precede a falha binária. Três subsistemas aparentemente
+diferentes, uma única origem: as Equações~\eqref{eq:v1-c4-8}
+e~\eqref{eq:v1-c4-11} deste capítulo.
+
+\subsection{Escoamento compressível em restrições: o orifício e o
+bloqueio}\label{sub:v1-c4-comprimivel}
+
+Quando a hipótese da Seção~\ref{sub:v1-c4-incompressivel} falha, a pergunta
+certa deixa de ser ``quanto a pressão cai'' e passa a ser ``qual vazão
+atravessa a restrição''. O ponto de partida é a velocidade do som do meio,
+Equação~\eqref{eq:v1-c4-12}:
+\begin{equation}\label{eq:v1-c4-12}
+a = \sqrt{\gamma\, R\, T},
+\end{equation}
+com $\gamma$ a razão de calores específicos do
+Capítulo~\ref{sec:termodinamica}, $R$ a constante do gás e $T$ a temperatura
+absoluta --- já a forma especializada para gás perfeito. Para um gás
+escapando por um orifício de área $A_0$ a partir de um reservatório a
+pressão $p_0$ e temperatura $T_0$, a vazão mássica em regime isentrópico é a
+Equação~\eqref{eq:v1-c4-13}:
+\begin{equation}\label{eq:v1-c4-13}
+\dot{m} = A_0\,p_0\sqrt{\frac{2\gamma}{(\gamma-1)R T_0}\left[
+\left(\frac{p_2}{p_0}\right)^{2/\gamma} -
+\left(\frac{p_2}{p_0}\right)^{(\gamma+1)/\gamma}\right]},
+\end{equation}
+onde $p_2$ é a pressão a jusante. O argumento do colchete tem máximo finito:
+quando a razão de pressões atinge o valor crítico da
+Equação~\eqref{eq:v1-c4-14}, a velocidade no gargalo iguala a do som e a
+vazão deixa de responder à queda de pressão adicional --- é o
+\textbf{escoamento bloqueado} (\textit{choked flow}), Equação~\eqref{eq:v1-c4-14}:
+\begin{equation}\label{eq:v1-c4-14}
+\frac{p_2}{p_0} \le \left(\frac{2}{\gamma+1}\right)^{\gamma/(\gamma-1)}
+\;\approx\; 0{,}528 \quad (\text{ar, } \gamma = 1{,}4).
+\end{equation}
+Acima do bloqueio, a vazão cresce com a razão de pressões; abaixo dele, só
+cresce com $p_0$ --- fisicalmente, porque a informação de que a jusante
+pressão caiu não consegue propagar-se para montante contra o próprio
+escoamento, que viaja a $Ma = 1$.
+
+Este é o fundamento do modelo de vazamento por folgas do Volume~II
+(Equação 9.3, com origem em Fleming e Tang): a folga entre rotor e carcaça é
+uma restrição, e o coeficiente $K$ daquela equação agrega exatamente os
+efeitos de descarga e geometria que a Equação~\eqref{eq:v1-c4-13} idealizada
+deixa de fora. O mesmo mecanismo explica por que o Volume~II trata o número
+de Mach de ponta do rotor como limite de projeto: quando $Ma_{\text{tip}}$ se
+aproxima da unidade, o escoamento de fuga pelas folgas entra no regime
+compressível dominante e a eficiência volumétrica deixa de degradar-se de
+forma suave.
+
+\subsection{Escoamento em meios porosos e leitos
+empacotados}\label{sub:v1-c4-poroso}
+
+Nem todo escoamento de interesse tem fronteiras limpas. Num filtro de
+elemento poroso, num leito de dessecante ou numa camada de incrustação, a
+microestrutura tem dimensão milimétrica ou menor, e a hipótese do contínuo
+exige a segunda promediação anunciada no
+Capítulo~\ref{sec:continuo}: equações de campo sobre um volume elementar
+representativo que contém dezenas de elementos da microestrutura. O resultado
+promediado para a resistência ao escoamento é a lei de Darcy,
+Equação~\eqref{eq:v1-c4-15}:
+\begin{equation}\label{eq:v1-c4-15}
+v_s = -\frac{k_p}{\mu}\,\frac{dp}{dx},
+\end{equation}
+onde $v_s$ é a velocidade superficial (vazão dividida pela área frontal total,
+não pela área vazia) e $k_p$ a permeabilidade do meio, com dimensão de área e
+valor determinado pela microestrutura. A Equação~\eqref{eq:v1-c4-15} é
+constitutiva no sentido estrito da
+Seção~\ref{sub:v1-c2-constitutivas}: não se deduz das leis de balanço --- a
+permeabilidade é medida ou correlacionada, e toda a informação sobre a
+geometria interna mora nela.
+
+Para um leito empacotado de partículas esféricas de diâmetro $d_p$ e
+porosidade $\varepsilon_b$ (fração de vazios do leito), a correlação clássica
+que estende Darcy ao regime com inércia --- quando as réguas de escoamento em
+torno das partículas deixam de ser laminares --- é a equação de Ergun,
+Equação~\eqref{eq:v1-c4-16} \cite{white2011}:
+\begin{equation}\label{eq:v1-c4-16}
+\frac{\Delta p}{L} = \frac{150\,\mu\,(1-\varepsilon_b)^2}{\varepsilon_b^3\, d_p^2}\,v_s
++ \frac{1{,}75\,(1-\varepsilon_b)\,\rho}{\varepsilon_b^3\, d_p}\,v_s^2 .
+\end{equation}
+O primeiro termo é a contribuição viscosa, linear em $v_s$; o segundo, a
+inercial, quadrática. As constantes $150$ e $1{,}75$ são ajustadas a ensaios
+--- mais uma vez, medidas, não deduzidas --- e é exatamente essa transição
+viscoso-inercial que o Volume~II usa para modelar a perda de carga nos
+leitos de dessecante do secador PSA (Equação 15.16), onde o seguimento da
+porosidade e do diâmetro efetivo das partículas ao longo do tempo é um
+indicador de degradação do próprio leito.
+
+\subsection{Escoamentos em rotação: camada limite e separação
+centrífuga}\label{sub:v1-c4-rotativo}
+
+A simplificação viscoso/inviscido do fim da
+Seção~\ref{sub:v1-c4-bases} ganha corpo na noção de \textbf{camada limite}:
+junto a uma parede, o fluido adere (velocidade nula na superfície) e os
+gradientes são tão grandes que só ali a viscosidade importa; fora dela, o
+escoamento comporta-se como inviscido. Para uma placa plana em regime
+laminar, a espessura dessa camada cresce ao longo da coordenada $x$ conforme
+a Equação~\eqref{eq:v1-c4-17}:
+\begin{equation}\label{eq:v1-c4-17}
+\delta_{cl}(x) \approx \frac{5x}{\sqrt{Re_x}},
+\end{equation}
+onde $\delta_{cl}$ é a espessura da camada limite (o subscrito evita colisão
+com a folga mecânica $\delta$ do Volume~II) e $Re_x = vx/\nu_k$. A
+Equação~\eqref{eq:v1-c4-17} é a justificativa formal de todo o capítulo: ela
+diz que o atrito mora numa película fina junto à parede, que o núcleo pode
+ser tratado sem viscosidade, e que a transferência de calor e o arrasto
+superficial são governados pelo que acontece dentro de $\delta_{cl}$ ---
+ponte direta para o Capítulo~\ref{sec:calor}.
+
+Resta o caso que este volume não tratou até aqui: o fluido num referencial
+que gira. As forças aparentes da Equação~\eqref{eq:v1-c2-2} --- centrífuga e
+de Coriolis --- atuam no fluido exatamente como atuam numa partícula, e é a
+primeira delas que explica um dos acessórios do Volume~II. Num vórtice
+forçado, o escoamento acompanha a rotação do corpo, $v_\theta = \omega r$, e
+a aceleração centrífuga $v_\theta^2/r = \omega^2 r$ estabelece o equilíbrio
+radial de pressão: partículas mais densas que o gás são arremessadas para
+fora, e a fronteira de separação é ditada pela diferença de densidades sob o
+campo centrífugo. É o princípio inteiro do separador ciclônico de condensado
+do Volume~II (Capítulo 14): nenhuma lei nova, apenas a
+Equação~\eqref{eq:v1-c2-2} aplicada a um volume de controle que gira. O que
+\emph{não} cabe neste capítulo é a acústica do ressonador de Helmholtz que o
+mesmo volume usa para avaliar risco de pulsação no vaso pulmão (Equação 16.2
+do Volume~II): ali o fenômeno é a propagação de ondas, e sua base pertence à
+extensão de rotordinâmica e acústica prevista para esta coleção.
+
+\subsection{Grupos adimensionais}\label{sub:v1-c4-adimensionais}
+
+Os grupos adimensionais deste capítulo não são curiosidade: são a forma de
+transportar resultado de ensaio para projeto, e a Tabela~\ref{tab:v1-c4-1}
+lista os que reaparecem ao longo de toda a coleção.
 
 \begin{table}[H]
 \centering
-\caption{Números adimensionais recorrentes em máquinas rotodinâmicas.}
+\small
+\caption[Grupos adimensionais de escoamento]{Grupos adimensionais
+recorrentes em máquinas rotodinâmicas e onde cada um governa.}
 \label{tab:v1-c4-1}
 \begin{tabular}{@{}llll@{}}
 \toprule
 \textbf{Número} & \textbf{Definição} & \textbf{Razão física} & \textbf{Uso} \\
 \midrule
-Reynolds & $Re = \rho v L / \mu$ & Inércia/viscosidade & Regime do escoamento \\
-Mach & $Ma = v/a$ & Velocidade/velocidade do som & Compressibilidade \\
+Reynolds & $Re = \rho v L / \mu$ & Inércia/viscosidade & Regime do escoamento; $f_D$ \\
+Mach & $Ma = v/a$ & Velocidade/velocidade do som & Compressibilidade; bloqueio \\
+Euler & $Eu = \Delta p / (\rho v^2)$ & Pressão/inércia & Perda de carga; cavitação \\
 Prandtl & $Pr = \mu c_p / k$ & Difusão viscosa/térmica & Escoamentos com calor \\
-Nusselt & $Nu = hL/k$ & Convecção/condução & Transferência de calor \\
-Euler & $Eu = \Delta P / (\rho v^2)$ & Pressão/inércia & Máquinas hidráulicas \\
+Nusselt & $Nu = hL/k$ & Convecção/condução & Coeficiente convectivo \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Camada limite}
+A força do argumento dimensional é que grupos como estes são os únicos que
+podem aparecer: mudar o fluido, a escala ou a velocidade não muda o $Re$ se o
+grupo se mantiver, e é por isso que ensaio em bancada pequeno projeta máquina
+grande. O Volume~II usa explicitamente $Re$ (atrito em tubulação), $Ma$
+(folgas e ponta de rotor) e $Nu$ (trocadores de calor); $Pr$ e $Eu$ operam
+nos bastidores das correlações que aqueles modelos adotam.
 
-A camada limite é a região adjacente a uma superfície sólida onde os efeitos
-viscosos são importantes. Sua espessura $\delta$ cresce ao longo da placa
-de acordo com
-\begin{equation}\label{eq:v1-c4-7}
-\delta(x) \approx \frac{5x}{\sqrt{Re_x}},
-\end{equation}
-para uma placa plana laminar. O conhecimento da camada limite é essencial
-para estimar arrasto, perdas por atrito e transferência de calor em
-superfícies de máquinas rotativas.
+\subsection{Síntese: premissas e ligação com o Volume
+II}\label{sub:v1-c4-sintese}
+
+A Tabela~\ref{tab:v1-c4-2} lista os resultados centrais do capítulo com as
+premissas de que dependem, no mesmo formato das
+Tabelas~\ref{tab:v1-c3-2} e~\ref{tab:v1-c7-4}, e serve como lista de
+verificação antes de aplicar qualquer um deles fora do contexto em que foi
+obtido.
+
+\begin{table}[H]
+\centering
+\caption[Premissas dos resultados do capítulo]{Resultados centrais do
+Capítulo~\ref{sec:fluidos} e as premissas de que dependem.}
+\label{tab:v1-c4-2}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Resultado} & \textbf{Equação} & \textbf{Premissas} \\
+\midrule
+Navier-Stokes incompressível & \eqref{eq:v1-c4-2} & $\mu$ constante; $\nabla\cdot\mathbf{v}\approx 0$ \\
+Incompressibilidade & \eqref{eq:v1-c4-3}, \eqref{eq:v1-c4-4} & $Ma \lesssim 0{,}3$; gás com $\gamma$ constante \\
+Continuidade integral & \eqref{eq:v1-c4-5} & Volume de controle fixo; escoamento com uma entrada e uma saída \\
+Força sobre tubulação & \eqref{eq:v1-c4-6} & Momento médio nas seções; regime quase-permanente para o transiente \\
+Bernoulli com perdas & \eqref{eq:v1-c4-7} & Regime permanente; incompressível; máquina e perdas contabilizadas \\
+Darcy-Weisbach & \eqref{eq:v1-c4-8} & Escoamento interno estabelecido; superfície hidraulicamente definida \\
+Regimes e atrito & \eqref{eq:v1-c4-9}, \eqref{eq:v1-c4-10} & Tubo circular; rugosidade uniforme; turbulenta plena para $f_D$ constante \\
+Perda localizada & \eqref{eq:v1-c4-11} & Regime turbulento; $\zeta$ tabelado por geometria \\
+Vazão em orifício & \eqref{eq:v1-c4-13} & Isentrópico; reservatório grande; gás perfeito \\
+Bloqueio sônico & \eqref{eq:v1-c4-14} & Gargalo em $Ma = 1$; jusante não influencia \\
+Lei de Darcy & \eqref{eq:v1-c4-15} & Regime laminar no meio; promediação representativa \\
+Ergun & \eqref{eq:v1-c4-16} & Leito de partículas; constantes ajustadas por ensaio \\
+Camada limite & \eqref{eq:v1-c4-17} & Placa plana; laminar; sem gradiente de pressão \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+A Tabela~\ref{tab:v1-c4-3} explicita a função do capítulo na coleção: cada
+modelo de escoamento que o Volume~II usa como ponto de partida tem aqui a sua
+origem --- e, simetricamente, cada modelo deste capítulo encontra lá a sua
+aplicação.
+
+\begin{table}[H]
+\centering
+\caption[Ligação com o Volume II]{Correspondência entre os fundamentos deste
+capítulo e os modelos de escoamento do Volume II.}
+\label{tab:v1-c4-3}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{O que o Volume II usa} & \textbf{Fundamento aqui} & \textbf{Seção} \\
+\midrule
+Perda de carga de filtro e silenciador (Eq.\ 5.4) & Perda localizada, $\zeta$ & \ref{sub:v1-c4-perda} \\
+Perda distribuída em tubulação (Eq.\ 5.15) & Darcy-Weisbach; $f_D(Re, \varepsilon_r/D)$ & \ref{sub:v1-c4-perda} \\
+Degradação de válvulas (Eq.\ 5.16) & Perda localizada crescente, $\zeta_{\text{valv}}$ & \ref{sub:v1-c4-perda} \\
+Vazamento por folgas (Eq.\ 9.3) & Orifício compressível; regime de fuga & \ref{sub:v1-c4-comprimivel} \\
+Mach de ponta e limite de rotor (Eqs.\ 9.12/9.13) & $Ma$; bloqueio sônico & \ref{sub:v1-c4-comprimivel} \\
+Perda de carga em leito de dessecante (Eq.\ 15.16) & Ergun; Darcy promediada & \ref{sub:v1-c4-poroso} \\
+Separador ciclônico de condensado (Cap.\ 14) & Forças aparentes em rotação & \ref{sub:v1-c4-rotativo} \\
+Trocadores de calor (Caps.\ 10, 12, 14) & $Nu$; camada limite & \ref{sub:v1-c4-adimensionais} \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Um aviso final, no espírito deste volume: as equações deste capítulo são
+simples e parecem inofensivas, e é justamente por isso que são mal usadas. A
+Equação~\eqref{eq:v1-c4-8} aplicada a um duto em desenvolvimento hidráulico
+subestima a perda; a Equação~\eqref{eq:v1-c4-11} com $\zeta$ tabelado fora da
+faixa de $Re$ erra sem aviso; a Equação~\eqref{eq:v1-c4-13} aplicada a uma
+restrição com comprimento apreciável deixa de ser isentrópica. O hábito que
+este volume tenta instalar é o de ler a premissa antes da fórmula --- a
+Tabela~\ref{tab:v1-c4-2} existe para isso.
 
 
 %=============================================================================
@@ -3065,66 +3411,253 @@ Degradação térmica do isolamento & Reflexão de onda e $\mathrm{d}v/\mathrm{d
 %=============================================================================
 \section{Fundamentos de Mecânica}\label{sec:mecanica}
 
-\subsection{Dinâmica rotacional}
+Este capítulo fecha a cadeia causal do volume: o Capítulo~\ref{sec:eletrica}
+terminou no torque eletromagnético $\tau_{em}$ que o motor entrega ao eixo, e
+é aqui que esse torque produz suas consequências --- aceleração, vibração e,
+no limite, fadiga. O capítulo fundamenta também a rotordinâmica do Volume~II:
+o balanço de potência do trem de transmissão, a velocidade crítica, a margem
+de separação e a vida em fadiga usados lá nascem dos resultados abaixo.
 
-A dinâmica de corpos rígidos em rotação é análoga à dinâmica translacional. A
-segunda lei de Newton para rotação é
+\subsection{Bases físicas: leis de Newton e a hipótese do corpo
+rígido}\label{sub:v1-c8-bases}
+
+As leis de Newton entram neste capítulo como princípios, não como
+consequências --- o mesmo estatuto que têm no Capítulo~\ref{sec:continuo}.
+Pelo teorema de Noether (Tabela~\ref{tab:v1-c2-1}), a isotropia do espaço
+implica a conservação do momento angular; é essa conservação, e não uma mera
+analogia com a translação, que sustenta a dinâmica rotacional das próximas
+seções.
+
+A hipótese de trabalho é a do \textbf{corpo rígido}: as distâncias internas
+do rotor são constantes e a dinâmica se reduz aos graus de liberdade de
+translação e rotação do conjunto. A hipótese tem critério quantitativo de
+validade, a Equação~\eqref{eq:v1-c8-1}: ela vale enquanto a velocidade de
+operação estiver bem abaixo da primeira velocidade crítica flexível do eixo,
 \begin{equation}\label{eq:v1-c8-1}
+\omega \ll \omega_{cr,1},
+\end{equation}
+regime em que as deformações elásticas são desprezíveis frente aos
+deslocamentos de corpo rígido. Os compressores do Volume~II operam com margem
+deliberada em relação a $\omega_{cr,1}$ --- a margem de separação da API~684,
+fundamentada na Seção~\ref{sub:v1-c8-vibracoes}. Quando a
+Equação~\eqref{eq:v1-c8-1} deixa de valer, o rotor deixa de ser rígido e o
+problema migra para a rotordinâmica, à qual o Volume~II dedica um capítulo
+inteiro.
+
+\subsection{Dinâmica rotacional}\label{sub:v1-c8-rotacional}
+
+Para um corpo rígido girando em torno de um eixo fixo, o momento angular é
+dado pela Equação~\eqref{eq:v1-c8-2}:
+\begin{equation}\label{eq:v1-c8-2}
+L = J_p\,\omega,
+\end{equation}
+onde $J_p$ é o momento de inércia em relação ao eixo de rotação e $\omega$ é
+a velocidade angular. A dinâmica de corpos rígidos em rotação é análoga à
+dinâmica translacional: a conservação do momento angular na forma
+diferencial, $\tau = dL/dt$, reduz-se à segunda lei de Newton para rotação,
+Equação~\eqref{eq:v1-c8-3}, quando $J_p$ é constante:
+\begin{equation}\label{eq:v1-c8-3}
 \tau = J_p \, \alpha,
 \end{equation}
-onde $\tau$ é o torque, $J_p$ é o momento de inércia em relação ao eixo de
-rotação e $\alpha$ é a aceleração angular. Os símbolos seguem os do
-Volume II: o torque é $\tau$ --- e não $T$, que é a temperatura nos
-Capítulos~\ref{sec:termodinamica} a~\ref{sec:calor} --- e o momento de inércia
-é $J_p$ --- e não $I$, que é a corrente elétrica no
+onde $\tau$ é o torque resultante e $\alpha$ é a aceleração angular. Os
+símbolos seguem os do Volume II: o torque é $\tau$ --- e não $T$, que é a
+temperatura nos Capítulos~\ref{sec:termodinamica} a~\ref{sec:calor} --- e o
+momento de inércia é $J_p$ --- e não $I$, que é a corrente elétrica no
 Capítulo~\ref{sec:eletrica}, nem $J$, que é o jacobiano da deformação no
 Capítulo~\ref{sec:continuo}.
 
-A energia cinética de rotação é
-\begin{equation}\label{eq:v1-c8-2}
+A energia cinética de rotação, Equação~\eqref{eq:v1-c8-4}, mede a energia que
+o rotor acumula --- é ela que sustenta a rotação durante as saliências de
+carga:
+\begin{equation}\label{eq:v1-c8-4}
 E_c = \frac{1}{2} J_p \,\omega^2.
 \end{equation}
 
-\subsection{Vibrações mecânicas}
+A potência mecânica transferida ao eixo é o produto do torque pela velocidade
+angular, Equação~\eqref{eq:v1-c8-5}:
+\begin{equation}\label{eq:v1-c8-5}
+P_{mec} = \tau\,\omega.
+\end{equation}
+É esta equação que costura os dois últimos capítulos: em regime permanente, o
+torque eletromagnético $\tau_{em}$ do Capítulo~\ref{sec:eletrica} equilibra o
+torque resistente do compressor, e a Equação~\eqref{eq:v1-c8-5} converte esse
+equilíbrio no balanço de potência do trem de transmissão que o Volume~II usa
+para dimensionar motor, engrenagens e acoplamentos.
 
-Um sistema massa-mola-amortecedor unidimensional é governado por
-\begin{equation}\label{eq:v1-c8-3}
+O eixo que liga motor e compressor não é torcionalmente rígido: um trecho de
+comprimento $\ell$ e seção circular com momento polar de área $I_p$ (não
+confundir com $J_p$, inércia de massa) tem rigidez torcional dada pela
+Equação~\eqref{eq:v1-c8-6}:
+\begin{equation}\label{eq:v1-c8-6}
+k_t = \frac{G\,I_p}{\ell},
+\end{equation}
+onde $G$ é o módulo de cisalhamento do Capítulo~\ref{sec:continuo}. Dois
+corpos de inércias $J_{p,1}$ e $J_{p,2}$ ligados por esse eixo formam um
+oscilador torcional cuja frequência natural, Equação~\eqref{eq:v1-c8-7},
+depende das duas inércias --- não basta conhecer uma delas:
+\begin{equation}\label{eq:v1-c8-7}
+\omega_{t} = \sqrt{k_t\left(\frac{1}{J_{p,1}} + \frac{1}{J_{p,2}}\right)}.
+\end{equation}
+O Volume~II calcula exatamente essa frequência para o trem
+motor--caixa--compressor, porque a coincidência entre $\omega_t$ e harmônicos
+da rede ou do engrenamento é mecanismo clássico de falha de eixos e
+acoplamentos.
+
+\subsection{Vibrações mecânicas}\label{sub:v1-c8-vibracoes}
+
+Quando a hipótese do corpo rígido é abandonada, o modelo mais simples é o
+sistema massa--mola--amortecedor unidimensional, governado pela
+Equação~\eqref{eq:v1-c8-8} \cite{rao2011}:
+\begin{equation}\label{eq:v1-c8-8}
 m\,\ddot{x} + c\,\dot{x} + k\,x = F(t),
 \end{equation}
 onde $m$ é a massa, $c$ é o coeficiente de amortecimento, $k$ é a rigidez e
-$F(t)$ é a força externa.
-
-A frequência natural não amortecida é
-\begin{equation}\label{eq:v1-c8-4}
-\omega_n = \sqrt{\frac{k}{m}}.
+$F(t)$ é a força externa. Duas frequências organizam o comportamento do
+sistema: a frequência natural não amortecida, Equação~\eqref{eq:v1-c8-9},
+\begin{equation}\label{eq:v1-c8-9}
+\omega_n = \sqrt{\frac{k}{m}},
 \end{equation}
-
-A frequência natural amortecida é
-\begin{equation}\label{eq:v1-c8-5}
+e a frequência natural amortecida, Equação~\eqref{eq:v1-c8-10},
+\begin{equation}\label{eq:v1-c8-10}
 \omega_d = \omega_n\sqrt{1-\zeta^2},
 \end{equation}
 onde $\zeta = c/(2\sqrt{km})$ é a razão de amortecimento.
 
-\subsection{Desbalanceamento e forças rotativas}
+Sob excitação harmônica $F(t) = F_0\cos\omega t$, a amplitude de regime
+permanente é $X = M\,F_0/k$, com o fator de amplificação dado pela
+Equação~\eqref{eq:v1-c8-11}:
+\begin{equation}\label{eq:v1-c8-11}
+M(r,\zeta) = \frac{1}{\sqrt{(1-r^2)^2 + (2\zeta r)^2}}, \qquad
+r = \frac{\omega}{\omega_n}.
+\end{equation}
+O fator cresce como $1/(2\zeta)$ quando $r \to 1$: é a ressonância. O
+critério de margem de separação da API~684 usado no Volume~II é uma receita
+para manter a velocidade de operação suficientemente longe de $r = 1$, com
+folga tanto maior quanto menor o amortecimento disponível.
+
+A especialização decisiva para máquinas rotativas é o rotor de Jeffcott: um
+disco de massa $m$ montado em um eixo flexível de rigidez $k_s$, leve o
+bastante para ter inércia desprezível. Transversalmente, o rotor é o
+oscilador da Equação~\eqref{eq:v1-c8-8}, e sua velocidade crítica é a
+frequência natural desse oscilador, Equação~\eqref{eq:v1-c8-12}:
+\begin{equation}\label{eq:v1-c8-12}
+\omega_{cr} = \sqrt{\frac{k_s}{m}}.
+\end{equation}
+O Volume~II refina esse resultado incluindo a flexibilidade dos mancais e
+constrói sobre ele o diagrama de Campbell; a estrutura, porém, é a da
+Equação~\eqref{eq:v1-c8-12}: velocidade crítica é frequência natural, e
+operar próximo dela é operar em ressonância.
+
+\subsection{Desbalanceamento e forças rotativas}\label{sub:v1-c8-desbalanceamento}
 
 Uma massa excêntrica $m_u$ girando a uma velocidade angular $\omega$ produz
-uma força de desbalanceamento
-\begin{equation}\label{eq:v1-c8-6}
+uma força de desbalanceamento, Equação~\eqref{eq:v1-c8-13},
+\begin{equation}\label{eq:v1-c8-13}
 F_u = m_u \, e \, \omega^2,
 \end{equation}
 onde $e$ é a excentricidade. Essa força é transmitida aos mancais e pode
 provocar vibração excessiva se a velocidade de operação estiver próxima a uma
-frequência crítica do eixo.
+frequência crítica do eixo --- o caso $r \to 1$ na Equação~\eqref{eq:v1-c8-11}.
+Como a força cresce com $\omega^2$ e gira com o rotor, a assinatura do
+desbalanceamento é vibração na frequência de rotação $f_r = \omega/2\pi$ ---
+o ``$1\times$'' do Volume~II.
 
-\subsection{Fadiga}
+O produto $e\,\omega$ mede a severidade do desbalanceamento residual e é a
+base do grau de qualidade de balanceamento da ISO~21940 --- denotado $G$ na
+norma, sem relação com o módulo de cisalhamento $G$ do
+Capítulo~\ref{sec:continuo}: cada classe de rotor tem um valor máximo
+admissível de $e_{per}\,\omega$ \cite{rao2011}. O Volume~II usa esse grau
+para especificar o balanceamento de rotores e para interpretar a evolução da
+componente $1\times$ no monitoramento de vibração.
+
+\subsection{Fadiga}\label{sub:v1-c8-fadiga}
 
 A fadiga é a falha por aplicação repetida de tensões abaixo do limite de
 escoação. Para carregamento completamente reverso, a lei de Basquin descreve
-a vida à fadiga $N_f$ em função da amplitude de tensão $\sigma_a$:
-\begin{equation}\label{eq:v1-c8-7}
+a vida à fadiga $N_f$ em função da amplitude de tensão $\sigma_a$,
+Equação~\eqref{eq:v1-c8-14}:
+\begin{equation}\label{eq:v1-c8-14}
 \sigma_a^m \, N_f = C,
 \end{equation}
-onde $m$ e $C$ são constantes do material.
+onde $m$ e $C$ são constantes do material, obtidas por ensaio --- a lei é
+constitutiva, medida e não deduzida, no sentido da
+Seção~\ref{sub:v1-c2-constitutivas} \cite{shigley2011}. O Volume~II escreve
+a mesma lei na forma $\sigma_a = \sigma'_f\,(2N_f)^{b_f}$; as duas são
+equivalentes, com $b_f = -1/m$ e a constante $C$ absorvida em $\sigma'_f$.
+
+Cargas reais não têm amplitude única. A regra de Miner acumula o dano de
+blocos de $n_i$ ciclos sob amplitude $\sigma_{a,i}$ como frações da vida
+correspondente, Equação~\eqref{eq:v1-c8-15} \cite{shigley2011}:
+\begin{equation}\label{eq:v1-c8-15}
+D = \sum_i \frac{n_i}{N_{f,i}},
+\end{equation}
+com falha prevista quando $D$ atinge a unidade. A hipótese é forte: dano
+linear e independente da ordem de aplicação dos blocos. É empiricamente
+razoável na maioria dos casos e erra quando a sequência de cargas importa ---
+o Volume~II a aplica à vida de componentes solicitados ciclicamente (barras
+de rotor, parafusos, palhetas) mantendo essa ressalva explícita.
+
+\subsection{Síntese: premissas e ligação com o Volume
+II}\label{sub:v1-c8-sintese}
+
+A Tabela~\ref{tab:v1-c8-1} lista os resultados centrais do capítulo com as
+premissas de que dependem, no mesmo formato das Tabelas~\ref{tab:v1-c3-2} e
+\ref{tab:v1-c7-4}, e serve como lista de verificação antes de aplicar
+qualquer um deles fora do contexto em que foi obtido.
+
+\begin{table}[H]
+\centering
+\caption[Premissas dos resultados do capítulo]{Resultados centrais do
+Capítulo~\ref{sec:mecanica} e as premissas de que dependem.}
+\label{tab:v1-c8-1}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Resultado} & \textbf{Equação} & \textbf{Premissas} \\
+\midrule
+Validade do corpo rígido & \eqref{eq:v1-c8-1} & Deformações elásticas desprezíveis \\
+Momento angular & \eqref{eq:v1-c8-2} & Corpo rígido; eixo fixo \\
+Torque--aceleração & \eqref{eq:v1-c8-3} & $J_p$ constante ao longo do tempo \\
+Energia cinética de rotação & \eqref{eq:v1-c8-4} & Corpo rígido \\
+Potência mecânica & \eqref{eq:v1-c8-5} & $\tau$ e $\omega$ no mesmo eixo \\
+Rigidez torcional & \eqref{eq:v1-c8-6} & Elástico linear; seção circular uniforme \\
+Frequência torcional do trem & \eqref{eq:v1-c8-7} & Dois corpos; eixo sem inércia \\
+Oscilador linear & \eqref{eq:v1-c8-8} & $m$, $c$, $k$ constantes; pequenas amplitudes \\
+Fator de amplificação & \eqref{eq:v1-c8-11} & Excitação harmônica; regime permanente; $\zeta<1$ \\
+Velocidade crítica (Jeffcott) & \eqref{eq:v1-c8-12} & Disco concentrado; eixo leve; $\zeta$ nulo \\
+Força de desbalanceamento & \eqref{eq:v1-c8-13} & Excentricidade fixa; corpo rígido \\
+Lei de Basquin & \eqref{eq:v1-c8-14} & Tensão uniaxial reversa; $m$, $C$ medidos \\
+Regra de Miner & \eqref{eq:v1-c8-15} & Acúmulo linear; ordem irrelevante \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+A Tabela~\ref{tab:v1-c8-2} explicita a função do capítulo na coleção: cada
+modelo mecânico que o Volume~II usa como ponto de partida tem aqui a sua
+origem.
+
+\begin{table}[H]
+\centering
+\caption[Ligação com o Volume II]{Correspondência entre os fundamentos deste
+capítulo e os modelos mecânicos do Volume II.}
+\label{tab:v1-c8-2}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{O que o Volume II usa} & \textbf{Fundamento aqui} & \textbf{Seção} \\
+\midrule
+Balanço de potência do trem de transmissão & $P_{mec} = \tau\,\omega$; $\tau_{em}$ (Cap.~\ref{sec:eletrica}) & \ref{sub:v1-c8-rotacional} \\
+Rigidez torcional de eixos e acoplamentos & $k_t = G\,I_p/\ell$ & \ref{sub:v1-c8-rotacional} \\
+Frequência crítica torcional do trem & Oscilador torcional de dois corpos & \ref{sub:v1-c8-rotacional} \\
+Velocidade crítica e diagrama de Campbell & Rotor de Jeffcott & \ref{sub:v1-c8-vibracoes} \\
+Margem de separação (API~684) & Ressonância; fator de amplificação & \ref{sub:v1-c8-vibracoes} \\
+Assinatura $1\times$ e balanceamento ISO~21940 & $F_u = m_u\,e\,\omega^2$; grau $G$ & \ref{sub:v1-c8-desbalanceamento} \\
+Vida de barras, parafusos e palhetas & Basquin e Miner & \ref{sub:v1-c8-fadiga} \\
+\bottomrule
+\end{tabular}}
+\end{table}
 
 
 %=============================================================================

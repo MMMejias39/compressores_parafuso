@@ -3427,3 +3427,127 @@ introduzir a primeira figura do volume implica criar um gerador próprio —
    - Cap. 26: Topologia dinâmica de trens de compressores em paralelo e redundâncias ($N+0, N+1, 2N$).
    - Cap. 27: Arquitetura nativa compilada de alta performance em Rust (Axum/Tokio) comparada à stack de pesquisa em Python.
    - Compilado com `pdflatex` (183 páginas, 0 erros).
+
+
+## Volume I — Reescrita do Cap. 4, Mecânica dos Fluidos (08/09/2026)
+
+**Contexto.** Ao retomar o Volume I, encontrado o Cap. 8 (Mecânica) **já
+expandido** — 254 linhas, arquitetura completa no padrão dos Caps. 2/7, com
+`rao2011` e `shigley2011` na bibliografia, modificado em 07/09. Essa sessão
+**não está registrada neste CONTEXTO.md** (nem o estado novo dos Caps. 4–9) —
+fica aqui o registro de que falta a entrada dela. Continuando pela ordem
+sugerida em 24/08 (próximo esqueleto depois do Cap. 8), o Cap. 4 era o próximo
+(86 linhas, fórmulas soltas sem base física) e foi reescrito nesta sessão.
+
+**O que foi feito.** Cap. 4 reescrito de ~86 para ~440 linhas, seguindo a
+arquitetura estabelecida (base física → hipótese com critério quantitativo →
+relações constitutivas → especializações → síntese), com 17 equações
+(`eq:v1-c4-1` a `eq:v1-c4-17`) e 9 subseções com labels `sub:v1-c4-<slug>`:
+
+- **Bases** — Navier-Stokes reapresentada como o balanço de quantidade de
+  movimento do Cap. 2 fechado com a constitutiva newtoniana (promessa das
+  linhas de introdução do volume); os dois eixos de simplificação (viscoso ×
+  inviscido, compressível × incompressível).
+- **Incompressibilidade** — critério $Ma \lesssim 0{,}3$ com origem física
+  ($\Delta\rho/\rho \sim Ma^2/2$); a fronteira Ma=0,3 atravessa o objeto do
+  Volume II (admissão incompressível × estágios compressíveis por design).
+- **Balanço integral** — continuidade, momento (força em tubulação) e Bernoulli
+  *com perdas e máquina* — a forma sem perda tratada como caso particular.
+- **Perda de carga** — Darcy-Weisbach, Reynolds, laminar $64/Re_D$, Colebrook
+  (cita `white2011`), perda localizada $\zeta$; as três aplicações do Volume II
+  com o mesmo formalismo (Eqs. 5.4 filtro/silenciador, 5.15 tubulação, 5.16
+  válvulas).
+- **Compressível em restrições** — velocidade do som, vazão isentrópica em
+  orifício, bloqueio sônico ($p_2/p_0 \le 0{,}528$ para ar); origem do modelo
+  de vazamento por folgas (Eq. 9.3) e do Mach de ponta (Eqs. 9.12/9.13).
+- **Porosos e leitos** — lei de Darcy (promessa da Seção `sub:v1-c2-hipotese`:
+  segunda promediação) e Ergun com as constantes 150/1,75 identificadas como
+  ajustadas por ensaio; ligação à Eq. 15.16 (leito de dessecante PSA).
+- **Rotação** — camada limite ($\delta_{cl}$, subscrito para não colidir com a
+  folga $\delta$ do Volume II) e separação centrífuga como aplicação das forças
+  aparentes da Eq. (2.2) — princípio do separador ciclônico (Cap. 14); o
+  ressonador de Helmholtz (Eq. 16.2) explicitamente **diferido** para a futura
+  extensão de acústica, com justificativa.
+- **Síntese** — tabelas `tab:v1-c4-2` (premissas) e `tab:v1-c4-3` (ligação com
+  o Volume II), no formato das Tabs. 3.2/7.4/7.5/8.1/8.2; `tab:v1-c4-1`
+  (grupos adimensionais) mantida com `\small` e uma linha nova de texto.
+
+**Nomenclatura** — sem nenhum bibitem novo (Cap. 4 cita só `white2011`, já
+existente). Linhas de `Ma`, `a` e `k_p` atualizadas para incluir o Cap. 4;
+acrescentados `Re`, `f_D`, `$\zeta$`, `$\delta_{cl}$` e `$\varepsilon_r$` com
+notas "não confundir" no estilo do volume.
+
+**Verificação.** `pdflatex` 3 passagens: 66 páginas (era 58), **0 erros, 0
+referências indefinidas, 0 labels duplicados**. Overfulls restantes apenas os
+dois baseline documentados (0,8 pt no Cap. 2 e 4,8 pt na tabela de sensores do
+Cap. 9) — nenhum novo. Páginas do Cap. 4 (34–42 do PDF) e da Nomenclatura
+renderizadas via `pdftoppm` e inspecionadas: tabelas 4.1/4.2/4.3 sem corte,
+legendas curtas na Lista de Tabelas, frações e expoentes corretos. Na primeira
+compilação houve 10 erros de `Missing $` (barras duplicadas nas linhas novas da
+Nomenclatura) e um overfull de 10,3 pt na linha de `$\delta_{cl}$` — ambos
+corrigidos antes da verificação final.
+
+**Nota operacional importante — instabilidade do `teorias.tex` nesta
+máquina.** Durante toda a sessão, o arquivo `teorias.tex` **desapareceu e
+reapareceu no filesystem em ciclos** (janelas de segundos a minutos; um processo
+externo move o arquivo — chegou a ser encontrado cópia antiga em
+`/tmp/tbuild/`). Nenhum cliente de sincronização foi identificado; causa em
+aberto. Mitigação usada e recomendada para sessões futuras: trabalhar numa cópia
+em `/tmp` com **nome neutro** (cópias chamadas `teorias.tex` também eram
+afetadas), escrever de volta com `os.replace` atômico + verificação de md5, e
+recompilar o PDF num script que espera o arquivo existir com o hash esperado.
+
+**Nada foi commitado** — regra permanente.
+
+## Volume I — Reescrita do Cap. 6, Sistemas de Transferência de Massa e Energia (09/09/2026)
+
+**Motivação.** Pedido do autor: "achei o capítulo 6 muito curto e sem
+informações". O esqueleto anterior (9 páginas de texto corrido, 6 equações sem
+contexto, typo "formulção") foi substituído por uma redação completa que cumpre
+a promessa da introdução do volume: a forma **integral sobre volumes de
+controle finitos**. Mesmo padrão da reescrita do Cap. 4: premissa declarada
+antes de cada equação, derivação a partir do que os capítulos anteriores já
+estabeleceram, e fechamento com tabelas de síntese ligando ao Volume II.
+
+**Subseções** (todas novas, labels `sub:v1-c6-<slug>`): 6.1 bases físicas —
+teorema de transporte de Reynolds (Eq. 2.19) aplicado a região fixa, gerando o
+balanço geral com acúmulo (Eq. 6.1); 6.2 balanço de massa e contabilidade de
+espécies (água no ar comprimido, razão de umidade W, fechamento "o
+intercooler condensa pouco porque a água não chegou/degradou"); 6.3 balanço de
+energia em regime permanente com entalpia de estagnação $h_0 = h + v^2/2 + gz$
+(Eq. 6.4), estimativas de descarte $v^2/2 \ll |\Delta h|$ e $gz \ll |\Delta h|$;
+6.4 balanço de quantidade de movimento (Eq. 6.5) e carregamento dinâmico em
+suportes; 6.5 regime transiente e capacitância — sistemas de primeira ordem,
+$C_a$ e $\tau_a = C_a/k$ (Eq. 6.8), com nota anti-colisão de símbolos; 6.6 vaso
+pulmão — equação de estado, dinâmica de pressão (Eq. 6.10) e autonomia
+(Eq. 6.11), com limites de validade (isotermia vs. adiabático no blow-down);
+6.7 cascata de volumes de controle — conservação global, nós e acumulação
+distribuída (Eq. 6.12), base do "fechamento de balanço" como diagnóstico do
+Gêmeo Digital; 6.8 síntese. 12 equações numeradas `eq:v1-c6-1` a
+`eq:v1-c6-12`.
+
+**Símbolos novos** na Nomenclatura (tabela de Termodinâmica/Calor, estilo com
+notas "não confundir"): $h_0$ (entalpia de estagnação), $C_a$ (capacitância de
+acúmulo), $\tau_a$ (constante de tempo, distinta do torque $\tau$). Coluna de
+capítulos de $W$ atualizada para "6, 11". Nenhum bibitem novo — as citações do
+capítulo são equações/tabelas já existentes do próprio documento (Eqs. 2.19,
+4.6, 4.3, 16.4, 16.5, 13.5, 9.16, 15.3, Tabela 18.1, ASME VIII) e referências
+textuais sem entrada na bibliografia.
+
+**Verificação.** `pdflatex` 3 passagens sobre `/tmp/vol1_build/main.tex`:
+**71 páginas** (era 66), **0 erros, 0 referências indefinidas, 0 labels
+duplicados**. Overfulls apenas os dois baseline documentados (0,8 pt Cap. 2;
+4,8 pt tabela de sensores Cap. 9) — nenhum novo. Páginas 44–48 do PDF
+renderizadas via `pdftoppm` e inspecionadas: Tabela 6.1 (resultados centrais e
+premissas, 10 linhas) e Tabela 6.2 (correspondência com os modelos do Volume
+II, 7 linhas) sem corte nem transbordo. Um backup do main anterior ficou em
+`/tmp/vol1_build/main_antes_cap6.bak`.
+
+**Publicação.** Mesma mitigação da instabilidade de `theorias.*`: trabalho em
+`/tmp/vol1_build`, publicação por rename atômico. `theorias.pdf` republicado
+com o PDF novo (watcher em background + reforço manual; md5 confere com
+`main.pdf`). Cópia estável datada substituída: `Volume_I_Fundamentos_2026-09-09.pdf`
+(a de 08/09, sem o Cap. 6 novo, foi removida para não circular versões
+divergentes).
+
+**Nada foi commitado** — regra permanente.

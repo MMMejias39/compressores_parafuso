@@ -7,9 +7,45 @@ aplicação offshore), sessão Kimi de 02/08/2026.
 numeradas), `CONTEXTO.md`, `CONTEXTO_app.md` e os três pareceres externos
 anteriores (Copilot, Manus, dicas_kimi).
 
-**Status:** proposta de trabalho — nada aqui foi implementado. Cada item indica
-a lacuna, o local exato no `.tex`, o ajuste proposto e os cuidados de convenção.
-Itens em ordem de prioridade sugerida (alta → baixa).
+**Status:** ✅ **IMPLEMENTADO — 13/13 itens em 02/08/2026.** O autor pediu o
+backlog completo de uma vez; todos os itens foram implementados na mesma sessão
+(registro completo em `../CONTEXTO.md`, seção "Backlog Kimi implementado — 13
+itens (02/08/2026)"). Este arquivo fica preservado como histórico do
+planejamento — as descrições abaixo referem-se ao estado do livro **antes** da
+implementação. Pontos de verificação rápida do que foi feito:
+
+- **BK-01** → `compressores.tex`, eq. 11.12 (`eq:s11-12`), condições ISO 1217
+  verificadas contra fonte real; Nomenclatura e Cap. 16 (`\eqref`) atualizados.
+- **BK-02** → nova subseção 5.9, eq. 5.14 ($P_{\text{int}}^* = \sqrt{P_1 P_2}$).
+- **BK-03** → item EDM na subseção 4.4 + fechamento eletrostático com eq. 4.13;
+  referência `erdman` (IEEE Trans. IA 32(2), 1996, DOI 10.1109/28.491472)
+  verificada antes de citar.
+- **BK-04** → linha "Posição Axial" ($\delta_{ax}$, μm) na Tabela 18.1 + frase
+  no Cap. 11 ligando eqs. 11.5 → sensor → 11.6.
+- **BK-05** → **decidido com o autor: a máquina real não tem MPV** — item
+  removido da lista de acessórios (mantidas retenção e blow-down).
+- **BK-06** → subseção 8.8, eq. 8.10 ($\omega_{cr,t}$ torcional, `api684`).
+- **BK-07** → subseção 9.7, eq. 9.11 ($\eta_p \leftrightarrow \eta_{is}$).
+- **BK-08** → subseção no Cap. 7 (TAN/ASTM D664, Karl Fischer/ASTM D6304,
+  ISO 4406:2021 — as três verificadas antes de citar).
+- **BK-09** → três inserções: hood como barreira acústica (ISO 2151:2004,
+  verificada), silenciador de admissão somando perda à eq. 5.4, amortecedor de
+  pulsação no Cap. 16.2 (`api618`).
+- **BK-10** → subseção 9.8, eqs. 9.12/9.13 ($u_{\text{tip}}$, $M_{\text{tip}}$).
+- **BK-11** → soft-sensor de $\dot{m}_w$, eq. 12.8 no Cap. 12.
+- **BK-12** → aquecedores anticondensação no item 4.4, ligados à eq. 4.7.
+- **BK-13** → nota de escopo junto ao item PSV no Cap. 3.6 (`asme8`).
+
+Estratégia que evitou renumeração em cascata: toda equação nova foi inserida ao
+fim do capítulo/subseção final — nenhuma equação preexistente mudou de número.
+5 `\bibitem` novos, todos verificados contra fonte real: `erdman`, `iso4406`,
+`astmd664`, `astmd6304`, `iso2151`.
+
+--- 
+
+*Texto original da proposta (estado pré-implementação) preservado abaixo.*
+Cada item indica a lacuna, o local exato no `.tex`, o ajuste proposto e os
+cuidados de convenção. Itens em ordem de prioridade sugerida (alta → baixa).
 
 | ID | Item | Tipo | Prioridade | Capítulo(s) |
 |----|------|------|-----------|-------------|
@@ -323,3 +359,78 @@ Registradas para não reabrir discussão futura:
 3. Ao final de cada sessão de implementação, atualizar `CONTEXTO.md` (o gatilho
    "Atualize contexto" é do autor; sem ele, registrar aqui o que foi feito e
    riscar o item deste backlog).
+
+
+---
+
+# Propostas novas (pós-backlog BK)
+
+## V0-01 — Criar o Volume 0: cálculo básico e notações para o leitor de entrada
+
+**Origem:** pedido do autor em 08/09/2026 — "um volume 0 com os termos
+básicos de cálculo e de notações, para que os mais leigos aprendam e que os
+formados há mais tempo relembrem". Atende também a recomendação do parecer
+Manus (26/07/2026, item 2): um capítulo preparatório para ampliar o público,
+criando dois níveis de leitura.
+
+**Status:** proposta de trabalho — nada implementado.
+
+**Conceito.** Um volume de entrada da coleção *Enciclopédia de Máquinas
+Rotodinâmicas*, posicionado antes do Volume I, cuja única função é remover a
+barreira de linguagem matemática: o leigo aprende do zero; o formado há
+décadas reativa o vocabulário em uma leitura. Nenhuma física de máquinas aqui
+— só a matemática e a notação sem as quais os volumes seguintes não abrem.
+
+**Escopo sugerido (a validar com o autor):**
+
+- **Cálculo elementar em uma variável** — funções, limites, derivada como taxa
+  e como inclinação, regras de derivação, integral definida como acúmulo,
+  teorema fundamental, integrais impróprias (aparecem em todas as vidas úteis
+  do Vol. II).
+- **Cálculo em várias variáveis** — derivadas parciais, gradiente, integrais
+  duplas/triplas e de linha/superfície (teorema de Stokes usado no Cap. 2 do
+  Vol. I).
+- **Equações diferenciais** — ODEs de 1ª e 2ª ordem, lineares, com coeficientes
+  constantes (oscilador massa–mola, circuito RC/RLC como motivação);
+  menção ao que é uma EDP, sem resolvê-las.
+- **Séries e aproximações** — séries de Taylor (base da linearização do EKF e
+  do truncamento de Navier-Stokes), séries geométricas, ordem de grandeza e
+  arredondamento significativo.
+- **Notação de engenharia** — somatórios e produtórios, índices e o convenio
+  de Einstein, delta de Kronecker, letras gregas (tabela de leitura), vetores e
+  tensores em notação de negrito (igual ao Vol. I), números complexos e fasores
+  (ponte para o Cap. 7 do Vol. I), unidades SI e prefixos.
+- **Ferramentas de leitura** — como ler uma equação numerada, como seguir um
+  balanço (entra = sai + acumula), o significado dos operadores ∇, ∂/∂t, D/Dt
+  antes de encontrá-los no Vol. I.
+
+**Decisões em aberto (perguntar ao autor antes de implementar):**
+
+1. **Formato** — novo documento `volume0.tex` (ou nome a definir) com a mesma
+   classe e identidade visual do Vol. I, ou prefácio expandido do Vol. I?
+   (Recomendação: documento separado — um prefácio não dá conta de 60+ páginas
+   e a coleção ganha um degrau de entrada real.)
+2. **Númeração** — Volume 0 implica renumerar? Não: a numeração atual (I e II)
+   permanece; o Volume 0 é anterior e opcional.
+3. **Profundidade** — até onde vai: parar antes de qualquer demonstração não
+   trivial, ou incluir demonstrações curtas didáticas? (Recomendação: só
+   intuição geométrica + regra de uso; demonstrações remetem a bibliografia.)
+4. **Exercícios** — incluir exercícios resolvidos? (O parecer Manus recomenda
+   exemplos numéricos resolvidos como um dos meios de ampliar o público.)
+
+**Convenções ao implementar (seguindo o padrão do Vol. I):**
+
+- Mesma classe `article`, pacotes, identidade visual e estilo de tabela
+  (booktabs, `\caption[curta]{longa}`).
+- Equações numeradas `\label{eq:v0-c<cap>-<n>}`; parágrafo didático **antes**
+  de cada equação; sem equação "crua".
+- Nenhuma referência bibliográfica sem verificação contra fonte real; a
+  bibliografia pode ser mínima (1–2 livros-texto de cálculo, a definir).
+- Nenhuma figura na primeira versão, salvo pedido do autor — o Cap. 7 do
+  Vol. I já registra a questão da primeira figura da coleção.
+- Símbolos novos entram na Nomenclatura do próprio volume (não tocar a do
+  Vol. I); evitar colisões com as letras já saturadas dos volumes I e II.
+- **Sem marcas de ferramenta de IA** em texto, comentários ou metadados —
+  regra declarada pelo autor em 08/09/2026.
+- Compilar 3 passagens, inspecionar o log (`grep -a`), renderizar páginas com
+  `pdftoppm` para conferência visual. **Não commitar sem pedido explícito.**
