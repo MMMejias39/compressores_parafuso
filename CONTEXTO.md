@@ -3570,7 +3570,7 @@ $\tau_a$ do Cap. 6; 5.6 trocadores — LMTD com Figura 5.2 (perfis
 paralelo/contracorrente, TikZ), fator $F$, incrustação, método
 $\varepsilon$-NTU com Figura 5.3 (gráfico pgfplots, contracorrente,
 $C_r = 0 / 0{,}5 / 0{,}75$); 5.7 síntese — Tabelas 5.3 (premissas) e 5.4
-(ligação com o Volume II). 19 equações `eq:v1-c5-1` a `eq:v1-c5-19`.
+(ligação com o Volume II). 18 equações `eq:v1-c5-1` a `eq:v1-c5-18`.
 
 **Figuras.** Três, todas vetoriais e versionadas no próprio .tex (sem
 arquivos externos): circuito térmico e perfis em TikZ puro; gráfico
