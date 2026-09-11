@@ -3594,3 +3594,40 @@ figuras e as quatro tabelas sem corte. Backups: `main_antes_cap5.bak` em
 
 **Nada de marcas de IA** em texto, comentários ou metadados — verificação
 mantida. **Nada commitado além do descrito** — regra permanente.
+
+## Volume I — Ilustração dos capítulos: 22 figuras vetoriais (11/09/2026)
+
+**Motivação.** Pedido do autor: ilustrar os demais capítulos para tornar a
+leitura mais aprazível e apoiar as abstrações mais difíceis.
+
+**Figuras.** 22 figuras novas, todas vetoriais e versionadas no próprio
+.tex (TikZ puro e pgfplots 1.18; `\usetikzlibrary{patterns}` no
+preâmbulo): Cap. 1 — mapa do volume e ligação com o Volume II; Cap. 2 —
+barra deformada, elemento de tensões de Cauchy, curva tensão-deformação
+do aço; Cap. 3 — sistema fechado vs. volume de controle, ciclo de Carnot
+em $T$--$s$, compressões no $p$--$V$; Cap. 4 — regimes laminar e
+turbulento, bocal convergente--divergente, camada limite; Cap. 6 —
+volume de controle genérico, resposta de 1ª ordem ao degrau, cascata de
+volumes de controle; Cap. 7 — circuito RLC, fasores, curva
+torque--velocidade do motor de indução; Cap. 8 — massa--mola--amortecedor,
+rotor desbalanceado, curva S--N; Cap. 9 — cadeia de medição, erros
+sistemático e aleatório; Síntese — trajetória do modelo físico ao Gêmeo
+Digital. Cada figura entra com frase de introdução no ponto da subseção
+em que a abstração mais se beneficia. Duas figuras precisaram de ajuste
+após inspeção visual (mapa do Cap. 1 com sobreposição; legenda do $p$--$V$
+do Cap. 3).
+
+**Verificação.** `pdflatex` 3 passagens: **86 páginas** (era 78), **0
+erros, 0 referências indefinidas**; overfulls apenas os dois baseline
+(0,8 pt Cap. 2; 4,8 pt Cap. 9). Inspeção visual página a página das
+figuras via `pdftoppm` (as de maior risco gráfico conferidas uma a uma).
+
+**Consolidação de nomes.** `Volume_I_Fundamentos.tex/pdf` é o nome
+canônico do Volume I. `teorias.tex/pdf` removidos do repositório (nome
+antigo de trabalho); duplicata acidental `theorias.*` (com ``h'')
+eliminada; cópia datada `Volume_I_Fundamentos_2026-09-09.pdf` removida
+(o histórico do git preserva todas as versões). `compressores.tex/pdf`
+pertecem ao Volume II e não foram tocados.
+
+**Nada de marcas de IA** em texto, comentários ou metadados. **Nada
+commitado além do descrito** — regra permanente.

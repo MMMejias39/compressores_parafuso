@@ -20,6 +20,7 @@
 \usepackage{tabularx}
 \usepackage{longtable}
 \usepackage{tikz}
+\usetikzlibrary{patterns}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 
@@ -585,6 +586,41 @@ de resumo e detalhamento: o Volume II não repete a teoria, ele escolhe as
 hipóteses que a particularizam para aquela máquina e assume as consequências
 dessa escolha.
 
+A Figura~\ref{fig:v1-c1-1} situa o volume no conjunto da obra: cada capítulo
+entrega uma peça --- uma lei de taxa, um balanço, um modelo de componente ---
+e a seta final é sempre a mesma, a construção do modelo dinâmico do
+Volume~II.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=0.92, transform shape,
+  caixa/.style={draw, rounded corners=2pt, align=center,
+  minimum height=0.85cm, inner sep=4pt},
+  fund/.style={caixa, fill=black!8}]
+\node[fund] (c2) at (0,0) {Contínuo\\(Cap. 2)};
+\node[fund] (c3) at (2.9,0) {Termodinâmica\\(Cap. 3)};
+\node[fund] (c4) at (5.8,0) {Fluidos\\(Cap. 4)};
+\node[fund] (c5) at (8.7,0) {Calor\\(Cap. 5)};
+\node[fund] (c6) at (11.6,0) {Sistemas\\(Cap. 6)};
+\node[caixa, fill=black!18, minimum width=2.2cm] (v2) at (13.9,-1.5)
+  {Volume II:\\máquinas e\\dinâmica};
+\node[caixa] (c7) at (2.2,-3.2) {Eletricidade (Cap. 7)};
+\node[caixa] (c8) at (6.6,-3.2) {Mecânica (Cap. 8)};
+\node[caixa] (c9) at (10.6,-3.2) {Instrumentação (Cap. 9)};
+\foreach \a/\b in {c2/c3, c3/c4, c4/c5, c5/c6}
+  \draw[->, thick] (\a) -- (\b);
+\draw[->, thick] (c6.east) -- (v2.north west);
+\draw[->, thick] (c7.north) .. controls (4,-1.8) .. (v2.south west);
+\draw[->, thick] (c8.north) -- (v2.south);
+\draw[->, thick] (c9.north) -- (v2.south east);
+\end{tikzpicture}
+\caption[Mapa do Volume I e sua ligação com o Volume II.]{Mapa do Volume I:
+a cadeia de balanços (Capítulos 2 a 6) conduz à dinâmica do Volume~II; os
+capítulos de componentes (7 a 9) alimentam o mesmo destino.}
+\label{fig:v1-c1-1}
+\end{figure}
+
+
 Dois exemplos tornam a relação concreta. A primeira lei aplicada a um volume
 de controle (Capítulo~\ref{sec:termodinamica}) é geral; ao aplicá-la a um
 estágio de compressão, o Volume II fixa o processo como politrópico, adota um
@@ -931,6 +967,43 @@ de sinal em balanços de máquinas em operação contínua.
 Deformação é uma noção geométrica: mede quanto as distâncias entre pontos
 materiais vizinhos mudaram. Nada nesta seção depende do material.
 
+A Figura~\ref{fig:v1-c2-1} fixa a ideia central no caso mais simples, a barra
+unidimensional: dois pontos vizinhos se separam por uma distância que muda
+com a deformação --- e é essa \emph{mudança relativa} que a medida de
+deformação quantifica, não o deslocamento absoluto.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small, scale=1.05]
+% barra indeformada
+\draw[thick] (0,0) -- (6.4,0);
+\fill (1,0) circle (1.6pt) node[below=3pt] {$A$};
+\fill (4.5,0) circle (1.6pt) node[below=3pt] {$B$};
+\draw[<->] (1,0.5) -- (4.5,0.5) node[midway, above=1pt] {$dx$};
+\node at (3.2,-0.8) {(a) Referência: pontos materiais $A$ e $B$};
+% barra deformada
+\begin{scope}[yshift=-3.1cm]
+\draw[thick, dashed, black!55] (0,0) -- (6.4,0);
+\draw[thick] (0,-0.5) -- (6.4,-0.5);
+\fill (1.3,-0.5) circle (1.6pt) node[below=3pt] {$A'$};
+\fill (5.2,-0.5) circle (1.6pt) node[below=3pt] {$B'$};
+\draw[<->] (1.3,0.5) -- (5.2,0.5) node[midway, above=1pt] {$dx + du$};
+\draw[<->, black!60] (1,-0.9) -- (1.3,-0.9) node[midway, below=1pt]
+  {\footnotesize $u$};
+\draw[<->, black!60] (4.5,-0.9) -- (5.2,-0.9) node[midway, below=1pt]
+  {\footnotesize $u + du$};
+\node at (3.2,-1.55) {(b) Deformada: $A$ e $B$ deslocam-se, e a distância
+entre eles muda de $dx$ para $dx + du$};
+\end{scope}
+\end{tikzpicture}
+\caption[Deformação unidimensional como mudança relativa de distância.]{%
+Deformação unidimensional: o que a medida $\varepsilon = du/dx$ registra é a
+mudança \emph{relativa} da distância entre dois pontos vizinhos, não o
+deslocamento absoluto deles.}
+\label{fig:v1-c2-1}
+\end{figure}
+
+
 O objeto fundamental é o \textbf{gradiente de deformação} $\mathbf{F}$,
 definido na Equação~\eqref{eq:v1-c2-6}, que transporta um segmento
 infinitesimal da configuração de referência para a atual:
@@ -1047,6 +1120,39 @@ eletromagnéticas, e as forças de inércia aparentes num referencial girante), 
 fronteira. As primeiras se escrevem como $\rho\mathbf{b}$ por unidade de
 volume. As segundas exigem mais cuidado, e é delas que nasce o conceito de
 tensão.
+
+A Figura~\ref{fig:v1-c2-2} mostra o estado de tensão num elemento plano: as
+componentes normais $\sigma$ puxam ou empurram as faces; as cisalhantes
+$\tau$ deslizam uma face sobre a outra --- e a simetria $\tau_{xy} =
+\tau_{yx}$ é o que garante o equilíbrio de momentos do elemento.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small, scale=1.25]
+\draw[thick] (0,0) rectangle (2,2);
+% tensoes normais
+\draw[->, thick] (0,1) -- (-0.7,1) node[left] {$\sigma_{xx}$};
+\draw[->, thick] (2,1) -- (2.7,1) node[right] {$\sigma_{xx}$};
+\draw[->, thick] (1,2) -- (1,2.7) node[above] {$\sigma_{yy}$};
+\draw[->, thick] (1,0) -- (1,-0.7) node[below] {$\sigma_{yy}$};
+% cisalhantes
+\draw[->, thick] (0.55,2) -- (1.45,2);
+\node[above] at (1,2.05) {\scriptsize $\tau_{yx}$};
+\draw[->, thick] (0.55,0) -- (-0.35,0);
+\draw[->, thick] (1.45,0) -- (2.35,0);
+\node[below] at (0.1,0) {\scriptsize $\tau_{yx}$};
+\node[below] at (2.0,0) {\scriptsize $\tau_{yx}$};
+\draw[->, thick] (0,0.55) -- (0,1.45);
+\node[left] at (0,1) {\scriptsize $\tau_{xy}$};
+\draw[->, thick] (2,0.55) -- (2,1.45);
+\node[right] at (2,1) {\scriptsize $\tau_{xy}$};
+\end{tikzpicture}
+\caption[Estado de tensão num elemento plano.]{Estado de tensão num
+elemento plano: componentes normais $\sigma$ e cisalhantes $\tau$ nas duas
+direções. O equilíbrio de momentos impõe $\tau_{xy} = \tau_{yx}$.}
+\label{fig:v1-c2-2}
+\end{figure}
+
 
 Define-se o \textbf{vetor tensão} $\mathbf{t}_{(\mathbf{n})}$ como a força de
 contato por unidade de área que o material do lado para o qual aponta o vetor
@@ -1280,6 +1386,36 @@ $\mathbf{q}$ e a temperatura $T$ --- quinze ao todo. As equações disponíveis
 são a continuidade (uma), o movimento de Cauchy (três) e a energia (uma):
 cinco. Faltam dez.
 
+A Figura~\ref{fig:v1-c2-3} desenha o comportamento tensão--deformação de um
+aço estrutural típico: a reta elástica fixa o módulo $E$; o patamar marca o
+escoamento; e a ruptura define onde a hipótese de pequenas deformações deixa
+de poder ser invocada.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=11cm, height=7cm, xlabel={Deformação $\varepsilon$},
+ylabel={Tensão $\sigma$ (MPa)}, xmin=0, xmax=0.28, ymin=0, ymax=500,
+xtick={0,0.05,0.1,0.15,0.2,0.25}, ytick={0,100,200,300,400,500},
+grid=both, label style={font=\small}, legend pos=south east,
+legend style={font=\footnotesize}]
+\addplot[thick] coordinates {(0,0) (0.00125,250) (0.02,250) (0.18,450)
+(0.25,300)};
+\addplot[dashed, black!60] coordinates {(0.00125,0) (0.00125,250)};
+\node[font=\footnotesize, anchor=west] at (axis cs:0.03,120) {$E$ (reta
+elástica)};
+\node[font=\footnotesize, anchor=south west] at (axis cs:0.075,255)
+{escoamento};
+\node[font=\footnotesize, anchor=east] at (axis cs:0.245,330) {ruptura};
+\end{axis}
+\end{tikzpicture}
+\caption[Curva tensão--deformação característica de um aço.]{Curva
+tensão--deformação de um aço estrutural típico: trecho elástico linear
+(módulo $E$), patamar de escoamento, endurecimento e ruptura.}
+\label{fig:v1-c2-3}
+\end{figure}
+
+
 As dez equações que faltam são as \textbf{relações constitutivas}, e é
 exatamente nelas que o material entra. Elas não são deduzidas das leis de
 balanço; são modelos, ajustados a experimento, sujeitos a três princípios que
@@ -1461,6 +1597,39 @@ organizam naturalmente em quatro grupos: acúmulo no interior, transporte
 convectivo pelas portas, condução de calor pela fronteira e trabalho das forças
 de superfície.
 
+A Figura~\ref{fig:v1-c3-1} contrasta os dois objetos que a termodinâmica
+trata: o sistema fechado, cuja fronteira contém sempre a mesma massa, e o
+volume de controle, por que a massa atravessa --- é o volume de controle que
+os balanços do Capítulo~\ref{sec:sistemas} farão calculável.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small]
+% (a) sistema fechado: pistao
+\begin{scope}
+\draw[thick] (0,0) rectangle (3.4,1.9);
+\draw[thick, fill=black!15] (2.3,0.15) rectangle (2.75,1.75);
+\node at (1.15,0.95) {gás};
+\draw[thick, ->] (2.75,0.95) -- (3.15,0.95) node[right=1pt] {$p$};
+\draw[dashed, rounded corners=3pt] (-0.25,-0.25) rectangle (3.65,2.15);
+\node[align=center] at (1.7,-0.75) {(a) Sistema fechado:\\a massa fica};
+\end{scope}
+% (b) volume de controle
+\begin{scope}[xshift=7cm]
+\draw[thick, dashed, rounded corners=3pt] (0,0) rectangle (3.4,1.9);
+\draw[->, thick] (-1.1,0.95) -- (0,0.95) node[midway, above] {$\dot{m}_e$};
+\draw[->, thick] (3.4,0.95) -- (4.5,0.95) node[midway, above] {$\dot{m}_s$};
+\node at (1.7,0.95) {volume de controle};
+\node[align=center] at (1.7,-0.75) {(b) Volume de controle:\\a massa atravessa};
+\end{scope}
+\end{tikzpicture}
+\caption[Sistema fechado e volume de controle.]{Os dois objetos da
+termodinâmica aplicada: o sistema fechado (a), com fronteira selada à massa,
+e o volume de controle (b), por cuja fronteira a massa e a energia fluem.}
+\label{fig:v1-c3-1}
+\end{figure}
+
+
 O terceiro grupo merece atenção, porque é dele que nasce a entalpia. O trabalho
 das forças de superfície nas portas de entrada e saída não é livre: para
 empurrar massa para dentro contra a pressão $p$, é preciso realizar trabalho. A
@@ -1513,6 +1682,39 @@ ciclo pode converter integralmente calor de uma única fonte em trabalho. O de
 \textbf{Clausius} afirma que calor não passa espontaneamente de um corpo frio
 para um quente. Demonstra-se que negar um implica negar o outro, de modo que os
 dois enunciam a mesma lei.
+
+O ciclo de Carnot, desenhado no diagrama temperatura--entropia da
+Figura~\ref{fig:v1-c3-2}, é o retângulo que delimita o que a segunda lei
+proíbe: nenhum ciclo operando entre as mesmas duas temperaturas converte mais
+calor em trabalho do que ele --- e nenhum o iguala fora das hipóteses de
+reversibilidade.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=10cm, height=6.8cm, xlabel={Entropia $s$},
+ylabel={Temperatura $T$}, xmin=0, xmax=5, ymin=0, ymax=5,
+xtick=\empty, ytick=\empty, axis lines=left, label style={font=\small},
+clip=false]
+\draw[thick, ->] (axis cs:1,4) -- (axis cs:3.9,4)
+  node[midway, above, font=\small] {$Q_q$ (isotérmica quente)};
+\draw[thick, ->] (axis cs:4,3.9) -- (axis cs:4,1.1)
+  node[midway, right, font=\small, align=left] {adiabática\\reversível};
+\draw[thick, ->] (axis cs:3.9,1) -- (axis cs:1.1,1)
+  node[midway, below, font=\small] {$Q_f$ (isotérmica fria)};
+\draw[thick, ->] (axis cs:1,1.1) -- (axis cs:1,3.9)
+  node[midway, left, font=\small, align=right] {adiabática\\reversível};
+\node[font=\small] at (axis cs:2.5,2.5) {$W_{liq}$};
+\node[font=\small, left] at (axis cs:1,4) {$T_q$};
+\node[font=\small, left] at (axis cs:1,1) {$T_f$};
+\end{axis}
+\end{tikzpicture}
+\caption[O ciclo de Carnot no diagrama $T$--$s$.]{O ciclo de Carnot no
+diagrama $T$--$s$: duas isotérmicas reversíveis ligadas por duas adiabáticas
+reversíveis. É o ciclo de maior rendimento possível entre $T_q$ e $T_f$.}
+\label{fig:v1-c3-2}
+\end{figure}
+
 
 Da segunda lei decorre o resultado de \textbf{Carnot}: todas as máquinas
 térmicas reversíveis operando entre os mesmos dois reservatórios têm a mesma
@@ -1640,6 +1842,35 @@ p\,v^{\gamma} = \text{const.}
 \end{equation}
 Note que a segunda forma não foi postulada: ela é consequência da primeira, da
 equação de estado e da hipótese de calores específicos constantes.
+
+A Figura~\ref{fig:v1-c3-3} reúne, num mesmo diagrama $p$--$V$, a compressão
+de um gás ideal pelos três caminhos clássicos: a isotérmica (mais fria, mais
+trabalho poupado), a adiabática e a politrópica intermediária. A área sob
+cada curva é o trabalho de compressão --- o desenho torna visual a
+economia da refrigeração intermediária.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=11cm, height=7.5cm, xlabel={Volume $V$},
+ylabel={Pressão $p$}, xmin=0.5, xmax=2.2, ymin=0.4, ymax=2.4,
+xmode=log, ymode=log, log basis x=2, log basis y=2,
+xticklabels={}, yticklabels={}, grid=both, label style={font=\small},
+legend pos=north east, legend style={font=\small}]
+\addplot[domain=0.5:2, samples=80, thick] {x^(-1)}
+  node[pos=0.15, above, sloped, font=\footnotesize] {};
+\addplot[domain=0.5:2, samples=80, thick, dashed] {1.32*x^(-1.4)};
+\addplot[domain=0.5:2, samples=80, thick, dotted] {1.1*x^(-1.2)};
+\legend{isotérmica ($n=1$), adiabática ($n=\gamma$), politrópica ($1<n<\gamma$)}
+\end{axis}
+\end{tikzpicture}
+\caption[Compressão isotérmica, politrópica e adiabática no diagrama $p$--$V$.]{%
+Compressão de um gás ideal por três caminhos: a área sob cada curva é o
+trabalho exigido --- a isotérmica consome menos, a adiabática mais, e as
+politrópicas reais ficam entre elas.}
+\label{fig:v1-c3-3}
+\end{figure}
+
 
 Compressão real não é isentrópica --- há troca de calor com a carcaça e há
 irreversibilidade. A generalização usual substitui $\gamma$ por um expoente
@@ -1988,6 +2219,40 @@ modela filtro, tubulação ou válvula.
 \subsection{Perda de carga: atrito distribuído e perdas
 localizadas}\label{sub:v1-c4-perda}
 
+A Figura~\ref{fig:v1-c4-1} contrasta os dois regimes de escoamento interno:
+no laminar, as camadas deslizam ordenadamente; no turbulento, a mistura
+macroscópica domina. O regime decide qual lei de atrito vale --- e por isso o
+número de Reynolds é a primeira pergunta de qualquer conta de perda de carga.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+% laminar
+\begin{scope}
+\draw (0,0) rectangle (5,1.6);
+\foreach \y/\c in {0.2/10, 0.5/25, 0.8/45, 1.1/25, 1.4/10}
+  \draw[black!\c, thick, -stealth] (0.15,\y) -- (4.85,\y);
+\node at (2.5,-0.45) {(a) Laminar: camadas ordenadas};
+\end{scope}
+% turbulento
+\begin{scope}[yshift=-2.9cm]
+\draw (0,0) rectangle (5,1.6);
+\draw[-stealth, thick] (0.15,0.3) .. controls (1.5,0.9) and (2,0.1)
+  .. (3,0.8) .. controls (3.8,1.4) and (4.5,0.5) .. (4.85,1.0);
+\draw[-stealth, thick] (0.15,1.2) .. controls (1,0.4) and (2.2,1.5)
+  .. (3.1,0.5) .. controls (3.9,0.0) and (4.2,1.2) .. (4.85,0.4);
+\draw[-stealth, thick] (0.15,0.75) .. controls (1.2,1.5) and (1.8,0.2)
+  .. (2.9,1.1) .. controls (3.6,1.6) and (4.4,0.7) .. (4.85,0.9);
+\node at (2.5,-0.45) {(b) Turbulento: mistura caótica};
+\end{scope}
+\end{tikzpicture}
+\caption[Regimes laminar e turbulento em escoamento interno.]{Regimes de
+escoamento interno: (a) laminar, com camadas ordenadas, e (b) turbulento,
+com mistura macroscópica. O número de Reynolds decide qual dos dois vale.}
+\label{fig:v1-c4-1}
+\end{figure}
+
+
 A perda de carga distribuída --- atrito ao longo do duto --- tem forma única
 para escoamento interno estabelecido, deduzida por análise dimensional e
 confirmada por ensaio: a equação de Darcy-Weisbach, Equação~\eqref{eq:v1-c4-8}:
@@ -2046,6 +2311,38 @@ e~\eqref{eq:v1-c4-11} deste capítulo.
 
 \subsection{Escoamento compressível em restrições: o orifício e o
 bloqueio}\label{sub:v1-c4-comprimivel}
+
+A Figura~\ref{fig:v1-c4-2} esquematiza o que ocorre numa restrição
+convergente-divergente: a seção de garganta é onde a velocidade atinge o
+som, e só depois dela a pressão pode se recuperar --- princípio que os
+orifícios de medição de vazão exploram e que os bocais de descarga respeitam.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small, scale=1.1]
+% contorno do bocal
+\draw[thick] (0,0.9) .. controls (2.2,0.85) and (3.4,0.35) .. (4,0.18);
+\draw[thick] (0,-0.9) .. controls (2.2,-0.85) and (3.4,-0.35) .. (4,-0.18);
+\draw[thick] (4,0.18) .. controls (5.2,0.55) and (6.6,0.9) .. (8.5,1.0);
+\draw[thick] (4,-0.18) .. controls (5.2,-0.55) and (6.6,-0.9) .. (8.5,-1.0);
+% linhas de corrente
+\foreach \y in {0.55, 0.2, -0.2, -0.55}
+  \draw[black!45, -stealth] (0.1,\y) -- (7.9,\y*1.25);
+% garganta
+\draw[dashed] (4,0.18) -- (4,-0.18);
+\node[above, font=\footnotesize] at (4,0.2) {garganta: $Ma = 1$};
+\node[font=\footnotesize] at (1.6,0.62) {$Ma < 1$};
+\node[font=\footnotesize] at (6.6,0.75) {$Ma > 1$};
+\draw[->, thick] (0.4,-1.35) -- (8.1,-1.35) node[below left=1pt, font=\small]
+{$x$};
+\end{tikzpicture}
+\caption[Bocal convergente--divergente e regiões sub e supersônicas.]{%
+Bocal convergente--divergente: a velocidade atinge o som na garganta e segue
+crescendo na parte divergente. É o princípio dos bocais e das medições por
+restrição.}
+\label{fig:v1-c4-2}
+\end{figure}
+
 
 Quando a hipótese da Seção~\ref{sub:v1-c4-incompressivel} falha, a pergunta
 certa deixa de ser ``quanto a pressão cai'' e passa a ser ``qual vazão
@@ -2130,6 +2427,37 @@ indicador de degradação do próprio leito.
 
 \subsection{Escoamentos em rotação: camada limite e separação
 centrífuga}\label{sub:v1-c4-rotativo}
+
+A Figura~\ref{fig:v1-c4-3} desenha a camada limite sobre uma placa plana: a
+velocidade cresce de zero na parede até a corrente livre, e a região de
+ajuste --- a camada limite --- engrossa no sentido do escoamento. Quase toda
+a física viscosa do Capítulo acontece dentro dela.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small, scale=1.15]
+\draw[thick] (0,0) -- (9.3,0);
+\draw[black!60, dashed, thick] (0,0.15) .. controls (3,0.8) and (6,1.6)
+  .. (9.2,2.3);
+\node[black!60, font=\footnotesize, rotate=13] at (7.6,2.35) {$\delta(x)$};
+% perfis de velocidade
+\foreach \x/\h in {1.3/0.45, 4.3/0.85, 7.3/1.35}{
+  \draw[thick, ->] (\x,0) .. controls (\x+0.12,\h*0.55) .. (\x+0.18,\h);}
+\draw[->, thick] (0.3,2.15) -- (1.6,2.15) node[right, font=\footnotesize]
+{$u_\infty$ (corrente livre)};
+\draw[<->, black!60] (9.05,0) -- (9.05,2.28);
+\node[black!60, font=\footnotesize, rotate=90, above] at (9.15,1.1) {};
+\draw[->, thick] (0.3,-0.5) -- (9.1,-0.5) node[below left=1pt, font=\small]
+{$x$};
+\node[font=\footnotesize] at (2.6,0.28) {$u = 0$ na parede};
+\end{tikzpicture}
+\caption[Camada limite sobre placa plana com perfis de velocidade.]{%
+Camada limite sobre placa plana: a velocidade cresce de zero (parede) até a
+corrente livre $u_\infty$, e a espessura $\delta(x)$ aumenta no sentido do
+escoamento.}
+\label{fig:v1-c4-3}
+\end{figure}
+
 
 A simplificação viscoso/inviscido do fim da
 Seção~\ref{sub:v1-c4-bases} ganha corpo na noção de \textbf{camada limite}:
@@ -2635,7 +2963,7 @@ temperatura de saída do refrigerante, o que o paralelo jamais permite.
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[font=\footnotesize,
+\begin{tikzpicture}[font=\footnotesize, scale=0.92, transform shape,
   perfil/.style={thick},
   eixos/.style={->}]
 % --- (a) paralelo ---
@@ -2828,6 +3156,35 @@ secador que satura, a carcaça que esquenta, a frota que equilibra demanda.
 \subsection{Bases físicas: do balanço diferencial ao volume de controle
 finito}\label{sub:v1-c6-bases}
 
+A Figura~\ref{fig:v1-c6-1} fixa o vocabulário do capítulo: um volume de
+controle generoso, com fluxos entrando e saindo, geração interna e o que se
+acumula --- os quatro termos da Equação~\eqref{eq:v1-c6-1}.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small, scale=1.05]
+\draw[thick, dashed, rounded corners=4pt] (0,0) rectangle (4.6,2.6);
+\node at (2.3,2.95) {volume de controle};
+% entrada
+\draw[->, thick] (-1.9,1.9) -- (0,1.9) node[midway, above] {$\dot{\mathcal{B}}_e$};
+\draw[->, thick] (-1.9,0.7) -- (0,0.7) node[midway, above] {$\dot{m}_e$};
+% saida
+\draw[->, thick] (4.6,1.9) -- (6.5,1.9) node[midway, above] {$\dot{\mathcal{B}}_s$};
+\draw[->, thick] (4.6,0.7) -- (6.5,0.7) node[midway, above] {$\dot{m}_s$};
+% geracao
+\node[align=center] at (2.3,1.55) {$\dot{\mathcal{B}}_{ger}$};
+\draw[->, thick] (2.3,1.3) -- (2.3,0.85);
+% acumulo
+\node[align=center] at (2.3,-0.75) {acúmulo: $d\mathcal{B}_{VC}/dt$};
+\draw[->, thick] (2.3,-0.45) -- (2.3,0.1);
+\end{tikzpicture}
+\caption[O volume de controle e seus quatro termos de balanço.]{O volume de
+controle: entradas, saídas, geração interna e acúmulo --- os quatro termos
+do balanço geral.}
+\label{fig:v1-c6-1}
+\end{figure}
+
+
 O ponto de partida rigoroso é o teorema de transporte de Reynolds,
 Equação~\eqref{eq:v1-c2-19}: a taxa de variação de uma grandeza extensiva
 dentro de uma região que se move com o fluido se decompõe em variação dentro
@@ -2940,6 +3297,37 @@ permanente.
 \subsection{Regime transiente e a noção de
 capacitância}\label{sub:v1-c6-transiente}
 
+A Figura~\ref{fig:v1-c6-2} desenha a assinatura dos sistemas de primeira
+ordem: ao degrau aplicado na entrada, a saída aproxima-se do novo valor com
+ritmo exponencial --- 63,2\,\% do caminho percorrido em uma constante de
+tempo, quase tudo em cinco.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=11cm, height=6.5cm, xlabel={$t/\tau_a$},
+ylabel={$y(t)$}, xmin=0, xmax=5, ymin=0, ymax=1.25,
+xtick={0,1,2,3,4,5}, ytick={0,0.2,0.4,0.6,0.8,1},
+grid=both, label style={font=\small}]
+\addplot[domain=0:5, samples=100, thick] {1-exp(-x)};
+\addplot[dashed, black!60] coordinates {(0,1) (5,1)};
+\addplot[dashed, black!60] coordinates {(1,0) (1,0.632)};
+\addplot[dashed, black!60] coordinates {(0,0.632) (1,0.632)};
+\node[font=\footnotesize] at (axis cs:2.3,0.45) {$y_\infty\bigl(1 -
+e^{-t/\tau_a}\bigr)$};
+\node[font=\footnotesize, anchor=south west] at (axis cs:1.02,0.45)
+{63,2\,\% em $t = \tau_a$};
+\node[font=\footnotesize, anchor=south west] at (axis cs:0.05,1.03) {degrau
+na entrada};
+\end{axis}
+\end{tikzpicture}
+\caption[Resposta de primeira ordem ao degrau.]{Resposta de primeira ordem
+ao degrau: aproximação exponencial ao novo valor, com 63,2\,\% do caminho em
+uma constante de tempo e 99\,\% em cinco.}
+\label{fig:v1-c6-2}
+\end{figure}
+
+
 Fora do regime permanente, o lado esquerdo da
 Equação~\eqref{eq:v1-c6-1} deixa de ser nulo --- e é ele que modela a
 inércia dos sistemas. Para a massa, a Equação~\eqref{eq:v1-c6-6}:
@@ -3021,6 +3409,37 @@ Volume~II registra ao tratar de \textit{blow-down}.
 
 \subsection{Sistemas em série: a cascata de volumes de
 controle}\label{sub:v1-c6-cascata}
+
+A Figura~\ref{fig:v1-c6-3} desenha a cascata: a saída de cada volume é
+entrada do seguinte, e o que se acumula nos nós internos --- condensado,
+energia na carcaça --- é o que o Gêmeo Digital contabiliza para fechar o
+balanço.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small,
+  vc/.style={draw, rounded corners=3pt, minimum width=2.1cm,
+  minimum height=1.2cm, align=center}]
+\node[vc] (vc1) at (0,0) {volume de\\controle 1};
+\node[vc] (vc2) at (4.4,0) {volume de\\controle 2};
+\node[vc] (vc3) at (8.8,0) {volume de\\controle 3};
+\draw[->, thick] (-1.8,0.35) -- (vc1.west |- 0,0.35);
+\draw[->, thick] (vc1) -- (vc2) node[midway, above] {$\dot{m}$, $\dot{\mathcal{B}}$};
+\draw[->, thick] (vc2) -- (vc3) node[midway, above] {$\dot{m}$, $\dot{\mathcal{B}}$};
+\draw[->, thick] (vc3.east |- 0,0.35) -- (10.9,0.35);
+% nos e acumulos
+\fill (2.2,0) circle (1.6pt); \fill (6.6,0) circle (1.6pt);
+\node[align=center, font=\footnotesize] at (2.2,-1.05) {nó 1:\\acúmulo local};
+\node[align=center, font=\footnotesize] at (6.6,-1.05) {nó 2:\\acúmulo local};
+\draw[->, thick] (2.2,-0.75) -- (2.2,-0.15);
+\draw[->, thick] (6.6,-0.75) -- (6.6,-0.15);
+\end{tikzpicture}
+\caption[Cascata de volumes de controle com nós de acúmulo.]{Cascata de
+volumes de controle: as fronteiras internas são os nós onde o acúmulo local
+se contabiliza --- base do fechamento de balanço do Gêmeo Digital.}
+\label{fig:v1-c6-3}
+\end{figure}
+
 
 A última especialização não é de grandeza, mas de arquitetura. Um trem de
 compressão é uma cadeia de volumes de controle em que a saída de cada um é
@@ -3303,6 +3722,37 @@ meio que o cerca, e não apenas da corrente que ele conduz.
 \subsection{A hipótese de parâmetros concentrados e seus
 limites}\label{sub:v1-c7-concentrados}
 
+A Figura~\ref{fig:v1-c7-1} mostra o circuito RLC série, o sistema de
+referência do capítulo: a mesma corrente atravessa os três elementos, e a
+soma das quedas de tensão iguala a da fonte --- a lei de Kirchhoff das
+tensões em ação.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small, scale=1.1,
+  elem/.style={draw, minimum width=1.15cm, minimum height=0.6cm}]
+\draw[thick] (0,0) -- (0.4,0);
+\draw[thick] (0.4,-0.55) circle (0.55);
+\node at (0.4,0) {\small $\sim$};
+\draw[thick] (0.95,0) -- (1.7,0);
+\node[elem] (r) at (2.55,0) {$R$};
+\node[elem] (l) at (5.05,0) {$L$};
+\draw[thick] (6.55,0) -- (7.1,0);
+\draw[thick] (7.1,-0.3) -- (7.1,0.3);
+\draw[thick] (7.5,-0.3) -- (7.5,0.3);
+\draw[thick] (7.5,0) -- (8.1,0) -- (8.1,-1.5) -- (0.4,-1.5) -- (0.4,-0.55);
+\draw[->, thick] (1.1,-1.5) -- (2.1,-1.5) node[midway, below] {$i(t)$};
+\node[font=\small] at (7.3,0.75) {$C$};
+\draw[black!60, dashed] (2.55,-0.55) -- (2.55,-0.95) node[below,
+font=\footnotesize, align=center] {queda $Ri$};
+\end{tikzpicture}
+\caption[Circuito RLC série alimentado por fonte senoidal.]{Circuito RLC
+série: a corrente $i(t)$ é comum aos três elementos, e a soma das quedas
+iguala a tensão da fonte --- a base do regime permanente senoidal.}
+\label{fig:v1-c7-1}
+\end{figure}
+
+
 A Seção~\ref{sub:v1-c2-hipotese} mostrou que tratar matéria discreta como campo
 contínuo exige uma separação de escalas, medida pelo número de Knudsen. A
 teoria de circuitos exige uma redução análoga, e em sentido oposto: ela
@@ -3543,6 +3993,32 @@ Aceita a hipótese de parâmetros concentrados, resta resolver as equações
 diferenciais do circuito. Quando a excitação é senoidal de frequência única e o
 circuito é linear e invariante no tempo, existe um atalho que não custa
 nenhuma aproximação adicional.
+
+A Figura~\ref{fig:v1-c7-2} desenha o regime senoidal: corrente atrasada em
+relação à tensão, como ocorre numa carga predominantemente indutiva --- o
+atraso é o que o fator de potência quantifica.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=11.5cm, height=6.5cm, xlabel={$\omega t$ (graus)},
+ylabel={}, xmin=0, xmax=360, ymin=-1.4, ymax=1.4,
+xtick={0,60,120,180,240,300,360}, ytick={-1,-0.5,0.5,1},
+grid=both, label style={font=\small}, legend pos=north east,
+legend style={font=\small}]
+\addplot[domain=0:360, samples=180, thick] {sin(x)};
+\addplot[domain=0:360, samples=180, thick, dashed] {0.85*sin(x-60)};
+\legend{$v(t)$, $i(t)$ (atrasada)}
+\draw[<->, black!70] (axis cs:95,0.75) -- (axis cs:155,0.75)
+  node[midway, above, font=\footnotesize] {$\varphi$};
+\end{axis}
+\end{tikzpicture}
+\caption[Tensão e corrente defasadas numa carga indutiva.]{Regime
+permanente senoidal: a corrente atrasada de um ângulo $\varphi$ em relação
+à tensão --- a defasagem que o fator de potência $\cos\varphi$ quantifica.}
+\label{fig:v1-c7-2}
+\end{figure}
+
 
 O argumento é o seguinte, e convém enunciá-lo porque é ele que delimita o uso.
 A resposta de um sistema linear invariante no tempo a $e^{j\omega t}$ é
@@ -3846,6 +4322,38 @@ para coincidir com a do Volume II; o número de pares é $p/2$. A colisão com $
 minúsculo de pressão, dos capítulos de termodinâmica, é aparente apenas: não há
 contexto em que as duas grandezas compareçam à mesma equação. Um motor de
 quatro polos em $60\,$Hz gira, portanto, com campo a $1800\,$rpm.
+
+A Figura~\ref{fig:v1-c7-3} desenha a assinatura do motor de indução: o
+torque parte de um valor de partida, atinge um pico e cai até zerar na
+velocidade síncrona --- o escorregamento é a variável de projeto que posiciona
+o ponto de operação na curva.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=11.5cm, height=7cm, xlabel={Velocidade relativa
+$n/n_s$}, ylabel={Torque $T/T_n$}, xmin=0, xmax=1.05, ymin=0, ymax=3,
+xtick={0,0.2,0.4,0.6,0.8,1}, ytick={0,1,2,3}, grid=both,
+label style={font=\small}]
+\addplot[thick] coordinates {(0,1.6) (0.15,2.6) (0.55,1.5) (0.8,1.05)
+(0.97,1.0) (1,0)};
+\addplot[dashed, black!60] coordinates {(0.97,0) (0.97,1)};
+\addplot[dashed, black!60] coordinates {(0,1) (1,1)};
+\node[font=\footnotesize, anchor=south] at (axis cs:0.15,2.65) {torque de
+ruptura};
+\node[font=\footnotesize, anchor=west] at (axis cs:0.13,1.6) {partida};
+\node[font=\footnotesize, anchor=south east] at (axis cs:0.97,0.1) {$n_s$};
+\node[font=\footnotesize, anchor=south west] at (axis cs:0.5,1.06)
+{$T_n$ (nominal)};
+\end{axis}
+\end{tikzpicture}
+\caption[Curva torque--velocidade do motor de indução.]{Curva
+torque--velocidade do motor de indução: partida, pico (torque de ruptura),
+queda até zero na velocidade síncrona. O escorregamento posiciona o ponto
+de operação.}
+\label{fig:v1-c7-3}
+\end{figure}
+
 
 \textbf{Por que o rotor precisa escorregar.} A máquina de indução não tem
 alimentação no rotor: a corrente que o percorre é \emph{induzida}. Pela lei de
@@ -4242,6 +4750,40 @@ e a frequência natural amortecida, Equação~\eqref{eq:v1-c8-10},
 \end{equation}
 onde $\zeta = c/(2\sqrt{km})$ é a razão de amortecimento.
 
+A Figura~\ref{fig:v1-c8-1} fixa o modelo de um grau de liberdade: massa,
+mola e amortecedor respondem à excitação com a dinâmica que as
+Seções~\ref{sub:v1-c8-vibracoes} e \ref{sub:v1-c8-desbalanceamento}
+analisam.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small, scale=1.05]
+% teto
+\fill[pattern=north east lines] (-0.3,0) rectangle (3.6,0.22);
+\draw[thick] (-0.3,0.22) -- (3.6,0.22);
+% mola (zigzag)
+\draw[thick] (0.7,0.22) -- (0.7,-0.15)
+  \foreach \i in {0,...,4} { -- ++(0.22,-0.28) -- ++(0.22,0.28) } -- (2.6,-1.5);
+% amortecedor
+\draw[thick] (2.9,0.22) -- (2.9,-0.6);
+\draw[thick] (2.55,-0.6) -- (3.25,-0.6);
+\draw[thick] (2.55,-0.6) -- (2.55,-0.85);
+\draw[thick] (3.25,-0.6) -- (3.25,-0.85);
+\draw[thick] (2.4,-0.85) -- (3.4,-0.85);
+\draw[thick] (2.9,-0.85) -- (2.9,-1.5);
+% massa
+\draw[thick, fill=black!12] (-0.1,-1.5) rectangle (3.5,-2.7);
+\node at (1.7,-2.1) {$m$};
+\node[font=\small] at (1.7,-3.15) {$F(t)$};
+\draw[->, thick] (1.7,-2.85) -- (1.7,-2.7);
+\end{tikzpicture}
+\caption[Sistema massa--mola--amortecedor de um grau de liberdade.]{%
+Sistema de um grau de liberdade: a massa $m$ suspensa pela mola $k$ e pelo
+amortecedor $c$, sob excitação $F(t)$ --- o modelo-base das vibrações.}
+\label{fig:v1-c8-1}
+\end{figure}
+
+
 Sob excitação harmônica $F(t) = F_0\cos\omega t$, a amplitude de regime
 permanente é $X = M\,F_0/k$, com o fator de amplificação dado pela
 Equação~\eqref{eq:v1-c8-11}:
@@ -4281,6 +4823,35 @@ Como a força cresce com $\omega^2$ e gira com o rotor, a assinatura do
 desbalanceamento é vibração na frequência de rotação $f_r = \omega/2\pi$ ---
 o ``$1\times$'' do Volume~II.
 
+A Figura~\ref{fig:v1-c8-2} desenha o desbalanceamento: o centro de massa
+deslocado do eixo de rotação gera a força centrífuga que o mancal sente ---
+duas vezes por volta em cada direção, na frequência de rotação.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small, scale=1.15]
+\draw[thick, fill=black!8] (0,0) circle (1.35);
+\draw[thick, ->] (0,0) -- (1.35,0) node[midway, below=1pt] {$r$};
+\fill (0,0) circle (1.6pt);
+\node[below left=0pt, font=\footnotesize] at (0,0) {$O$};
+% centro de massa excêntrico
+\fill (0.65,0.4) circle (1.8pt);
+\node[right=1pt, font=\footnotesize] at (0.65,0.4) {$G$};
+\draw[dashed, black!60] (0,0) -- (0.65,0.4);
+\node[font=\footnotesize, above=2pt] at (0.32,0.2) {$e$};
+% forca centrifuga
+\draw[->, very thick] (0.65,0.4) -- (1.75,1.05) node[right=1pt] {$F$};
+% rotacao
+\draw[->, thick] (110:1.7) arc (110:160:1.7);
+\node[font=\footnotesize] at (135:2.05) {$\omega$};
+\end{tikzpicture}
+\caption[Rotor desbalanceado e força centrífuga.]{Rotor com centro de massa
+$G$ deslocado de $e$ do eixo de rotação: a força centrífuga $F = m e
+\omega^2$ transmitida aos mancais, na frequência de rotação.}
+\label{fig:v1-c8-2}
+\end{figure}
+
+
 O produto $e\,\omega$ mede a severidade do desbalanceamento residual e é a
 base do grau de qualidade de balanceamento da ISO~21940 --- denotado $G$ na
 norma, sem relação com o módulo de cisalhamento $G$ do
@@ -4303,6 +4874,36 @@ constitutiva, medida e não deduzida, no sentido da
 Seção~\ref{sub:v1-c2-constitutivas} \cite{shigley2011}. O Volume~II escreve
 a mesma lei na forma $\sigma_a = \sigma'_f\,(2N_f)^{b_f}$; as duas são
 equivalentes, com $b_f = -1/m$ e a constante $C$ absorvida em $\sigma'_f$.
+
+A Figura~\ref{fig:v1-c8-3} desenha a curva S--N característica dos aços: a
+vida cai com a tensão, e acima de um limite de ciclos a tensão limite de
+fadiga estabiliza --- tensões abaixo dela não consomem vida, premissa do
+dimensionamento em fadiga.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=11.5cm, height=7cm, xlabel={Ciclos $N$},
+ylabel={Tensão alternada $\sigma_a$}, xmin=1e3, xmax=1e8, ymin=0,
+ymax=600, xmode=log, ytick={0,100,200,300,400,500,600},
+xtick={1e3,1e4,1e5,1e6,1e7,1e8}, grid=both, label style={font=\small}]
+\addplot[thick] coordinates {(1e3,540) (1e4,420) (1e5,330) (1e6,270)};
+\addplot[thick] coordinates {(1e6,270) (1e8,270)};
+\addplot[dashed, black!60] coordinates {(1e3,540) (1e8,540)};
+\node[font=\footnotesize, anchor=south west] at (axis cs:1.2e3,545)
+{$\sigma_u$ (tração)};
+\node[font=\footnotesize, anchor=west] at (axis cs:1.2e6,285)
+{$\sigma_{-1}$ (limite de fadiga)};
+\node[font=\footnotesize, anchor=north east] at (axis cs:8e4,340) {lei de
+Basquin (reta em log--log)};
+\end{axis}
+\end{tikzpicture}
+\caption[Curva S--N de fadiga de um aço.]{Curva S--N típica de um aço: queda
+de vida com a tensão até o limite de fadiga $\sigma_{-1}$, constante a
+partir de $\sim 10^6$ ciclos.}
+\label{fig:v1-c8-3}
+\end{figure}
+
 
 Cargas reais não têm amplitude única. A regra de Miner acumula o dano de
 blocos de $n_i$ ciclos sob amplitude $\sigma_{a,i}$ como frações da vida
@@ -4403,6 +5004,30 @@ y = y_{med} \pm U,
 onde $U$ é a incerteza expandida, geralmente calculada para um fator de
 cobertura $k=2$ (aproximadamente 95\% de confiança).
 
+A Figura~\ref{fig:v1-c9-1} desenha a cadeia de medição: o fenômeno físico
+atravessa o sensor, o condicionamento e a aquisição antes de virar número no
+supervisório --- e cada elo contribui com sua parcela de incerteza.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small,
+  elo/.style={draw, rounded corners=2pt, minimum height=0.95cm, align=center,
+  inner sep=5pt}]
+\node[elo] (a) at (0,0) {fenômeno\\físico};
+\node[elo] (b) at (2.9,0) {sensor};
+\node[elo] (c) at (5.8,0) {condicionamento};
+\node[elo] (d) at (9.0,0) {aquisição (A/D)};
+\node[elo, fill=black!10] (e) at (12.3,0) {supervisório /\\Gêmeo Digital};
+\foreach \x/\y in {a/b, b/c, c/d, d/e}
+  \draw[->, thick] (\x) -- (\y);
+\end{tikzpicture}
+\caption[A cadeia de medição, do fenômeno ao número.]{A cadeia de medição:
+cada elo transforma o sinal e acrescenta sua parcela de incerteza ao número
+que chega ao supervisório.}
+\label{fig:v1-c9-1}
+\end{figure}
+
+
 A incerteza combinada $u_c$ é obtida a partir das incertezas das fontes
 individuais $u_i$:
 \begin{equation}\label{eq:v1-c9-2}
@@ -4442,6 +5067,41 @@ processamento. A taxa de amostragem $f_s$ deve respeitar o teorema de Nyquist:
 f_s \geq 2\,f_{max},
 \end{equation}
 onde $f_{max}$ é a maior frequência de interesse no sinal.
+
+A Figura~\ref{fig:v1-c9-2} contrasta os dois erros que a repetição revela:
+medições agrupadas mas longe do valor de referência carregam erro
+sistemático; espalhadas em torno dele, erro aleatório. A calibração corrige
+o primeiro; a média de repetições reduz o segundo.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=7.2cm, height=6cm, xmin=0.4, xmax=1.6, ymin=0.4,
+ymax=1.6, xtick=\empty, ytick=\empty, axis lines=left, title={\footnotesize
+(a) Sistemático: agrupadas, longe}, title style={font=\small},
+label style={font=\small}]
+\addplot[only marks, mark=*, mark size=1.6pt] coordinates {(1.28,1.32)
+(1.33,1.27) (1.25,1.28) (1.31,1.35) (1.29,1.24) (1.24,1.33) (1.34,1.30)};
+\addplot[only marks, mark=o, mark size=3.5pt, thick] coordinates {(1,1)};
+\node[font=\footnotesize, anchor=south] at (axis cs:1,0.94) {referência};
+\end{axis}
+\begin{axis}[width=7.2cm, height=6cm, at={(8.6cm,0)}, xmin=0.4, xmax=1.6,
+ymin=0.4, ymax=1.6, xtick=\empty, ytick=\empty, axis lines=left,
+title={\footnotesize (b) Aleatório: em torno}, title style={font=\small},
+label style={font=\small}]
+\addplot[only marks, mark=*, mark size=1.6pt] coordinates {(0.92,1.05)
+(1.12,0.94) (0.88,0.9) (1.08,1.12) (0.98,1.15) (1.15,1.02) (0.95,0.85)};
+\addplot[only marks, mark=o, mark size=3.5pt, thick] coordinates {(1,1)};
+\node[font=\footnotesize, anchor=south] at (axis cs:1,0.94) {referência};
+\end{axis}
+\end{tikzpicture}
+\caption[Erro sistemático e erro aleatório em medições repetidas.]{%
+Repetições de uma medição: (a) agrupadas longe da referência --- erro
+sistemático, corrigido por calibração; (b) espalhadas em torno dela --- erro
+aleatório, reduzido por média.}
+\label{fig:v1-c9-2}
+\end{figure}
+
 
 \subsection{Diagnóstico e monitoramento de condição}
 
@@ -4493,6 +5153,33 @@ com dados de campo. O fluxo de informação é:
 \item Algoritmos de estimação (EKF), detecção de anomalia (VAE) e otimização
   (MPC/\-PSO) ajustam o modelo e prescrevem ações.
 \end{enumerate}
+
+A Figura~\ref{fig:v1-c10-1} desenha a trajetória do volume: das leis de
+taxa e dos balanços às equações dos nós, daí aos modelos dinâmicos com
+capacitâncias, e finalmente ao Gêmeo Digital --- que devolve o diagnóstico
+à planta.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small,
+  elo/.style={draw, rounded corners=2pt, minimum height=1.15cm, align=center,
+  inner sep=6pt}]
+\node[elo] (a) at (0,0) {leis de taxa e\\balanços (Vol. I)};
+\node[elo] (b) at (3.7,0) {equações dos nós\\(modelo estático)};
+\node[elo] (c) at (7.5,0) {capacitâncias:\\dinâmica};
+\node[elo, fill=black!10] (d) at (11.4,0) {Gêmeo Digital:\\diagnóstico};
+\foreach \x/\y in {a/b, b/c, c/d}
+  \draw[->, thick] (\x) -- (\y);
+\draw[->, thick, dashed] (d.south) .. controls (8,-1.6) and (4,-1.6)
+  .. (a.south) node[midway, below, font=\footnotesize] {validação e ajuste
+  com dados de planta};
+\end{tikzpicture}
+\caption[Do modelo físico ao Gêmeo Digital.]{A trajetória do Volume I ao
+Gêmeo Digital: leis e balanços, nós, dinâmica --- e o retorno dos dados de
+planta para validar e ajustar o modelo.}
+\label{fig:v1-c10-1}
+\end{figure}
+
 
 Esse fluxo só é possível porque cada fenômeno físico foi previamente modelado
 a partir dos fundamentos corretos — o que justifica a existência deste volume.
