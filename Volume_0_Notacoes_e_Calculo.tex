@@ -1,0 +1,1377 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- Pacotes de Suporte ---
+\usepackage{cmap} % corrige o mapeamento Unicode de ligaduras (fi/ff/fl)
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[expansion=false]{microtype}
+\usepackage[brazilian]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{tikz}
+\usetikzlibrary{patterns}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+\hyphenation{
+  off-shore Off-shore
+  con-tí-nuo con-tí-nu-a
+  di-fe-ren-ci-al di-fe-ren-ci-ais
+  lo-ga-rit-mo lo-ga-rit-mos
+  tri-go-no-mét-ri-ca tri-go-no-mét-ri-cas
+  a-pro-xi-ma-ção a-pro-xi-ma-ções
+}
+
+\numberwithin{equation}{section}
+\numberwithin{table}{section}
+\numberwithin{figure}{section}
+
+\geometry{margin=2.5cm, headheight=15pt}
+\addtolength{\topmargin}{-0.5pt}
+\setlength{\emergencystretch}{1em}
+
+\hypersetup{
+	colorlinks=true,
+	linkcolor=black,
+	citecolor=black,
+	urlcolor=black,
+	pdftitle={Notações e Cálculo Básico},
+	pdfauthor={Marcelo Moreira Mejias},
+	pdfsubject={Pré-requisitos para Máquinas Rotodinâmicas},
+	pdfkeywords={notação matemática, cálculo, vetores, equações diferenciais, aproximações}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+\fancyhead[L]{\nouppercase{\leftmark}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Identificação de volume/revisão ---
+\newcommand{\colecaotitulo}{Enciclopédia de Máquinas Rotodinâmicas}
+\newcommand{\volumeatual}{Volume 0}
+\newcommand{\revdata}{Rev. 12/09/2026}
+
+% --- Identidade visual dos capítulos ---
+\newcommand{\chapterword}{Capítulo}
+\titleformat{\section}
+	{\normalfont\Large\bfseries\raggedright}
+	{\chapterword~\thesection}{1em}{}
+	[\vspace{-0.5em}\rule{\textwidth}{0.4pt}]
+
+
+\begin{document}
+
+
+	% --- CAPA ---
+	\begin{titlepage}
+		\centering
+		\vspace*{1.5cm}
+		{\large \textsc{\colecaotitulo\ --- \volumeatual}} \\[1cm]
+		\rule{\textwidth}{0.4pt} \\[0.8cm]
+		{\Huge \textbf{Notações e Cálculo Básico}} \\[0.5cm]
+		{\Large \textbf{Pré-requisitos para o Estudo de Máquinas Rotodinâmicas}} \\[0.8cm]
+		\rule{\textwidth}{0.4pt} \\[1.5cm]
+
+		% Placeholder para ilustração conceitual do Volume 0
+		\vspace{5cm}
+
+		\vfill
+		{\large \textbf{Autor: Engenheiro Marcelo Moreira Mejias, M.Sc.}} \\[0.5cm]
+
+		{\large \today} \\[0.3cm]
+		{\normalsize \revdata}
+	\end{titlepage}
+
+	% --- DEDICATÓRIA ---
+	\newpage
+	\thispagestyle{empty}
+	\vspace*{\fill}
+	\begin{flushright}
+		\textit{Aos que reaprendem o básico sem vergonha,}
+		\textit{e aos que nunca o esqueceram.}
+	\end{flushright}
+	\vspace*{\fill}
+
+
+% --- PREFÁCIO ---
+\newpage
+\section*{Prefácio}
+\addcontentsline{toc}{section}{Prefácio}
+
+Esta coleção pede do leitor um repertório mínimo: ler e manipular símbolos
+matemáticos, operar com unidades, derivar, integrar e resolver as equações
+diferenciais mais simples. Quem chega da formação recente talvez precise
+apenas revisar; quem está há anos fora da sala de aula, ou quem nunca viu o
+formalismo, precisa de um lugar para começar. O Volume~0 é esse lugar.
+
+A intenção não é substituir os livros de cálculo e de física básica, mas
+reunir, num único percurso curto, exatamente o que os Volumes~I e~II usam ---
+nem mais, nem menos. Cada capítulo declara o que apresenta, mostra o que é
+operacional e fecha com uma síntese que aponta onde a ferramenta reaparece
+nos volumes seguintes. O leitor que domina o assunto de um capítulo pode
+pulá-lo sem prejuízo; o leitor que duvida encontra aqui o mínimo necessário,
+sem rodeios.
+
+Nussenzveig~\cite{nussenzveig} cobre a física básica que antecede esta
+notação; Guidorizzi~\cite{guidorizzi2013} cobre o cálculo em profundidade.
+Para o aprofundamento, as referências de classe mundial são as de
+Feynman~\cite{feynman1963} na física e de Apostol~\cite{apostol1967} e
+Spivak~\cite{spivak2008} no cálculo. Este volume é o caminho curto entre
+essas obras e a engenharia de máquinas.
+
+% --- SUMÁRIO ---
+\newpage
+\tableofcontents
+\newpage
+
+
+%=============================================================================
+% CAPÍTULO 1 — INTRODUÇÃO AO VOLUME 0
+%=============================================================================
+\section{Introdução ao Volume 0}\label{sec:v0-intro}
+
+\subsection{Para quem é este volume}
+
+Há dois leitores em mente. O primeiro é quem retoma os estudos depois de
+anos de prática e percebe que o vocabulário simbólico esqueceu mais rápido
+que o juízo físico --- sabe o que o problema pede, mas não lê mais a equação
+com fluidez. O segundo é quem começa do zero relativo: tem firmeza em
+aritmética e no raciocínio de causa e efeito, mas nunca sistematizou
+funções, derivadas e integrais. Este volume serve aos dois. Para o primeiro,
+é um relembrar ordenado; para o segundo, um aprender enxuto, com tudo o que
+será cobrado depois --- e nada do que não será.
+
+\subsection{O que este volume cobre --- e o que não cobre}
+
+O recorte é definido pelo uso, não pela tradição. Estão aqui a notação
+simbólica, as unidades e a análise dimensional, as funções elementares, os
+vetores e o essencial de álgebra linear, o cálculo diferencial e integral em
+uma e várias variáveis, as equações diferenciais ordinárias de primeira e
+segunda ordem e as séries de aproximação. Não estão aqui a teoria dos
+números reais, as demonstrações de existência e unicidade, a integração
+avancada de funções especiais nem a teoria de espaços vetoriais: nada disso
+aparece nos Volumes~I e~II, e portanto não tem lugar neste volume.
+
+\subsection{Como usar este volume}
+
+Os capítulos foram escritos para serem lidos em sequência, mas cada um pode
+ser consultado isoladamente: todos usam a mesma notação, estabelecida no
+Capítulo~\ref{sec:v0-notacao} e mantida sem exceção até o Volume~II. A
+Tabela~\ref{tab:v0-c1-1} resume o papel de cada capítulo e o ponto dos
+volumes seguintes em que ele reaparece.
+
+\begin{table}[H]
+\centering
+\caption[Mapa do Volume 0 e suas pontes com os volumes I e II.]{%
+Mapa do Volume 0: cada capítulo ensina uma ferramenta e indica onde ela é
+usada nos Volumes I e II desta coleção.}
+\label{tab:v0-c1-1}
+\begin{tabularx}{\textwidth}{lXl}
+\toprule
+\textbf{Cap.} & \textbf{Ferramenta} & \textbf{Onde reaparece} \\
+\midrule
+\ref{sec:v0-notacao} & Notação e linguagem simbólica & Toda a coleção \\
+\ref{sec:v0-unidades} & Unidades e análise dimensional & Toda a coleção \\
+\ref{sec:v0-funcoes} & Funções elementares e gráficos & Caps. 2 a 9 do Vol.~I \\
+\ref{sec:v0-vetores} & Vetores e álgebra linear & Caps. 2, 4 e 7 do Vol.~I \\
+\ref{sec:v0-derivadas} & Cálculo diferencial & Leis de taxa, Vol.~I \\
+\ref{sec:v0-integrais} & Cálculo integral & Balanços, Vol.~I \\
+\ref{sec:v0-edo} & Equações diferenciais & Modelagem dinâmica, Vol.~II \\
+\ref{sec:v0-series} & Séries e aproximações & Linearização e erros, Vols.~I e~II \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Quem já domina um capítulo avança sem culpa; quem duvida resolve os exemplos
+à mão --- nenhum passo deste volume exige computador.
+
+
+%=============================================================================
+% CAPÍTULO 2 — NOTAÇÃO E LINGUAGEM SIMBÓLICA
+%=============================================================================
+\section{Notação e Linguagem Simbólica}\label{sec:v0-notacao}
+
+\subsection{Por que a notação importa}
+
+A notação é a gramática da física aplicada. Uma equação como
+$\tau = J_p\,\alpha$ só pode ser lida de cor porque cada símbolo tem papel
+fixo: letras em itálico representam grandezas que variam, letras em romano
+representam nomes e funções, operadores têm formas próprias. Quem internaliza
+essa gramática lê equações como frases; quem não internaliza decora
+desenhos. Este capítulo fixa a gramática usada em toda a coleção.
+
+\subsection{Fontes: itálico para variáveis, romano para nomes}
+
+A convenção seguida em todos os volumes é a dos textos clássicos de
+matemática aplicada:
+
+\begin{itemize}
+\item \textbf{Itálico} para variáveis e grandezas: $x$, $T$ (temperatura),
+$p$ (pressão), $t$ (tempo), $\omega$ (velocidade angular).
+\item \textbf{Romano} para operadores, funções com nome e unidades:
+$\mathrm{d}x$ (diferencial), $\mathrm{sen}$, $\mathrm{ln}$, $\mathrm{exp}$,
+$\max$, e as unidades $\mathrm{m}$, $\mathrm{s}$, $\mathrm{Pa}$.
+\item \textbf{Negro} para vetores e matrizes: $\bm{v}$, $\bm{F}$,
+$\bm{\nabla}T$.
+\end{itemize}
+
+O diferencial escreve-se $\mathrm{d}$ romano para distinguir o operador da
+variável: $\mathrm{d}t$ lê-se ``um pedacinho de $t$''. O número
+$\mathrm{e} \approx 2{,}71828$ (base dos logaritmos naturais) e a unidade
+imaginária $\mathrm{i}$ seguem a mesma regra.
+
+\subsection{Operadores e símbolos de uso geral}
+
+A Tabela~\ref{tab:v0-c2-1} reúne os operadores que aparecem em toda a
+coleção. Nenhum deles é opcional: todos serão usados nos volumes seguintes.
+
+\begin{table}[H]
+\centering
+\caption[Operadores matemáticos e seu significado.]{%
+Operadores matemáticos usados em toda a coleção.}
+\label{tab:v0-c2-1}
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Símbolo} & \textbf{Significado} \\
+\midrule
+$=$ & igualdade exata \\
+$\approx$ & aproximadamente igual (dentro de uma tolerância declarada) \\
+$\equiv$ & identidade, definição ou equivalência por hipótese \\
+$:= $ & ``é definido como'' (a igualdade aponta da definição para o nome) \\
+$\propto$ & proporcional a (igual a menos uma constante) \\
+$\rightarrow$, $\to$ & tende a; ou mapeamento de função \\
+$\sum$, $\prod$ & somatório e produtório de uma sequência \\
+$\mathrm{d}/\mathrm{d}t$ & derivada em relação ao tempo (taxa instantânea) \\
+$\partial/\partial x$ & derivada parcial em relação a $x$ \\
+$\nabla$ & gradiente (vetor das derivadas parciais) \\
+$\int_a^b$ & integral definida entre $a$ e $b$ \\
+$\Delta$ & variação finita (ex.: $\Delta T = T_2 - T_1$) \\
+$\delta$ & variação infinitesimal ou incerteza, conforme o contexto \\
+$\lfloor\cdot\rfloor$, $\lceil\cdot\rceil$ & piso e teto \\
+$\forall$, $\exists$ & ``para todo'', ``existe'' \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Duas distinções valem reforço. A variação finita $\Delta x = x_2 - x_1$ é um
+número comum entre dois estados; o diferencial $\mathrm{d}x$ é um pedacinho
+de variável dentro de um processo de limite --- a integral é feita deles. E
+a distinção entre $\approx$ e $\equiv$: a primeira admite erro, que deve ser
+declarado ou estimável; a segunda não admite erro nenhum, apenas convenção.
+
+\subsection{Letras gregas}
+
+A engenharia de máquinas usa intensivamente as letras gregas, e a mesma
+letra costuma ter uso dominante em cada área. A Tabela~\ref{tab:v0-c2-2}
+lista as que aparecem nos Volumes~I e~II com seu papel principal.
+
+\begin{table}[H]
+\centering
+\caption[Letras gregas e seu uso dominante nesta coleção.]{%
+Letras gregas mais usadas na coleção e seu significado dominante.}
+\label{tab:v0-c2-2}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Min.} & \textbf{Mai.} & \textbf{Uso dominante} \\
+\midrule
+$\alpha$ & & aceleração angular; coeficiente de expansão \\
+$\beta$ & & razão de compressão volumétrica \\
+$\gamma$ & $\Gamma$ & razão de calores específicos $c_p/c_v$ \\
+$\delta$ & $\Delta$ & variação finita; folga (Volume II) \\
+$\varepsilon$ & & deformação; eficiência alternativa; rugosidade \\
+$\zeta$ & & fator de amortecimento \\
+$\eta$ & & eficiência \\
+$\theta$ & $\Theta$ & ângulo; temperatura reduzida \\
+$\lambda$ & $\Lambda$ & comprimento de onda; autovalor \\
+$\mu$ & & viscosidade dinâmica; coeficiente de atrito \\
+$\nu$ & & viscosidade cinemática; frequência natural \\
+$\rho$ & & massa específica \\
+$\sigma$ & $\Sigma$ & tensão; somatório \\
+$\tau$ & & torque; tensão de cisalhamento \\
+$\phi$ & $\Phi$ & razão de fluxo; função \\
+$\psi$ & $\Psi$ & função de corrente (fluidos) \\
+$\omega$ & $\Omega$ & velocidade angular; resistência elétrica \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Quando uma letra servir a dois usos, o texto declara qual vale na ocasião;
+o Volume~I adota essa regra desde seu primeiro capítulo.
+
+\subsection{Índices, expoentes e adornos}
+
+Grandeza nenhuma anda sozinha: a coleção escreve $p_1$ e $p_2$ para pressões
+em dois pontos, $T_{h,i}$ para temperatura de entrada do fluido quente, e
+$\dot{m}$ (ponto por cima) para vazão mássica --- o ponto codifica
+``por unidade de tempo''. Adornos têm significado fixo: linha por cima
+($\bar{x}$) para média, til ($\tilde{x}$) para valor adimensionalizado,
+chapéu ($\hat{x}$) para estimativa. Subscritos romanos nomeiam
+($c_p$ = calor específico \emph{a pressão constante}); subscritos itálicos
+indexam ($x_i$, o $i$-ésimo valor).
+
+\subsection{Síntese: premissas e ligação com os volumes seguintes}
+
+Este capítulo não postulou física nenhuma: fixou apenas a escrita. As
+convenções aqui estabelecidas --- fontes, operadores, letras gregas,
+adornos --- valem sem exceção do Capítulo~\ref{sec:v0-unidades} deste volume
+até o capítulo final do Volume~II. Quando o Volume~I escreve
+$\bm{\nabla}T$, é o gradiente desta Tabela~\ref{tab:v0-c2-1}; quando escreve
+$\eta$, é a eficiência desta Tabela~\ref{tab:v0-c2-2}.
+
+
+%=============================================================================
+% CAPÍTULO 3 — UNIDADES, DIMENSÕES E ORDEM DE GRANDEZA
+%=============================================================================
+\section{Grandezas, Unidades e Análise Dimensional}\label{sec:v0-unidades}
+
+\subsection{Grandezas e unidades: o número e o rótulo}
+
+Toda grandeza física é um número multiplicado por uma unidade:
+``$p = 7{,}0\ \mathrm{bar}$'' significa $7{,}0$ vezes a unidade bar.
+O número isolado não significa nada físico --- 7,0 de quê? --- e a unidade
+isolada tampouco. A primeira disciplina deste capítulo é nunca separar os
+dois: escrever a unidade junto a cada valor, em todos os passos de todos os
+cálculos.
+
+As unidades usadas em toda a coleção são as do Sistema Internacional (SI),
+resumidas na Tabela~\ref{tab:v0-c3-1} com as grandezas de interesse desta
+obra. Unidades fora do SI aparecem apenas quando a prática industrial as
+impõe --- o bar para pressão e o rpm para rotação ---, e sempre com conversão
+explícita na primeira ocorrência.
+
+\begin{table}[H]
+\centering
+\caption[Unidades do SI usadas nesta coleção.]{%
+Grandezas e unidades do SI usadas nesta coleção.}
+\label{tab:v0-c3-1}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Grandeza} & \textbf{Símbolo} & \textbf{Unidade SI (abrev.)} \\
+\midrule
+comprimento & $L$ & metro (m) \\
+massa & $m$ & quilograma (kg) \\
+tempo & $t$ & segundo (s) \\
+corrente elétrica & $I$ & ampère (A) \\
+temperatura & $T$ & kelvin (K) \\
+\midrule
+força & $F$ & newton (N = kg\,m\,s$^{-2}$) \\
+pressão & $p$ & pascal (Pa = N\,m$^{-2}$) \\
+energia, trabalho & $E$, $W$ & joule (J = N\,m) \\
+potência & $P$ & watt (W = J\,s$^{-1}$) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Os prefixos do SI multiplicam as unidades por potências de dez. Os que
+aparecem na coleção são poucos e devem ser lidos de cor:
+$\mathrm{k}$ (quilo, $10^3$), $\mathrm{M}$ (mega, $10^6$),
+$\mathrm{G}$ (giga, $10^9$), $\mathrm{m}$ (mili, $10^{-3}$),
+$\mu$ (micro, $10^{-6}$). Assim, $1\ \mathrm{kW} = 10^3\ \mathrm{W}$ e
+$1\ \mu\mathrm{m} = 10^{-6}\ \mathrm{m}$. Dois cuidados permanentes: o
+prefixo $\mathrm{m}$ minúsculo é mili, enquanto $\mathrm{M}$ maiúsculo é
+mega --- seis ordens de grandeza de diferença; e prefixos não se combinam
+(diz-se $\mathrm{kg}$, nunca ``$\mathrm{k}\mu\mathrm{g}$'').
+
+\subsection{Homogeneidade dimensional}
+
+Uma equação física só pode somar grandezas de mesma dimensão: não se soma
+metros a segundos, nem joules a watts. Essa exigência, chamada
+\textbf{homogeneidade dimensional}, é o verificador mais barato que existe:
+qualquer equação que some termos de dimensões diferentes está errada, antes
+de qualquer cálculo numérico. As dimensões fundamentais da mecânica são
+comprimento $[L]$, massa $[M]$ e tempo $[t]$; toda grandeza mecânica se
+decompõe nelas. A Equação~\eqref{eq:v0-c3-1} mostra a verificação para a
+pressão:
+
+\begin{equation}\label{eq:v0-c3-1}
+[p] = \frac{[F]}{[A]} = \frac{[M]\,[L]\,[t]^{-2}}{[L]^2}
+    = [M]\,[L]^{-1}\,[t]^{-2}.
+\end{equation}
+
+A análise dimensional faz mais que detectar erro: ela \emph{descobre} a forma
+das relações. Se um período de oscilação depende só de uma massa $m$ e de
+uma rigidez $k$ (dimensão $[M][t]^{-2}$), a única combinação com dimensão de
+tempo é $\sqrt{m/k}$ --- a constante numérica a análise não dá, mas a
+dependência inteira ela dá. O Volume~I usa esse argumento nos grupos
+adimensionais do Capítulo~4, e o Volume~II o repete no dimensionamento
+preliminar.
+
+\subsection{Notação científica e ordem de grandeza}
+
+A notação científica escreve qualquer número como
+$m \times 10^n$, com $1 \le m < 10$ e $n$ inteiro:
+$c = 3{,}00 \times 10^8\ \mathrm{m/s}$. Ela existe para dois motivos
+operacionais. O primeiro é comparar: saber se um resultado é
+$2 \times 10^{-3}$ ou $2 \times 10^{3}$ é saber se a conta está no
+universo certo, antes de conferir qualquer dígito. O segundo é o
+\textbf{estimativa de ordem de grandeza}: arredondar cada fator para a
+potência de dez mais próxima e multiplicar as potências. Uma bomba de
+$3{,}2\ \mathrm{kW}$ operando $6{,}5\ \mathrm{h/dia}$ gasta, em ordem de
+grandeza, $10^3 \times 10^1 = 10^4\ \mathrm{Wh}$ por dia --- dez ve menos
+que mil, dez vezes mais que cem. Quem estima antes de calcular nunca
+confunde kW com MW.
+
+\subsection{Algarismos significativos e arredondamento}
+
+Um instrumento que lê $7{,}0\ \mathrm{bar}$ afirma algo mais forte que um
+que lê $7\ \mathrm{bar}$: afirma que o valor está entre $6{,}95$ e
+$7{,}05$. Os \textbf{algarismos significativos} codificam essa afirmação:
+o último dígito escrito é o incerto, todos os anteriores são firmes. As
+regras operacionais são poucas:
+
+\begin{itemize}
+\item na multiplicação e divisão, o resultado tem tantos significativos
+  quanto o fator com menos significativos;
+\item na adição e subtração, o resultado tem tantas casas decimais quanto
+  o termo com menos casas decimais;
+\item o arredondamento é feito no resultado final, nunca nos passos
+  intermediários --- guardar dígitos extras durante a conta não é
+  desonestidade, é precaução.
+\end{itemize}
+
+A regra do resultado final importa mais que as outras duas: uma conta com
+dez passos em que cada passo arredonda acumula erro sistemático. O Volume~I
+trata a propagação formal de incerteza no capítulo de instrumentação; aqui
+basta a disciplina acima.
+
+\subsection{Síntese: premissas e ligação com os volumes seguintes}
+
+Este capítulo postulou apenas que grandezas têm dimensão e que equações
+somam dimensões iguais. Com isso, o leitor já pode conferir qualquer
+equação dos volumes seguintes: a homogeneidade dimensional da
+Equação~\eqref{eq:v0-c3-1} se reaplica em cada lei de taxa do Volume~I, e a
+estimativa de ordem de grandeza é o primeiro teste de plausibilidade de
+qualquer número de engenharia.
+
+
+%=============================================================================
+% CAPÍTULO 4 — FUNÇÕES ELEMENTARES E GRÁFICOS
+%=============================================================================
+\section{Funções Elementares e Gráficos}\label{sec:v0-funcoes}
+
+\subsection{O que é uma função}
+
+Uma função associa a cada valor de uma variável independente $x$ um único
+valor da variável dependente $y$, escrito $y = f(x)$. A restrição ``único
+valor'' não é burocracia: uma curva de pressão de um compressor que para
+cada vazão desse duas pressões não é uma função $p(\dot{m})$ --- falta-lhe
+informação (em geral, a condição do processo). Em engenharia, especificar a
+função exige especificar o \emph{domínio} (para quais $x$ vale) e a
+\emph{condição} sob a qual vale; o Volume~I repete esse aviso em cada lei
+de taxa.
+
+\subsection{Potências, polinômios e raízes}
+
+A família das potências $f(x) = x^n$ cobre grande parte da geometria
+elementar: $n=1$ é a reta, $n=2$ a parábola, $n=3$ a cúbica, e expoentes
+negativos dão as leis de decaimento --- a lei de resfriamento de Newton usa
+decaimento exponencial, mas a perda de carga em regime laminar
+($\Delta p \propto \dot{m}$) e turbulento ($\Delta p \propto \dot{m}^2$)
+são potências. Polinômios somam potências inteiras:
+$f(x) = a_0 + a_1 x + a_2 x^2 + \dots + a_n x^n$, e a curva
+torque--velocidade de um motor de indução é bem aproximada por um
+polinômio de segundo grau no seu trecho de operação --- como mostra o
+Capítulo~7 do Volume~I.
+
+\subsection{Exponencial e logaritmo}
+
+A função exponencial $f(x) = \mathrm{e}^{x}$ e o logaritmo natural
+$f(x) = \ln x$ são inversas uma da outra e aparecem em toda parte onde a
+taxa de variação de uma grandeza é proporcional à própria grandeza:
+resfriamento, descarga de pressão, crescimento de falha. Suas propriedades
+operacionais, Equações~\eqref{eq:v0-c4-1} a~\eqref{eq:v0-c4-3}, devem ser
+manipuladas sem hesitação:
+
+\begin{equation}\label{eq:v0-c4-1}
+\mathrm{e}^{a+b} = \mathrm{e}^{a}\,\mathrm{e}^{b},
+\qquad
+\mathrm{e}^{a\,b} = \left(\mathrm{e}^{a}\right)^{b},
+\end{equation}
+\begin{equation}\label{eq:v0-c4-2}
+\ln(a\,b) = \ln a + \ln b,
+\qquad
+\ln(a^{b}) = b\,\ln a,
+\qquad
+\ln \mathrm{e}^{x} = x,
+\end{equation}
+\begin{equation}\label{eq:v0-c4-3}
+a^{x} = \mathrm{e}^{x\,\ln a}.
+\end{equation}
+
+O logaritmo transforma multiplicação em adição e potência em produto ---
+é a calculadora dos tempos sem calculadora, e continua útil porque
+lineariza gráficos, como se vê adiante. A exponencial tem ainda a
+propriedade $f'(x) = f(x)$: é a única função igual à sua própria taxa de
+variação, e por isso governa todos os processos de primeira ordem do
+Volume~II.
+
+\subsection{Funções trigonométricas}
+
+As funções $\mathrm{sen}\,\theta$, $\mathrm{cos}\,\theta$ e
+$\mathrm{tg}\,\theta$ medem lados do triângulo inscrito no círculo unitário,
+Figura~\ref{fig:v0-c4-1}. Toda a teoria de vibrações do Volume~I é escrita
+nessas funções, porque todo movimento oscilatório simples é projeção de
+rotação.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=2.2]
+\draw[->] (-1.25,0) -- (1.35,0) node[below left=1pt] {$x$};
+\draw[->] (0,-1.25) -- (0,1.35) node[below left=1pt] {$y$};
+\draw (0,0) circle (1);
+\draw[thick,->] (0,0) -- (35:1);
+\draw (0,0) -- ({cos(35)},0);
+\draw[dashed] (35:1) -- ({cos(35)},0);
+\draw (0.16,0) arc (0:35:0.16) node[midway,right=2pt] {$\theta$};
+\draw ({cos(35)},0.035) -- ({cos(35)-0.035},0.035) -- ({cos(35)-0.035},0);
+\node[below] at ({cos(35)},0) {$\cos\theta$};
+\draw[dashed] (0,{sin(35)}) -- (35:1);
+\draw (-0.035,{sin(35)}) -- (-0.035,{sin(35)-0.035}) -- (0,{sin(35)-0.035});
+\node[left] at (0,{sin(35)}) {$\mathrm{sen}\,\theta$};
+\end{tikzpicture}
+\caption[Círculo unitário: seno e cosseno como projeções.]{%
+O círculo unitário define seno e cosseno como projeções do raio unitário:
+o ponto do círculo a ângulo $\theta$ tem coordenadas
+$(\cos\theta,\ \mathrm{sen}\,\theta)$.}
+\label{fig:v0-c4-1}
+\end{figure}
+
+As identidades que a coleção usa sem aviso são as de soma de arcos e o
+teorema fundamental, Equação~\eqref{eq:v0-c4-4}:
+
+\begin{equation}\label{eq:v0-c4-4}
+\mathrm{sen}^2\theta + \cos^2\theta = 1,
+\qquad
+\mathrm{sen}(a \pm b) = \mathrm{sen}\,a\cos b \pm \cos a\,\mathrm{sen}\,b.
+\end{equation}
+
+Os argumentos das funções trigonométricas são sempre ângulos em
+\emph{radianos} nesta coleção --- a frequência natural $\omega_n$ aparece
+multiplicando $t$ dentro do seno, e $\omega t$ só tem dimensão de ângulo
+porque o radiano é adimensional.
+
+\subsection{Funções de duas variáveis e superfícies}
+
+Uma função $f(x,y)$ associa um valor a cada par ordenado do plano; seu
+gráfico é uma superfície. Na prática desta coleção, funções de duas
+variáveis aparecem como \emph{mapas}: a eficiência politrópica como função
+da razão de compressão e da rotação, a pressão de descarga como função da
+vazão e da abertura de válvula. Ler esses mapas --- fixar uma variável e
+ler a curva resultante na outra --- é exatamente o que o cálculo de
+derivadas parciais formaliza no Capítulo~\ref{sec:v0-derivadas}.
+
+\subsection{Leitura de gráficos: linear, semilog e log--log}
+
+Gráficos em escala linear mostram somas como deslocamentos; gráficos em
+escala logarítmica mostram \emph{potências como retas}. Se
+$y = C\,x^n$, então $\ln y = \ln C + n\,\ln x$: num gráfico log--log, a
+lei de potência vira uma reta de inclinação $n$. Se
+$y = C\,\mathrm{e}^{a x}$, então $\ln y = \ln C + a x$: num gráfico
+semilog (só o eixo $y$ em log), a exponencial vira uma reta de inclinação
+$a$. Os ensaios do Volume~II usam esses artifícios para ler expoentes de
+politropas e constantes de tempo direto do gráfico.
+
+\subsection{Síntese: premissas e ligação com os volumes seguintes}
+
+As funções deste capítulo --- potência, exponencial, logaritmo,
+trigonométricas --- são o vocabulário completo dos modelos dos volumes
+seguintes: nenhuma outra função aparece nos Volumes~I e~II sem ser
+explicitamente construída a partir destas. O círculo unitário da
+Figura~\ref{fig:v0-c4-1} retorna nas vibrações mecânicas; as propriedades
+da exponencial, nos sistemas de primeira ordem; a linearização log--log,
+na leitura de curvas de ensaio.
+
+
+%=============================================================================
+% CAPÍTULO 5 — VETORES E ÁLGEBRA LINEAR ESSENCIAL
+%=============================================================================
+\section{Vetores e Álgebra Linear Essencial}\label{sec:v0-vetores}
+
+\subsection{Por que vetores}
+
+Força, velocidade, aceleração, gradiente de temperatura e campo magnético
+têm direção, sentido e magnitude: tratá-los como números escalares
+produz equações incompletas ou erradas. O vetor é a estrutura matemática
+que registra as três informações de uma vez. Nesta coleção, vetores
+escreve-se em negro ($\bm{v}$) e seus módulos em itálico ($v$).
+
+\subsection{O que é um vetor}
+
+Um vetor $\bm{v}$ num espaço tridimensional é uma terna ordenada de
+componentes numa base escolhida, Equação~\eqref{eq:v0-c5-1}:
+
+\begin{equation}\label{eq:v0-c5-1}
+\bm{v} = v_x\,\bm{i} + v_y\,\bm{j} + v_z\,\bm{k},
+\qquad
+v = \lVert\bm{v}\rVert = \sqrt{v_x^2 + v_y^2 + v_z^2}.
+\end{equation}
+
+Os vetores $\bm{i}$, $\bm{j}$, $\bm{k}$ são a base cartesiana: têm módulo
+um e apontam nos eixos coordenados. Trocar de base muda as componentes,
+não o vetor --- a velocidade de um rotor não depende de onde se coloca a
+régua. A primeira habilidade operacional é decompor: dado um vetor de
+módulo $v$ na direção do ângulo $\theta$ no plano, suas componentes são
+$v_x = v\cos\theta$ e $v_y = v\,\mathrm{sen}\,\theta$.
+
+\subsection{As duas multiplicações}
+
+Entre vetores há duas multiplicações, e confundi-las é erro frequente. O
+\textbf{produto escalar}, Equação~\eqref{eq:v0-c5-2}, devolve um número e
+mede projeção: é o trabalho de uma força ao longo de um deslocamento e a
+potência de um torque na velocidade angular.
+
+\begin{equation}\label{eq:v0-c5-2}
+\bm{a}\cdot\bm{b} = a\,b\cos\theta_{ab}
+                  = a_x b_x + a_y b_y + a_z b_z.
+\end{equation}
+
+O \textbf{produto vetorial}, Equação~\eqref{eq:v0-c5-3}, devolve um vetor
+perpendicular ao plano dos dois, com módulo igual à área do paralelogramo
+que eles definem:
+
+\begin{equation}\label{eq:v0-c5-3}
+\lVert\bm{a}\times\bm{b}\rVert = a\,b\,\mathrm{sen}\,\theta_{ab},
+\qquad
+\bm{a}\times\bm{b} =
+\begin{vmatrix}
+\bm{i} & \bm{j} & \bm{k} \\
+a_x & a_y & a_z \\
+b_x & b_y & b_z
+\end{vmatrix}.
+\end{equation}
+
+O momento de uma força, $\bm{\tau} = \bm{r}\times\bm{F}$, e a rotação
+$\bm{v} = \bm{\omega}\times\bm{r}$ de um ponto a velocidade angular
+$\bm{\omega}$ são produtos vetoriais: a direção perpendicular não é
+detalhe, é a informação principal. A Figura~\ref{fig:v0-c5-1} resume as
+duas operações no plano.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=1.5]
+% --- (a) produto escalar: projeção ---
+\begin{scope}[xshift=0cm]
+\draw[->,thick] (0,0) -- (2.6,0) node[below=1pt] {$\bm{a}$};
+\draw[->,thick] (0,0) -- (1.8,1.2) node[above=1pt] {$\bm{b}$};
+\draw[dashed] (1.8,1.2) -- (1.8,0);
+\draw[decorate,decoration={brace,amplitude=3pt},yshift=-2pt]
+  (0,0) -- (1.8,0) node[midway,below=4pt] {$b\cos\theta$};
+\draw (0.42,0) arc (0:33.7:0.42) node[midway,right=1pt] {$\theta$};
+\node at (1.3,-0.75) {(a) escalar: projeção};
+\end{scope}
+% --- (b) produto vetorial: área ---
+\begin{scope}[xshift=5.6cm]
+\draw[->,thick] (0,0) -- (2.6,0) node[below=1pt] {$\bm{a}$};
+\draw[->,thick] (0,0) -- (1.1,1.5) node[above=1pt] {$\bm{b}$};
+\draw[black!45] (2.6,0) -- (3.7,1.5) -- (1.1,1.5);
+\fill[black!12] (0,0) -- (2.6,0) -- (3.7,1.5) -- (1.1,1.5) -- cycle;
+\draw (0.42,0) arc (0:53.7:0.42) node[midway,right=1pt] {$\theta$};
+\node at (1.85,-0.75) {(b) vetorial: área $a\,b\,\mathrm{sen}\,\theta$};
+\end{scope}
+\end{tikzpicture}
+\caption[Produto escalar como projeção e produto vetorial como área.]{%
+As duas multiplicações entre vetores. (a) O produto escalar mede a
+projeção de $\bm{b}$ sobre $\bm{a}$. (b) O módulo do produto vetorial é a
+área do paralelogramo definido pelos dois vetores; seu sentido é dado pela
+regra da mão direita, perpendicular ao plano.}
+\label{fig:v0-c5-1}
+\end{figure}
+
+Duas identidades que a coleção usa sem aviso decorrem das
+definições: o produto escalar comuta ($\bm{a}\cdot\bm{b} =
+\bm{b}\cdot\bm{a}$), o produto vetorial anticomuta
+($\bm{a}\times\bm{b} = -\,\bm{b}\times\bm{a}$), e um vetorial duplo
+repetido é nulo ($\bm{a}\times\bm{a} = \bm{0}$).
+
+\subsection{Matrizes e sistemas lineares}
+
+Uma matriz é uma tabela retangular de números que representa uma
+transformação linear: multiplicada por um vetor-coluna, devolve outro
+vetor. O que a engenharia de máquinas precisa saber operar é pequeno: o
+produto linha por coluna, a transposição (trocar linhas por colunas, com
+$[\,\cdot\,]^{T}$), e a inversão --- a matriz $\bm{A}^{-1}$ tal que
+$\bm{A}^{-1}\bm{A} = \bm{I}$, onde $\bm{I}$ é a identidade. Sistemas
+lineares escrevem-se compactamente como $\bm{A}\bm{x} = \bm{b}$, e a
+solução, quando existe, é $\bm{x} = \bm{A}^{-1}\bm{b}$.
+
+O conteúdo prático está em saber \emph{quando} a solução existe e é única:
+quando o determinante de $\bm{A}$ é não nulo, ou, em linguagem física,
+quando as equações do sistema são independentes entre si. Um sistema com
+duas equações que dizem a mesma coisa tem determinante nulo e infinitas
+soluções; um sistema com equações contraditórias tem determinante nulo e
+nenhuma solução. O Volume~II encontra exatamente esses casos nos balanços
+de redes de ar e nos ajustes de parâmetros por mínimos quadrados, onde a
+matriz dos coeficientes precisa ser invertida numericamente.
+
+\subsection{Síntese: premissas e ligação com os volumes seguintes}
+
+Este capítulo definiu vetor, produtos escalar e vetorial, matriz e
+inversão. Os produtos das Equações~\eqref{eq:v0-c5-2}
+e~\eqref{eq:v0-c5-3} reaparecem na mecânica do contínuo (tensão e
+momento), na eletricidade (potência e campo) e na dinâmica rotacional do
+Volume~I; a inversão de matrizes sustenta a resolução numérica do
+Volume~II.
+
+
+%=============================================================================
+% CAPÍTULO 6 — CÁLCULO DIFERENCIAL
+%=============================================================================
+\section{Cálculo Diferencial}\label{sec:v0-derivadas}
+
+\subsection{A derivada como taxa instantânea}
+
+A pergunta que o cálculo diferencial responde é: com que rapidez uma
+grandeza muda naquele instante? A velocidade média entre dois instantes é
+$\Delta x / \Delta t$; a velocidade instantânea é o limite desse quociente
+quando o intervalo encolhe, Equação~\eqref{eq:v0-c6-1}:
+
+\begin{equation}\label{eq:v0-c6-1}
+\frac{\mathrm{d}x}{\mathrm{d}t}
+  = \lim_{\Delta t \to 0} \frac{\Delta x}{\Delta t}.
+\end{equation}
+
+Essa é a definição, e ela importa: toda derivada dos volumes seguintes é
+um limite como este, e toda regra de derivação é um atalho para calculá-lo.
+A notação $\mathrm{d}x/\mathrm{d}t$ lê-se ``taxa de variação de $x$ com
+$t$''; quando a variável independente é o tempo, o ponto por cima
+($\dot{x}$) abrevia a mesma coisa --- como na vazão $\dot{m}$ do
+Volume~I.
+
+\subsection{Regras de derivação}
+
+As regras que a coleção usa estão na Tabela~\ref{tab:v0-c6-1}. Nenhuma
+delas deve ser procurada em tabela durante a leitura dos volumes: todas
+precisam estar disponíveis de imediato.
+
+\begin{table}[H]
+\centering
+\caption[Regras de derivação usadas nesta coleção.]{%
+Derivadas das funções elementares e regras operacionais.}
+\label{tab:v0-c6-1}
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Função} & \textbf{Derivada} \\
+\midrule
+$x^n$ & $n\,x^{n-1}$ \\
+$\mathrm{e}^{x}$ & $\mathrm{e}^{x}$ \\
+$\ln x$ & $1/x$ \\
+$\mathrm{sen}\,x$ & $\cos x$ \\
+$\cos x$ & $-\,\mathrm{sen}\,x$ \\
+\midrule
+$f + g$ & $f' + g'$ \\
+$f\,g$ & $f'g + f\,g'$ \\
+$f(g(x))$ & $f'(g)\,g'(x)$ \quad (regra da cadeia) \\
+$f/g$ & $(f'g - f\,g')/g^2$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+A regra da cadeia merece destaque porque é a mais usada e a mais
+esquecida: ela diz que a taxa de uma grandeza composta é o produto das
+taxas encadeadas. Quando o Volume~I escreve a aceleração de uma partícula
+como $a = \mathrm{d}v/\mathrm{d}t = (\mathrm{d}v/\mathrm{d}x)(\mathrm{d}x/
+\mathrm{d}t)$, é a regra da cadeia trabalhando.
+
+\subsection{A derivada como inclinação --- e a linearização}
+
+Geometricamente, a derivada num ponto é a inclinação da reta tangente à
+curva naquele ponto, Figura~\ref{fig:v0-c6-1}. Essa leitura geométrica é
+operacionalmente a mais importante: \emph{próximo de um ponto, toda função
+diferenciável parece uma reta}. A Equação~\eqref{eq:v0-c6-2} é a
+aproximação de primeira ordem, base de toda linearização da coleção:
+
+\begin{equation}\label{eq:v0-c6-2}
+f(x_0 + \Delta x) \approx f(x_0) + f'(x_0)\,\Delta x.
+\end{equation}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=1.4]
+\draw[->] (0,0) -- (6.3,0) node[below left=1pt] {$x$};
+\draw[->] (0,0) -- (0,4.1) node[below left=1pt] {$f$};
+% curva f(x) = 0.08 x^2 + 0.4 sen(2x) + 1 ... suave
+\draw[thick, domain=0:6, samples=120]
+  plot (\x, {0.09*\x*\x + 0.5*sin(\x r) + 0.8});
+% ponto x0=2.6
+\coordinate (P) at (2.6, {0.09*2.6*2.6 + 0.5*sin(2.6 r) + 0.8});
+\fill (P) circle (1.4pt) node[above=1pt] {$f(x_0)$};
+\draw[dashed] (2.6,0) -- (P);
+\node[below] at (2.6,0) {$x_0$};
+% tangente em x0: f'(x0) = 0.18*2.6 + 0.5*cos(2.6) = 0.468 + (-0.429) = 0.039
+% usa inclinação real aprox 0.04; reta: y = f(x0) + 0.04 (x-2.6)
+\draw[thick, dashed, domain=1.2:4.6]
+  plot (\x, {0.09*2.6*2.6 + 0.5*sin(2.6 r) + 0.8 + 0.04*(\x-2.6)});
+% secante até x0+dx
+\coordinate (Q) at (4.3, {0.09*4.3*4.3 + 0.5*sin(4.3 r) + 0.8});
+\draw[black!50] (P) -- (Q);
+\draw[dashed] (4.3,0) -- (Q);
+\node[below] at (4.3,0) {$x_0 + \Delta x$};
+\node[black!50,right] at (3.6,2.85) {secante};
+\node at (4.9,1.6) {tangente};
+\node at (1.1,2.3) {$f(x)$};
+\end{tikzpicture}
+\caption[A derivada como inclinação da tangente.]{%
+A derivada $f'(x_0)$ é a inclinação da tangente à curva em $x_0$. A
+secante entre $x_0$ e $x_0+\Delta x$ aproxima a tangente; a aproximação se
+torna exata quando $\Delta x \to 0$. Perto de $x_0$, a tangente substitui a
+curva: é a linearização da Equação~\eqref{eq:v0-c6-2}.}
+\label{fig:v0-c6-1}
+\end{figure}
+
+Todo o estudo de estabilidade, de sensibilidade de parâmetros e de
+pequenos sinais nos volumes seguintes é a Equação~\eqref{eq:v0-c6-2}
+aplicada a modelos físicos: o Volume~II lineariza o comportamento do
+compressor em torno de um ponto de operação para projetar o controle.
+
+\subsection{Derivadas parciais e o gradiente}
+
+Uma função de duas variáveis, $f(x,y)$, tem duas taxas de variação: a que
+resulta de mexer só em $x$ (com $y$ fixo) e a que resulta de mexer só em
+$y$. São as derivadas parciais, Equação~\eqref{eq:v0-c6-3}, escritas com o
+sinal $\partial$ em vez de $\mathrm{d}$ para lembrar que a outra variável
+ficou parada:
+
+\begin{equation}\label{eq:v0-c6-3}
+\frac{\partial f}{\partial x}
+  = \lim_{\Delta x \to 0}
+    \frac{f(x+\Delta x, y) - f(x,y)}{\Delta x}.
+\end{equation}
+
+O vetor das derivadas parciais é o gradiente,
+$\bm{\nabla} f = (\partial f/\partial x,\ \partial f/\partial y,\ 
+\partial f/\partial z)$: ele aponta na direção de maior crescimento de
+$f$ e seu módulo mede a inclinação máxima. O gradiente de temperatura
+dirige o fluxo de calor na lei de Fourier; o gradiente de pressão dirige o
+escoamento; o gradiente de uma função de custo dirige os ajustes de
+projeto. A regra da cadeia estende-se naturalmente: se $f$ depende de $x$
+e de $y$, e ambas dependem de $t$, então
+
+\begin{equation}\label{eq:v0-c6-4}
+\frac{\mathrm{d}f}{\mathrm{d}t}
+  = \frac{\partial f}{\partial x}\frac{\mathrm{d}x}{\mathrm{d}t}
+  + \frac{\partial f}{\partial y}\frac{\mathrm{d}y}{\mathrm{d}t}.
+\end{equation}
+
+A Equação~\eqref{eq:v0-c6-4} é a versão contínua da contabilidade de
+variações usada nos balanços do Volume~I: a variação total é a soma das
+variações parciais vezes as taxas de cada caminho.
+
+\subsection{Máximos, mínimos e pontos de equilíbrio}
+
+Onde uma função suave atinge máximo ou mínimo, a tangente é horizontal:
+$f'(x) = 0$. Esses pontos \emph{estacionários} são candidatos a ótimos, e
+a segunda derivada decide: $f'' > 0$ indica mínimo, $f'' < 0$ indica
+máximo, $f'' = 0$ pede investigação adicional. Em funções de duas
+variáveis, o ponto estacionário exige $\partial f/\partial x = 0$ e
+$\partial f/\partial y = 0$ simultaneamente. A busca de máximo
+rendimento, de mínimo consumo específico e de ponto de operação ótimo,
+que percorre o Volume~II do início ao fim, é esta seção em escala
+industrial.
+
+\subsection{Síntese: premissas e ligação com os volumes seguintes}
+
+A derivada foi definida como limite de taxa média, e todas as suas regras
+são consequência da definição. As três leituras --- taxa instantânea
+(Equação~\eqref{eq:v0-c6-1}), inclinação e linearização
+(Equação~\eqref{eq:v0-c6-2}) e variação parcial
+(Equação~\eqref{eq:v0-c6-3}) --- cobrem todo o uso que os Volumes~I e~II
+fazem do cálculo diferencial: leis de taxa, sensibilidades e otimização.
+
+
+%=============================================================================
+% CAPÍTULO 7 — CÁLCULO INTEGRAL
+%=============================================================================
+\section{Cálculo Integral}\label{sec:v0-integrais}
+
+\subsection{A integral como acumulação}
+
+Se a derivada pergunta ``com que rapidez?'', a integral pergunta ``quanto
+acumulou?''. Uma vazão $\dot{m}$ constante durante $\Delta t$ acumula
+$\dot{m}\,\Delta t$ de massa; uma vazão variável acumula a soma de muitos
+pedacinhos, Equação~\eqref{eq:v0-c7-1}:
+
+\begin{equation}\label{eq:v0-c7-1}
+m = \int_{t_1}^{t_2} \dot{m}(t)\ \mathrm{d}t.
+\end{equation}
+
+O símbolo $\int$ é um ``S'' esticado, de soma: a integral soma produtos
+$\dot{m}(t)\,\mathrm{d}t$, cada um sendo quantidade por vez vezes um
+pedacinho de tempo. A interpretação é sempre essa: a integral acumula a
+taxa. Todo balanço do Volume~I --- massa, energia, quantidade de
+movimento --- é uma Equação~\eqref{eq:v0-c7-1} vestida de princípio de
+conservação.
+
+\subsection{O teorema fundamental}
+
+Derivar e integrar são operações inversas, e isso é o teorema fundamental
+do cálculo, Equação~\eqref{eq:v0-c7-2}: a integral da taxa devolve a
+variação acumulada entre os extremos.
+
+\begin{equation}\label{eq:v0-c7-2}
+\int_{a}^{b} f'(x)\ \mathrm{d}x = f(b) - f(a).
+\end{equation}
+
+Duas consequências operacionais seguem. A primeira: para avaliar uma
+integral definida, basta encontrar uma função cuja derivada seja o
+integrando (uma \emph{primitiva}) e subtrair seus valores nos extremos.
+A segunda: a integral definida é um \emph{número}, e a primitiva é uma
+\emph{função}; confundir as duas coisas é a fonte clássica de erro de
+sinal e de constante.
+
+\subsection{A integral como área --- e o valor médio}
+
+Geometricamente, a integral definida é a área sob a curva entre os
+extremos, Figura~\ref{fig:v0-c7-1}, com áreas abaixo do eixo contadas
+negativo. A leitura de área resolve problemas que a primitiva resolve com
+dificuldade: a energia de um ciclo no diagrama $p$--$V$ é a área
+fechada pela curva, e trabalho líquido de um ciclo fechado é zero quando a
+curva não envolve área.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=1.4]
+\draw[->] (0,0) -- (6.3,0) node[below left=1pt] {$x$};
+\draw[->] (0,0) -- (0,3.6) node[below left=1pt] {$f$};
+\draw[thick, domain=0:6, samples=120]
+  plot (\x, {2.4*exp(-(\x-3)^2/2.2) + 0.35});
+% área sob a curva entre x=1 e x=4.6
+\fill[black!15, domain=1:4.6, samples=80]
+  plot (\x, {2.4*exp(-(\x-3)^2/2.2) + 0.35}) -- (4.6,0) -- (1,0) -- cycle;
+\draw[thick, domain=1:4.6, samples=80]
+  plot (\x, {2.4*exp(-(\x-3)^2/2.2) + 0.35});
+\draw[dashed] (1,0) -- (1,{2.4*exp(-4/2.2)+0.35});
+\draw[dashed] (4.6,0) -- (4.6,{2.4*exp(-(1.6)^2/2.2)+0.35});
+\node[below] at (1,0) {$a$};
+\node[below] at (4.6,0) {$b$};
+\node at (2.8,1.0) {$\displaystyle\int_a^b f(x)\,\mathrm{d}x$};
+\end{tikzpicture}
+\caption[A integral definida como área sob a curva.]{%
+A integral definida de $f$ entre $a$ e $b$ é a área sob a curva nesse
+intervalo. A região sombreada representa a acumulação da Equação
+\eqref{eq:v0-c7-1}: cada fatia vertical de largura $\mathrm{d}x$ tem área
+$f(x)\,\mathrm{d}x$, e a integral soma todas.}
+\label{fig:v0-c7-1}
+\end{figure}
+
+Uma aplicação direta define o \textbf{valor médio} de uma função num
+intervalo, Equação~\eqref{eq:v0-c7-3}:
+
+\begin{equation}\label{eq:v0-c7-3}
+\bar{f} = \frac{1}{b-a}\int_{a}^{b} f(x)\ \mathrm{d}x.
+\end{equation}
+
+O valor médio é a altura do retângulo de mesma área que a curva. A
+diferença média logarítmica de temperatura dos trocadores de calor e a
+potência média de um ciclo periódico, ambas do Volume~I, são
+Equação~\eqref{eq:v0-c7-3} com nomes próprios.
+
+\subsection{Primitivas das funções elementares}
+
+A Tabela~\ref{tab:v0-c7-1} lista as primitivas que a coleção usa. Como
+verificação de segurança, derive o resultado: se a derivada volta ao
+integrando, a primitiva está certa.
+
+\begin{table}[H]
+\centering
+\caption[Primitivas das funções elementares.]{%
+Primitivas imediatas das funções elementares, com $C$ constante arbitrária.}
+\label{tab:v0-c7-1}
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Função} & \textbf{Primitiva} \\
+\midrule
+$x^n$ ($n \neq -1$) & $x^{n+1}/(n+1) + C$ \\
+$1/x$ & $\ln|x| + C$ \\
+$\mathrm{e}^{x}$ & $\mathrm{e}^{x} + C$ \\
+$\mathrm{sen}\,x$ & $-\cos x + C$ \\
+$\cos x$ & $\mathrm{sen}\,x + C$ \\
+$1/(1+x^2)$ & $\operatorname{arctg} x + C$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Quando a primitiva não é imediata, restam três caminhos, em ordem de
+preferência: substituição de variável (que desfaz a regra da cadeia),
+integração por partes (que desfaz a regra do produto) e tabelas ou
+software para as demais. Para a engenharia de máquinas, o essencial é
+reconhecer \emph{qual} caminho se aplica, e a coleção só exige isso.
+
+\subsection{Integrais múltiplas}
+
+Uma integral dupla $\iint_A f(x,y)\,\mathrm{d}A$ soma contribuições sobre
+uma região do plano --- a massa de uma placa, por exemplo, soma
+$\rho(x,y)\,\mathrm{d}A$ sobre toda a área. A avaliação é sempre a mesma:
+integrar duas vezes em sequência, cada vez tratando a outra variável como
+constante. A mesma lógica se estende a três dimensões. No Volume~I, os
+balanços integrais sobre volumes de controle são exatamente integrais
+triplas disfarçadas de física; o Capítulo~4 escreve o teorema do
+transporte que as organiza.
+
+\subsection{Síntese: premissas e ligação com os volumes seguintes}
+
+A integral acumula taxa (Equação~\eqref{eq:v0-c7-1}), a primitiva inverte a
+derivação (Equação~\eqref{eq:v0-c7-2}) e o valor médio resume o
+acumulado (Equação~\eqref{eq:v0-c7-3}). Com isso, o leitor está pronto
+para os balanços integrais do Volume~I e para a acumulação de energia,
+massa e carga que percorre o Volume~II.
+
+
+%=============================================================================
+% CAPÍTULO 8 — EQUAÇÕES DIFERENCIAIS ORDINÁRIAS
+%=============================================================================
+\section{Equações Diferenciais Ordinárias}\label{sec:v0-edo}
+
+\subsection{O que é uma equação diferencial}
+
+Uma equação diferencial ordinária (EDO) relaciona uma função às suas
+próprias taxas de variação. A declaração ``a temperatura do reservatório
+cai a uma taxa proporcional à diferença entre ela e a ambiente'' traduz-se
+na Equação~\eqref{eq:v0-c8-1}:
+
+\begin{equation}\label{eq:v0-c8-1}
+\frac{\mathrm{d}T}{\mathrm{d}t} = -k\,(T - T_{\infty}),
+\end{equation}
+
+com $k > 0$ constante do processo e $T_{\infty}$ a temperatura ambiente.
+A solução não é um número, é uma função $T(t)$ que satisfaz a equação para
+todo $t$. A \emph{ordem} da EDO é a maior derivada presente; a
+Equação~\eqref{eq:v0-c8-1} é de primeira ordem. Quase toda dinâmica do
+Volume~II --- resposta de pressão, de temperatura, de rotação --- é uma
+EDO de primeira ou segunda ordem com nomes próprios.
+
+\subsection{Condições iniciais e o problema completo}
+
+Uma EDO admite infinitas soluções: a Equação~\eqref{eq:v0-c8-1} é satisfeita
+por qualquer decaimento exponencial de amplitude livre. Fixar o problema
+exige \emph{condições iniciais}: o valor da função (e das derivadas, se a
+ordem for maior que um) num instante de referência. O conjunto EDO mais
+condição inicial chama-se \emph{problema de valor inicial}, e sua solução
+é única sempre que a equação for suficientemente bem comportada --- o que
+todas as equações desta coleção são. Saber contar as condições exigidas é
+metade da modelagem: primeira ordem pede uma condição, segunda ordem pede
+duas.
+
+\subsection{Primeira ordem: separáveis e lineares}
+
+A Equação~\eqref{eq:v0-c8-1} é do tipo \emph{separável}: as variáveis se
+separam, com tudo que depende de $T$ de um lado e tudo que depende de $t$
+do outro, Equação~\eqref{eq:v0-c8-2}:
+
+\begin{equation}\label{eq:v0-c8-2}
+\frac{\mathrm{d}T}{T - T_{\infty}} = -k\ \mathrm{d}t
+\quad\Longrightarrow\quad
+\ln\frac{T - T_{\infty}}{T_0 - T_{\infty}} = -k\,t,
+\end{equation}
+
+onde $T_0 = T(0)$. Isolando $T(t)$, obtém-se o decaimento exponencial,
+Equação~\eqref{eq:v0-c8-3}, com a constante de tempo $\tau = 1/k$:
+
+\begin{equation}\label{eq:v0-c8-3}
+T(t) = T_{\infty} + (T_0 - T_{\infty})\,\mathrm{e}^{-t/\tau}.
+\end{equation}
+
+A constante de tempo tem leitura direta: a cada intervalo $\tau$, a
+diferença $T - T_{\infty}$ cai para $37\%$ ($\mathrm{e}^{-1}$) do valor
+anterior; em $3\tau$, restam $5\%$. Esse argumento aparece em todos os
+sistemas de primeira ordem da coleção, do resfriamento de motor à
+resposta de sensor.
+
+A segunda família de primeira ordem é a \emph{linear}:
+$\dot{x} + a(t)\,x = b(t)$, que inclui forçamento externo $b(t)$. A
+estratégia de solução (fator integrante) não precisa ser reproduzida aqui;
+o que importa é a estrutura da solução: resposta = transiente (decai com
+o tempo) + regime permanente (acompanha o forçamento). Essa decomposição
+organiza a análise de resposta do Volume~II.
+
+\subsection{Segunda ordem: oscilações}
+
+A EDO de segunda ordem com coeficientes constantes, Equação
+\eqref{eq:v0-c8-4}, governa massa--mola--amortecedor, circuitos $RLC$ e
+todo oscilador natural de máquina:
+
+\begin{equation}\label{eq:v0-c8-4}
+\ddot{x} + 2\zeta\omega_n\,\dot{x} + \omega_n^2\,x = f(t).
+\end{equation}
+
+O parâmetro $\omega_n$ é a \emph{frequência natural} (a que o sistema
+oscilaria sem amortecimento) e $\zeta$ é o \emph{fator de amortecimento},
+que classifica o comportamento, Figura~\ref{fig:v0-c8-1}:
+
+\begin{itemize}
+\item $\zeta < 1$ --- subamortecido: oscila com amplitude decaindo;
+\item $\zeta = 1$ --- criticamente amortecido: retorna ao repouso no menor
+  tempo sem cruzar a posição de equilíbrio;
+\item $\zeta > 1$ --- superamortecido: retorna sem oscilar, lentamente.
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=1.15]
+\begin{axis}[
+  width=11.5cm, height=6.2cm,
+  xlabel={$t$ (tempo adimensional $\omega_n t$)},
+  ylabel={$x$ (deslocamento)},
+  xmin=0, xmax=12, ymin=-0.4, ymax=1.25,
+  axis lines=left,
+  legend style={font=\footnotesize, at={(0.97,0.03)}, anchor=south east},
+  xtick=\empty, ytick={0,1},
+]
+% subamortecido zeta=0.15: x = exp(-0.15 t) cos(0.989 t)
+\addplot[thick, domain=0:12, samples=240]
+  {1 - exp(-0.15*x)*(cos(deg(0.9887*x)) + 0.1517*sin(deg(0.9887*x)))};
+\addlegendentry{$\zeta = 0{,}15$ (subamortecido)}
+% criticamente amortecido: x = (1+t) exp(-t)
+\addplot[thick, dashed, domain=0:12, samples=120]
+  {1 - (1+x)*exp(-x)};
+\addlegendentry{$\zeta = 1$ (crítico)}
+% superamortecido zeta=2: raízes -0.268 e -3.732; x = (r2 e^{r1 t} - r1 e^{r2 t})/(r2-r1)
+\addplot[thick, dotted, domain=0:12, samples=120]
+  {1 + (-3.732*exp(-0.268*x) + 0.268*exp(-3.732*x))/(-0.268+3.732)};
+\addlegendentry{$\zeta = 2$ (superamortecido)}
+\end{axis}
+\end{tikzpicture}
+\caption[Resposta de sistemas de segunda ordem por regime de amortecimento.]{%
+Resposta ao degrau de um sistema de segunda ordem, Equação
+\eqref{eq:v0-c8-4}, para três fatores de amortecimento. O subamortecido
+oscila antes de assentar; o crítico assenta sem oscilar no menor tempo; o
+superamortecido assenta sem oscilar, mais lentamente.}
+\label{fig:v0-c8-1}
+\end{figure}
+
+O Volume~I deduz a Equação~\eqref{eq:v0-c8-4} três vezes --- mecânica,
+eletricidade e vibrações --- e mostra que é a mesma equação com roupagens
+diferentes; o Volume~II a usa para avaliar se o comportamento dinâmico de
+um compressor está próximo de um regime perigoso de oscilação.
+
+\subsection{Solução numérica: o passo de Euler}
+
+Quando a EDO não admite solução fechada --- e as EDOs com coeficientes
+variáveis ou não lineares, como as do Volume~II, em geral não admitem ---
+recorre-se à integração numérica. O método de Euler, o mais simples,
+traduz a definição de derivada direto em algoritmo: se
+$\dot{x} = g(x,t)$, então a variação num passo pequeno $\Delta t$ é
+aproximadamente $g\,\Delta t$, Equação~\eqref{eq:v0-c8-5}:
+
+\begin{equation}\label{eq:v0-c8-5}
+x_{n+1} = x_n + g(x_n, t_n)\ \Delta t.
+\end{equation}
+
+A Equação~\eqref{eq:v0-c8-5} é a própria definição da derivada com o
+limite suspenso; por isso o erro de cada passo é proporcional a
+$(\Delta t)^2$, e o erro acumulado, a $\Delta t$. Refinar o passo
+diminui o erro previsivelmente --- e essa previsibilidade é o que permite
+confiar na simulação. O Volume~II integra suas EDOs com métodos mais
+refinados que este, mas todos descendentes diretos da
+Equação~\eqref{eq:v0-c8-5}.
+
+\subsection{Síntese: premissas e ligação com os volumes seguintes}
+
+Uma EDO postula a forma da taxa; a condição inicial fixa a amplitude; a
+solução fecha o problema. As famílias aqui apresentadas --- primeira ordem
+separável e linear, segunda ordem com coeficientes constantes --- cobrem
+toda a dinâmica dos volumes seguintes. A constante de tempo
+(Equação~\eqref{eq:v0-c8-3}) e o fator de amortecimento
+(Equação~\eqref{eq:v0-c8-4}) serão vocabulário corrente a partir daqui.
+
+
+%=============================================================================
+% CAPÍTULO 9 — SÉRIES E APROXIMAÇÕES
+%=============================================================================
+\section{Séries e Aproximações}\label{sec:v0-series}
+
+\subsection{Por que aproximar}
+
+Os modelos exatos são raros; os úteis são aproximados. A pergunta da
+engenharia nunca é ``a aproximação é perfeita?'', e sim ``o erro da
+aproximação é pequeno \emph{para o meu propósito}?''. Este capítulo fornece
+as duas ferramentas para respondê-la: a série de Taylor, que gera
+aproximações, e a notação de ordem, que declara o erro.
+
+\subsection{A série de Taylor}
+
+Uma função suave pode ser reconstruída perto de um ponto a partir de seus
+valores e de todas as suas derivadas naquele ponto, Equação
+\eqref{eq:v0-c9-1}:
+
+\begin{equation}\label{eq:v0-c9-1}
+f(x_0 + h) = f(x_0) + f'(x_0)\,h
+  + \frac{f''(x_0)}{2!}\,h^2
+  + \frac{f'''(x_0)}{3!}\,h^3 + \dots
+\end{equation}
+
+O polinômio truncado na primeira ordem é a linearização da
+Equação~\eqref{eq:v0-c6-2}; cada termo a mais melhora a cópia numa
+vizinhança maior. O fatorial nos denominadores faz a série convergir
+rapidamente para $h$ pequeno: o termo de ordem $n$ decai com $h^n$, de
+modo que dobrar a precisão da aproximação custa cada vez menos.
+
+A Figura~\ref{fig:v0-c9-1} mostra a aproximação de $\mathrm{e}^{x}$ em
+torno de $x_0 = 0$: a reta (ordem 1) serve numa vizinhança estreita, a
+parábola (ordem 2) alarga-a, e a cúbica (ordem 3) praticamente coincide
+com a exponencial no intervalo desenhado.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\footnotesize]
+\begin{axis}[
+  width=11.5cm, height=6.6cm,
+  xlabel={$x$}, ylabel={$f(x)$},
+  xmin=-2.2, xmax=2.2, ymin=-0.5, ymax=4.5,
+  axis lines=left,
+  legend style={font=\footnotesize, at={(0.03,0.97)}, anchor=north west},
+  ytick={0,1,2,3,4},
+]
+\addplot[thick, domain=-2.2:1.5, samples=120] {exp(x)};
+\addlegendentry{$\mathrm{e}^{x}$}
+\addplot[thick, dashed, domain=-2.2:2.2] {1+x};
+\addlegendentry{ordem 1: $1+x$}
+\addplot[thick, dotted, domain=-2.2:2.2] {1+x+x^2/2};
+\addlegendentry{ordem 2: $1+x+x^2/2$}
+\addplot[thin, domain=-2.2:2.2] {1+x+x^2/2+x^3/6};
+\addlegendentry{ordem 3: $+x^3/6$}
+\end{axis}
+\end{tikzpicture}
+\caption[Série de Taylor da exponencial em torno de $x_0=0$.]{%
+A série de Taylor da Equação~\eqref{eq:v0-c9-1} aplicada a
+$\mathrm{e}^{x}$ em torno de $x_0 = 0$. Cada ordem acrescentada melhora a
+aproximação numa vizinhança maior; perto de $x_0$, a reta já descreve a
+função com erro pequeno.}
+\label{fig:v0-c9-1}
+\end{figure}
+
+As expansões que a coleção usa sem aviso decorrem da
+Equação~\eqref{eq:v0-c9-1}, válidas para $|\varepsilon| \ll 1$,
+Equação~\eqref{eq:v0-c9-2}:
+
+\begin{equation}\label{eq:v0-c9-2}
+(1+\varepsilon)^n \approx 1 + n\,\varepsilon,
+\qquad
+\frac{1}{1+\varepsilon} \approx 1 - \varepsilon,
+\qquad
+\mathrm{e}^{\varepsilon} \approx 1 + \varepsilon,
+\qquad
+\ln(1+\varepsilon) \approx \varepsilon.
+\end{equation}
+
+A primeira delas é o binômio de Newton truncado; todas dizem o mesmo:
+funções suaves parecem retas de perto, e a declaração
+``$|\varepsilon| \ll 1$'' é a hipótese que dá sentido à aproximação.
+
+\subsection{Erro e notação de ordem}
+
+A notação $f(h) = O(h^n)$ lê-se ``$f$ é da ordem de $h^n$'' e significa
+que $f$ decai pelo menos tão rápido quanto $h^n$ quando $h \to 0$:
+existem constantes $C$ e $h_0$ tais que $|f(h)| \le C\,h^n$ para
+$0 < h < h_0$. A constante $C$ não interessa no momento --- interessa o
+expoente, porque ele diz como o erro melhora quando se refina a
+discretização. O método de Euler da Equação~\eqref{eq:v0-c8-5} tem erro
+global $O(\Delta t)$: diminuir o passo pela metade divide o erro pela
+metade, e essa previsão é verificável numericamente.
+
+Declarar a ordem do erro é o mínimo de honestidade de uma aproximação.
+Quando o Volume~II lineariza um modelo, a pergunta ``qual é o $h$ da
+linearização?'' --- isto é, quão longe do ponto de operação a aproximação
+ainda vale --- tem resposta numérica, e a notação $O(\cdot)$ é a
+linguagem para formular essa resposta.
+
+\subsection{Síntese: premissas e ligação com os volumes seguintes}
+
+A série de Taylor gera aproximações locais; a notação de ordem declara seu
+erro. Juntas, autorizam a operação mais frequente desta coleção:
+substituir um modelo complicado por um simples \emph{numa vizinhança
+declarada}, sabendo quanto se perde. Todas as linearizações, todas as
+sensibilidades e todos os controladores dos volumes seguintes usam essa
+autorização.
+
+
+%=============================================================================
+% CAPÍTULO 10 — SÍNTESE E PONTE COM OS VOLUMES I E II
+%=============================================================================
+\section{Síntese e Ponte com os Volumes I e II}\label{sec:v0-sintese}
+
+\subsection{As peças reunidas}
+
+O Volume~0 não apresentou física nenhuma: apresentou a linguagem e as
+operações com que a física será escrita. A Tabela~\ref{tab:v0-c10-1}
+fecha o ciclo começado na Tabela~\ref{tab:v0-c1-1}: cada ferramenta, o
+capítulo que a ensina e o primeiro uso que os volumes seguintes fazem dela.
+
+\begin{table}[H]
+\centering
+\caption[Ferramentas do Volume 0 e seu primeiro uso nos volumes seguintes.]{%
+Mapa de saída do Volume 0: de cada ferramenta ao seu primeiro uso na
+coleção.}
+\label{tab:v0-c10-1}
+\begin{tabularx}{\textwidth}{lXl}
+\toprule
+\textbf{Cap.} & \textbf{Ferramenta} & \textbf{Primeiro uso} \\
+\midrule
+\ref{sec:v0-notacao} & Notação & Símbolos das leis de taxa, Cap. 2 do Vol.~I \\
+\ref{sec:v0-unidades} & Unidades e dimensão & Verificação de toda equação do Vol.~I \\
+\ref{sec:v0-funcoes} & Funções & Leis constitutivas, Caps. 2--3 do Vol.~I \\
+\ref{sec:v0-vetores} & Vetores & Tensão de Cauchy, Cap. 2 do Vol.~I \\
+\ref{sec:v0-derivadas} & Derivadas & Leis de taxa, Caps. 2--5 do Vol.~I \\
+\ref{sec:v0-integrais} & Integrais & Balanços integrais, Cap. 4 do Vol.~I \\
+\ref{sec:v0-edo} & Equações diferenciais & Sistemas dinâmicos, Vol.~II \\
+\ref{sec:v0-series} & Séries e ordem & Linearizações, Vols.~I e~II \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Como o Volume 0 se relaciona com os demais}
+
+A relação é de pré-requisito, não de resumo: o Volume~I pressupõe este
+volume da mesma forma que prescreve seus próprios capítulos. Quem leu
+aqui não encontra surpresa simbólica adiante; quem pulou aqui e tropeçar
+num símbolo ou numa operação encontra neste volume o lugar de onde ele
+veio. A convenção de notação do Capítulo~\ref{sec:v0-notacao} vale sem
+exceção: se algum símbolo parecer usado de outro modo, o uso local está
+errado, e não a convenção.
+
+\subsection{Próximos passos}
+
+Com este volume concluído, o percurso natural segue para o Volume~I, que
+aplica estas ferramentas à mecânica do contínuo, aos termofluidos e aos
+sistemas de medição --- e destes, ao Volume~II, que as particulariza no
+compressor de parafuso offshore. Quem chegou aqui sem formação prévia
+pode precisar de um percurso mais longo; Nussenzveig~\cite{nussenzveig}
+fornece a física básica que antecede este volume, e Guidorizzi
+\cite{guidorizzi2013} o cálculo em profundidade. As referências de classe
+mundial para o mesmo percurso são Feynman~\cite{feynman1963} na física e
+Apostol~\cite{apostol1967} e Spivak~\cite{spivak2008} no cálculo. O
+caminho da coleção, porém, está completo: o que será usado, já foi
+ensinado.
+
+
+%=============================================================================
+% BIBLIOGRAFIA
+%=============================================================================
+\newpage
+\begin{thebibliography}{99}
+
+\bibitem{nussenzveig} Nussenzveig, H. M. \textit{Curso de Física Básica}. Vol.~1: \textit{Mecânica}. 5ª ed. São Paulo: Blucher, 2013; Vol.~2: \textit{Fluidos, Oscilações e Ondas, Calor}. 5ª ed. São Paulo: Blucher, 2014.
+
+\bibitem{guidorizzi2013} Guidorizzi, H. L. \textit{Um Curso de Cálculo}. Vol.~1. 5ª ed. Rio de Janeiro: LTC, 2013.
+
+\bibitem{feynman1963} Feynman, R. P., Leighton, R. B., Sands, M. \textit{The Feynman Lectures on Physics}. Vol.~1: \textit{Mainly Mechanics, Radiation, and Heat}. Addison-Wesley, 1963.
+
+\bibitem{apostol1967} Apostol, T. M. \textit{Calculus}. Vol.~1: \textit{One-Variable Calculus, with an Introduction to Linear Algebra}. 2nd ed. Wiley, 1967.
+
+\bibitem{spivak2008} Spivak, M. \textit{Calculus}. 4th ed. Houston: Publish or Perish, 2008.
+
+\end{thebibliography}
+
+\end{document}

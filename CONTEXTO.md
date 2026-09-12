@@ -3670,3 +3670,38 @@ acadêmicas (edição brasileira quando existente). Na sequência, o autor indic
 **Verificação.** `pdflatex` 3 passagens: **87 páginas** (era 86), **0
 erros, 0 referências indefinidas**; overfulls apenas os dois baseline.
 Inspeção visual das páginas de Referências (acentos e numeração corretos).
+
+## Diretriz permanente — bibliografia (12/09/2026)
+
+**Decisão do autor.** Usar sempre as melhores bibliografias do mundo,
+independentemente de país: a escolha de referência prioriza a excelência
+internacional da obra, não a disponibilidade em português. Obras nacionais
+entram quando o autor as indicar explicitamente (Nussenzveig, Özisik,
+Filippo Filho, Rollins, Bloch & Geitner) ou quando forem a melhor da
+categoria; caso contrário, preferir os clássicos mundiais (ex.: Feynman,
+Apostol, Spivak no Volume 0).
+
+## Volume 0 — Notações e Cálculo Básico: criação (12/09/2026)
+
+**Pedido do autor (backlog V0-01).** Volume de pré-requisitos com os
+termos básicos de cálculo e de notações, para que os mais leigos aprendam
+e os formados há mais tempo relembrem.
+
+**Conteúdo.** 10 capítulos no formato da coleção (bases, desenvolvimento,
+síntese com ponte aos volumes seguintes): introdução e mapa; notação e
+linguagem simbólica (fontes, operadores, letras gregas, adornos);
+grandezas, unidades e análise dimensional; funções elementares e gráficos
+(com círculo unitário); vetores e álgebra linear essencial; cálculo
+diferencial (linearização, gradiente); cálculo integral (acumulação, valor
+médio); equações diferenciais de 1ª e 2ª ordem (constante de tempo,
+amortecimento, passo de Euler); séries e aproximações (Taylor, notação
+$O(\cdot)$); síntese com tabela de pontes. Seis figuras vetoriais (TikZ e
+pgfplots) e seis tabelas. Bibliografia: Nussenzveig e Guidorizzi (indicação
+do autor) + Feynman, Apostol e Spivak (classe mundial, pela diretriz acima).
+
+**Verificação.** `pdflatex` 3 passagens: **24 páginas, 0 erros, 0
+referências indefinidas, 0 overfulls**. Curvas da Figura 8.1 conferidas
+analiticamente (partem de 0, convergem para 1); legenda reposicionada após
+inspeção visual. Sem marcas de IA em texto ou metadados.
+
+**Nomenclatura.** `Volume_0_Notacoes_e_Calculo.tex/pdf` é o nome canônico.
