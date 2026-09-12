@@ -130,3 +130,15 @@ do PDF (`pdftotext -layout`), nesta data:
       com 1–2 slides da Parte III
 
 — Relatório gerado em 16/08/2026 sobre `compressores.tex` @ `f6cfefb` (151 páginas).
+
+## 7. Aprendizados das sessões do Volume I (12/09/2026)
+
+- Nomear arquivos com o nome definitivo desde o início; nomes de trabalho
+  temporários geram duplicatas (`teorias`, `theorias`, cópias datadas) que
+  confundem o autor. Nome canônico do Volume I: `Volume_I_Fundamentos.tex/pdf`.
+- Verificar sempre o estado real do repositório por clone fresco; índices e
+  leituras locais de objeto podem divergir do remoto de forma não reproduzível.
+- Comandos de stage seguros quando o índice local é suspeito:
+  `git hash-object -w <arquivo>`, `git update-index --cacheinfo`,
+  `git commit-tree` (mensagem com `-F <arquivo>`), `git update-ref`,
+  depois `git push`; verificação final por `git cat-file -p origin/main:<arq>`.
