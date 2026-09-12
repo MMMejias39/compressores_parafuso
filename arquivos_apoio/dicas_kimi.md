@@ -80,3 +80,15 @@ ajustes finos para uma versão final.
 - [ ] `\setlength{\headheight}{15pt}` (warnings do fancyhdr)
 - [ ] `\texorpdfstring` em títulos com matemática (bookmarks)
 - [ ] Preencher metadados do PDF via `\hypersetup`
+
+## 6. Aprendizados das sessões do Volume I (12/09/2026)
+
+- Nomear arquivos com o nome definitivo desde o início; nomes de trabalho
+  temporários geram duplicatas (`teorias`, `theorias`, cópias datadas) que
+  confundem o autor.
+- Verificar sempre o estado real do repositório por clone fresco; índices e
+  leituras locais podem divergir do remoto.
+- Comandos de stage seguros quando o índice local é suspeito:
+  `git hash-object -w <arquivo>`, `git update-index --cacheinfo`,
+  `git commit-tree` (mensagem com `-F <arquivo>`), `git update-ref`,
+  depois `git push`.
