@@ -3665,7 +3665,7 @@ compressível, Cap. 4), Tenenbaum (dinâmica do corpo rígido, Cap. 8),
 Rollins (prática de ar comprimido, Cap. 1), Filippo Filho (máquinas de
 fluido, síntese) e Bloch e Geitner (confiabilidade de compressores,
 síntese). Dados bibliográficos conferidos em catálogos e referências
-acadêmicas (edição brasileira quando existente).
+acadêmicas (edição brasileira quando existente). Na sequência, o autor indicou mais duas: Nussenzveig, *Curso de Física Básica* (Blucher, vols. 1 e 2, citado em "Como usar este volume") e Fox, McDonald e Pritchard, *Introdução à Mecânica dos Fluidos* (LTC, 7ª ed. brasileira, citado junto a White na perda de carga do Cap. 4).
 
 **Verificação.** `pdflatex` 3 passagens: **87 páginas** (era 86), **0
 erros, 0 referências indefinidas**; overfulls apenas os dois baseline.
