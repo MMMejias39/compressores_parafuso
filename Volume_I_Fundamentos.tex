@@ -584,7 +584,9 @@ específico: o compressor de parafuso rotativo isento de óleo em plantas de ar
 comprimido offshore. A relação entre os dois volumes é de especialização, não
 de resumo e detalhamento: o Volume II não repete a teoria, ele escolhe as
 hipóteses que a particularizam para aquela máquina e assume as consequências
-dessa escolha.
+dessa escolha. Do lado prático do ar comprimido --- seleção, instalação e
+operação de compressores e de redes de distribuição ---, o manual editado por
+Rollins~\cite{rollins2004} é a referência consagrada em língua portuguesa.
 
 A Figura~\ref{fig:v1-c1-1} situa o volume no conjunto da obra: cada capítulo
 entrega uma peça --- uma lei de taxa, um balanço, um modelo de componente ---
@@ -2315,7 +2317,10 @@ bloqueio}\label{sub:v1-c4-comprimivel}
 A Figura~\ref{fig:v1-c4-2} esquematiza o que ocorre numa restrição
 convergente-divergente: a seção de garganta é onde a velocidade atinge o
 som, e só depois dela a pressão pode se recuperar --- princípio que os
-orifícios de medição de vazão exploram e que os bocais de descarga respeitam.
+orifícios de medição de vazão exploram e que os bocais de descarga respeitam. O
+tratamento clássico do escoamento compressível, com o formalismo das ondas de
+choque e dos métodos numéricos de captura de choque, está em
+Laney~\cite{laney1998}.
 
 \begin{figure}[H]
 \centering
@@ -2689,7 +2694,9 @@ Equação~\eqref{eq:v1-c5-1}:
 \end{equation}
 onde $\mathbf{q}$ é o vetor fluxo de calor (W\,m$^{-2}$), $k$ a
 condutividade térmica do material (W\,m$^{-1}$\,K$^{-1}$) e o sinal negativo
-codifica a direção: do quente para o frio.
+codifica a direção: do quente para o frio. A condução, em regime permanente
+e transiente e com ou sem geração interna, recebe tratamento sistemático em
+Özisik~\cite{ozisik1990}, referência clássica disponível em língua portuguesa.
 
 Integrando a Equação~\eqref{eq:v1-c5-1} numa parede plana de espessura $L$
 com $k$ constante e temperaturas impostas $T_1$ e $T_2$ nas faces, obtém-se o
@@ -4728,7 +4735,9 @@ depende das duas inércias --- não basta conhecer uma delas:
 O Volume~II calcula exatamente essa frequência para o trem
 motor--caixa--compressor, porque a coincidência entre $\omega_t$ e harmônicos
 da rede ou do engrenamento é mecanismo clássico de falha de eixos e
-acoplamentos.
+acoplamentos. A cinemática e a cinética do corpo rígido, dos parâmetros de
+Euler às equações de Newton--Euler, recebem tratamento completo em
+Tenenbaum~\cite{tenenbaum1997}.
 
 \subsection{Vibrações mecânicas}\label{sub:v1-c8-vibracoes}
 
@@ -5189,7 +5198,11 @@ a partir dos fundamentos corretos — o que justifica a existência deste volume
 Com os fundamentos estabelecidos, o leitor está apto a acompanhar o Volume II,
 onde essas mesmas teorias são aplicadas a um sistema de compressão de ar
 offshore completo. As equações, convenções e notação deste volume serão
-reutilizadas lá, de modo que a transição seja direta.
+reutilizadas lá, de modo que a transição seja direta. Para a teoria das
+máquinas de fluido --- bombas, ventiladores e compressores ---, ver
+Filippo~\cite{filippo2015}; para a confiabilidade e a disponibilidade de
+compressores industriais, com a linguagem de planta, ver Bloch e
+Geitner~\cite{bloch2012}.
 
 
 %=============================================================================
@@ -5210,9 +5223,13 @@ reutilizadas lá, de modo que a transição seja direta.
 
 \bibitem{fox2020} Fox, R. W., McDonald, A. T., Pritchard, P. J. \textit{Introduction to Fluid Mechanics}. 10ª ed. Wiley, 2020.
 
+\bibitem{laney1998} Laney, C. B. \textit{Computational Gasdynamics}. Cambridge University Press, 1998.
+
 \bibitem{incropera2008} Incropera, F. P., DeWitt, D. P. \textit{Fundamentos de Transferência de Calor e de Massa}. 6ª ed. LTC, 2008.
 
 \bibitem{bejan1993} Bejan, A. \textit{Heat Transfer}. Wiley, 1993.
+
+\bibitem{ozisik1990} Özisik, M. N. \textit{Transferência de Calor: Um Texto Básico}. Rio de Janeiro: Guanabara Koogan, 1990.
 
 \bibitem{chapman2012} Chapman, S. J. \textit{Fundamentos de Máquinas Elétricas}. Cengage Learning, 2012.
 
@@ -5228,9 +5245,17 @@ reutilizadas lá, de modo que a transição seja direta.
 
 \bibitem{shigley2011} Shigley, J. E., Mischke, C. R., Budynas, R. G. \textit{Projeto de Elementos de Máquinas}. 8ª ed. Bookman, 2011.
 
+\bibitem{tenenbaum1997} Tenenbaum, R. A. \textit{Dinâmica}. Rio de Janeiro: Editora da UFRJ, 1997.
+
 \bibitem{figliola2011} Figliola, R. S., Beasley, D. E. \textit{Theory and Design for Mechanical Measurements}. 5ª ed. Wiley, 2011.
 
 \bibitem{international2008} Joint Committee for Guides in Metrology (JCGM). \textit{Evaluation of Measurement Data — Guide to the Expression of Uncertainty in Measurement (GUM 1995 with minor corrections)}. 2008.
+
+\bibitem{filippo2015} Filippo Filho, G. \textit{Bombas, Ventiladores e Compressores: Fundamentos}. São Paulo: Érica, 2015.
+
+\bibitem{rollins2004} Rollins, J. P. (ed.). \textit{Manual de Ar Comprimido e Gases}. Tradução e revisão técnica de B. Buck. São Paulo: Pearson Prentice Hall, 2004.
+
+\bibitem{bloch2012} Bloch, H. P., Geitner, F. K. \textit{Compressores: Um Guia Prático para a Confiabilidade e a Disponibilidade}. Porto Alegre: Bookman, 2014. Tradução de \textit{Compressors: How to Achieve High Reliability \& Availability}, McGraw-Hill, 2012.
 
 \end{thebibliography}
 

@@ -3655,3 +3655,18 @@ canônico do Volume I (86 páginas, 22 figuras); `compressores.tex/pdf`
 pertecem ao Volume II; tudo o mais sai da árvore (o histórico do git
 preserva as versões antigas). Lição: nomear cedo com nome definitivo e
 evitar duplicatas datadas no repositório.
+
+## Volume I — Bibliografia ampliada (12/09/2026)
+
+**Pedido do autor.** Inclusão de seis obras de referência indicadas
+pelo autor, com citações no ponto temático de cada uma:
+Özisik (condução, Cap. 5), Laney (escoamento
+compressível, Cap. 4), Tenenbaum (dinâmica do corpo rígido, Cap. 8),
+Rollins (prática de ar comprimido, Cap. 1), Filippo Filho (máquinas de
+fluido, síntese) e Bloch e Geitner (confiabilidade de compressores,
+síntese). Dados bibliográficos conferidos em catálogos e referências
+acadêmicas (edição brasileira quando existente).
+
+**Verificação.** `pdflatex` 3 passagens: **87 páginas** (era 86), **0
+erros, 0 referências indefinidas**; overfulls apenas os dois baseline.
+Inspeção visual das páginas de Referências (acentos e numeração corretos).
