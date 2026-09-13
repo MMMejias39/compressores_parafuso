@@ -87,8 +87,9 @@ cada um — resumo aqui):
 
 - `streamlit`, `numpy`, `matplotlib`, `pytest`, `scipy`, `torch`, `pandas`,
   `openpyxl`: todas instaladas via `pip install -r requirements.txt`, sem
-  cuidado especial. `pandas`/`openpyxl` (16/08/2026) servem só a aba "Dados
-  Medidos" (`pd.read_csv`/`pd.read_excel` do upload de instrumentação) —
+  cuidado especial. `pandas`/`openpyxl` (16/08/2026) servem o importador de
+  telemetria do Conector PI System (sub-aba de "Sistema & Dinâmica";
+  `pd.read_csv`/`pd.read_excel` do upload de arquivo) —
   `openpyxl` é o *engine* que o pandas exige para ler `.xlsx`, não usado
   diretamente no código.
   `torch` vem do índice padrão do PyPI (build com CUDA embutido, ~2GB a
@@ -131,8 +132,9 @@ Em ordem de preferência:
    assert not at.exception
    # inspecionar at.metric, at.subheader, etc. por valores plausíveis
    ```
-   Roda as 6 abas inteiras a cada execução (todo `with tab_x:` executa,
-   independente de qual aba estaria visualmente selecionada) — pega
+   Roda as 5 abas inteiras a cada execução (todo `with tab_x:` executa,
+   independente de qual aba estaria visualmente selecionada, incluindo o
+   conteúdo do Modo Treinamento quando ativado) — pega
    exceções de import, `KeyError` de `session_state` e colisão de `key=`
    entre widgets (já aconteceu uma vez, dois `st.slider` com o mesmo
    label+parâmetros sem `key` explícito).
@@ -188,7 +190,8 @@ a versão sempre atualizada). Resumo no momento desta escrita (16/08/2026):
   ΔP de válvula para ζ_valv).
 - Parte III do app (orquestração EKF→VAE→PIML→prognóstico→MPC como um
   pipeline único, replicando o Capítulo 29 do livro): os algoritmos
-  existem e funcionam cada um isoladamente na aba 4, mas não há ainda uma
+  existem e funcionam cada um isoladamente na sub-aba "Motores de IA" da
+  aba "Diagnóstico & IA", mas não há ainda uma
   demo que encadeie a saída de um como entrada do próximo.
 
 Estender qualquer item desta lista é bem-vindo, mas cada um exige decidir

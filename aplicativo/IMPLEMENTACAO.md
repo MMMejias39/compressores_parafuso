@@ -119,9 +119,10 @@ simulada.
    │  pso.py  │  (otimiza sobre `sistema.simular`, função de custo genérica)
    └─────────┘
 
-  Todos os módulos acima são consumidos por app.py (interface Streamlit, 6
-  abas: Operação estática / Dinâmica temporal / Secagem PSA / Gêmeo Digital
-  / Configurações / Dados Medidos)
+  Todos os módulos acima são consumidos por app.py (interface Streamlit, 5
+  abas: Supervisório de Frota / Dashboard do Ativo / Diagnóstico & IA /
+  Sistema & Dinâmica / Configurações — mais o Modo Treinamento, ativado na
+  barra lateral)
 ```
 
 `sistema.py` é o único módulo que TODOS os outros (exceto `constantes.py`)
@@ -132,38 +133,42 @@ chamam `sistema.simular()` (ou, no caso do PIML, replicam uma fração mínima
 e explicitamente documentada da física em forma diferenciável, ver
 `GUIA_CODIGO.md` § `piml.py`).
 
-## As seis abas da interface
+## As cinco abas da interface
 
-1. **Operação estática** — um único ponto de operação, calculado por
-   `sistema.simular()`: KPIs, tabela de estados nos 6 pontos do trem,
-   perfil P/T/PDP, curva de perdas V_i, motor/hood, carcaça, tubulação.
-2. **Dinâmica temporal** — `dinamica.simular_transiente()`, a rede
-   respondendo no tempo a um perfil de demanda com evento de pico, nos
-   modos VSD ou Carga/Alívio.
-3. **Secagem PSA** — `psa_ciclo.simular_ciclo_psa()`, rodízio de N torres
+1. **🚢 Supervisório de Frota** — painel da frota offshore: $HI$ composto
+   (Eq. 26.4), auditoria $NIS$ (Eq. 21.7) e $RUL$ bayesiano por máquina.
+2. **📊 Dashboard do Ativo** — um único ponto de operação, calculado por
+   `sistema.simular()`: KPIs, tabela de estados ao longo do trem,
+   perfil P/T/PDP, motor/hood, carcaça, tubulação, balanço exergético e
+   telemetria PI. Com o **Modo Treinamento** ativo (botão na barra lateral,
+   banner em todas as abas), passa a exibir a Arena de Treinamento — desafio
+   cego em 4 níveis de dificuldade e biblioteca técnica de mecanismos.
+3. **🔬 Diagnóstico & IA** — duas sub-abas: **Laboratório de Falhas &
+   Classificador m̂_falha** (10 cenários de falha isolada de
+   `cenarios_falha.py`, classificação por resíduo mínimo Eq. 29.2) e
+   **Motores de IA** (5 sub-abas: EKF & EKF Aumentado, VAE, PIML, MPC, PSO —
+   os cinco algoritmos da Parte II mais os três caminhos de identificação
+   de K: EKF aumentado, PIML inverso e calibração em lote via
+   Levenberg-Marquardt). O EKF de 2 estados e o EKF aumentado rotulam o
+   eixo de tempo em dias, não em passos abstratos — um "Δt entre medições"
+   assumido converte o horizonte de simulação para a mesma escala de
+   semanas do cenário do Capítulo 29. Cenário e parâmetros configuráveis na
+   aba Configurações.
+4. **🛠️ Sistema & Dinâmica** — três sub-abas: **Dinâmica Temporal**
+   (`dinamica.simular_transiente()`, a rede respondendo no tempo a um
+   perfil de demanda com evento de pico, nos modos VSD ou Carga/Alívio);
+   **Secagem PSA** (`psa_ciclo.simular_ciclo_psa()`, rodízio de N torres
    com as 3 fases (adsorvendo/regenerando/resfriando) e os KPIs do
-   Capítulo 15. Inclui (16/08/2026) o ponto de orvalho na saída do secador
-   ao longo do tempo (`pdp_saida_c`) — serrilhado, reiniciando a cada
-   troca de torre.
-4. **Gêmeo Digital (EKF/PSO)** — os cinco algoritmos da Parte II mais os
-   três caminhos de identificação de K (EKF aumentado, PIML, calibração
-   em lote via Levenberg-Marquardt), cada um em sua própria seção, com
-   cenário e parâmetros configuráveis na aba Configurações. O EKF de 2
-   estados e o EKF aumentado (16/08/2026) rotulam o eixo de tempo em
-   dias, não em passos abstratos — um "Δt entre medições" assumido
-   converte o horizonte de simulação para a mesma escala de semanas do
-   cenário do Capítulo 29.
-5. **Configurações** (16/08/2026) — geometria de equipamento e
+   Capítulo 15, incluindo o ponto de orvalho na saída do secador ao longo
+   do tempo (`pdp_saida_c`) — serrilhado, reiniciando a cada troca de
+   torre); e **Conector PI System** (gerador/exportador de telemetria,
+   importador de arquivos externos e catálogo de tags).
+5. **⚙️ Configurações** — geometria de equipamento e
    hiperparâmetros de algoritmo que não mudam de uma sessão de análise
    para a outra: tudo que antes vivia numa única barra lateral longa,
    exceto as condições de operação do momento (essas continuam na barra
    lateral, sempre visíveis). Ver `GUIA_CODIGO.md` § `app.py` para a
    ordem de execução.
-6. **Dados Medidos** (16/08/2026) — upload de referência (.xlsx/.csv) com
-   a instrumentação real de uma planta, comparada contra a Tabela 18.1 do
-   livro (quais dos 9 pontos A-I têm sensor físico vs. dependem de
-   inferência por modelo). Só documentação — não altera `params` nem a
-   simulação das outras abas.
 
 ## Por que os algoritmos de IA têm escopo reduzido frente ao livro
 

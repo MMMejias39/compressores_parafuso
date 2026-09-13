@@ -2,9 +2,10 @@
 
 Este repositório reúne o ecossistema completo de engenharia, modelagem matemática, código-fonte e inteligência artificial industrial:
 
-1. **O livro — Volume I** — *Fundamentos de Mecânica do Contínuo, Termofluidos e Sistemas de Medição: Bases Teóricas para Máquinas Rotodinâmicas* (`teorias.tex`/`teorias.pdf`). Reúne os fundamentos de mecânica dos sólidos e fluidos, termodinâmica aplicada, psicrometria, transferência de calor, eletricidade industrial, dinâmica de rotores e instrumentação.
-2. **O livro — Volume II** — *Gêmeo Digital de Sistemas de Compressão Offshore: Diretrizes Técnicas, Modelagem e Implementação* (`compressores.tex`/`compressores.pdf`). Cobre a física rigorosa de um trem de compressão de ar de parafuso duplo *oil-free* em dois estágios, tratamento térmico/adsorção (PSA), armazenamento em vasos de pressão e a metodologia de Gêmeo Digital (EKF, VAE, PIML, MPC, PSO, identificação por problema inverso, catálogo de falhas causais e supervisório de frota).
-3. **Aplicações de Simulação & Gêmeo Digital**:
+1. **O livro — Volume 0** — *Notações e Cálculo Básico* (`Volume_0_Notacoes_e_Calculo.tex`/`.pdf`). Pré-requisito matemático da coleção: notação e linguagem simbólica, análise dimensional, funções, vetores, cálculo diferencial e integral, equações diferenciais e séries/aproximações.
+2. **O livro — Volume I** — *Fundamentos de Mecânica do Contínuo, Termofluidos e Sistemas de Medição: Bases Teóricas para Máquinas Rotodinâmicas* (`Volume_I_Fundamentos.tex`/`.pdf`). Reúne os fundamentos de mecânica dos sólidos e fluidos, termodinâmica aplicada, psicrometria, transferência de calor, eletricidade industrial, dinâmica de rotores e instrumentação.
+3. **O livro — Volume II** — *Gêmeo Digital de Sistemas de Compressão Offshore: Diretrizes Técnicas, Modelagem e Implementação* (`compressores.tex`/`compressores.pdf`). Cobre a física rigorosa de um trem de compressão de ar de parafuso duplo *oil-free* em dois estágios, tratamento térmico/adsorção (PSA), armazenamento em vasos de pressão e a metodologia de Gêmeo Digital (EKF, VAE, PIML, MPC, PSO, identificação por problema inverso, catálogo de falhas causais e supervisório de frota).
+4. **Aplicações de Simulação & Gêmeo Digital**:
    - **Versão Rust 2.0 (`compressor2/`)**: Implementação industrial de alta performance em Rust (Axum + Vanilla JS/Tailwind/Chart.js). Servidor assíncrono nativo, tempo de resposta sub-milissegundo, conformidade visual **WCAG 2.1 AA** (auditoria automatizada via Chrome Headless), arquitetura dinâmica de trens de compressores, 7 nós termodinâmicos, 26+ tags industriais OSIsoft PI, arena de treinamento de operadores com parecer causal e conformidade estrutural com **ASME VIII Div. 1**.
    - **Versão Python (`aplicativo/`)**: Simulador analítico e exploratório em Python 3.10+ com interface Streamlit, servindo de protótipo de pesquisa e validação física das equações.
 
@@ -62,7 +63,7 @@ O simulador modela o trem contínuo de ar comprimido para instalações offshore
 # Navegar até o diretório do projeto Rust
 cd compressor2
 
-# Executar a suíte de 25 testes unitários
+# Executar a suíte de 26 testes unitários
 cargo test --workspace
 
 # Iniciar o servidor web
@@ -100,8 +101,11 @@ A aplicação conta com alternância de temas (**☀️ Claro**, **🌙 Escuro**
 ```
 Compressores/
 ├── README.md                      # Visão geral do ecossistema
-├── CONTEXTO.md                    # Fundamentação técnica e normas de engenharia
-├── CONTEXTO_app.md                # Diretrizes do gêmeo digital e interface
+├── CONTEXTO.md                    # Fundamentação técnica e normas de engenharia (livro)
+├── CONTEXTO_app.md                # Histórico cronológico de sessões de desenvolvimento (livro + interface)
+├── Volume_0_Notacoes_e_Calculo.tex/.pdf  # Volume 0 — pré-requisitos matemáticos
+├── Volume_I_Fundamentos.tex/.pdf  # Volume I — fundamentos teóricos
+├── compressores.tex/.pdf          # Volume II — gêmeo digital (documento principal)
 ├── compressor2/                   # Implementação em Rust 2.0
 │   ├── Cargo.toml                 # Workspace Cargo
 │   ├── README.md                  # Documentação detalhada da stack Rust
@@ -115,6 +119,7 @@ Compressores/
 │   ├── requirements.txt           # Dependências Python
 │   ├── GUIA_CODIGO.md             # Documentação dos módulos Python
 │   ├── IMPLEMENTACAO.md           # Detalhes de implementação
+│   ├── MANUTENCAO.md              # Plano de manutenção e extensão
 │   └── compressor_sim/            # Módulos analíticos Python
 ├── figuras/                       # Diagramas e esquemáticos técnicos
 └── scripts/                       # Scripts auxiliares e de geração gráfica

@@ -101,6 +101,7 @@ aplicativo/
 │   ├── piml.py             # Physics-Informed ML (+ problema inverso, Cap. 23.8)
 │   ├── mpc.py              # Controle Preditivo Baseado em Modelo
 │   ├── pso.py              # Otimização por Enxame de Partículas
+│   ├── torch_device.py     # seleção de device (CUDA/CPU) para VAE e PIML
 │   ├── calib_lm.py         # Calibração via Levenberg-Marquardt
 │   └── cenarios_falha.py   # 10 cenários de falha isolada (Cap. 28.3)
 ├── tests/

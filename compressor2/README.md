@@ -16,7 +16,7 @@ compressor2/
     ├── sim_core/              # Biblioteca pura de simulação e algoritmos de IA
     │   ├── Cargo.toml
     │   └── src/
-    │       ├── constantes.py  # Constantes físicas universais e propriedades do ar úmido
+    │       ├── constantes.rs  # Constantes físicas universais e propriedades do ar úmido
     │       ├── nucleo.rs      # Termodinâmica dos estágios LP/HP e psicrometria
     │       ├── subsistemas.rs # Intercooler, aftercooler, separador, vaso pulmão
     │       ├── sistema.rs     # Cascata completa dos 7 nós (Pontos A a G)
@@ -24,6 +24,7 @@ compressor2/
     │       ├── psa_ciclo.rs   # Adsorção por modulação de pressão (PSA)
     │       ├── mpc.rs         # Controle Preditivo Baseado em Modelo
     │       ├── pso.rs         # Otimização por Enxame de Partículas (π*)
+    │       ├── calib_lm.rs    # Calibração em lote via Levenberg-Marquardt
     │       ├── ekf.rs         # Filtro de Kalman Estendido com teste NIS
     │       ├── pi_telemetry.rs# Catálogo de 26+ tags industriais OSIsoft PI (ISA 18.2)
     │       ├── frota.rs       # Supervisório de frota offshore com RUL probabilístico (IC 95%)
@@ -31,7 +32,8 @@ compressor2/
     └── app/                   # Aplicação servidora Axum e Single-Page Application (SPA)
         ├── Cargo.toml
         └── src/
-            └── main.rs        # Servidor assíncrono Tokio/Axum, rotas REST e interface industrial
+            ├── main.rs        # Servidor assíncrono Tokio/Axum, rotas REST e interface industrial
+            └── bin/benchmark.rs # Benchmark de tempo de resposta das rotas
 ```
 
 ---
@@ -53,7 +55,7 @@ compressor2/
 ```bash
 cargo test --workspace
 ```
-*Garante a aprovação dos 25 testes físicos, matemáticos e de convergência dos algoritmos de IA.*
+*Garante a aprovação dos 26 testes físicos, matemáticos e de convergência dos algoritmos de IA.*
 
 ### Execução do Servidor Web
 ```bash
@@ -71,9 +73,11 @@ Acesse: **`http://localhost:8080`**
 | `/api/health` | `GET` | Health check da aplicação e versão |
 | `/api/simular` | `POST` | Executa o balanço estático dos 7 nós termodinâmicos |
 | `/api/frota` | `GET` | Retorna o painel da frota de compressores (`?n_compressores=N&fad_unitario=X`) |
+| `/api/pi/snapshot` | `GET` | Snapshot instantâneo das tags OSIsoft PI do ponto de operação atual |
 | `/api/telemetria` | `POST` | Gera snapshot de telemetria multivariável OSIsoft PI com ruído calibrado |
 | `/api/dinamica/simular` | `POST` | Simulação transiente contínua ($P_{vaso}, P_{in}, P_{out}$) com $T_{sim}$ e $\Delta t$ |
 | `/api/treinamento/caso` | `POST` | Sorteia caso operacional cego com mecanismo de falha |
+| `/api/treinamento/catalogo` | `GET` | Retorna o catálogo de mecanismos de falha da arena de treinamento |
 | `/api/treinamento/avaliar` | `POST` | Avalia hipótese causal do operador e emite parecer técnico |
 | `/api/diagnostico/classificar` | `POST` | Classificador bayesiano de resíduo mínimo ponderado $\hat{m}_{falha}$ |
 | `/api/psa/simular` | `POST` | Simulação de ciclagem e Gantt das torres adsortivas PSA |

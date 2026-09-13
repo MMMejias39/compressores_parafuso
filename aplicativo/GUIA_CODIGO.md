@@ -307,17 +307,21 @@ Implementa a arquitetura de supervisão contínua da frota offshore descrita na 
 
 ## `app.py` — interface Streamlit
 
-Ponto de entrada do simulador web e da arena de treinamento, estruturado em 9 abas dedicadas:
-1. **📊 Dashboard Digital Twin & PI**: nós de processo A-I, balanço exergético (Eq. 17.3), pegada de $\text{CO}_2$ (Eq. 17.5) e grid ao vivo de tags PI com alarmes ISA.
-2. **🎯 Arena de Treinamento de Falhas**: modo desafio cego em 4 níveis de dificuldade, submissão de diagnósticos, pontuação e biblioteca técnica.
-3. **🚨 Laboratório & Diagnóstico m̂_falha**: injeção interativa de falhas e classificador multi-mecanismo (Eq. 29.2) com explicabilidade SHAP.
-4. **🚢 Supervisório de Frota (FPSO)**: monitoramento simultâneo de 4 compressores, $HI$ composto, auditoria $NIS$ e $RUL$.
-5. **🧠 Motores de IA do Gêmeo**: EKF, EKF Aumentado (Cap. 28), VAE (Cap. 22), PIML (Cap. 23), MPC e PSO (Cap. 24).
-6. **📈 Dinâmica Temporal**: transiente de rede, controle VSD vs Carga/Alívio.
-7. **🌀 Secagem PSA**: rodízio de torres, diagrama de Gantt de fases (Adsorvendo, Regenerando, Resfriando), curvas de $q_d/q_{eq}$, temperatura e PDP.
-8. **📂 Conector PI System & Dados**: gerador/exportador de telemetria e importador de arquivos externos.
-9. **🎛️ Configurações & Física**: geometria do equipamento, materiais e hiperparâmetros de IA.
+Ponto de entrada do simulador web. A navegação principal tem **5 abas** — o Modo
+Treinamento é ativado por botão na barra lateral (banner em todas as abas), não
+por uma aba própria:
+
+1. **🚢 Supervisório de Frota**: monitoramento simultâneo de N compressores, $HI$ composto (Eq. 26.4), auditoria $NIS$ (Eq. 21.7) e $RUL$ com IC 95%.
+2. **📊 Dashboard do Ativo**: nós de processo A-I, balanço exergético (Eq. 17.3), pegada de $\text{CO}_2$ (Eq. 17.5) e grid ao vivo de tags PI com alarmes ISA. Com o Modo Treinamento ativo, passa a exibir a **Arena de Treinamento de Falhas** — sub-abas "🕹️ Modo Desafio Cego (Exame)" (4 níveis de dificuldade, pontuação e parecer técnico) e "📚 Biblioteca Técnica de Mecanismos".
+3. **🔬 Diagnóstico & IA**: duas sub-abas — **🚨 Laboratório de Falhas & Classificador m̂_falha** (injeção interativa de falhas e classificador multi-mecanismo, Eq. 29.2, com explicabilidade SHAP) e **🧠 Motores de IA**, com 5 sub-abas internas: EKF & EKF Aumentado (Caps. 21/28), VAE (Cap. 22), PIML (Cap. 23), MPC e PSO (Cap. 24) — mais a calibração de K via Levenberg-Marquardt (`calib_lm.py`).
+4. **🛠️ Sistema & Dinâmica**: três sub-abas — **📈 Dinâmica Temporal** (transiente de rede, VSD vs Carga/Alívio), **🌀 Secagem PSA** (rodízio de torres, Gantt das fases, curvas de $q_d/q_{eq}$, temperatura e PDP de saída) e **📂 Conector PI System** (3 sub-abas: gerador/exportador, importador de telemetria e catálogo de tags).
+5. **⚙️ Configurações & Física**: geometria do equipamento, materiais do dessecante e hiperparâmetros de IA.
 
 ## `tests/test_simulador.py` e `tests/test_pi_treinamento.py`
 
-Suíte completa com **102 testes automatizados** cobrindo a física, a termodinâmica, todos os algoritmos de IA da Parte II, a geração de tags PI, o classificador multi-mecanismo, a arena de treinamento e a supervisão de frota. Rodar com `pytest tests/`.
+Suíte completa com **102 casos de teste** (86 funções de teste; três delas
+parametrizadas — PDP, `n_vasos` e o catálogo de 10 cenários de falha — elevam o
+total executado para 102) cobrindo a física, a termodinâmica, todos os
+algoritmos de IA da Parte II, a geração de tags PI, o classificador
+multi-mecanismo, a arena de treinamento e a supervisão de frota. Rodar com
+`pytest tests/`.
