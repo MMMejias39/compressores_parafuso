@@ -3705,3 +3705,73 @@ analiticamente (partem de 0, convergem para 1); legenda reposicionada após
 inspeção visual. Sem marcas de IA em texto ou metadados.
 
 **Nomenclatura.** `Volume_0_Notacoes_e_Calculo.tex/pdf` é o nome canônico.
+
+## Volume 0 — backlog por criticidade implementado (12/09/2026)
+
+**Pedido do autor:** "podemos continuar a melhorar o volume 0?" seguido de
+"crie um backlog por criticidade primeiro e siga o desenvolvimento por ele".
+Auditoria prévia do volume (então 29 páginas) achou defeitos de conformidade
+e lacunas de conteúdo; o planejamento completo, com o critério de
+criticidade e o ponto exato dos Volumes I/II onde cada conteúdo é exigido,
+está em `Backlog_volume0.md` (arquivo novo, na raiz, não commitado).
+
+**Conformidade corrigida antes do conteúdo:** `\clearpage` antes dos 10
+capítulos (faltava — convenção da coleção); Lista de Figuras e Lista de
+Tabelas (ausentes; mesmo formato do Vol. I, `\phantomsection` +
+`\addcontentsline`); 2 violações de auto-referência de equação
+(`eq:v0-c4-2`, `eq:v0-c6-4`) corrigidas — varredura 0/22 na época, 0/36 no
+fim; 4 defeitos de prosa ("dez ve menos que mil" — typo que também estava
+**errado**: 10⁴ é 10× mais que mil e 10× menos que cem mil; frase truncada
+do trabalho líquido no $p$–$V$; "vetorial duplo repetido"; citação da Eq.
+6.4 só depois de aparecer).
+
+**Itens implementados (ordem de criticidade):**
+- **B0-01 — Números complexos e fasores** (Cap. 4, nova subseção + Figura
+  4.2 do fasor girante, Eqs. 4.5–4.8): identidade de Euler, forma polar, o
+  truque $\mathrm{d}/\mathrm{d}t \leftrightarrow \mathrm{i}\omega$,
+  definição do fasor e as duas condições de validade (linearidade +
+  frequência única, as mesmas que o Vol. I enuncia). Nota de símbolo
+  adicionada no Cap. 2: a unidade imaginária é $\mathrm{j}$ na engenharia
+  elétrica (o Vol. I usa $\mathrm{j}$ — conferido em $Z_L = j\omega L$,
+  Eq. `v1-c7-13`), não $\mathrm{i}$.
+- **B0-02 — Derivada material $D/Dt$ + menção a EDP**: subseção nova no
+  Cap. 6 (taxa no ponto fixo × taxa na partícula, Eq. 6.5, ponte com
+  Navier-Stokes do Vol. I) e subseção curta no Cap. 8 (o que é uma EDP;
+  condições de contorno; por que os volumes seguintes não resolvem nenhuma —
+  e como o Vol. II a usa como resíduo no PIML).
+- **B0-03 — Kronecker/Einstein + divergência/rotacional + teorema da
+  divergência**: subseção no Cap. 5 (δ de Kronecker, Eq. 5.4; soma
+  implícita de Einstein, Eq. 5.5 — com a própria lei constitutiva do Vol. I
+  como exemplo), no Cap. 6 (divergência, Eq. 6.6; rotacional, Eq. 6.7) e no
+  Cap. 7 (fluxo, Eq. 7.4; teorema da divergência, Eq. 7.5 — a ponte
+  integral→diferencial que o Vol. I usa nos balanços). **Correção ao
+  backlog original**: o "teorema de Stokes" citado lá é a *hipótese* de
+  Stokes (fluido newtoniano) no Vol. I — o teorema integral do rotacional
+  **não** é usado na coleção e entrou só como menção de uma frase.
+- **B0-04 — Autovalores e autovetores** (Cap. 5, Eqs. 5.6/5.7): polinômio
+  característico, traço e determinante como contas de conferência, e o
+  significado físico de modo próprio — ponte com as tensões principais do
+  Cap. 2 do Vol. I (que admite "três autovalores reais") e com as raízes do
+  sistema de 2ª ordem.
+- **B0-05 — Exercícios resolvidos**: 18 exercícios (2 por capítulo de
+  conteúdo; 1 de navegação no Cap. 1 e 1 de travessia no Cap. 10), todos
+  com resolução completa, citando as equações do próprio volume e sem usar
+  nada além do que o capítulo ensinou.
+- **B0-06 — Séries geométricas** (Cap. 9, Eq. 9.3): soma, condição
+  $|r|<1$, e a leitura de balanço discreto (ligada ao passo de Euler).
+- **B0-07 — Figura da capa**: o `vspace` com comentário "Placeholder" virou
+  a escada de pré-requisitos (Volume 0 → I → II) em TikZ vetorial, no
+  padrão das figuras versionadas no próprio `.tex` do volume.
+- **B0-08 — Tabela de gregas**: a linha de $\omega$/$\Omega$ dizia
+  "resistência elétrica" — corrigido para "$\Omega$ é a unidade ohm", para
+  não sugerir colisão de grandeza.
+
+**Verificação final:** `pdflatex` 3 passagens — **42 páginas, 0 erros, 0
+overfulls, 0 referências indefinidas**; varredura de auto-referência 0/36;
+0 hardcodes de número de equação; capítulos conferidos abrindo em página
+nova (p. 8, 10, 14, 17, 21, 25, 29, 33, 37, 40); Lista de Figuras
+atualizada (7 entradas, incluindo a 4.2 nova); capa renderizada
+(`pdftoppm`) e conferida por extração de texto. **Nada commitado** — regra
+permanente. **Achado colateral pendente de decisão do autor:** o Volume I
+não usa `\clearpage` nenhum (caps. começam no meio da página), desviando da
+convenção da coleção.

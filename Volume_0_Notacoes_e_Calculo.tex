@@ -85,8 +85,17 @@
 		{\Large \textbf{Pré-requisitos para o Estudo de Máquinas Rotodinâmicas}} \\[0.8cm]
 		\rule{\textwidth}{0.4pt} \\[1.5cm]
 
-		% Placeholder para ilustração conceitual do Volume 0
-		\vspace{5cm}
+		% Ilustração conceitual: a escada de pré-requisitos da coleção
+		\begin{tikzpicture}[font=\footnotesize]
+			\node[draw, fill=black!4, minimum width=8.6cm, minimum height=1.1cm, align=center]
+				(v0) at (0,0) {\textbf{Volume 0} --- Notações e Cálculo Básico\\[2pt] a linguagem e as operações};
+			\node[draw, fill=black!9, minimum width=7.2cm, minimum height=1.1cm, align=center]
+				(v1) at (0,1.7) {\textbf{Volume I} --- Fundamentos\\[2pt] a física que as usa};
+			\node[draw, fill=black!16, minimum width=5.8cm, minimum height=1.1cm, align=center]
+				(v2) at (0,3.4) {\textbf{Volume II} --- Gêmeo Digital\\[2pt] a máquina que as verifica};
+			\draw[->, thick] (v0.north) -- (v1.south);
+			\draw[->, thick] (v1.north) -- (v2.south);
+		\end{tikzpicture}
 
 		\vfill
 		{\large \textbf{Autor: Engenheiro Marcelo Moreira Mejias, M.Sc.}} \\[0.5cm]
@@ -135,12 +144,22 @@ essas obras e a engenharia de máquinas.
 % --- SUMÁRIO ---
 \newpage
 \tableofcontents
+
+% --- LISTAS DE FIGURAS E TABELAS ---
+\phantomsection
+\addcontentsline{toc}{section}{Lista de Figuras}
+\listoffigures
+\newpage
+\phantomsection
+\addcontentsline{toc}{section}{Lista de Tabelas}
+\listoftables
 \newpage
 
 
 %=============================================================================
 % CAPÍTULO 1 — INTRODUÇÃO AO VOLUME 0
 %=============================================================================
+\clearpage
 \section{Introdução ao Volume 0}\label{sec:v0-intro}
 
 \subsection{Para quem é este volume}
@@ -198,10 +217,31 @@ usada nos Volumes I e II desta coleção.}
 Quem já domina um capítulo avança sem culpa; quem duvida resolve os exemplos
 à mão --- nenhum passo deste volume exige computador.
 
+\subsection{Exercícios resolvidos}
+
+\textbf{Exercício 1.1 (navegação pelo mapa).} Um colega relata: ``a
+temperatura da carcaça do meu compressor está subindo há duas semanas, sem
+ninguém mexer em nada''. Quais capítulos deste volume preparam a leitura
+desse sintoma nos volumes seguintes, e em que ordem?
+
+\emph{Resolução.} A Tabela~\ref{tab:v0-c1-1} responde. A temperatura que
+sobe é uma \emph{taxa}, então o Capítulo~\ref{sec:v0-derivadas} é o
+instrumento central; a análise do porquê vai usar \emph{balanços} de
+calor, do Capítulo~\ref{sec:v0-integrais}; a resposta da carcaça ao calor
+generado é uma equação diferencial, do
+Capítulo~\ref{sec:v0-edo}; e a comparação de grandezas de escalas
+muito diferentes (W contra $^\circ$C) pede o Capítulo~\ref{sec:v0-unidades}. A
+notação do Capítulo~\ref{sec:v0-notacao} atravessa todos eles. Ordem
+sugerida de revisão: \ref{sec:v0-notacao} $\rightarrow$
+\ref{sec:v0-unidades} $\rightarrow$ \ref{sec:v0-derivadas} $\rightarrow$
+\ref{sec:v0-integrais} $\rightarrow$ \ref{sec:v0-edo}.
+Nenhum número foi calculado aqui --- o exercício é usar o mapa.
+
 
 %=============================================================================
 % CAPÍTULO 2 — NOTAÇÃO E LINGUAGEM SIMBÓLICA
 %=============================================================================
+\clearpage
 \section{Notação e Linguagem Simbólica}\label{sec:v0-notacao}
 
 \subsection{Por que a notação importa}
@@ -231,7 +271,9 @@ $\bm{\nabla}T$.
 O diferencial escreve-se $\mathrm{d}$ romano para distinguir o operador da
 variável: $\mathrm{d}t$ lê-se ``um pedacinho de $t$''. O número
 $\mathrm{e} \approx 2{,}71828$ (base dos logaritmos naturais) e a unidade
-imaginária $\mathrm{i}$ seguem a mesma regra.
+imaginária $\mathrm{i}$ seguem a mesma regra --- escrita $\mathrm{j}$ na
+engenharia elétrica, para não colidir com a corrente $i$; é a convenção do
+Capítulo~7 do Volume~I.
 
 \subsection{Operadores e símbolos de uso geral}
 
@@ -303,7 +345,7 @@ $\sigma$ & $\Sigma$ & tensão; somatório \\
 $\tau$ & & torque; tensão de cisalhamento \\
 $\phi$ & $\Phi$ & razão de fluxo; função \\
 $\psi$ & $\Psi$ & função de corrente (fluidos) \\
-$\omega$ & $\Omega$ & velocidade angular; resistência elétrica \\
+$\omega$ & $\Omega$ & velocidade angular; $\Omega$ é a unidade ohm \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -331,10 +373,36 @@ até o capítulo final do Volume~II. Quando o Volume~I escreve
 $\bm{\nabla}T$, é o gradiente desta Tabela~\ref{tab:v0-c2-1}; quando escreve
 $\eta$, é a eficiência desta Tabela~\ref{tab:v0-c2-2}.
 
+\subsection{Exercícios resolvidos}
+
+\textbf{Exercício 2.1 (papel tipográfico).} Na equação $\tau = J_p\,\alpha$,
+identifique o papel tipográfico de cada símbolo e explique por que o
+subscrito de $J_p$ é romano.
+
+\emph{Resolução.} $\tau$ (torque), $J_p$ (momento polar de inércia) e
+$\alpha$ (aceleração angular) são grandezas que variam --- por isso
+itálico. O subscrito $p$ é romano porque \emph{nomeia} e não indexa: ele
+não enumera valores $J_1, J_2, \dots$; ele diz de \emph{qual} momento de
+inércia se trata (polar). Pela regra do capítulo, subscrito romano nomeia,
+subscrito itálico indexa.
+
+\textbf{Exercício 2.2 (variação finita × taxa).} Uma tabela registra
+$\Delta p = p_{out} - p_{in} = 12\ \mathrm{kPa}$ num intervalo de 1 h e,
+numa outra coluna, $\mathrm{d}p/\mathrm{d}t = -0{,}8\ \mathrm{kPa/min}$. Os
+dois números contradizem um ao outro?
+
+\emph{Resolução.} Não --- medem coisas diferentes. $\Delta p$ é variação
+finita entre dois estados, um número comum. $\mathrm{d}p/\mathrm{d}t$ é
+uma taxa instantânea, o limite do quociente quando o intervalo
+encolhe. Ambos podem ser verdadeiros ao mesmo tempo: a pressão terminou
+12 kPa mais alta do que começou e, num instante específico, caía a
+0,8 kPa por minuto.
+
 
 %=============================================================================
 % CAPÍTULO 3 — UNIDADES, DIMENSÕES E ORDEM DE GRANDEZA
 %=============================================================================
+\clearpage
 \section{Grandezas, Unidades e Análise Dimensional}\label{sec:v0-unidades}
 
 \subsection{Grandezas e unidades: o número e o rótulo}
@@ -420,8 +488,8 @@ universo certo, antes de conferir qualquer dígito. O segundo é o
 \textbf{estimativa de ordem de grandeza}: arredondar cada fator para a
 potência de dez mais próxima e multiplicar as potências. Uma bomba de
 $3{,}2\ \mathrm{kW}$ operando $6{,}5\ \mathrm{h/dia}$ gasta, em ordem de
-grandeza, $10^3 \times 10^1 = 10^4\ \mathrm{Wh}$ por dia --- dez ve menos
-que mil, dez vezes mais que cem. Quem estima antes de calcular nunca
+grandeza, $10^3 \times 10^1 = 10^4\ \mathrm{Wh}$ por dia --- dez vezes mais
+que mil e dez vezes menos que cem mil. Quem estima antes de calcular nunca
 confunde kW com MW.
 
 \subsection{Algarismos significativos e arredondamento}
@@ -442,6 +510,33 @@ regras operacionais são poucas:
   desonestidade, é precaução.
 \end{itemize}
 
+\subsection{Exercícios resolvidos}
+
+\textbf{Exercício 3.1 (homogeneidade dimensional).} Verifique se a perda de
+carga $\Delta p = f_D\,(L/D)\,\rho\,v^2/2$ --- que o Volume~I usa para a
+tubulação interestágios --- é dimensionalmente homogênea.
+
+\emph{Resolução.} $f_D$ e $L/D$ são adimensionais, então a dimensão do
+termo inteiro é a de $\rho v^2$: com $[\rho] = [M]\,[L]^{-3}$ e
+$[v^2] = [L]^2\,[t]^{-2}$,
+$[\rho v^2] = [M]\,[L]^{-1}\,[t]^{-2}$ --- exatamente a dimensão da
+pressão da Equação~\eqref{eq:v0-c3-1}. Homogênea, portanto: qualquer
+resultado com outra dimensão indicaria erro de unidade, não erro de
+física.
+
+\textbf{Exercício 3.2 (algarismos significativos).} Uma vazão de
+$12\ \mathrm{m^3/min}$ opera durante $3{,}5\ \mathrm{min}$. Escreva o
+volume acumulado com o número correto de significativos, e explique por
+que escrever $42{,}0\ \mathrm{m^3}$ seria uma afirmação mais forte do
+que os dados sustentam.
+
+\emph{Resolução.} Na multiplicação, o resultado herda o menor número de
+significativos: $12$ tem dois, $3{,}5$ tem dois, então o produto é
+$42\ \mathrm{m^3}$ (dois significativos). Escrever $42{,}0$ afirma
+três --- que o volume está entre $41{,}95$ e $42{,}05$ --- quando o dado
+de entrada $12$ só garante $11{,}5$ a $12{,}5$ vezes o tempo. O dígito
+extra é honesto durante a conta e desonesto no resultado final.
+
 A regra do resultado final importa mais que as outras duas: uma conta com
 dez passos em que cada passo arredonda acumula erro sistemático. O Volume~I
 trata a propagação formal de incerteza no capítulo de instrumentação; aqui
@@ -460,6 +555,7 @@ qualquer número de engenharia.
 %=============================================================================
 % CAPÍTULO 4 — FUNÇÕES ELEMENTARES E GRÁFICOS
 %=============================================================================
+\clearpage
 \section{Funções Elementares e Gráficos}\label{sec:v0-funcoes}
 
 \subsection{O que é uma função}
@@ -492,8 +588,8 @@ A função exponencial $f(x) = \mathrm{e}^{x}$ e o logaritmo natural
 $f(x) = \ln x$ são inversas uma da outra e aparecem em toda parte onde a
 taxa de variação de uma grandeza é proporcional à própria grandeza:
 resfriamento, descarga de pressão, crescimento de falha. Suas propriedades
-operacionais, Equações~\eqref{eq:v0-c4-1} a~\eqref{eq:v0-c4-3}, devem ser
-manipuladas sem hesitação:
+operacionais (Equações~\eqref{eq:v0-c4-1},~\eqref{eq:v0-c4-2}
+e~\eqref{eq:v0-c4-3}) devem ser manipuladas sem hesitação:
 
 \begin{equation}\label{eq:v0-c4-1}
 \mathrm{e}^{a+b} = \mathrm{e}^{a}\,\mathrm{e}^{b},
@@ -584,20 +680,143 @@ semilog (só o eixo $y$ em log), a exponencial vira uma reta de inclinação
 $a$. Os ensaios do Volume~II usam esses artifícios para ler expoentes de
 politropas e constantes de tempo direto do gráfico.
 
+\subsection{Números complexos e fasores}
+
+Existe uma extensão dos números reais que a engenharia elétrica não
+dispensa e que a coleção usa desde que eletricidade entra em cena: o número
+complexo. Um número complexo $z$ escreve-se como par de reais,
+Equação~\eqref{eq:v0-c4-5}, em forma retangular ou em forma polar --- módulo
+e ângulo (fase):
+
+\begin{equation}\label{eq:v0-c4-5}
+z = a + \mathrm{i}\,b
+  = \lvert z\rvert\,\mathrm{e}^{\,\mathrm{i}\theta},
+\qquad
+\lvert z\rvert = \sqrt{a^2 + b^2},
+\qquad
+\theta = \operatorname{arctg}\frac{b}{a},
+\end{equation}
+
+onde $\mathrm{i}^2 = -1$ é a unidade imaginária. Somar complexos soma
+componentes; multiplicar multiplica módulos e soma fases:
+$(\lvert z_1\rvert\,\mathrm{e}^{\mathrm{i}\theta_1})
+(\lvert z_2\rvert\,\mathrm{e}^{\mathrm{i}\theta_2}) =
+\lvert z_1 z_2\rvert\,\mathrm{e}^{\mathrm{i}(\theta_1+\theta_2)}$.
+
+A ponte entre os complexos e as funções trigonométricas deste capítulo é a
+identidade de Euler, Equação~\eqref{eq:v0-c4-6}: a exponencial de argumento
+imaginário é um ponto no plano complexo a distância um da origem, e suas
+projeções nos dois eixos são o cosseno e o seno.
+
+\begin{equation}\label{eq:v0-c4-6}
+\mathrm{e}^{\,\mathrm{i}\theta} = \cos\theta + \mathrm{i}\,\mathrm{sen}\,\theta,
+\qquad
+\cos\theta = \frac{\mathrm{e}^{\,\mathrm{i}\theta} + \mathrm{e}^{-\,\mathrm{i}\theta}}{2},
+\qquad
+\mathrm{sen}\,\theta = \frac{\mathrm{e}^{\,\mathrm{i}\theta} - \mathrm{e}^{-\,\mathrm{i}\theta}}{2\mathrm{i}}.
+\end{equation}
+
+A propriedade que faz da exponencial complexa a ferramenta da engenharia
+elétrica é a derivada, Equação~\eqref{eq:v0-c4-7}: derivar
+$\mathrm{e}^{\,\mathrm{i}\omega t}$ é multiplicar por $\mathrm{i}\omega$ ---
+a forma não muda, só o módulo e a fase.
+
+\begin{equation}\label{eq:v0-c4-7}
+\frac{\mathrm{d}}{\mathrm{d}t}\,\mathrm{e}^{\,\mathrm{i}\omega t}
+  = \mathrm{i}\omega\,\mathrm{e}^{\,\mathrm{i}\omega t}.
+\end{equation}
+
+É isso que define o \textbf{fasor}. Toda grandeza senoidal de frequência
+única, Equação~\eqref{eq:v0-c4-8}, pode ser representada pelo número
+complexo que carrega sua amplitude e sua fase:
+
+\begin{equation}\label{eq:v0-c4-8}
+v(t) = V\cos(\omega t + \varphi)
+\quad\longleftrightarrow\quad
+\hat{V} = V\,\mathrm{e}^{\,\mathrm{i}\varphi}.
+\end{equation}
+
+Somar grandezas senoidais de mesma frequência --- que exigiria expansões
+trigonométricas --- vira soma algébrica de números complexos;
+derivar vira multiplicar por $\mathrm{i}\omega$; e as equações diferenciais
+do circuito viram equações algébricas complexas. É assim que o Capítulo~7
+do Volume~I define a impedância $Z$ de resistor, indutor e capacitor. O
+fasor girante da Figura~\ref{fig:v0-c4-2} fecha o círculo com o círculo
+unitário da Figura~\ref{fig:v0-c4-1}: o fasor é a rotação, a senoide é a
+sua projeção.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\footnotesize, scale=2.4]
+\draw[->] (-1.3,0) -- (1.5,0) node[below left=1pt] {$\mathrm{Re}$};
+\draw[->] (0,-1.3) -- (0,1.5) node[below left=1pt] {$\mathrm{Im}$};
+\draw[black!35] (0,0) circle (1);
+\draw[thick,->] (0,0) -- (55:1) node[above right=-2pt]
+  {$\hat{V}\,\mathrm{e}^{\,\mathrm{i}\omega t}$};
+\draw[dashed] (55:1) -- ({cos(55)},0);
+\fill ({cos(55)},0) circle (1.1pt);
+\node[below] at ({cos(55)},-0.02) {$v(t) = V\cos(\omega t + \varphi)$};
+\draw (0.24,0) arc (0:55:0.24) node[midway,right=2pt] {$\omega t + \varphi$};
+\draw[->,black!60] (140:1.12) arc (140:108:1.12);
+\end{tikzpicture}
+\caption[Fasor girante e a senoide como projeção.]{%
+O fasor $\hat{V} = V\,\mathrm{e}^{\,\mathrm{i}\varphi}$ gira com velocidade
+angular $\omega$ no plano complexo; a grandeza senoidal
+$v(t) = V\cos(\omega t + \varphi)$ é a projeção do fasor sobre o eixo real.
+A correspondência da Equação~\eqref{eq:v0-c4-8} exige linearidade e
+frequência única.}
+\label{fig:v0-c4-2}
+\end{figure}
+
+Duas condições delimitam o uso, e o Volume~I as enuncia antes de aplicá-lo:
+o sistema deve ser \emph{linear} e a excitação, de \emph{frequência única}.
+Fora delas o fasor deixa de valer --- não por falta de cálculo, mas porque a
+correspondência da Equação~\eqref{eq:v0-c4-8} deixa de ser biunívoca.
+
+\subsection{Exercícios resolvidos}
+
+\textbf{Exercício 4.1 (do seno ao fasor).} A tensão de um barramento
+escreve-se $v(t) = 141\cos(314{,}16\,t - \pi/6)\ \mathrm{V}$. Extraia a
+frequência angular, a frequência em hertz, a fase e o fasor
+$\hat{V}$ em forma polar e retangular.
+
+\emph{Resolução.} Por comparação com a Equação~\eqref{eq:v0-c4-8}:
+$\omega = 314{,}16\ \mathrm{rad/s}$, logo $f = \omega/2\pi = 50\ \mathrm{Hz}$;
+fase $\varphi = -\pi/6 = -30^\circ$; amplitude $V = 141\ \mathrm{V}$.
+O fasor é $\hat{V} = 141\,\mathrm{e}^{-\mathrm{i}\pi/6}\ \mathrm{V}$, ou
+$\hat{V} = 141\cos 30^\circ - \mathrm{i}\,141\,\mathrm{sen}\,30^\circ
+= 122 - 70{,}5\,\mathrm{i}\ \mathrm{V}$, pela Equação~\eqref{eq:v0-c4-6}.
+
+\textbf{Exercício 4.2 (ler a constante de tempo do gráfico).} A pressão de
+um vaso em blow-down segue $p(t) = p_0\,\mathrm{e}^{-t/\tau}$. Mediram-se
+$p(0) = 8{,}0\ \mathrm{bar}$ e $p(60\,\mathrm{s}) = 4{,}0\ \mathrm{bar}$.
+Obtenha $\tau$ e estime $p(120\,\mathrm{s})$.
+
+\emph{Resolução.} Tomando o logaritmo (Equação~\eqref{eq:v0-c4-2}),
+$\ln p = \ln p_0 - t/\tau$: num gráfico semilog, a inclinação é
+$-1/\tau$. Do par de pontos, $\tau = 60\,\mathrm{s}/\ln(8/4) =
+60/0{,}693 \approx 87\ \mathrm{s}$. Então
+$p(120\,\mathrm{s}) = 8{,}0\,\mathrm{e}^{-120/87} =
+8{,}0\,\mathrm{e}^{-1{,}38} \approx 2{,}0\ \mathrm{bar}$ --- dois
+intervalos de meia-vida, metade e metade de novo.
+
 \subsection{Síntese: premissas e ligação com os volumes seguintes}
 
 As funções deste capítulo --- potência, exponencial, logaritmo,
-trigonométricas --- são o vocabulário completo dos modelos dos volumes
+trigonométricas, e as complexas que as embrulham --- são o vocabulário
+completo dos modelos dos volumes
 seguintes: nenhuma outra função aparece nos Volumes~I e~II sem ser
 explicitamente construída a partir destas. O círculo unitário da
 Figura~\ref{fig:v0-c4-1} retorna nas vibrações mecânicas; as propriedades
 da exponencial, nos sistemas de primeira ordem; a linearização log--log,
-na leitura de curvas de ensaio.
+na leitura de curvas de ensaio; e os fasores da
+Figura~\ref{fig:v0-c4-2}, em toda a eletricidade do Volume~I.
 
 
 %=============================================================================
 % CAPÍTULO 5 — VETORES E ÁLGEBRA LINEAR ESSENCIAL
 %=============================================================================
+\clearpage
 \section{Vetores e Álgebra Linear Essencial}\label{sec:v0-vetores}
 
 \subsection{Por que vetores}
@@ -693,7 +912,7 @@ regra da mão direita, perpendicular ao plano.}
 Duas identidades que a coleção usa sem aviso decorrem das
 definições: o produto escalar comuta ($\bm{a}\cdot\bm{b} =
 \bm{b}\cdot\bm{a}$), o produto vetorial anticomuta
-($\bm{a}\times\bm{b} = -\,\bm{b}\times\bm{a}$), e um vetorial duplo
+($\bm{a}\times\bm{b} = -\,\bm{b}\times\bm{a}$), e um produto vetorial
 repetido é nulo ($\bm{a}\times\bm{a} = \bm{0}$).
 
 \subsection{Matrizes e sistemas lineares}
@@ -716,19 +935,133 @@ nenhuma solução. O Volume~II encontra exatamente esses casos nos balanços
 de redes de ar e nos ajustes de parâmetros por mínimos quadrados, onde a
 matriz dos coeficientes precisa ser invertida numericamente.
 
+\subsection{Notação de índices: Kronecker e convenção de Einstein}
+
+Os Volumes~I e~II escrevem as leis do contínuo em índices --- e usam duas
+convenções que precisam ser lidas de cor. A primeira é o \textbf{delta de
+Kronecker}, $\delta_{ij}$, que vale um quando os índices coincidem e zero
+caso contrário, Equação~\eqref{eq:v0-c5-4}:
+
+\begin{equation}\label{eq:v0-c5-4}
+\delta_{ij} =
+\begin{cases}
+1, & i = j,\\
+0, & i \neq j.
+\end{cases}
+\end{equation}
+
+No produto, um índice livre somado contra um $\delta$ troca de nome:
+$\delta_{ij}v_j = v_i$. A segunda convenção é a \textbf{soma implícita de
+Einstein}: num termo, todo índice que aparece repetido duas vezes está
+somado, sem sinal de somatório escrito, Equação~\eqref{eq:v0-c5-5}:
+
+\begin{equation}\label{eq:v0-c5-5}
+\bm{a}\cdot\bm{b} = a_i b_i
+\quad\text{significa}\quad
+\sum_{i=1}^{3} a_i b_i,
+\qquad
+(\bm{A}\bm{b})_i = A_{ij} b_j
+\quad\text{significa}\quad
+\sum_{j=1}^{3} A_{ij} b_j.
+\end{equation}
+
+O índice repetido (\emph{mudo}) é o somado; o índice único (\emph{livre})
+sobrevive na resposta. A convenção existe porque essa é a única operação
+que se repete: o produto escalar da Equação~\eqref{eq:v0-c5-2} em índices
+é $a_i b_i$, e a lei constitutiva do fluido newtoniano do Volume~I,
+$\tau_{ij} = 2\mu S_{ij} - \tfrac{2}{3}\mu\,(\nabla\cdot\bm{v})\,\delta_{ij}$,
+é escrita inteira nesse formalismo --- o $\delta_{ij}$ distribui a parte
+volumétrica igualmente pelas três direções normais. Duas regras fecham a
+leitura: nenhuma equação desta coleção soma um índice aparecido três
+vezes, e nenhum índice livre fica sem par.
+
+\subsection{Autovalores e autovetores}
+
+Uma matriz quadrada $\bm{A}$ em geral muda a direção do vetor que
+multiplica. Há direções especiais, porém, nas quais a transformação só
+estica ou encolhe, sem girar: os \emph{autovetores}. Um autovetor
+$\bm{v}_i$ e seu \emph{autovalor} $\lambda_i$ satisfazem a
+Equação~\eqref{eq:v0-c5-6}:
+
+\begin{equation}\label{eq:v0-c5-6}
+\bm{A}\,\bm{v}_i = \lambda_i\,\bm{v}_i.
+\end{equation}
+
+A Equação~\eqref{eq:v0-c5-6} só tem solução não nula quando o
+determinante de $\bm{A} - \lambda\,\bm{I}$ anula, Equação~\eqref{eq:v0-c5-7}
+--- condição que, desenvolvida, é um polinômio em $\lambda$ (o
+\emph{polinômio característico}), de grau igual à dimensão da matriz:
+
+\begin{equation}\label{eq:v0-c5-7}
+\det(\bm{A} - \lambda\,\bm{I}) = 0.
+\end{equation}
+
+Para uma matriz $2\times 2$, a Equação~\eqref{eq:v0-c5-7} desenvolve-se em
+$\lambda^2 - (\operatorname{tr}\bm{A})\,\lambda + \det\bm{A} = 0$, com
+$\operatorname{tr}\bm{A} = A_{11} + A_{22}$ a soma da diagonal: os dois
+autovalores têm soma igual ao traço e produto igual ao determinante ---
+duas contas de conferência que valem em qualquer dimensão.
+
+O significado físico é o de \emph{modo próprio}: cada autovalor é o
+comportamento do sistema numa direção própria. No Volume~I, a matriz das
+tensões do Capítulo~2 --- simétrica e real --- admite três autovalores
+reais, as \emph{tensões principais}, com autovetores dando as três
+direções ortogonais em que o material só é puxado ou empurrado, nunca
+cortado: é nelas que os critérios de falha são escritos. Numa equação de
+segunda ordem como a Equação~\eqref{eq:v0-c8-4}, os autovalores do sistema
+massa--mola--amortecedor têm parte real $-\zeta\omega_n$ (a taxa de
+decaimento) e parte imaginária a frequência de oscilação --- o conteúdo
+físico da Figura~\ref{fig:v0-c8-1}. A leitura operacional para a coleção:
+matriz simétrica real tem autovalores reais e autovetores ortogonais;
+autovalor com parte real negativa é modo que decai; autovalor imaginário
+puro é modo que oscila sem decair.
+
+\subsection{Exercícios resolvidos}
+
+\textbf{Exercício 5.1 (torque como produto vetorial).} Uma força de
+$F = 120\ \mathrm{N}$ atua perpendicular a uma alavanca de raio
+$\bm{r} = 0{,}25\,\bm{i}\ \mathrm{m}$, na direção $\bm{j}$. Calcule o
+torque em relação ao centro.
+
+\emph{Resolução.} Pela Equação~\eqref{eq:v0-c5-3}, o produto vetorial é o
+determinante com as duas componentes:
+$\bm{\tau} = \bm{r}\times\bm{F} = 0{,}25 \times 120\,\bm{k} =
+30\,\bm{k}\ \mathrm{N\,m}$. O módulo é $r\,F\,\mathrm{sen}\,90^\circ = 30$,
+e a direção $\bm{k}$ (fora do plano) é a informação que o produto
+escalar não daria --- é a regra da mão direita.
+
+\textbf{Exercício 5.2 (autovalores de uma matriz simétrica).} Para
+$\bm{A} = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix}$, obtenha
+autovalores e autovetores, e confira pelos atalhos do traço e do
+determinante.
+
+\emph{Resolução.} A Equação~\eqref{eq:v0-c5-7} dá
+$\lambda^2 - 4\lambda + 3 = 0$, cujas raízes são $\lambda_1 = 3$ e
+$\lambda_2 = 1$. Confirmação: soma $3+1 = 4 = \operatorname{tr}\bm{A}$;
+produto $3 = \det\bm{A} = 2\cdot 2 - 1\cdot 1 = 3$. Os autovetores vêm da
+Equação~\eqref{eq:v0-c5-6}: para $\lambda_1 = 3$, $(A - 3I)\bm{v} = 0$ dá
+$-v_1 + v_2 = 0$, ou $\bm{v}_1 \propto (1,1)$; para $\lambda_2 = 1$,
+$v_1 + v_2 = 0$, ou $\bm{v}_2 \propto (1,-1)$ --- ortogonais entre si,
+como promete a leitura para matrizes simétricas.
+
 \subsection{Síntese: premissas e ligação com os volumes seguintes}
 
 Este capítulo definiu vetor, produtos escalar e vetorial, matriz e
-inversão. Os produtos das Equações~\eqref{eq:v0-c5-2}
+inversão, e a notação de índices com que os volumes seguintes escrevem
+seus balanços. Os produtos das Equações~\eqref{eq:v0-c5-2}
 e~\eqref{eq:v0-c5-3} reaparecem na mecânica do contínuo (tensão e
 momento), na eletricidade (potência e campo) e na dinâmica rotacional do
 Volume~I; a inversão de matrizes sustenta a resolução numérica do
-Volume~II.
+Volume~II; o $\delta_{ij}$ da Equação~\eqref{eq:v0-c5-4} entra na lei
+constitutiva do Capítulo~2 do Volume~I; e os autovalores da
+Equação~\eqref{eq:v0-c5-6} retornam como tensões principais nesse mesmo
+capítulo.
 
 
 %=============================================================================
 % CAPÍTULO 6 — CÁLCULO DIFERENCIAL
 %=============================================================================
+\clearpage
 \section{Cálculo Diferencial}\label{sec:v0-derivadas}
 
 \subsection{A derivada como taxa instantânea}
@@ -856,8 +1189,9 @@ $\bm{\nabla} f = (\partial f/\partial x,\ \partial f/\partial y,\
 $f$ e seu módulo mede a inclinação máxima. O gradiente de temperatura
 dirige o fluxo de calor na lei de Fourier; o gradiente de pressão dirige o
 escoamento; o gradiente de uma função de custo dirige os ajustes de
-projeto. A regra da cadeia estende-se naturalmente: se $f$ depende de $x$
-e de $y$, e ambas dependem de $t$, então
+projeto. A regra da cadeia estende-se naturalmente a funções compostas: se
+$f$ depende de $x$ e de $y$, e ambas dependem de $t$, a taxa total é dada
+pela Equação~\eqref{eq:v0-c6-4}:
 
 \begin{equation}\label{eq:v0-c6-4}
 \frac{\mathrm{d}f}{\mathrm{d}t}
@@ -868,6 +1202,105 @@ e de $y$, e ambas dependem de $t$, então
 A Equação~\eqref{eq:v0-c6-4} é a versão contínua da contabilidade de
 variações usada nos balanços do Volume~I: a variação total é a soma das
 variações parciais vezes as taxas de cada caminho.
+
+\subsection{Taxa no ponto fixo e taxa na partícula: a derivada material}
+
+Há duas perguntas distintas que o cálculo responde sobre um \emph{campo}
+--- uma grandeza definida em cada ponto do espaço e a cada instante, como a
+temperatura do ar na admissão ou a velocidade do fluido num duto. A
+primeira é a taxa no ponto fixo: a derivada parcial
+$\partial f/\partial t$ mede como $f$ muda naquele lugar, com o observador
+parado. A segunda é a taxa seguindo a partícula: como muda $f$ para o
+pedacinho de fluido que se move. A segunda é a \textbf{derivada material},
+escrita com $D$ para distingui-la das demais, Equação~\eqref{eq:v0-c6-5}:
+
+\begin{equation}\label{eq:v0-c6-5}
+\frac{D f}{D t}
+  = \frac{\partial f}{\partial t}
+  + v_x\,\frac{\partial f}{\partial x}
+  + v_y\,\frac{\partial f}{\partial y}
+  + v_z\,\frac{\partial f}{\partial z}
+  = \frac{\partial f}{\partial t} + \bm{v}\cdot\bm{\nabla} f,
+\end{equation}
+
+onde $\bm{v}$ é a velocidade da partícula. A Equação~\eqref{eq:v0-c6-5} é a
+Equação~\eqref{eq:v0-c6-4} aplicada ao caminho da partícula: a variação
+total é a taxa local mais a soma das variações espaciais vezes a velocidade
+com que a partícula as percorre. A diferença entre as duas taxas é
+operacionalmente importante: a temperatura do ar num ponto fixo da
+admissão pode ser constante ($\partial T/\partial t = 0$) com ar quente
+chegando de fora ($D T/D t \neq 0$) --- é exatamente o que o termo
+convectivo $\bm{v}\cdot\bm{\nabla}T$ registra. O Volume~I escreve toda a
+dinâmica dos fluidos com esta derivada: a aceleração de uma partícula é
+$D\bm{v}/D t$, e as equações de Navier-Stokes são o balanço de quantidade
+de movimento escrito nela.
+
+\subsection{Divergência e rotacional}
+
+Dois operadores análogos ao gradiente partem de um campo vetorial $\bm{F}$
+--- mas devolvem, um, um escalar; outro, um vetor. A \textbf{divergência}
+mede o quanto o campo diverge do ponto: a taxa com que ele ``sai'' do
+entorno, Equação~\eqref{eq:v0-c6-6}. Onde a divergência é positiva há
+fonte; onde é negativa, sorvedouro:
+
+\begin{equation}\label{eq:v0-c6-6}
+\nabla\cdot\bm{F}
+  = \frac{\partial F_x}{\partial x}
+  + \frac{\partial F_y}{\partial y}
+  + \frac{\partial F_z}{\partial z}.
+\end{equation}
+
+A continuidade da massa do Volume~I é essa leitura aplicada ao campo
+$\rho\bm{v}$: o termo $\nabla\cdot(\rho\bm{v})$ soma quanto de massa sai
+de um volume elementar por unidade de tempo. O \textbf{rotacional} mede a
+tendência do campo de girar em torno do ponto --- a circulação por
+unidade de área, Equação~\eqref{eq:v0-c6-7}:
+
+\begin{equation}\label{eq:v0-c6-7}
+\nabla\times\bm{F}
+  = \left(
+      \frac{\partial F_z}{\partial y}
+    - \frac{\partial F_y}{\partial z},\;\;
+      \frac{\partial F_x}{\partial z}
+    - \frac{\partial F_z}{\partial x},\;\;
+      \frac{\partial F_y}{\partial x}
+    - \frac{\partial F_x}{\partial y}
+    \right).
+\end{equation}
+
+Um escoamento em vórtice tem rotacional não nulo no núcleo e nulo fora
+dele; um escoamento retilíneo uniforme, rotacional nulo em toda parte. Na
+coleção, o rotacional aparece nas equações de Maxwell do Capítulo~7 do
+Volume~I, que escrevem o campo elétrico girando em torno da variação do
+campo magnético e vice-versa. Ambos os operadores só fecham sentido com os
+teoremas integrais do Capítulo~\ref{sec:v0-integrais}: é lá que as taxas
+locais viram balanços sobre volumes e superfícies.
+
+\subsection{Exercícios resolvidos}
+
+\textbf{Exercício 6.1 (regra da cadeia na lei de resfriamento).} Mostre que
+$T(t) = T_{\infty} + (T_0 - T_{\infty})\,\mathrm{e}^{-t/\tau}$, a solução da
+Equação~\eqref{eq:v0-c8-3}, satisfaz a Equação~\eqref{eq:v0-c8-1}.
+
+\emph{Resolução.} Com a regra da cadeia,
+$\mathrm{d}T/\mathrm{d}t = (T_0 - T_{\infty})\cdot
+(-1/\tau)\,\mathrm{e}^{-t/\tau}$. Mas o próprio lado direito da solução
+dá $(T - T_{\infty}) = (T_0 - T_{\infty})\,\mathrm{e}^{-t/\tau}$, então
+$\mathrm{d}T/\mathrm{d}t = -(1/\tau)\,(T - T_{\infty})$ --- exatamente a
+Equação~\eqref{eq:v0-c8-1} com $k = 1/\tau$. Conferir uma solução
+derivando-a é o hábito barato que o capítulo recomenda.
+
+\textbf{Exercício 6.2 (linearização).} Estime $\sqrt{9{,}3}$ a partir da
+reta tangente a $f(x) = \sqrt{x}$ em $x_0 = 9$, e avalie o erro.
+
+\emph{Resolução.} $f'(x) = 1/(2\sqrt{x})$, então $f'(9) = 1/6$. A
+Equação~\eqref{eq:v0-c6-2} dá $\sqrt{9{,}3} \approx 3 + (1/6)(0{,}3) =
+3{,}050$. O valor exato é $3{,}0496$: erro de $4\times 10^{-4}$, bem
+menor que a estimativa de primeira ordem sugeria --- porque a derivada
+segunda de $\sqrt{x}$ também é pequena perto de $9$. Para $\Delta x$
+maior (digamos, $\sqrt{16}$ a partir de $9$), a mesma reta dá
+$3 + 7/6 = 4{,}17$ contra $4{,}00$ exato --- a vizinhança vale o que a
+Equação~\eqref{eq:v0-c6-2} declara: é local.
 
 \subsection{Máximos, mínimos e pontos de equilíbrio}
 
@@ -884,16 +1317,19 @@ industrial.
 \subsection{Síntese: premissas e ligação com os volumes seguintes}
 
 A derivada foi definida como limite de taxa média, e todas as suas regras
-são consequência da definição. As três leituras --- taxa instantânea
+são consequência da definição. As quatro leituras --- taxa instantânea
 (Equação~\eqref{eq:v0-c6-1}), inclinação e linearização
-(Equação~\eqref{eq:v0-c6-2}) e variação parcial
-(Equação~\eqref{eq:v0-c6-3}) --- cobrem todo o uso que os Volumes~I e~II
-fazem do cálculo diferencial: leis de taxa, sensibilidades e otimização.
+(Equação~\eqref{eq:v0-c6-2}), variação parcial
+(Equação~\eqref{eq:v0-c6-3}) e derivada material
+(Equação~\eqref{eq:v0-c6-5}) --- cobrem todo o uso que os Volumes~I e~II
+fazem do cálculo diferencial: leis de taxa, sensibilidades, otimização e
+dinâmica de fluidos.
 
 
 %=============================================================================
 % CAPÍTULO 7 — CÁLCULO INTEGRAL
 %=============================================================================
+\clearpage
 \section{Cálculo Integral}\label{sec:v0-integrais}
 
 \subsection{A integral como acumulação}
@@ -936,9 +1372,8 @@ sinal e de constante.
 Geometricamente, a integral definida é a área sob a curva entre os
 extremos, Figura~\ref{fig:v0-c7-1}, com áreas abaixo do eixo contadas
 negativo. A leitura de área resolve problemas que a primitiva resolve com
-dificuldade: a energia de um ciclo no diagrama $p$--$V$ é a área
-fechada pela curva, e trabalho líquido de um ciclo fechado é zero quando a
-curva não envolve área.
+dificuldade: o trabalho líquido de um ciclo no diagrama $p$--$V$ é a área
+que a curva fecha --- nulo quando o caminho de volta retrata o de ida.
 
 \begin{figure}[H]
 \centering
@@ -1009,6 +1444,70 @@ integração por partes (que desfaz a regra do produto) e tabelas ou
 software para as demais. Para a engenharia de máquinas, o essencial é
 reconhecer \emph{qual} caminho se aplica, e a coleção só exige isso.
 
+\subsection{Integrais de linha e de superfície; o teorema da divergência}
+
+Há duas integrais que acumulam ao longo de caminhos e de superfícies em
+vez de ao longo de um intervalo. A integral de linha soma o produto da
+grandeza pelo pedacinho de caminho: o trabalho de uma força ao longo de
+uma trajetória é $\int_C \bm{F}\cdot\mathrm{d}\bm{l}$, e o mesmo formal,
+sobre uma curva fechada ($\oint_C$), mede a circulação de um campo. A
+integral de superfície soma o componente normal do campo em cada
+pedacinho da superfície --- o \textbf{fluxo} ---, Equação~\eqref{eq:v0-c7-4}:
+
+\begin{equation}\label{eq:v0-c7-4}
+\Phi_S = \iint_S \bm{F}\cdot\bm{n}\ \mathrm{d}S,
+\end{equation}
+
+com $\bm{n}$ o vetor unitário normal à superfície. É o formal do balanço
+de massa: a massa que atravessa a superfície fechada de um volume por
+unidade de tempo é $\iint_S \rho\,\bm{v}\cdot\bm{n}\,\mathrm{d}S$.
+
+O teorema que liga os dois lados é o \textbf{teorema da divergência} (de
+Gauss), Equação~\eqref{eq:v0-c7-5}: o fluxo que sai de um volume fechado
+iguala a soma das divergências dentro dele.
+
+\begin{equation}\label{eq:v0-c7-5}
+\iint_S \bm{F}\cdot\bm{n}\ \mathrm{d}S
+  = \iiint_V (\nabla\cdot\bm{F})\ \mathrm{d}V.
+\end{equation}
+
+É a ponte que o Volume~I usa para converter os balanços da forma integral
+(sobre volumes de controle) na forma diferencial (válida ponto a ponto):
+aplica-se a Equação~\eqref{eq:v0-c7-5} ao termo de fluxo e observa-se que,
+valendo o balanço para todo volume imaginável, o integrando tem de anular.
+A leitura operacional é a dos balanços do Capítulo~6 do Volume~I:
+entra $=$ sai $+$ acumula, escrito por unidade de volume. Existe um
+teorema análogo para o rotacional --- o de Stokes, que iguala a circulação
+em torno de uma curva fechada ao fluxo do rotacional pela superfície que
+ela limita --- mas a coleção não o usa: as equações de Maxwell aparecem já
+na forma diferencial.
+
+\subsection{Exercícios resolvidos}
+
+\textbf{Exercício 7.1 (acumulação a vazão constante).} Uma rede recebe
+$\dot{m} = 0{,}20\ \mathrm{kg/s}$ durante 30 min. Quanta massa entrou?
+
+\emph{Resolução.} Pela Equação~\eqref{eq:v0-c7-1},
+$m = \int_0^{1800\,\mathrm{s}} 0{,}20\ \mathrm{d}t = 0{,}20 \times 1800 =
+360\ \mathrm{kg}$. A integral de uma constante é a regra do retângulo: a
+unidade do integrando ($\mathrm{kg/s}$) vezes a unidade do passo
+($\mathrm{s}$) fecha em $\mathrm{kg}$ --- a checagem dimensional da
+Equação~\eqref{eq:v0-c7-1} já valida a conta antes de fazê-la.
+
+\textbf{Exercício 7.2 (acumulação a potência decaindo).} Um aquecedor de
+regeneração opera com potência $P(t) = 6{,}0\,\mathrm{e}^{-t/40}\ \mathrm{kW}$
+(após o fechamento térmico). Quanta energia ele entrega em 60 s?
+
+\emph{Resolução.} Com a primitiva da exponencial (Tabela~\ref{tab:v0-c7-1})
+e o teorema fundamental (Equação~\eqref{eq:v0-c7-2}):
+$W = \int_0^{60} P_0\,\mathrm{e}^{-t/\tau}\,\mathrm{d}t =
+P_0\,\tau\,(1 - \mathrm{e}^{-60/40}) =
+6{,}0 \times 40 \times (1 - \mathrm{e}^{-1{,}5}) =
+240 \times 0{,}777 \approx 186\ \mathrm{kJ}$. Nota de interpretação: a
+energia é menor que a do degrau constante ($6{,}0 \times 60 =
+360\ \mathrm{kJ}$) porque a potência decai --- a integral acumula a
+taxa, não a taxa inicial.
+
 \subsection{Integrais múltiplas}
 
 Uma integral dupla $\iint_A f(x,y)\,\mathrm{d}A$ soma contribuições sobre
@@ -1024,7 +1523,10 @@ transporte que as organiza.
 
 A integral acumula taxa (Equação~\eqref{eq:v0-c7-1}), a primitiva inverte a
 derivação (Equação~\eqref{eq:v0-c7-2}) e o valor médio resume o
-acumulado (Equação~\eqref{eq:v0-c7-3}). Com isso, o leitor está pronto
+acumulado (Equação~\eqref{eq:v0-c7-3}); o fluxo da
+Equação~\eqref{eq:v0-c7-4} e o teorema da divergência da
+Equação~\eqref{eq:v0-c7-5} convertem balanços integrais em leis
+ponto a ponto. Com isso, o leitor está pronto
 para os balanços integrais do Volume~I e para a acumulação de energia,
 massa e carga que percorre o Volume~II.
 
@@ -1032,6 +1534,7 @@ massa e carga que percorre o Volume~II.
 %=============================================================================
 % CAPÍTULO 8 — EQUAÇÕES DIFERENCIAIS ORDINÁRIAS
 %=============================================================================
+\clearpage
 \section{Equações Diferenciais Ordinárias}\label{sec:v0-edo}
 
 \subsection{O que é uma equação diferencial}
@@ -1177,6 +1680,63 @@ confiar na simulação. O Volume~II integra suas EDOs com métodos mais
 refinados que este, mas todos descendentes diretos da
 Equação~\eqref{eq:v0-c8-5}.
 
+\subsection{Uma menção às equações diferenciais parciais}
+
+Toda equação deste capítulo relaciona uma função de \emph{uma} variável às
+suas taxas --- por isso \emph{ordinária}. Quando a função depende de mais
+de uma variável --- a temperatura $T(x,y,z,t)$ de um sólido, a velocidade
+do fluido num duto --- e a equação mistura as derivadas parciais dessas
+variáveis, ela é uma \emph{equação diferencial parcial} (EDP). A mudança
+de objeto é substantiva: em lugar de condições iniciais, o problema em
+geral exige condições nos \emph{contornos} do domínio --- a temperatura
+prescrita nas faces da parede, o escoamento nulo na superfície do rotor ---
+e a família de soluções admissíveis é muito mais rica.
+
+O Volume~I encontra EDPs em três lugares: a continuidade e o escoamento no
+Capítulo~2, Navier-Stokes no Capítulo~4 e a condução de calor no
+Capítulo~5 --- e em nenhum deles resolve uma EDP diretamente: ou a física
+se reduz a uma EDO por hipótese (parâmetros concentrados, regime
+permanente, simetria), ou o resultado entra na forma integral do teorema de
+transporte. O Volume~II também não resolve EDPs, mas as usa como resíduo
+físico no aprendizado física-informado: a rede é penalizada por violar a
+conservação expressa na equação, não por resolvê-la. O que o leitor precisa
+carregar daqui é o reconhecimento do objeto --- e a razão pela qual as
+hipóteses que os volumes seguintes assumem são precisamente as que
+dispensam resolvê-las.
+
+\subsection{Exercícios resolvidos}
+
+\textbf{Exercício 8.1 (carcaça esfriando).} Uma carcaça sai de regime com
+$T_0 = 95\,^\circ\mathrm{C}$, ambiente $T_{\infty} = 30\,^\circ\mathrm{C}$
+e constante de tempo $\tau = 20\ \mathrm{min}$. Quanto vale $T$ em 20 min
+e em 60 min? Quanto tempo até $35\,^\circ\mathrm{C}$?
+
+\emph{Resolução.} Pela Equação~\eqref{eq:v0-c8-3}:
+$T(20) = 30 + 65\,\mathrm{e}^{-1} = 30 + 65 \times 0{,}368 =
+54\,^\circ\mathrm{C}$; $T(60) = 30 + 65\,\mathrm{e}^{-3} =
+30 + 65 \times 0{,}0498 = 33{,}2\,^\circ\mathrm{C}$ --- a leitura dos
+37\%\ por $\tau$ e dos 5\%\ em $3\tau$. Para $T = 35$:
+$\mathrm{e}^{-t/\tau} = 5/65 = 0{,}077$, então
+$t = 20\,\ln(65/5) = 20 \times 2{,}56 = 51\ \mathrm{min}$. A leitura
+física: entre 20 e 60 min a carcaça perdeu só $21\,^\circ\mathrm{C}$, mas
+entre 51 e o regime permanente restam $5\,^\circ\mathrm{C}$ --- o
+último grau é o mais lento.
+
+\textbf{Exercício 8.2 (classificar o amortecimento).} Um sistema tem
+$\omega_n = 6\ \mathrm{rad/s}$ e $\zeta = 0{,}25$. Classifique o regime,
+obtenha a frequência amortecida e o tempo em que o envelope cai para
+2\%.
+
+\emph{Resolução.} $\zeta < 1$: subamortecido --- oscila com amplitude
+decaindo, como a curva da Figura~\ref{fig:v0-c8-1}. Frequência
+amortecida: $\omega_d = \omega_n\sqrt{1 - \zeta^2} =
+6\sqrt{1 - 0{,}0625} = 5{,}8\ \mathrm{rad/s}$. O envelope decai como
+$\mathrm{e}^{-\zeta\omega_n t} = \mathrm{e}^{-1{,}5 t}$, a mesma
+estrutura de primeira ordem da Equação~\eqref{eq:v0-c8-3} com
+$\tau = 1/(\zeta\omega_n) = 0{,}67\ \mathrm{s}$: em
+$t = 4\tau = 2{,}7\ \mathrm{s}$ o envelope vale $\mathrm{e}^{-4} =
+1{,}8\,\%$ --- abaixo dos 2\%\ pedidos.
+
 \subsection{Síntese: premissas e ligação com os volumes seguintes}
 
 Uma EDO postula a forma da taxa; a condição inicial fixa a amplitude; a
@@ -1190,6 +1750,7 @@ toda a dinâmica dos volumes seguintes. A constante de tempo
 %=============================================================================
 % CAPÍTULO 9 — SÉRIES E APROXIMAÇÕES
 %=============================================================================
+\clearpage
 \section{Séries e Aproximações}\label{sec:v0-series}
 
 \subsection{Por que aproximar}
@@ -1287,6 +1848,54 @@ linearização?'' --- isto é, quão longe do ponto de operação a aproximaçã
 ainda vale --- tem resposta numérica, e a notação $O(\cdot)$ é a
 linguagem para formular essa resposta.
 
+\subsection{Séries geométricas}
+
+A família de séries que a engenharia usa sem hesitação é a geométrica:
+termos que decaem por razão fixa $r$, Equação~\eqref{eq:v0-c9-3}:
+
+\begin{equation}\label{eq:v0-c9-3}
+S = 1 + r + r^2 + r^3 + \dots = \frac{1}{1-r},
+\qquad |r| < 1.
+\end{equation}
+
+A condição $|r| < 1$ é o que faz a soma infinita convergir para um número
+finito --- cada termo é uma fração cada vez menor do anterior. Com
+$r = 0{,}5$, a soma é $2$; com $r = 0{,}6$, $2{,}5$. A leitura
+operacional: um processo em que ``restam $r$ do anterior'' a cada passo
+acumula, no limite, $1/(1-r)$ vezes o primeiro termo. É o argumento
+atrás da resposta ao degrau de um sistema de primeira ordem integrado
+pela Equação~\eqref{eq:v0-c8-5} --- o déficit inicial decaindo por
+$r = 1 - \Delta t/\tau$ a cada passo soma geometricamente para o regime
+permanente --- e da taxa de convergência dos métodos iterativos que o
+Volume~II usa para calibrar parâmetros.
+
+\subsection{Exercícios resolvidos}
+
+\textbf{Exercício 9.1 (binômio truncado).} Estime $(1{,}02)^5$ com a
+Equação~\eqref{eq:v0-c9-2} truncada na segunda ordem, e compare com o
+valor exato.
+
+\emph{Resolução.} Com $\varepsilon = 0{,}02$ e $n = 5$: a primeira ordem
+dá $1 + 5\times 0{,}02 = 1{,}10$; a segunda acrescenta o termo
+$\binom{5}{2}\,(0{,}02)^2 = 10 \times 4\times 10^{-4} = 0{,}004$,
+totalizando $1{,}104$. O valor exato é $1{,}10408$: a segunda ordem já
+captura $4$ dos $5$ dígitos. O termo de terceira ordem vale
+$10\,(0{,}02)^3 = 8\times 10^{-5}$ --- a série cobra cada dígito a
+mais caro, exatamente o que o fatorial da Equação~\eqref{eq:v0-c9-1}
+promete.
+
+\textbf{Exercício 9.2 (soma geométrica e déficit remanescente).} Um sistema
+de primeira ordem é integrado com passo que deixa razão $r = 0{,}8$ entre
+déficits consecutivos. Quanto do déficit inicial resta após 10 passos, e
+para quanto converge a soma dos déficits?
+
+\emph{Resolução.} O déficit remanescente é $r^{10} = 0{,}8^{10} =
+0{,}107$: restam $10{,}7\,\%$ --- a leitura da meia-vida da
+Equação~\eqref{eq:v0-c8-3}, agora em passos discretos. A soma acumulada
+dos déficits é a série geométrica da Equação~\eqref{eq:v0-c9-3}:
+$1/(1 - 0{,}8) = 5$ --- a soma inteira vale cinco vezes o primeiro
+déficit, número que converge já nas primeiras dezenas de termos.
+
 \subsection{Síntese: premissas e ligação com os volumes seguintes}
 
 A série de Taylor gera aproximações locais; a notação de ordem declara seu
@@ -1300,6 +1909,7 @@ autorização.
 %=============================================================================
 % CAPÍTULO 10 — SÍNTESE E PONTE COM OS VOLUMES I E II
 %=============================================================================
+\clearpage
 \section{Síntese e Ponte com os Volumes I e II}\label{sec:v0-sintese}
 
 \subsection{As peças reunidas}
@@ -1340,6 +1950,27 @@ num símbolo ou numa operação encontra neste volume o lugar de onde ele
 veio. A convenção de notação do Capítulo~\ref{sec:v0-notacao} vale sem
 exceção: se algum símbolo parecer usado de outro modo, o uso local está
 errado, e não a convenção.
+
+\subsection{Exercício de travessia}
+
+\textbf{Exercício 10.1 (a travessia reversa).} O Volume~II escreve, no capítulo do
+VAE: ``o erro de reconstrução $E_{\text{rec}}$ é a soma dos desvios ao
+quadrado das $M$ variáveis, cada uma normalizada pela própria escala''.
+Retrace essa frase às ferramentas deste volume.
+
+\emph{Resolução.} (i) ``$M$ variáveis'' é um vetor de dados, o objeto do
+Capítulo~\ref{sec:v0-vetores} --- escrito $\bm{z}$, com componentes
+indexadas $z_i$. (ii) ``soma dos desvios'' é o somatório da
+Tabela~\ref{tab:v0-c2-1} ($\sum_i$); ``ao quadrado'' é a função potência
+do Capítulo~\ref{sec:v0-funcoes}, e o quadrado é o que impede desvios
+positivos e negativos de se cancelarem. (iii) ``normalizada pela própria
+escala'' é a disciplina de unidades do Capítulo~\ref{sec:v0-unidades}:
+sem ela, a variável de maior escala numérica dominaria a soma. (iv) ``a
+soma cresce quando a máquina degrada'' é uma taxa --- o Capítulo~\ref{sec:v0-derivadas}
+diz como ela é lida no tempo, e o limiar de disparo é decidido com a
+honestidade de aproximação do Capítulo~\ref{sec:v0-series}. A frase que
+parecia estrangeira é, na verdade, cinco ferramentas deste volume em
+cadeia.
 
 \subsection{Próximos passos}
 
