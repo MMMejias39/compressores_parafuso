@@ -1,5 +1,40 @@
 dicas_COPILOT.md — Verificação rápida do PDF compressores.pdf
 
+> **STATUS: ENCERRADO — todos os itens resolvidos, reverificado em 13/09/2026.**
+> A pergunta que fecha este relatório ("Deseja seguir com essa conferência
+> automática?") **já foi respondida e executada** na própria sessão de
+> 02/08/2026, como parte da checagem final do Backlog Kimi. Não há nada
+> aguardando decisão aqui.
+>
+> Estado de cada item:
+> - **A — equações (11.6), (9.8), (15.7):** os três eram erros reais, e os três
+>   foram corrigidos — 9.8 faltava dividir por 60 (RPM → Hz); 11.6 usava
+>   $\omega$ em rad/s numa fórmula que exige RPM; 15.7 calculava a razão de PDP
+>   em Celsius com sinal, invertendo o sentido do índice. A fragmentação de
+>   (11.6) na extração era artefato do `pdftotext`, não defeito de layout —
+>   conferida visualmente.
+> - **B — referências cruzadas:** 0 marcadores `??`; 227 labels `eq:s*-*`, 1
+>   sem `\eqref{}` prévio e esse é caso limítrofe declarado.
+> - **C — tabelas e diagramação:** resolvido pelo checklist do `dicas_kimi.md`
+>   de 31/07 (Nomenclatura alargada, 5 matrizes de falha em `\resizebox`,
+>   título da subseção 5.5).
+> - **D — metadados/acessibilidade:** `pdftitle`, `pdfauthor`, `pdfsubject` e
+>   `pdfkeywords` preenchidos; `\texorpdfstring` nos 4 títulos com matemática,
+>   zerando as warnings de bookmark.
+> - **E — arquivo binário:** confirmado, `referências extras para as
+>   fórmulas.md` é um `.odt` com extensão trocada. Convertido em 08/09/2026 para
+>   `referências extras para as fórmulas (convertido).md`, e a verificação
+>   mostrou que **todas** as referências que ele mapeava já constavam da
+>   bibliografia (`moran`, `hanlon`, `incropera`, `simon`, `rawlings`, `kingma`,
+>   `raissi`, `shigley`). Nenhuma ação pendente; o binário original foi
+>   preservado intacto.
+>
+> **Calibração de ceticismo (registrada no `CONTEXTO.md`):** a análise anterior
+> do Copilot **acertou o sintoma e errou a causa** — recomendou reforçar
+> `fontenc`/`inputenc` para o problema das ligaduras fi/ff, mas ambos já estavam
+> no preâmbulo; a causa real era a ausência do pacote `cmap`. Ler os relatórios
+> desta origem verificando a causa, não só o sintoma.
+
 Resumo das verificações automáticas
 
 1) Extração de texto: pdftotext -layout produziu compressores.txt sem ocorrências de referências não-resolvidas do tipo "??" e sem caracteres de substituição U+FFFD (�).

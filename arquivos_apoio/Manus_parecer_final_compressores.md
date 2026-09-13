@@ -1,5 +1,41 @@
 # Parecer Técnico-Editorial: Análise do Documento "Compressores"
 
+> **STATUS das 5 recomendações prioritárias — verificado em 13/09/2026.**
+> Este parecer é de 26/07/2026, quando o documento tinha 105 páginas; hoje tem
+> **183**. Foi o relatório externo mais certeiro do projeto nos achados
+> normativos — os três se confirmaram na fonte primária.
+>
+> 1. **Revisão do escopo e título ("Enciclopédia")** — ❌ **deliberadamente
+>    recusado pelo autor**, e registrado como tal no `CONTEXTO.md`: a obra é o
+>    primeiro volume de uma coleção modular, e o título descreve o projeto, não
+>    o volume isolado. **Não reabrir** sem o autor levantar o assunto.
+> 2. **Público-alvo e didática** — ✅ em boa parte, por um caminho que o parecer
+>    não previu: em vez de dois níveis de leitura dentro do mesmo livro, a
+>    coleção ganhou um **Volume 0 inteiro** de pré-requisitos (12/09/2026, 42
+>    páginas, 18 exercícios resolvidos) e um **Volume I** de fundamentos (87
+>    páginas). O **glossário bilíngue** foi implementado em 23/08/2026
+>    (Glossário de Anglicismos, ~40 termos, antes da bibliografia). ⚠️ **Resta**
+>    o que o parecer pedia para a Parte II: objetivos de aprendizagem e 2–3
+>    exercícios resolvidos por capítulo — ver `dicas_ollama.md`, item 5.
+> 3. **Estrutura dos capítulos (consolidar os curtos)** — ⚠️ **parcial**. Caps.
+>    12 e 13 foram triplicados em 30/07/2026 e a Parte II foi aprofundada em 6
+>    capítulos. Os mais curtos hoje (contagem de 13/09/2026) são **Cap. 27
+>    (605 palavras), Cap. 25 (1.022), Cap. 6 (1.075) e Cap. 20 (1.091)** — note
+>    que os Caps. 11 e 14, citados em registros antigos como os mais curtos, já
+>    cresceram e saíram da lista.
+> 4. **Verificação de normas** — ✅ **integralmente**. ISO 8573-1 qualificada
+>    como **Classe 2** com ponto de medição e pressão de referência declarados;
+>    ISO 20816-3 tratada explicitamente **por não se aplicar** a compressores
+>    rotativos de deslocamento positivo (Caps. 1 e 18), com os critérios
+>    passando a vir da API 619/OEM/linha de base; ISO 1217 citada com a
+>    **Amd 1:2016**.
+> 5. **Aprimoramento bibliográfico (volume, páginas, DOI)** — ✅ feito em
+>    30/07/2026, com todas as referências conferidas contra fonte real. Três
+>    achados vieram dessa varredura: IEC 60034-2-1 citada sem ano pressupondo
+>    uma edição já substituída; "API TR 684-1" não se confirmou em nenhuma fonte
+>    e foi removida; Incropera e Shigley trocaram de ordem de autoria nas
+>    edições atuais.
+
 ## 1. Introdução
 
 Este parecer técnico-editorial foi elaborado a partir da análise do documento "compressores.pdf", com foco na qualidade editorial e didática, no posicionamento da obra no contexto brasileiro, e na verificação da veracidade e pertinência das referências técnicas mais críticas, com sugestões de alocação por capítulo. A revisão foi realizada com um escopo mínimo, conforme solicitado, priorizando uma amostragem representativa e a verificação das fontes mais relevantes.

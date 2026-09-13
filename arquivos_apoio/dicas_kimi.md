@@ -1,5 +1,19 @@
 # Dicas de melhoria — `compressores.pdf`
 
+> **STATUS: ENCERRADO — checklist inteiro implementado em 01/08/2026**
+> (commits `27997b6` e `3417919`), reverificado em 13/09/2026 contra o `.tex`
+> atual. Não há pendência aberta aqui.
+>
+> ⚠️ **Não confundir com o `dicas_kimi.md` da raiz**, que é um relatório
+> *diferente*, de 16/08/2026, sobre o documento já com 151 páginas. Este aqui é
+> o de 31/07/2026, sobre a versão de 133 páginas.
+>
+> **Achado de calibração registrado no `CONTEXTO.md`:** este relatório acertou o
+> diagnóstico mas **subestimou a extensão** — relatou 1 tabela "Matriz de
+> falhas" com overfull grave (37,4 pt); a varredura completa achou **5**, a pior
+> com 56,7 pt. Vale como lembrete de que a contagem de um revisor externo é
+> ponto de partida, não escopo fechado.
+
 Avaliação de qualidade do documento (133 páginas, A4, compilado em 31/07/2026).
 Diagnóstico geral: documento em bom nível técnico-editorial; os itens abaixo são
 ajustes finos para uma versão final.
@@ -71,15 +85,31 @@ ajustes finos para uma versão final.
 - Capa: data "31 de julho de 2026" vs "Rev. 26/07/2026" — coerente; apenas
   confirmar se a Rev. deve acompanhar a data de compilação.
 
-## Checklist resumido
+## Checklist resumido — todos concluídos
 
-- [ ] Corrigir célula da Nomenclatura (p. 15) — colisão símbolo/significado
-- [ ] Quebrar/encurtar título da subseção 5.5 (overfull 56,7 pt)
-- [ ] Ajustar tabelas "Matriz de falhas" largas (overfull 37,4 pt e similares)
-- [ ] Revisar overfulls remanescentes após as correções acima
-- [ ] `\setlength{\headheight}{15pt}` (warnings do fancyhdr)
-- [ ] `\texorpdfstring` em títulos com matemática (bookmarks)
-- [ ] Preencher metadados do PDF via `\hypersetup`
+Verificações reconferidas em 13/09/2026, com o comando de cada uma:
+
+- [x] Célula da Nomenclatura (p. 15) — coluna Símbolo alargada de 2,0 cm para
+      2,8 cm nas 8 tabelas de Nomenclatura, compensada encolhendo Significado.
+- [x] Título da subseção 5.5 — "Sub/Sobrecompressão" virou "Sub- e
+      Sobrecompressão", permitindo hifenização. (O `\textbf{}` no título foi
+      **mantido de propósito**: é o padrão do documento inteiro, 105
+      subseções — não era o defeito.)
+- [x] Tabelas "Matriz de falhas" largas — **5** convertidas para
+      `\resizebox{\textwidth}{!}{...}`, não 1 como o relatório supunha.
+- [x] Overfulls remanescentes — `\emergencystretch=1em` no preâmbulo resolveu a
+      maior parte. Hoje: **36 overfulls, o maior com 2,01 pt** (linhas de
+      Nomenclatura com a palavra "adimensional"), classificados como
+      cosmeticamente insignificantes e estáveis há meses.
+- [x] `headheight` — `\geometry{margin=2.5cm, headheight=15pt}`, linha 42.
+- [x] `\texorpdfstring` em títulos com matemática — 4 ocorrências; as 11
+      warnings de bookmark do hyperref foram a zero.
+- [x] Metadados do PDF — `pdfsubject` e `pdfkeywords` preenchidos no
+      `\hypersetup`.
+
+**Item que o relatório classificou como "sem necessidade de ação" e vale
+registrar:** a observação sobre a capa (data automática × "Rev.") continua
+resolvida pela convenção de revisão manual já estabelecida.
 
 ## 6. Aprendizados das sessões do Volume I (12/09/2026)
 

@@ -22,6 +22,10 @@ Code leu o código deste diretório.
 
 ## Estrutura
 
+> ⚠️ A árvore abaixo é a de 01/08/2026 (3 abas, 6 módulos). A estrutura atual
+> está em `aplicativo/README.md` e `aplicativo/GUIA_CODIGO.md`, que são os
+> documentos destilados e mantidos; este arquivo é o registro cronológico.
+
 ```
 aplicativo/
 ├── app.py                  # interface Streamlit (ponto de entrada, 3 abas)
@@ -915,7 +919,12 @@ falha simultaneamente" registrada em `../CONTEXTO.md`.
 
 **Nada foi commitado ainda** — aguardando revisão do autor.
 
-## Estado atual
+## Estado atual (registro de 15/08/2026 — DESATUALIZADO)
+
+> ⚠️ **Esta seção ficou congelada em 15/08/2026** e descreve o app com 4 abas e
+> 66 testes. O estado real está em "Estado atual verificado (13/09/2026)", ao
+> fim deste arquivo. Preservada aqui como registro cronológico, seguindo a
+> convenção do projeto de nunca reescrever entradas antigas.
 
 Código compila sem erro de sintaxe, **66/66 testes passam**
 (`venv/bin/pytest tests/ -q`, ~8-10s) — 41 após a Eq. 9.6, mais 7 do
@@ -1618,3 +1627,54 @@ acima, sem gerador sistemático de dataset.
    - Mapeamento das 26+ tags da Tabela 18.1, gerador sintético e importador com validação EKF.
 6. **Auditoria de Acessibilidade Visual e Alto Contraste (WCAG 2.1 AA)**:
    - Auditada automaticamente via Chrome Headless em todas as 7 telas com 0 falhas nos modos Claro e Escuro.
+
+---
+
+## Estado atual verificado (13/09/2026)
+
+Levantamento feito por leitura direta do código e dos arquivos, a pedido do
+autor ("verifique se os erros e dicas ainda valem"). Substitui a seção "Estado
+atual" de 15/08/2026, que ficou congelada.
+
+**Abas: 5, não 6 nem 7.** `app.py:158` declara, nesta ordem: `tab_frota`,
+`tab_dashboard`, `tab_diagnostico`, `tab_sistema`, `tab_config` — 🚢
+Supervisório de Frota, 📊 Dashboard do Ativo, 🔬 Diagnóstico & IA, 🛠️ Sistema &
+Dinâmica, ⚙️ Configurações. O **Modo Treinamento** deixou de ser aba e é
+ativado por botão na barra lateral, com banner em todas as abas; o **Painel de
+Falhas** virou sub-aba de "Diagnóstico & IA" ("🚨 Laboratório de Falhas &
+Classificador m̂_falha"); a antiga aba "📂 Dados Medidos" virou sub-aba de
+"Sistema & Dinâmica" ("📂 Conector PI System"). As entradas cronológicas acima
+que falam em 6 ou 7 abas descrevem estados intermediários reais — não são erro
+de registro, só ficaram para trás.
+
+**Testes: 86 funções, 102 casos.** `tests/test_simulador.py` tem 77 funções
+`def test_` e `tests/test_pi_treinamento.py` tem 9; três são parametrizadas
+(PDP, `n_vasos` e o catálogo de 10 cenários de falha), elevando o total
+executado a 102. `aplicativo/GUIA_CODIGO.md` já registrava esse número
+corretamente.
+
+**Não foi possível executar a suíte nesta sessão:** `aplicativo/venv/` não
+existe na árvore, e streamlit/torch/scipy também não estão no Python do
+sistema. Antes de rodar ou testar o app:
+`python3 -m venv venv && venv/bin/pip install -r requirements.txt`. Note que
+`requirements.txt` hoje inclui `torch>=2.4` diretamente (o comentário no
+próprio arquivo explica a troca do build CPU-only pelo build padrão do PyPI, em
+16/08/2026) — a nota "torch fica de fora da instalação automática", em entradas
+antigas deste arquivo, não vale mais.
+
+**Catálogo de falhas:** `cenarios_falha.py::CATALOGO_CENARIOS` tem **10**
+cenários, contra os **59** mecanismos da Tabela 28.2 do livro (contagem
+verificada; entradas antigas deste arquivo dizem "56 mecanismos" e o livro
+chegou a dizer "57" — o número correto e já usado no `.tex` é 59). A frase
+correta é, portanto, "10 de 59".
+
+**Lado Rust (`compressor2/`):** 26 `#[test]` declarados, `cargo` disponível na
+máquina. Não coberto por este arquivo — ver `compressor2/README.md` e o
+`CONTEXTO.md` principal.
+
+**Pendências do app que continuam válidas:** os 49 mecanismos de falha
+restantes; treino multi-mecanismo com gerador sistemático de dataset; sensores
+portáteis/wireless (Eq. 18.6); $\zeta_{valv}$ (Eq. 5.16) e os outros dois
+elementos de $\Lambda$ ainda sem canal de medição; supervisório com estado
+persistente entre sessões; `k_ads_ref` nunca verificado contra literatura;
+Parte III como pipeline único encadeado (os algoritmos existem isolados).

@@ -11,11 +11,18 @@ bastante para justificar (nova convenção, nova figura derivada, arquivo novo).
 
 ## O que é este projeto
 
-`compressores.tex` é um livro técnico (~84 páginas) sobre construção de um Gêmeo
-Digital completo para compressores de parafuso rotativo isentos de óleo usados em
-plantas de ar comprimido offshore (óleo e gás). O autor escreveu o conteúdo original
-com apoio de um GPAI e vem revisando/expandindo o documento em conjunto com o Claude
-ao longo de várias sessões.
+`compressores.tex` é um livro técnico (**183 páginas** em 13/09/2026 — o "~84
+páginas" que este parágrafo trazia desde 26/07/2026 estava congelado) sobre
+construção de um Gêmeo Digital completo para compressores de parafuso rotativo
+isentos de óleo usados em plantas de ar comprimido offshore (óleo e gás). O autor
+escreveu o conteúdo original com apoio de um GPAI e vem revisando/expandindo o
+documento em conjunto com o Claude ao longo de várias sessões.
+
+**A coleção hoje tem três volumes**, não só este: `Volume_0_Notacoes_e_Calculo.tex`
+(42 p., pré-requisitos matemáticos), `Volume_I_Fundamentos.tex` (87 p., fundamentos
+teóricos) e `compressores.tex` (183 p., o Volume II descrito acima). Mais duas
+implementações de referência: `aplicativo/` (Streamlit/Python) e `compressor2/`
+(Rust/Axum).
 
 Estrutura lógica do livro: primeiro a física e a engenharia de cada componente
 (motor, gearbox, rotores, resfriamento, secagem PSA, vasos de pressão, instrumentação),
@@ -48,8 +55,10 @@ comporte novos volumes de outros equipamentos sem reescrever o que já existe; (
 eventualmente um esquema de versionamento explícito — **repositório git
 inicializado em 26/07/2026** (ver `.gitignore` na raiz, que exclui artefatos de
 build do LaTeX `*.aux/.log/.out/.toc/.nav/.snm` e o ambiente Python
-`scripts/venv/`, `scripts/__pycache__/`). Ainda não há nenhum commit — nunca crie
-commits sem pedido explícito do autor.
+`scripts/venv/`, `scripts/__pycache__/`). O repositório tem histórico extenso
+desde então (`git log --oneline` para o estado real — nunca cite hash de
+memória) — mas a regra segue idêntica: **nunca crie commits sem pedido
+explícito do autor.**
 
 ## Fluxo conceitual do pipeline completo (raciocínio do autor, 16/08/2026)
 
@@ -119,8 +128,17 @@ também em "Pendências conhecidas" para não se perderem:
 
 ## Arquivos e pastas
 
-- `compressores.tex` — documento principal (fonte única de verdade).
-- `compressores.pdf` — PDF compilado (84 páginas na última revisão).
+- `compressores.tex` — Volume II, o documento principal (fonte única de verdade).
+- `compressores.pdf` — PDF compilado (**183 páginas** em 13/09/2026).
+- `Volume_I_Fundamentos.tex`/`.pdf` — Volume I, fundamentos teóricos (87 páginas,
+  158 equações, ~50 figuras vetoriais TikZ/pgfplots escritas no próprio `.tex` —
+  **não** usa `scripts/gen_figuras.py`, que é do Volume II). Nome canônico desde
+  11/09/2026; `teorias.*`/`theorias.*` eram nomes de trabalho, removidos.
+- `Volume_0_Notacoes_e_Calculo.tex`/`.pdf` — Volume 0, pré-requisitos
+  matemáticos (42 páginas, 36 equações, 18 exercícios resolvidos). Mesmo padrão
+  de figuras vetoriais no próprio `.tex`.
+- `compressor2/` — implementação Rust 2.0 (workspace Cargo, `sim_core` +
+  servidor Axum), 26 testes. Criada em 27/08/2026.
 - `figuras/` — todos os PDFs de figura usados via `\includegraphics`. **Não edite
   estes PDFs diretamente** — regenere a partir da fonte (ver seção "Figuras" abaixo).
 - `scripts/gen_figuras.py` — script Python (matplotlib) que gera a maior parte das
@@ -2105,14 +2123,24 @@ aproximada de valor:
    *trip* etc. sem tradução sistemática. A forma sugerida é: seção de glossário
    ao final, mais a primeira ocorrência de cada termo no texto ajustada para
    "termo em português (original)".
-2. **Capítulos 11 (864 palavras), 14 (923), 20 (974) e 6 (976)** são os mais
-   curtos do livro depois da expansão dos Capítulos 12 e 13 — se o critério de
-   "capítulo desenvolvido, não nota técnica" for aplicado adiante, começar por
-   eles. (Contagem por `awk` sobre o `.tex`, incluindo marcação; serve para
-   ranquear, não como número absoluto.)
-3. **Redes Bayesianas (Cap. 25)** e os detalhes de MHE do `do-mpc` (Cap. 27)
-   continuam citados só por nome, sem equação — pendência herdada do
-   "Inventário de algoritmos da Parte II" acima.
+2. **Capítulos mais curtos do livro** — se o critério de "capítulo
+   desenvolvido, não nota técnica" (parecer Manus) for aplicado adiante,
+   começar por eles. **Contagem refeita em 13/09/2026: Cap. 27 (605 palavras),
+   Cap. 25 (1.022), Cap. 6 (1.075) e Cap. 20 (1.091).** A lista anterior desta
+   pendência — "Caps. 11 (864), 14 (923), 20 (974) e 6 (976)" — está vencida:
+   os Caps. 11 e 14 cresceram desde então e saíram do fim da fila, e o Cap. 27
+   (Implementação de Alta Performance) passou a ser o mais curto, logo depois de
+   ganhar a seção da stack Rust. O Cap. 6 é o único que aparece nas duas listas
+   — e é também o único capítulo da Parte I sem nenhuma figura (pendência
+   separada), o que o torna o candidato mais forte. (Contagem por script Python
+   sobre o `.tex`, incluindo marcação; serve para ranquear, não como número
+   absoluto.)
+3. **Redes Bayesianas (Cap. 25)** continuam citadas só por nome, sem equação —
+   pendência herdada do "Inventário de algoritmos da Parte II" acima.
+   *(Atualização de 13/09/2026: a metade sobre **MHE do `do-mpc`** saiu desta
+   pendência — ganhou subseção própria, "Controle Preditivo e MHE (do-mpc)",
+   `compressores.tex:3648`. Segue sem equacionamento próprio, mas não é mais
+   "só uma citação por nome".)*
 4. ~~Estudo de caso numérico de ponta a ponta~~ — **feito em 15/08/2026**,
    ver "Parte III — Estudo de Caso Integrado, Capítulo 28" acima.
 5. ~~Sensores móveis/portáteis~~ — **feito no livro em 16/08/2026**, restrito
@@ -3775,3 +3803,134 @@ atualizada (7 entradas, incluindo a 4.2 nova); capa renderizada
 permanente. **Achado colateral pendente de decisão do autor:** o Volume I
 não usa `\clearpage` nenhum (caps. começam no meio da página), desviando da
 convenção da coleção.
+
+## Reverificação geral de pendências e relatórios externos (13/09/2026)
+
+Pedido do autor: "verifique se os erros e dicas ainda valem, pois muito já foi
+ajustado". Cada item pendente dos arquivos de apoio foi conferido **por busca
+direta nos `.tex` e no código**, não por leitura de registro anterior. O
+resultado está anotado dentro de cada arquivo; o resumo:
+
+**Encerrados — não reabrir.** `relatorio_diagramacao.md` (8/8),
+`arquivos_apoio/dicas_kimi.md` de 31/07 (checklist inteiro),
+`dicas_kimi.md` de 16/08 (5/5), `dicas_COPILOT.md`,
+`Manus_parecer_final_compressores.md` (3 achados normativos + glossário de
+anglicismos), `Backlog_kimi_compress.md` (13/13), `Backlog_volume0.md` (8/8) e
+`Gemini_ajuste.pdf` (5 correções + 5 adições). `melhorias_gemini.md` está
+majoritariamente vencido — ganhou cabeçalho de status listando o que já entrou
+e o que resta (essencialmente calibração de bancada, Sobol/Morris, UKF e
+MLOps).
+
+**Conformidade estrutural conferida nesta data** (vale como baseline para a
+próxima auditoria): 227 labels `eq:s*-*`, **1** sem `\eqref{}` prévio
+(`eq:s22-5` — caso limítrofe: o parágrafo cita a `eq:s20-4` porque a equação é
+reprodução declarada dela); **0** `\hline`/`tabular{|`/`array{|`; **50**
+`\caption[`, **0** `\caption{`; **0** floats `[h!]`, 47 `[h!tbp]`; 36 overfull
+hboxes, o maior com 2,01 pt (baseline documentado).
+
+**Regressão real encontrada e corrigida na mesma sessão:** quatro aspas retas
+voltaram à prosa do Capítulo 29 (`compressores.tex`, seção "Generalização: da
+Atribuição Pontual ao Treino Multi-Mecanismo", escrita em 16/08/2026),
+violando a regra permanente registrada em 30/07/2026. **O defeito era visível
+no PDF** — `pdftotext` devolvia `PIML"(incrustaçã` e `PIML"— que`, com o
+espaço seguinte engolido pelo *shorthand* do babel, exatamente o sintoma
+descrito na regra. Corrigidas para `` `` ``/`''`. As 22 aspas retas restantes
+no arquivo são legítimas (2 em comentário de preâmbulo, 4 no bloco `verbatim`
+de Python, e as demais em contextos equivalentes).
+
+**Lição de processo:** a regra das aspas foi criada em 30/07/2026 e violada de
+novo em 16/08/2026, em conteúdo escrito nesta mesma linha de sessões — ou seja,
+uma regra permanente registrada no `CONTEXTO.md` não impede a reincidência por
+si só. A varredura é barata (`grep -o '"' compressores.tex | wc -l`, esperando
+apenas as ocorrências legítimas conhecidas) e vale rodar ao fim de qualquer
+sessão que escreva prosa nova, junto com a varredura de auto-referência de
+equação que já é rotina.
+
+**Pendências que continuam válidas** (verificadas uma a uma):
+1. `dicas_ollama.md` itens 2, 3, 4, 5, 7 e 8 — o item 8 (mover
+   `Gemini_ajuste.pdf`) foi resolvido nesta sessão; os demais seguem abertos, e
+   o arquivo agora traz o comando de verificação de cada um. **Cuidado com o
+   item 4**: existe um Glossário *de Anglicismos* (Cap. final, desde
+   23/08/2026), mas o que falta é o glossário *de notação* cruzando
+   termodinâmica × mecânica × ML — são itens distintos, fáceis de confundir.
+2. O item 6 do `dicas_ollama.md` deixou de ser pendente por inteiro e passou a
+   **parcial**: estimação de estados ✅ (Caps. 21/28) e quantificação de
+   incerteza ✅ (subseção própria, `:3431`); faltam **validação do gêmeo contra
+   dados reais** e **hierarquia de fidelidade** (0 ocorrências de ambas), e
+   sincronização/latência aparecem só como bullet.
+3. Cap. 6 do Volume II segue sem nenhuma figura — última lacuna gráfica da
+   Parte I (o documento tem 28 figuras no total).
+4. **Volume I não usa nenhum `\clearpage`** (10 capítulos, 0 ocorrências) —
+   achado colateral registrado em 12/09, ainda pendente de decisão do autor. O
+   Volume 0 já segue a convenção (10/10).
+5. Redes Bayesianas (Cap. 25) sem equação.
+
+**Estado do Volume I nesta data**, corrigindo o registro de 24/08 que listava
+metade dos capítulos como esqueleto: **todos os capítulos de conteúdo já foram
+reescritos** ao padrão da coleção — Cap. 2 (825 linhas), 3 (559), 4 (527), 5
+(539), 6 (402), 7 (1094), 8 (349). O único que ainda não passou pela reescrita
+é o **Cap. 9, Instrumentação e Medição (135 linhas)** — candidato natural para
+a próxima expansão. O Cap. 10 (Síntese, 138 linhas) é curto por natureza.
+
+**Ambiente:** o `aplicativo/venv/` **não existe na árvore atual** — precisa ser
+recriado (`python3 -m venv venv && venv/bin/pip install -r requirements.txt`)
+antes de rodar ou testar o app Python; streamlit/torch/scipy também não estão
+no Python do sistema. O lado Rust está operacional (`cargo` instalado, 26
+`#[test]` declarados).
+
+**Dois ajustes aplicados nesta mesma sessão, a pedido do autor:**
+1. As quatro aspas retas do Cap. 29 corrigidas (acima). Recompilado em 3
+   passagens: **183 páginas, 0 erros, 0 referências indefinidas, 36 overfulls
+   com máximo de 2,01 pt** — baseline preservado, sem regressão. Confirmado no
+   PDF por `pdftotext`: agora sai `PIML” (incrustação` e `coluna “Detecção`,
+   com o espaço preservado.
+2. `Gemini_ajuste.pdf` movido para `arquivos_apoio/` com `git mv` (item 8 do
+   `dicas_ollama.md`), preservando o histórico — o git registrou a operação
+   como rename (`R`). Nenhum `.tex` ou `.md` referenciava o caminho antigo.
+
+**Correção de fato sobre `arquivos_apoio/`:** este arquivo afirma, na seção
+"Estado atual (última sessão)", que o subdiretório "continua **não rastreado
+pelo git**". **Isso não é mais verdade** — `git ls-files arquivos_apoio/`
+devolve 8 arquivos rastreados. A afirmação valia em 02/08/2026, quando a pasta
+foi criada, e nunca foi atualizada. A **regra de conteúdo continua valendo
+integralmente**: não mexer em nenhum arquivo de `arquivos_apoio/` sem pedido
+explícito do autor — o que mudou é só o status de versionamento, não a
+permissão.
+
+**Segunda rodada, mesma sessão — status defasado nos arquivos de apoio.** O
+autor pediu para atualizar também os `.md` onde as melhorias estavam
+desatualizadas, o que autorizou explicitamente mexer em `arquivos_apoio/`
+(a regra permanente exige pedido explícito — este foi ele; a regra continua
+valendo para sessões futuras). Corrigidos:
+
+- **`arquivos_apoio/Backlog_kimi_compress.md`** — a proposta **V0-01** (criar o
+  Volume 0) ainda dizia "proposta de trabalho — nada implementado", de 08/09.
+  O Volume 0 existe, está completo e commitado desde 12/09. Atualizado com o
+  estado final e com a resposta às quatro decisões que a proposta deixava em
+  aberto.
+- **`Backlog_volume0.md`** — dizia "Nada commitado sem pedido explícito do
+  autor"; o trabalho está em `5210d92` e `7db0080`.
+- **`arquivos_apoio/dicas_kimi.md`** (31/07) — checklist de 7 itens inteiro
+  desmarcado, embora implementado em 01/08. Marcado, com o comando de
+  verificação de cada item e um aviso para não confundir este relatório com o
+  `dicas_kimi.md` da raiz, que é outro (16/08).
+- **`arquivos_apoio/dicas_COPILOT.md`** — encerrava com uma pergunta em aberto
+  ("Deseja seguir com essa conferência automática?") já respondida e executada
+  em 02/08. Cabeçalho de status cobrindo os cinco blocos A–E.
+- **`arquivos_apoio/Manus_parecer_final_compressores.md`** — cabeçalho com o
+  estado das 5 recomendações prioritárias. Vale notar que a recomendação 2
+  (dois níveis de leitura) acabou atendida por um caminho que o parecer não
+  previu: em vez de estratificar o mesmo livro, a coleção ganhou o Volume 0 e o
+  Volume I inteiros.
+- **`SISTEMA_MULTI_MODELOS.md`** — a linha "Projeto ativo" ainda descrevia o
+  repositório como "material de ensino, avaliação 6,0/10, revisão em curso pelo
+  Kimi". Substituída por uma tabela dos cinco artefatos com o estado medido.
+
+**Padrão observado, que vale para a próxima auditoria:** o erro recorrente
+nestes arquivos não é conteúdo errado — é **status congelado**. Cada relatório
+descreve corretamente o que viu no dia em que foi escrito, e o que envelhece é a
+linha de "pendente"/"nada implementado"/"nada commitado" no topo. Uma leitura
+apressada dos arquivos de apoio, hoje, produziria uma lista de tarefas com pelo
+menos 20 itens já feitos. Ao encerrar um item de backlog, **atualizar o status
+no próprio arquivo de origem**, não só no `CONTEXTO.md` — foi exatamente essa
+lacuna que exigiu esta rodada.

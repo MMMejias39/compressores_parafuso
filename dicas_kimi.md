@@ -1,5 +1,13 @@
 # Dicas de melhoria — `compressores.pdf`
 
+> **STATUS: ENCERRADO — 5/5 itens implementados (16/08/2026), reverificados em
+> 13/09/2026 contra o `.tex` atual.** Este arquivo fica como registro histórico
+> do diagnóstico; não há pendência aberta nele. O checklist ao fim traz o
+> comando de verificação de cada item. Avaliação de precisão do relatório
+> registrada no `CONTEXTO.md` ("Quarto relatório externo"): foi o relatório
+> externo mais preciso já recebido no projeto — 100% dos achados acionáveis se
+> confirmaram, com uma única imprecisão cosmética de sintaxe (`[!h]` × `[h!]`).
+
 Avaliação de qualidade do documento (151 páginas, A4, compilado em 16/08/2026,
 3 passagens de `pdflatex`, a partir de `compressores.tex` no commit `f6cfefb`).
 Diagnóstico geral: documento em excelente estado técnico-editorial — compilação
@@ -119,15 +127,25 @@ do PDF (`pdftotext -layout`), nesta data:
 - 0 referências a labels inexistentes; 0 labels duplicados.
 - Extração do PDF: 0 bytes de controle (ligaduras), 0 U+FFFD, 0 `??`.
 
-## Checklist resumido
+## Checklist resumido — todos concluídos
 
-- [ ] `\markboth{...}{}` no Cap. 28 (cabeçalho de 2 linhas + 4 warnings de
-      `headheight`) — **prioridade alta**
-- [ ] Forma curta de `\caption` nas Tabelas 14.1, 16.1, 17.1, 18.1 e 18.2
-- [ ] Resolver os órfãos `\bibitem{bloch}` e `\bibitem{isa51}` (citar ou remover)
-- [ ] Trocar `[!h]` por `[!htbp]` nos 13 floats (silencia warnings do log)
-- [ ] (Opcional, decisão do autor) Atualizar `apresentacao_compressores.tex`
-      com 1–2 slides da Parte III
+- [x] `\markboth{...}{}` no Cap. 28 — feito. Verificação: `grep -n markboth
+      compressores.tex` devolve 3 usos de capítulo (Caps. 9, 28 e 29) além da
+      redefinição de `\sectionmark` no preâmbulo.
+- [x] Forma curta de `\caption` nas Tabelas 14.1, 16.1, 17.1, 18.1 e 18.2 —
+      feito. Verificação: **50 `\caption[`, 0 `\caption{`** no arquivo inteiro.
+- [x] Órfãos `\bibitem{bloch}` e `\bibitem{isa51}` — resolvidos citando, não
+      removendo (uma terceira opção que o relatório não considerou): `bloch` na
+      abertura do Cap. 3, `isa51` no Cap. 18 junto à convenção ISA de níveis
+      H/HH/LL. Verificação: `grep -c "cite{bloch}"` = 1, `grep -c "cite{isa51}"`
+      = 1.
+- [x] Floats sem fallback — feito. **Atenção à sintaxe**: o relatório escreveu
+      `[!h]`/`[!htbp]`, mas o `.tex` real sempre usou `[h!]` (ordem invertida) —
+      quem pesquisar literalmente por `[!h]` não acha nada. Verificação:
+      **0 ocorrências de `[h!]`, 47 de `[h!tbp]`**.
+- [x] Slides da Parte III — feito em 16/08/2026 (commit `e059d24`), 2 slides
+      novos entre "Evolução do Gêmeo Digital" e "Síntese". O deck está hoje com
+      24 slides.
 
 — Relatório gerado em 16/08/2026 sobre `compressores.tex` @ `f6cfefb` (151 páginas).
 
