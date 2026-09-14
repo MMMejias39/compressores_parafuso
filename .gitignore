@@ -23,6 +23,12 @@ aplicativo/iniciar_simulador.desktop
 # Configuração local do Claude Code (pessoal, não compartilhada)
 .claude/settings.local.json
 
+# Ferramentas locais baixadas (binários grandes, específicos da máquina).
+# .tools/ guarda o binário do tectonic (~60 MB) e o tarball de instalação
+# (~22 MB) — 79 MB no total. É ferramenta de build, não conteúdo do projeto:
+# reinstalável a partir da distribuição oficial do tectonic.
+.tools/
+
 # Rust & Cargo build artifacts
 target/
 **/target/
