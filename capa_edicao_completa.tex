@@ -1,0 +1,203 @@
+% =============================================================================
+% CAPA DA EDIÇÃO COMPLETA — Enciclopédia de Máquinas Rotodinâmicas
+% -----------------------------------------------------------------------------
+% Capa vetorial em TikZ puro, versionada no próprio .tex (mesma convenção das
+% figuras dos Volumes 0 e I). Sem imagem externa: nada a licenciar, nada que
+% possa faltar num clone, e escala sem perda em qualquer tamanho de impressão.
+%
+% Paleta herdada do projeto (scripts/gen_figuras.py e .streamlit/config.toml):
+%   NAVY #1f3b57 — campo e traço técnico
+%   BLUE #2b6cb0 — destaque frio
+%   OURO #c8a24b — destaque quente, usado com parcimônia
+%
+% MOTIVO: o par de rotores de parafuso em ELEVAÇÃO, desenhado como os dois
+% cilindros engrenados com suas hélices — 4 entradas no macho, 6 no fêmea, a
+% proporção real da máquina do Volume II. A geometria é paramétrica (senoides
+% recortadas pelo contorno do cilindro), não um contorno desenhado à mão: é o
+% que separa desenho técnico de ilustração genérica. Uma primeira versão tentou
+% o corte transversal com curvas de Bézier e produziu formas arredondadas sem
+% leitura mecânica — descartada.
+% =============================================================================
+
+\definecolor{capaNavy}{HTML}{1F3B57}
+\definecolor{capaNavyEsc}{HTML}{16293C}
+\definecolor{capaBlue}{HTML}{2B6CB0}
+\definecolor{capaClaro}{HTML}{DBE7F2}
+\definecolor{capaPapel}{HTML}{F7F9FC}
+\definecolor{capaOuro}{HTML}{C8A24B}
+
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture, overlay]
+
+  % ---------------------------------------------------------------------------
+  % Campo de fundo
+  % ---------------------------------------------------------------------------
+  \fill[capaNavy] (current page.south west) rectangle (current page.north east);
+
+  % Faixa superior levemente mais escura: assenta a tipografia do topo sem
+  % precisar de moldura.
+  \fill[capaNavyEsc]
+    (current page.north west) rectangle ([yshift=-62mm]current page.north east);
+
+  % ---------------------------------------------------------------------------
+  % MOTIVO — par de rotores em elevação, com hélices paramétricas
+  % ---------------------------------------------------------------------------
+  \begin{scope}[shift={([yshift=26mm]current page.center)}]
+
+    % --- Rotor fêmea (atrás, 6 entradas) ---
+    % Cada hélice é traçada PARAMETRICAMENTE só na face voltada ao observador
+    % (fase de -90 a +90 graus, onde cos>0). Traçar a senoide inteira faria as
+    % faces da frente e de trás se cruzarem, e o conjunto lê como treliça em
+    % vez de rotor — foi o defeito da primeira versão.
+    \begin{scope}[shift={(0,-1.52)}]
+      \def\rF{1.28}    \def\cF{6.30}    \def\wF{2.05}
+      \begin{scope}
+        \clip (-\cF/2,-\rF) rectangle (\cF/2,\rF);
+        \foreach \k in {0,...,5}{
+          \foreach \n in {-2,-1,0,1,2}{
+            \draw[capaBlue!75, line width=0.55pt]
+              plot[domain={-90+360*\n}:{90+360*\n}, samples=34,
+                   variable=\s, smooth]
+              ({(\s*0.0174533 - \k*1.0472)/\wF}, {\rF*sin(\s)});
+          }
+        }
+      \end{scope}
+      \draw[capaBlue!90, line width=0.7pt] (-\cF/2,-\rF) -- (\cF/2,-\rF);
+      \draw[capaBlue!90, line width=0.7pt] (-\cF/2, \rF) -- (\cF/2, \rF);
+      \draw[capaBlue!90, line width=0.7pt] (-\cF/2,0) ellipse (0.30 and \rF);
+      \draw[capaBlue!90, line width=0.7pt] ( \cF/2,0) ellipse (0.30 and \rF);
+    \end{scope}
+
+    % --- Rotor macho (à frente, 4 entradas, maior) ---
+    \begin{scope}[shift={(0,1.18)}]
+      \def\rM{1.66}    \def\cM{6.30}    \def\wM{1.40}
+      \fill[capaNavy] (-\cM/2-0.34,-\rM) rectangle (\cM/2+0.34,\rM);
+      \begin{scope}
+        \clip (-\cM/2,-\rM) rectangle (\cM/2,\rM);
+        \foreach \k in {0,...,3}{
+          \foreach \n in {-2,-1,0,1,2}{
+            \draw[capaClaro, line width=0.85pt]
+              plot[domain={-90+360*\n}:{90+360*\n}, samples=40,
+                   variable=\s, smooth]
+              ({(\s*0.0174533 - \k*1.5708)/\wM}, {\rM*sin(\s)});
+          }
+        }
+      \end{scope}
+      \draw[capaPapel, line width=1.0pt] (-\cM/2,-\rM) -- (\cM/2,-\rM);
+      \draw[capaPapel, line width=1.0pt] (-\cM/2, \rM) -- (\cM/2, \rM);
+      \draw[capaPapel, line width=1.0pt] (-\cM/2,0) ellipse (0.38 and \rM);
+      \draw[capaPapel, line width=1.0pt] ( \cM/2,0) ellipse (0.38 and \rM);
+      % cotos de eixo
+      \draw[capaPapel!75, line width=0.9pt] (-\cM/2-0.92,-0.16) rectangle (-\cM/2,0.16);
+      \draw[capaPapel!75, line width=0.9pt] ( \cM/2,-0.16) rectangle ( \cM/2+0.92,0.16);
+    \end{scope}
+
+    % --- Eixos de centro: o vocabulário do desenho técnico ---
+    \draw[capaOuro!70, line width=0.4pt, dash pattern=on 6pt off 2.5pt on 1pt off 2.5pt]
+      (-4.60,1.18) -- (4.60,1.18);
+    \draw[capaOuro!45, line width=0.4pt, dash pattern=on 6pt off 2.5pt on 1pt off 2.5pt]
+      (-4.60,-1.52) -- (4.60,-1.52);
+  \end{scope}
+
+  % ---------------------------------------------------------------------------
+  % Lombada simbólica: três faixas, na ordem de leitura 0 → I → II
+  % ---------------------------------------------------------------------------
+  \begin{scope}
+    \coordinate (L) at ([xshift=15mm]current page.west);
+    \fill[capaOuro]    ([yshift=48mm]L) rectangle ([xshift=4mm,yshift=112mm]L);
+    \fill[capaBlue]    ([yshift=-20mm]L) rectangle ([xshift=4mm,yshift=44mm]L);
+    \fill[capaBlue!60] ([yshift=-88mm]L) rectangle ([xshift=4mm,yshift=-24mm]L);
+
+    \node[rotate=90, capaNavyEsc, font=\sffamily\bfseries\tiny, anchor=center]
+      at ([xshift=2mm,yshift=80mm]L) {\textls[120]{VOLUME 0}};
+    \node[rotate=90, capaPapel, font=\sffamily\bfseries\tiny, anchor=center]
+      at ([xshift=2mm,yshift=12mm]L) {\textls[120]{VOLUME I}};
+    \node[rotate=90, capaPapel, font=\sffamily\bfseries\tiny, anchor=center]
+      at ([xshift=2mm,yshift=-56mm]L) {\textls[120]{VOLUME II}};
+  \end{scope}
+
+  % ---------------------------------------------------------------------------
+  % Tipografia — bloco superior (identidade da coleção)
+  % ---------------------------------------------------------------------------
+  \node[anchor=north west, capaPapel, font=\sffamily\bfseries\Large, align=left]
+    at ([shift={(30mm,-24mm)}]current page.north west)
+    {\textls[90]{ENCICLOPÉDIA DE}\\[1.2mm]\textls[90]{MÁQUINAS ROTODINÂMICAS}};
+  \draw[capaOuro, line width=2pt]
+    ([shift={(30mm,-40mm)}]current page.north west) --
+    ([shift={(58mm,-40mm)}]current page.north west);
+  \node[anchor=north west, capaBlue!85, font=\sffamily\small]
+    at ([shift={(30mm,-45mm)}]current page.north west)
+    {Compressores de parafuso \textit{oil-free} para plantas offshore};
+
+  % ---------------------------------------------------------------------------
+  % Tipografia — bloco inferior (título e conteúdo)
+  % ---------------------------------------------------------------------------
+  \node[anchor=south west, capaPapel,
+        font=\sffamily\bfseries\fontsize{46}{50}\selectfont]
+    at ([shift={(30mm,74mm)}]current page.south west) {Edição Completa};
+
+  \draw[capaPapel!45, line width=0.7pt]
+    ([shift={(30mm,68mm)}]current page.south west) --
+    ([shift={(180mm,68mm)}]current page.south west);
+  \draw[capaOuro, line width=2.6pt]
+    ([shift={(30mm,68mm)}]current page.south west) --
+    ([shift={(66mm,68mm)}]current page.south west);
+
+  % Os três volumes — numeral destacado à esquerda, título à direita
+  \foreach \vy/\vnum/\vtit in {%
+      56/0/{Notações e Cálculo Básico},
+      42/I/{Fundamentos de Mecânica do Contínuo, Termofluidos e Sistemas de Medição},
+      28/II/{Gêmeo Digital de Sistemas de Compressão Offshore}}{
+    \node[anchor=north east, capaOuro, font=\sffamily\bfseries\large]
+      at ([shift={(41mm,\vy mm)}]current page.south west) {\vnum};
+    \node[anchor=north west, capaClaro, font=\sffamily\small, align=left,
+          text width=132mm]
+      at ([shift={(46mm,\vy mm)}]current page.south west) {\vtit};
+  }
+
+  % Autor e revisão
+  \draw[capaPapel!25, line width=0.5pt]
+    ([shift={(30mm,20mm)}]current page.south west) --
+    ([shift={(180mm,20mm)}]current page.south west);
+  \node[anchor=north west, capaPapel, font=\sffamily\bfseries\normalsize]
+    at ([shift={(30mm,16mm)}]current page.south west) {\autorlivro};
+  \node[anchor=north east, capaBlue!85, font=\sffamily\scriptsize]
+    at ([shift={(180mm,16mm)}]current page.south west)
+    {Volume único \,\textbullet\, Rev. \revdatacompleta};
+
+\end{tikzpicture}
+\end{titlepage}
+
+% =============================================================================
+% VERSO DA CAPA — nota sobre a edição
+% =============================================================================
+\newpage
+\thispagestyle{empty}
+\vspace*{\fill}
+\begin{center}
+	\begin{minipage}{0.78\textwidth}
+		\small
+		\textbf{Sobre esta edição.} Este volume único reúne, sem alteração de
+		conteúdo, os três volumes da coleção \emph{Enciclopédia de Máquinas
+		Rotodinâmicas}. A numeração de capítulos, equações, figuras e tabelas de
+		cada volume é preservada exatamente como na edição avulsa: a
+		Equação~5.5 do Volume~II continua sendo a Equação~5.5 aqui, e toda
+		referência cruzada externa --- inclusive as citações de equação no
+		código-fonte dos simuladores --- permanece válida.
+
+		\vspace{0.8em}
+		Os volumes avulsos continuam sendo os documentos canônicos. Esta edição
+		é gerada a partir deles por
+		\texttt{scripts/gerar\_edicao\_completa.py}, de modo que nunca divirja:
+		qualquer correção feita num volume aparece aqui na próxima geração.
+
+		\vspace{0.8em}
+		\textbf{Como ler.} O Volume~0 é pré-requisito opcional --- quem domina o
+		formalismo matemático pode começar direto no Volume~I. O Volume~I
+		sustenta o Volume~II, mas cada capítulo foi escrito para ser consultável
+		isoladamente. O sumário geral, a lista de figuras e a lista de tabelas
+		cobrem os três volumes de uma vez.
+	\end{minipage}
+\end{center}
+\vspace*{\fill}

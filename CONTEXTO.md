@@ -3934,3 +3934,82 @@ apressada dos arquivos de apoio, hoje, produziria uma lista de tarefas com pelo
 menos 20 itens já feitos. Ao encerrar um item de backlog, **atualizar o status
 no próprio arquivo de origem**, não só no `CONTEXTO.md` — foi exatamente essa
 lacuna que exigiu esta rodada.
+
+## Edição Completa: os três volumes num único documento (13/09/2026)
+
+Pedido do autor: "empacotar tudo em um único arquivo também e com capa de livro
+com excelente qualidade de Designer", com a ressalva explícita, dada em
+seguida, de **não apagar os volumes separados**. A edição completa é, portanto,
+um artefato adicional — os avulsos continuam canônicos.
+
+**Decisão de arquitetura: gerar, não duplicar.** Em vez de um quarto `.tex`
+editável à mão, `scripts/gerar_edicao_completa.py` monta
+`Enciclopedia_Completa.tex` a partir dos três volumes a cada execução. O
+motivo é a lição já registrada em "Aprendizados operacionais": este projeto já
+gastou tempo com duplicatas que divergiram (`teorias`/`theorias`, cópias
+datadas). Aqui a fonte da verdade continua sendo o volume avulso; a edição
+completa é derivada e descartável, e o cabeçalho do arquivo gerado avisa
+"ARQUIVO GERADO — não edite à mão".
+
+**O que o gerador faz, por volume:** descarta a capa própria (substituída pela
+página de Parte) e os sumários/listas locais (há versões globais); preserva
+prefácio, dedicatória, nomenclatura e todo o corpo; extrai os `\bibitem` para
+uma bibliografia única deduplicada por chave; e **zera o contador de seção na
+abertura de cada volume**.
+
+**Esse `\setcounter{section}{0}` é o ponto crítico da montagem.** Sem ele, a
+numeração contínua faria o Capítulo 5 do Volume II virar Capítulo 25, e com
+`\numberwithin{equation}{section}` toda equação seria renumerada — quebrando de
+uma vez a prosa dos três livros e as citações `# Eq. 5.5` espalhadas pelo
+código dos simuladores. Com o reset, a numeração fica idêntica à da edição
+avulsa. **Verificado, não presumido:** as 422 equações dos três volumes (36 +
+158 + 228) aparecem todas no PDF da edição completa, nenhuma ausente.
+
+**Compatibilidade dos volumes, medida antes de começar** — melhor do que o
+esperado: mesma classe (`article`, 12pt, a4paper) nos três, preâmbulos quase
+idênticos, **zero labels duplicados** entre os arquivos (as convenções de
+prefixo `eq:v0-`/`eq:v1-`/`eq:s` funcionaram) e apenas 4 chaves de bibliografia
+repetidas (`erdman`, `iec60034`, `nemamg1`, `nussenzveig`) — 90 entradas brutas
+viram 86 únicas.
+
+**Dois defeitos encontrados na montagem e corrigidos:**
+1. A primeira versão trazia a lista de pacotes escrita à mão no gerador e
+   faltavam `tabularx` e `bm` — erro de compilação. Corrigido fazendo o gerador
+   **derivar a união dos `\usepackage` das próprias fontes**, com `cmap`
+   primeiro (regra permanente) e `hyperref` por último. Um volume que passe a
+   usar um pacote novo não quebra mais a edição completa.
+2. As Partes internas do Volume II entravam no sumário como "I", "II", "III",
+   no mesmo nível das Partes-volume — um "VOLUME II" seguido de um "II"
+   indistinguível. O gerador passou a rotulá-las "Parte I — ...", só no arquivo
+   derivado; `compressores.tex` não foi tocado.
+
+**Capa** (`capa_edicao_completa.tex`, arquivo separado e editável à mão): TikZ
+vetorial puro, sem imagem externa — nada a licenciar, nada que falte num clone,
+escala sem perda. Paleta herdada do projeto (NAVY `#1f3b57`, BLUE `#2b6cb0`,
+mais um ouro `#c8a24b` de apoio). Motivo: o par de rotores em **elevação**, com
+as hélices traçadas parametricamente.
+
+**Duas iterações descartadas antes de chegar lá, ambas por inspeção visual do
+render — nenhuma seria pega pelo log de compilação:**
+- A 1ª tentou o **corte transversal** com curvas de Bézier e produziu formas
+  arredondadas sem leitura mecânica — exatamente o defeito "primitivas
+  genéricas" que o autor já havia rejeitado na Figura 2.3 em 26/07/2026. A
+  malha de fundo também dominava a página e o nome do autor colidia com o
+  subtítulo.
+- A 2ª desenhou as hélices como **senoides completas**; as faces da frente e de
+  trás se cruzavam e o conjunto lia como treliça. Corrigido traçando apenas a
+  face voltada ao observador (fase de -90° a +90°, onde $\cos > 0$),
+  parametricamente — aí as hélices viram curvas paralelas e o objeto passa a
+  ler como rotor de parafuso.
+
+**Lição que vale para qualquer figura nova:** as três correções da capa vieram
+de olhar o PNG renderizado, não do log — que esteve limpo em todas as versões.
+É a mesma lição já registrada para as figuras 3D em 20/08/2026, e ela se aplica
+igualmente a capa e a diagrama.
+
+**Verificação final:** 3 passagens de `pdflatex`, **309 páginas, 0 erros, 0
+referências indefinidas, 0 labels duplicados, 0 citações indefinidas**. 38
+overfull hboxes, o maior com 4,79 pt — **exatamente a soma dos baselines dos
+volumes** (36 do Vol. II a 2,01 pt + 2 do Vol. I, sendo o de 4,79 pt o conhecido
+da tabela de sensores do Cap. 9). Nenhum overfull novo introduzido pela
+montagem. Capa, verso e página de Parte conferidos por `pdftoppm`.
