@@ -11,11 +11,22 @@ completa é derivada e descartável.
 O que o gerador faz, por volume:
   - descarta a capa própria (`titlepage`), substituída pela página de Parte;
   - descarta sumário e listas de figuras/tabelas locais (há versões globais);
-  - preserva prefácio, dedicatória, nomenclatura e todo o corpo;
+  - descarta a dedicatória e o prefácio locais: a edição reunida tem os seus,
+    em `dedicatoria_edicao_completa.tex` e `prefacio_edicao_completa.tex`
+    (ambos editáveis à mão, como a capa);
+  - preserva nomenclatura e todo o corpo;
   - zera o contador de seção, de modo que a numeração de capítulos, equações,
     figuras e tabelas fique IDÊNTICA à da edição avulsa (`\\numberwithin` faz o
     resto). Isso é o ponto crítico: o código dos simuladores cita "Eq. 5.5" do
     Volume II, e essa citação precisa continuar apontando para a mesma equação;
+  - prefixa as âncoras do hyperref por volume (`\\theHsection`,
+    `\\theHequation` etc.): zerar o contador sem isso gera centenas de
+    destinos duplicados (`section.1`, `equation.5.3`, ...) e links que
+    apontam para o volume errado;
+  - carrega o pacote `bookmark`: o hyperref sozinho calcula o aninhamento
+    dos marcadores do PDF de forma relativa e se perde com as páginas de
+    volume (`\\addcontentsline{toc}{part}`), aninhando cada capítulo dentro
+    do anterior e os Volumes I/II dentro do Volume 0;
   - extrai os `\\bibitem` para uma bibliografia única, deduplicada por chave.
 
 Uso:
@@ -32,6 +43,8 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 SAIDA = RAIZ / "Enciclopedia_Completa.tex"
 CAPA = RAIZ / "capa_edicao_completa.tex"
+DEDICATORIA = RAIZ / "dedicatoria_edicao_completa.tex"
+PREFACIO = RAIZ / "prefacio_edicao_completa.tex"
 
 # (arquivo, rótulo da Parte, título da Parte, subtítulo)
 VOLUMES = [
@@ -95,6 +108,15 @@ def limpa_corpo(corpo: str, rotulo: str) -> tuple[str, list[tuple[str, str]]]:
             if m:
                 itens.append((m.group(1), pedaco.strip()))
 
+    # Dedicatória e prefácio locais: a edição reunida tem os seus (ver
+    # dedicatoria_/prefacio_edicao_completa.tex). Nos avulsos ficam intactos.
+    corpo = re.sub(
+        r"%\s*---\s*DEDICAT[ÓO]RIA\s*---.*?\\vspace\*\{\\fill\}.*?\\vspace\*\{\\fill\}",
+        "", corpo, count=1, flags=re.S)
+    corpo = re.sub(
+        r"%\s*---\s*PREF[ÁA]CIO\s*---.*?(?=\n[ \t]*%\s*(?:---|===))",
+        "", corpo, count=1, flags=re.S)
+
     # Sumário e listas locais: a edição completa tem os seus, globais.
     corpo = re.sub(r"^[ \t]*\\tableofcontents[ \t]*\n", "", corpo, flags=re.M)
     for lista in ("listoffigures", "listoftables"):
@@ -110,7 +132,7 @@ def limpa_corpo(corpo: str, rotulo: str) -> tuple[str, list[tuple[str, str]]]:
 
     # Entradas de sumário que se repetiriam nos três volumes ganham o rótulo do
     # volume — sem isso o sumário global teria três "Prefácio" indistinguíveis.
-    for entrada in ("Prefácio", "Nomenclatura", "Glossário de Anglicismos"):
+    for entrada in ("Nomenclatura", "Glossário de Anglicismos"):
         corpo = corpo.replace(
             r"\addcontentsline{toc}{section}{" + entrada + "}",
             r"\addcontentsline{toc}{section}{" + f"{entrada} — {rotulo}" + "}",
@@ -158,6 +180,23 @@ def coleta_pacotes(preambulos: list[str]) -> list[str]:
     return ordenados
 
 
+def ancora_volume(tag: str) -> str:
+    """Zera a seção e torna as âncoras do hyperref únicas por volume.
+
+    O contador de seção recomeça em cada volume (numeração idêntica à
+    edição avulsa), mas as âncoras internas (`section.1`, `equation.5.3`,
+    ...) precisam do prefixo do volume, senão se repetem e os links do
+    PDF apontam para a primeira ocorrência.
+    """
+    return (
+        f"\n\\setcounter{{section}}{{0}}\n"
+        f"\\renewcommand{{\\theHsection}}{{{tag}.\\arabic{{section}}}}\n"
+        f"\\renewcommand{{\\theHequation}}{{{tag}.\\theequation}}\n"
+        f"\\renewcommand{{\\theHfigure}}{{{tag}.\\thefigure}}\n"
+        f"\\renewcommand{{\\theHtable}}{{{tag}.\\thetable}}\n"
+    )
+
+
 def pagina_de_parte(rotulo: str, titulo: str, subtitulo: str) -> str:
     """Página de abertura de volume.
 
@@ -198,7 +237,7 @@ def main() -> int:
     hifenizacao: set[str] = set()
     preambulos: list[str] = []
 
-    for arquivo, rotulo, titulo, subtitulo in VOLUMES:
+    for i, (arquivo, rotulo, titulo, subtitulo) in enumerate(VOLUMES):
         caminho = RAIZ / arquivo
         if not caminho.exists():
             print(f"ERRO: volume não encontrado: {caminho}", file=sys.stderr)
@@ -219,8 +258,7 @@ def main() -> int:
 
         corpos.append(
             pagina_de_parte(rotulo, titulo, subtitulo)
-            # Zera a seção: mantém a numeração idêntica à do volume avulso.
-            + "\n\\setcounter{section}{0}\n"
+            + ancora_volume(f"v{i}")
             + corpo
         )
         print(f"  {arquivo}: {len(corpo.splitlines())} linhas, "
@@ -233,6 +271,8 @@ def main() -> int:
                  .replace("@@AUTOR@@", AUTOR)
                  .replace("@@HIFENIZACAO@@", hif)
                  .replace("@@CAPA@@", CAPA.name)
+                 .replace("@@DEDICATORIA@@", DEDICATORIA.name)
+                 .replace("@@PREFACIO@@", PREFACIO.name)
                  .replace("@@PACOTES@@", "\n".join(coleta_pacotes(preambulos))))
     rodape = RODAPE.replace("@@BIBLIOGRAFIA@@", bib)
     saida = cabecalho + "\n\n".join(corpos) + rodape
@@ -260,6 +300,8 @@ CABECALHO = r"""% ==============================================================
 \documentclass[12pt,a4paper]{article}
 
 @@PACOTES@@
+\usepackage{bookmark}  % níveis corretos dos marcadores do PDF (hyperref sozinho
+                       % aninha capítulos/volumes um dentro do outro nesta montagem)
 \usepackage{xcolor}   % cores da capa (tikz já carrega, explícito por clareza)
 \usetikzlibrary{patterns}
 \pgfplotsset{compat=1.18}
@@ -306,6 +348,9 @@ CABECALHO = r"""% ==============================================================
 
 \input{@@CAPA@@}
 
+% --- DEDICATÓRIA DA EDIÇÃO (arquivo editável à mão) ---
+\input{@@DEDICATORIA@@}
+
 % --- SUMÁRIO GERAL ---
 \clearpage
 \pagenumbering{roman}
@@ -320,6 +365,9 @@ CABECALHO = r"""% ==============================================================
 \phantomsection
 \addcontentsline{toc}{section}{Lista de Tabelas}
 \listoftables
+
+% --- PREFÁCIO DA EDIÇÃO (arquivo editável à mão) ---
+\input{@@PREFACIO@@}
 
 \clearpage
 \pagenumbering{arabic}
