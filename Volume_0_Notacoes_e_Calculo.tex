@@ -115,10 +115,17 @@
 	\vspace*{\fill}
 
 
+% --- SUMÁRIO ---
+\newpage
+\tableofcontents
+
+
+
 % --- PREFÁCIO ---
 \newpage
 \section*{Prefácio}
 \addcontentsline{toc}{section}{Prefácio}
+\markboth{Prefácio}{}
 
 Esta coleção pede do leitor um repertório mínimo: ler e manipular símbolos
 matemáticos, operar com unidades, derivar, integrar e resolver as equações
@@ -140,20 +147,6 @@ Para o aprofundamento, as referências de classe mundial são as de
 Feynman~\cite{feynman1963} na física e de Apostol~\cite{apostol1967} e
 Spivak~\cite{spivak2008} no cálculo. Este volume é o caminho curto entre
 essas obras e a engenharia de máquinas.
-
-% --- SUMÁRIO ---
-\newpage
-\tableofcontents
-
-% --- LISTAS DE FIGURAS E TABELAS ---
-\phantomsection
-\addcontentsline{toc}{section}{Lista de Figuras}
-\listoffigures
-\newpage
-\phantomsection
-\addcontentsline{toc}{section}{Lista de Tabelas}
-\listoftables
-\newpage
 
 
 %=============================================================================
@@ -221,21 +214,31 @@ Quem já domina um capítulo avança sem culpa; quem duvida resolve os exemplos
 
 \textbf{Exercício 1.1 (navegação pelo mapa).} Um colega relata: ``a
 temperatura da carcaça do meu compressor está subindo há duas semanas, sem
-ninguém mexer em nada''. Quais capítulos deste volume preparam a leitura
-desse sintoma nos volumes seguintes, e em que ordem?
+ninguém mexer em nada''. Escreva a forma matemática mais simples que
+descreve esse sintoma, aponte que capítulo deste volume fecha cada peça
+dessa forma e diga em que ordem lê-los.
 
-\emph{Resolução.} A Tabela~\ref{tab:v0-c1-1} responde. A temperatura que
-sobe é uma \emph{taxa}, então o Capítulo~\ref{sec:v0-derivadas} é o
-instrumento central; a análise do porquê vai usar \emph{balanços} de
-calor, do Capítulo~\ref{sec:v0-integrais}; a resposta da carcaça ao calor
-generado é uma equação diferencial, do
-Capítulo~\ref{sec:v0-edo}; e a comparação de grandezas de escalas
-muito diferentes (W contra $^\circ$C) pede o Capítulo~\ref{sec:v0-unidades}. A
-notação do Capítulo~\ref{sec:v0-notacao} atravessa todos eles. Ordem
-sugerida de revisão: \ref{sec:v0-notacao} $\rightarrow$
+\emph{Resolução.} O sintoma é uma \emph{taxa}: $\mathrm{d}T/\mathrm{d}t
+> 0$ de modo sustentado. A forma mais simples que a produz é um balanço
+--- o que acumula é o que entra menos o que sai:
+$$M\,c\,\frac{\mathrm{d}T}{\mathrm{d}t}
+  = \dot{Q}_{\mathrm{entra}} - \dot{Q}_{\mathrm{sai}}.$$
+Cada peça tem seu capítulo. Escrever $\mathrm{d}T/\mathrm{d}t$ e não
+confundi-lo com o $\Delta T$ de uma tabela é o
+Capítulo~\ref{sec:v0-notacao}; conferir que os dois lados têm a mesma
+dimensão --- potência --- é o Capítulo~\ref{sec:v0-unidades}; ler a
+derivada como taxa instantânea é o Capítulo~\ref{sec:v0-derivadas};
+acumular essa taxa para saber quanto calor entrou nas duas semanas é o
+Capítulo~\ref{sec:v0-integrais}; e resolver a igualdade para obter
+$T(t)$ --- descobrindo que a carcaça sobe até um \emph{novo regime}, com
+constante de tempo própria, em vez de subir sem limite --- é o
+Capítulo~\ref{sec:v0-edo}. Ordem de leitura:
+\ref{sec:v0-notacao} $\rightarrow$
 \ref{sec:v0-unidades} $\rightarrow$ \ref{sec:v0-derivadas} $\rightarrow$
-\ref{sec:v0-integrais} $\rightarrow$ \ref{sec:v0-edo}.
-Nenhum número foi calculado aqui --- o exercício é usar o mapa.
+\ref{sec:v0-integrais} $\rightarrow$ \ref{sec:v0-edo}, o mesmo percurso
+que a Tabela~\ref{tab:v0-c1-1} resume. O diagnóstico físico --- por que
+o calor gerado aumentou --- é assunto do Volume~II; o produto aqui é
+saber que ferramenta cada pedaço da frase exige.
 
 
 %=============================================================================
@@ -364,15 +367,6 @@ chapéu ($\hat{x}$) para estimativa. Subscritos romanos nomeiam
 ($c_p$ = calor específico \emph{a pressão constante}); subscritos itálicos
 indexam ($x_i$, o $i$-ésimo valor).
 
-\subsection{Síntese: premissas e ligação com os volumes seguintes}
-
-Este capítulo não postulou física nenhuma: fixou apenas a escrita. As
-convenções aqui estabelecidas --- fontes, operadores, letras gregas,
-adornos --- valem sem exceção do Capítulo~\ref{sec:v0-unidades} deste volume
-até o capítulo final do Volume~II. Quando o Volume~I escreve
-$\bm{\nabla}T$, é o gradiente desta Tabela~\ref{tab:v0-c2-1}; quando escreve
-$\eta$, é a eficiência desta Tabela~\ref{tab:v0-c2-2}.
-
 \subsection{Exercícios resolvidos}
 
 \textbf{Exercício 2.1 (papel tipográfico).} Na equação $\tau = J_p\,\alpha$,
@@ -387,7 +381,7 @@ inércia se trata (polar). Pela regra do capítulo, subscrito romano nomeia,
 subscrito itálico indexa.
 
 \textbf{Exercício 2.2 (variação finita × taxa).} Uma tabela registra
-$\Delta p = p_{out} - p_{in} = 12\ \mathrm{kPa}$ num intervalo de 1 h e,
+$\Delta p = p_{\mathrm{out}} - p_{\mathrm{in}} = 12\ \mathrm{kPa}$ num intervalo de 1 h e,
 numa outra coluna, $\mathrm{d}p/\mathrm{d}t = -0{,}8\ \mathrm{kPa/min}$. Os
 dois números contradizem um ao outro?
 
@@ -400,6 +394,17 @@ encolhe. Ambos podem ser verdadeiros ao mesmo tempo: a pressão terminou
 
 
 %=============================================================================
+
+
+\subsection{Síntese: premissas e ligação com os volumes seguintes}
+
+Este capítulo não postulou física nenhuma: fixou apenas a escrita. As
+convenções aqui estabelecidas --- fontes, operadores, letras gregas,
+adornos --- valem sem exceção do Capítulo~\ref{sec:v0-unidades} deste volume
+até o capítulo final do Volume~II. Quando o Volume~I escreve
+$\bm{\nabla}T$, é o gradiente desta Tabela~\ref{tab:v0-c2-1}; quando escreve
+$\eta$, é a eficiência desta Tabela~\ref{tab:v0-c2-2}.
+
 % CAPÍTULO 3 — UNIDADES, DIMENSÕES E ORDEM DE GRANDEZA
 %=============================================================================
 \clearpage
@@ -513,8 +518,9 @@ regras operacionais são poucas:
 \subsection{Exercícios resolvidos}
 
 \textbf{Exercício 3.1 (homogeneidade dimensional).} Verifique se a perda de
-carga $\Delta p = f_D\,(L/D)\,\rho\,v^2/2$ --- que o Volume~I usa para a
-tubulação interestágios --- é dimensionalmente homogênea.
+carga $\Delta p = f_D\,(L/D)\,\rho\,v^2/2$ --- que o Volume~I apresenta e o
+Volume~II aplica à tubulação interestágios --- é dimensionalmente
+homogênea.
 
 \emph{Resolução.} $f_D$ e $L/D$ são adimensionais, então a dimensão do
 termo inteiro é a de $\rho v^2$: com $[\rho] = [M]\,[L]^{-3}$ e
@@ -532,15 +538,15 @@ que os dados sustentam.
 
 \emph{Resolução.} Na multiplicação, o resultado herda o menor número de
 significativos: $12$ tem dois, $3{,}5$ tem dois, então o produto é
-$42\ \mathrm{m^3}$ (dois significativos). Escrever $42{,}0$ afirma
-três --- que o volume está entre $41{,}95$ e $42{,}05$ --- quando o dado
-de entrada $12$ só garante $11{,}5$ a $12{,}5$ vezes o tempo. O dígito
-extra é honesto durante a conta e desonesto no resultado final.
-
-A regra do resultado final importa mais que as outras duas: uma conta com
-dez passos em que cada passo arredonda acumula erro sistemático. O Volume~I
-trata a propagação formal de incerteza no capítulo de instrumentação; aqui
-basta a disciplina acima.
+$42\ \mathrm{m^3}$ (dois significativos). Escrever $42{,}0$ afirmaria
+três --- isto é, que o volume está entre $41{,}95$ e
+$42{,}05\ \mathrm{m^3}$, uma janela de $0{,}1\ \mathrm{m^3}$. Os dados
+não sustentam essa afirmação: $12$ garante apenas algo entre $11{,}5$ e
+$12{,}5\ \mathrm{m^3/min}$, e $3{,}5$ apenas algo entre $3{,}45$ e
+$3{,}55\ \mathrm{min}$ --- combinados, o volume fica entre $39{,}7$ e
+$44{,}4\ \mathrm{m^3}$, faixa quase cinquenta vezes mais larga do que a
+janela que o terceiro dígito insinua. O dígito extra é útil durante a
+conta, para não acumular arredondamento, e desonesto no resultado final.
 
 \subsection{Síntese: premissas e ligação com os volumes seguintes}
 
@@ -1018,17 +1024,28 @@ puro é modo que oscila sem decair.
 
 \subsection{Exercícios resolvidos}
 
-\textbf{Exercício 5.1 (torque como produto vetorial).} Uma força de
-$F = 120\ \mathrm{N}$ atua perpendicular a uma alavanca de raio
-$\bm{r} = 0{,}25\,\bm{i}\ \mathrm{m}$, na direção $\bm{j}$. Calcule o
-torque em relação ao centro.
+\textbf{Exercício 5.1 (torque como produto vetorial).} Uma alavanca de
+braço $\bm{r} = 0{,}25\,\bm{i}\ \mathrm{m}$ recebe na ponta a força
+$\bm{F} = 120\,\bm{j}\ \mathrm{N}$. Calcule o torque em relação ao centro
+e diga que informação o produto vetorial dá e o escalar não daria.
 
 \emph{Resolução.} Pela Equação~\eqref{eq:v0-c5-3}, o produto vetorial é o
-determinante com as duas componentes:
-$\bm{\tau} = \bm{r}\times\bm{F} = 0{,}25 \times 120\,\bm{k} =
-30\,\bm{k}\ \mathrm{N\,m}$. O módulo é $r\,F\,\mathrm{sen}\,90^\circ = 30$,
-e a direção $\bm{k}$ (fora do plano) é a informação que o produto
-escalar não daria --- é a regra da mão direita.
+determinante formal
+$$\bm{\tau} = \bm{r}\times\bm{F} =
+\begin{vmatrix}
+\bm{i} & \bm{j} & \bm{k}\\
+0{,}25 & 0 & 0\\
+0 & 120 & 0
+\end{vmatrix}
+= (0{,}25\cdot 120)\,\bm{k} = 30\,\bm{k}\ \mathrm{N\,m},$$
+com as componentes em $\bm{i}$ e $\bm{j}$ nulas porque ambos os vetores
+estão no plano $xy$. O módulo confere com
+$r\,F\,\mathrm{sen}\,90^\circ = 30\ \mathrm{N\,m}$, valor máximo possível
+para esse braço e essa força: fosse a força alinhada com a alavanca, o
+seno anularia o produto e não haveria torque nenhum. Já a direção
+$\bm{k}$ --- fora do plano, pela regra da mão direita --- é o que o
+produto escalar não daria: ela diz em torno de que eixo, e em que
+sentido, a alavanca gira.
 
 \textbf{Exercício 5.2 (autovalores de uma matriz simétrica).} Para
 $\bm{A} = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix}$, obtenha
@@ -1276,32 +1293,6 @@ campo magnético e vice-versa. Ambos os operadores só fecham sentido com os
 teoremas integrais do Capítulo~\ref{sec:v0-integrais}: é lá que as taxas
 locais viram balanços sobre volumes e superfícies.
 
-\subsection{Exercícios resolvidos}
-
-\textbf{Exercício 6.1 (regra da cadeia na lei de resfriamento).} Mostre que
-$T(t) = T_{\infty} + (T_0 - T_{\infty})\,\mathrm{e}^{-t/\tau}$, a solução da
-Equação~\eqref{eq:v0-c8-3}, satisfaz a Equação~\eqref{eq:v0-c8-1}.
-
-\emph{Resolução.} Com a regra da cadeia,
-$\mathrm{d}T/\mathrm{d}t = (T_0 - T_{\infty})\cdot
-(-1/\tau)\,\mathrm{e}^{-t/\tau}$. Mas o próprio lado direito da solução
-dá $(T - T_{\infty}) = (T_0 - T_{\infty})\,\mathrm{e}^{-t/\tau}$, então
-$\mathrm{d}T/\mathrm{d}t = -(1/\tau)\,(T - T_{\infty})$ --- exatamente a
-Equação~\eqref{eq:v0-c8-1} com $k = 1/\tau$. Conferir uma solução
-derivando-a é o hábito barato que o capítulo recomenda.
-
-\textbf{Exercício 6.2 (linearização).} Estime $\sqrt{9{,}3}$ a partir da
-reta tangente a $f(x) = \sqrt{x}$ em $x_0 = 9$, e avalie o erro.
-
-\emph{Resolução.} $f'(x) = 1/(2\sqrt{x})$, então $f'(9) = 1/6$. A
-Equação~\eqref{eq:v0-c6-2} dá $\sqrt{9{,}3} \approx 3 + (1/6)(0{,}3) =
-3{,}050$. O valor exato é $3{,}0496$: erro de $4\times 10^{-4}$, bem
-menor que a estimativa de primeira ordem sugeria --- porque a derivada
-segunda de $\sqrt{x}$ também é pequena perto de $9$. Para $\Delta x$
-maior (digamos, $\sqrt{16}$ a partir de $9$), a mesma reta dá
-$3 + 7/6 = 4{,}17$ contra $4{,}00$ exato --- a vizinhança vale o que a
-Equação~\eqref{eq:v0-c6-2} declara: é local.
-
 \subsection{Máximos, mínimos e pontos de equilíbrio}
 
 Onde uma função suave atinge máximo ou mínimo, a tangente é horizontal:
@@ -1313,6 +1304,40 @@ $\partial f/\partial y = 0$ simultaneamente. A busca de máximo
 rendimento, de mínimo consumo específico e de ponto de operação ótimo,
 que percorre o Volume~II do início ao fim, é esta seção em escala
 industrial.
+
+\subsection{Exercícios resolvidos}
+
+\textbf{Exercício 6.1 (regra da cadeia).} A temperatura de uma carcaça cai
+segundo $T(t) = 30 + 65\,\mathrm{e}^{-t/20}$, com $T$ em
+$^\circ\mathrm{C}$ e $t$ em minutos. Obtenha $\mathrm{d}T/\mathrm{d}t$ e
+mostre que a taxa é, em todo instante, proporcional ao quanto a carcaça
+ainda está acima dos $30\,^\circ\mathrm{C}$.
+
+\emph{Resolução.} A função é composta: uma exponencial avaliada em
+$u(t) = -t/20$. Pela regra da cadeia,
+$\mathrm{d}T/\mathrm{d}t = 65\,\mathrm{e}^{u}\cdot\mathrm{d}u/\mathrm{d}t
+= 65\,\mathrm{e}^{-t/20}\cdot(-1/20)$. Agora observe que a própria
+expressão de $T$ dá $65\,\mathrm{e}^{-t/20} = T - 30$. Substituindo,
+$$\frac{\mathrm{d}T}{\mathrm{d}t} = -\frac{1}{20}\,(T - 30).$$
+A taxa é, de fato, proporcional ao excesso $T - 30$, com constante
+$-1/20\ \mathrm{min}^{-1}$: quanto mais perto dos
+$30\,^\circ\mathrm{C}$, mais devagar a carcaça esfria. O
+Capítulo~\ref{sec:v0-edo} parte exatamente dessa observação para
+construir as equações diferenciais.
+
+\textbf{Exercício 6.2 (linearização).} Estime $\sqrt{9{,}3}$ a partir da
+reta tangente a $f(x) = \sqrt{x}$ em $x_0 = 9$, e avalie o erro.
+
+\emph{Resolução.} $f'(x) = 1/(2\sqrt{x})$, então $f'(9) = 1/6$. A
+Equação~\eqref{eq:v0-c6-2} dá $\sqrt{9{,}3} \approx 3 + (1/6)(0{,}3) =
+3{,}050$. O valor exato é $3{,}0496$: erro de $4\times 10^{-4}$, e esse
+erro é exatamente o que a curvatura prevê --- com
+$f''(x) = -1/(4x^{3/2})$, o primeiro termo desprezado vale
+$\tfrac{1}{2}f''(9)\,(0{,}3)^2 \approx -4\times 10^{-4}$. A reta tangente
+erra por excesso porque a raiz é côncava. Para $\Delta x$
+maior (digamos, $\sqrt{16}$ a partir de $9$), a mesma reta dá
+$3 + 7/6 = 4{,}17$ contra $4{,}00$ exato --- a vizinhança vale o que a
+Equação~\eqref{eq:v0-c6-2} declara: é local.
 
 \subsection{Síntese: premissas e ligação com os volumes seguintes}
 
@@ -1482,6 +1507,17 @@ em torno de uma curva fechada ao fluxo do rotacional pela superfície que
 ela limita --- mas a coleção não o usa: as equações de Maxwell aparecem já
 na forma diferencial.
 
+\subsection{Integrais múltiplas}
+
+Uma integral dupla $\iint_A f(x,y)\,\mathrm{d}A$ soma contribuições sobre
+uma região do plano --- a massa de uma placa, por exemplo, soma
+$\rho(x,y)\,\mathrm{d}A$ sobre toda a área. A avaliação é sempre a mesma:
+integrar duas vezes em sequência, cada vez tratando a outra variável como
+constante. A mesma lógica se estende a três dimensões. No Volume~I, os
+balanços integrais sobre volumes de controle são exatamente integrais
+triplas disfarçadas de física; o Capítulo~4 escreve o teorema do
+transporte que as organiza.
+
 \subsection{Exercícios resolvidos}
 
 \textbf{Exercício 7.1 (acumulação a vazão constante).} Uma rede recebe
@@ -1507,17 +1543,6 @@ P_0\,\tau\,(1 - \mathrm{e}^{-60/40}) =
 energia é menor que a do degrau constante ($6{,}0 \times 60 =
 360\ \mathrm{kJ}$) porque a potência decai --- a integral acumula a
 taxa, não a taxa inicial.
-
-\subsection{Integrais múltiplas}
-
-Uma integral dupla $\iint_A f(x,y)\,\mathrm{d}A$ soma contribuições sobre
-uma região do plano --- a massa de uma placa, por exemplo, soma
-$\rho(x,y)\,\mathrm{d}A$ sobre toda a área. A avaliação é sempre a mesma:
-integrar duas vezes em sequência, cada vez tratando a outra variável como
-constante. A mesma lógica se estende a três dimensões. No Volume~I, os
-balanços integrais sobre volumes de controle são exatamente integrais
-triplas disfarçadas de física; o Capítulo~4 escreve o teorema do
-transporte que as organiza.
 
 \subsection{Síntese: premissas e ligação com os volumes seguintes}
 
@@ -1654,6 +1679,31 @@ superamortecido assenta sem oscilar, mais lentamente.}
 \label{fig:v0-c8-1}
 \end{figure}
 
+O caso subamortecido merece as duas grandezas que se leem direto de um
+registro de vibração. Sem forçamento ($f(t) = 0$), a resposta é a
+Equação~\eqref{eq:v0-c8-5}: a oscilação não ocorre na frequência natural
+$\omega_n$, e sim na \emph{frequência amortecida} $\omega_d$, um pouco
+menor; e a amplitude é limitada por um \emph{envelope} exponencial, que
+decai como uma equação de primeira ordem com constante de tempo
+$\tau = 1/(\zeta\omega_n)$:
+
+\begin{equation}\label{eq:v0-c8-5}
+x(t) = A\,\underbrace{\mathrm{e}^{-\zeta\omega_n t}}_{\text{envelope}}
+       \cos(\omega_d t + \varphi),
+\qquad
+\omega_d = \omega_n\sqrt{1 - \zeta^2}.
+\end{equation}
+
+Os dois fatores da Equação~\eqref{eq:v0-c8-5} separam o que a máquina faz
+em duas perguntas independentes: o cosseno diz \emph{com que rapidez}
+oscila, o envelope diz \emph{por quanto tempo} continua oscilando. Para
+os amortecimentos fracos usuais em máquina ($\zeta \lesssim 0{,}3$),
+$\omega_d$ fica a menos de $5\,\%$ de $\omega_n$ --- diferença que importa
+em conta de fase, não em identificação de qual modo foi excitado. Na
+resposta ao degrau da Figura~\ref{fig:v0-c8-1} o mesmo envelope
+reaparece, agora governando o \emph{desvio} em relação ao valor final em
+vez da amplitude em torno do repouso.
+
 O Volume~I deduz a Equação~\eqref{eq:v0-c8-4} três vezes --- mecânica,
 eletricidade e vibrações --- e mostra que é a mesma equação com roupagens
 diferentes; o Volume~II a usa para avaliar se o comportamento dinâmico de
@@ -1666,19 +1716,19 @@ variáveis ou não lineares, como as do Volume~II, em geral não admitem ---
 recorre-se à integração numérica. O método de Euler, o mais simples,
 traduz a definição de derivada direto em algoritmo: se
 $\dot{x} = g(x,t)$, então a variação num passo pequeno $\Delta t$ é
-aproximadamente $g\,\Delta t$, Equação~\eqref{eq:v0-c8-5}:
+aproximadamente $g\,\Delta t$, Equação~\eqref{eq:v0-c8-6}:
 
-\begin{equation}\label{eq:v0-c8-5}
+\begin{equation}\label{eq:v0-c8-6}
 x_{n+1} = x_n + g(x_n, t_n)\ \Delta t.
 \end{equation}
 
-A Equação~\eqref{eq:v0-c8-5} é a própria definição da derivada com o
+A Equação~\eqref{eq:v0-c8-6} é a própria definição da derivada com o
 limite suspenso; por isso o erro de cada passo é proporcional a
 $(\Delta t)^2$, e o erro acumulado, a $\Delta t$. Refinar o passo
 diminui o erro previsivelmente --- e essa previsibilidade é o que permite
 confiar na simulação. O Volume~II integra suas EDOs com métodos mais
 refinados que este, mas todos descendentes diretos da
-Equação~\eqref{eq:v0-c8-5}.
+Equação~\eqref{eq:v0-c8-6}.
 
 \subsection{Uma menção às equações diferenciais parciais}
 
@@ -1718,9 +1768,12 @@ $T(20) = 30 + 65\,\mathrm{e}^{-1} = 30 + 65 \times 0{,}368 =
 37\%\ por $\tau$ e dos 5\%\ em $3\tau$. Para $T = 35$:
 $\mathrm{e}^{-t/\tau} = 5/65 = 0{,}077$, então
 $t = 20\,\ln(65/5) = 20 \times 2{,}56 = 51\ \mathrm{min}$. A leitura
-física: entre 20 e 60 min a carcaça perdeu só $21\,^\circ\mathrm{C}$, mas
-entre 51 e o regime permanente restam $5\,^\circ\mathrm{C}$ --- o
-último grau é o mais lento.
+física: cada intervalo de $\tau = 20\ \mathrm{min}$ remove sempre a mesma
+\emph{fração} do excesso sobre o ambiente ($63\,\%$), mas frações iguais
+de um excesso que encolhe valem cada vez menos em graus --- são
+$41\,^\circ\mathrm{C}$ no primeiro intervalo, $15\,^\circ\mathrm{C}$ no
+segundo e $6\,^\circ\mathrm{C}$ no terceiro. É por isso que a carcaça
+chega \emph{perto} do ambiente depressa e termina de chegar devagar.
 
 \textbf{Exercício 8.2 (classificar o amortecimento).} Um sistema tem
 $\omega_n = 6\ \mathrm{rad/s}$ e $\zeta = 0{,}25$. Classifique o regime,
@@ -1728,14 +1781,19 @@ obtenha a frequência amortecida e o tempo em que o envelope cai para
 2\%.
 
 \emph{Resolução.} $\zeta < 1$: subamortecido --- oscila com amplitude
-decaindo, como a curva da Figura~\ref{fig:v0-c8-1}. Frequência
-amortecida: $\omega_d = \omega_n\sqrt{1 - \zeta^2} =
-6\sqrt{1 - 0{,}0625} = 5{,}8\ \mathrm{rad/s}$. O envelope decai como
-$\mathrm{e}^{-\zeta\omega_n t} = \mathrm{e}^{-1{,}5 t}$, a mesma
-estrutura de primeira ordem da Equação~\eqref{eq:v0-c8-3} com
-$\tau = 1/(\zeta\omega_n) = 0{,}67\ \mathrm{s}$: em
-$t = 4\tau = 2{,}7\ \mathrm{s}$ o envelope vale $\mathrm{e}^{-4} =
-1{,}8\,\%$ --- abaixo dos 2\%\ pedidos.
+decaindo, como a curva da Figura~\ref{fig:v0-c8-1}. Os dois fatores da
+Equação~\eqref{eq:v0-c8-5} dão o resto. Frequência amortecida:
+$\omega_d = \omega_n\sqrt{1 - \zeta^2} = 6\sqrt{1 - 0{,}0625} =
+5{,}8\ \mathrm{rad/s}$, $3\,\%$ abaixo de $\omega_n$. Envelope:
+$\mathrm{e}^{-\zeta\omega_n t} = \mathrm{e}^{-1{,}5\,t}$, ou seja, a
+mesma estrutura de primeira ordem da Equação~\eqref{eq:v0-c8-3} com
+$\tau = 1/(\zeta\omega_n) = 0{,}67\ \mathrm{s}$. Impondo o valor pedido
+e tomando o logaritmo (Equação~\eqref{eq:v0-c4-2}):
+$\mathrm{e}^{-t/\tau} = 0{,}02 \Rightarrow
+t = \tau\,\ln 50 = 0{,}67 \times 3{,}91 = 2{,}6\ \mathrm{s}$, que são
+$3{,}9\,\tau$. É daí que vem a regra prática de tomar $4\tau$ como tempo
+de acomodação: em $4\tau$ o envelope já está em $1{,}8\,\%$, um pouco
+além do que se pediu --- a regra é conservadora de propósito.
 
 \subsection{Síntese: premissas e ligação com os volumes seguintes}
 
@@ -1838,7 +1896,7 @@ que $f$ decai pelo menos tão rápido quanto $h^n$ quando $h \to 0$:
 existem constantes $C$ e $h_0$ tais que $|f(h)| \le C\,h^n$ para
 $0 < h < h_0$. A constante $C$ não interessa no momento --- interessa o
 expoente, porque ele diz como o erro melhora quando se refina a
-discretização. O método de Euler da Equação~\eqref{eq:v0-c8-5} tem erro
+discretização. O método de Euler da Equação~\eqref{eq:v0-c8-6} tem erro
 global $O(\Delta t)$: diminuir o passo pela metade divide o erro pela
 metade, e essa previsão é verificável numericamente.
 
@@ -1864,37 +1922,61 @@ $r = 0{,}5$, a soma é $2$; com $r = 0{,}6$, $2{,}5$. A leitura
 operacional: um processo em que ``restam $r$ do anterior'' a cada passo
 acumula, no limite, $1/(1-r)$ vezes o primeiro termo. É o argumento
 atrás da resposta ao degrau de um sistema de primeira ordem integrado
-pela Equação~\eqref{eq:v0-c8-5} --- o déficit inicial decaindo por
+pela Equação~\eqref{eq:v0-c8-6} --- o déficit inicial decaindo por
 $r = 1 - \Delta t/\tau$ a cada passo soma geometricamente para o regime
 permanente --- e da taxa de convergência dos métodos iterativos que o
 Volume~II usa para calibrar parâmetros.
 
 \subsection{Exercícios resolvidos}
 
-\textbf{Exercício 9.1 (binômio truncado).} Estime $(1{,}02)^5$ com a
-Equação~\eqref{eq:v0-c9-2} truncada na segunda ordem, e compare com o
-valor exato.
+\textbf{Exercício 9.1 (uma ordem a mais).} A Equação~\eqref{eq:v0-c9-2}
+estima $(1+\varepsilon)^n$ apenas em primeira ordem. Aplique a
+Equação~\eqref{eq:v0-c9-1} a $f(\varepsilon) = (1+\varepsilon)^5$ em
+torno de $\varepsilon = 0$ para obter o termo de segunda ordem, use-o
+para estimar $(1{,}02)^5$, compare com a primeira ordem e com o valor
+exato, e identifique qual fator faz os termos encolherem.
 
-\emph{Resolução.} Com $\varepsilon = 0{,}02$ e $n = 5$: a primeira ordem
-dá $1 + 5\times 0{,}02 = 1{,}10$; a segunda acrescenta o termo
-$\binom{5}{2}\,(0{,}02)^2 = 10 \times 4\times 10^{-4} = 0{,}004$,
-totalizando $1{,}104$. O valor exato é $1{,}10408$: a segunda ordem já
-captura $4$ dos $5$ dígitos. O termo de terceira ordem vale
-$10\,(0{,}02)^3 = 8\times 10^{-5}$ --- a série cobra cada dígito a
-mais caro, exatamente o que o fatorial da Equação~\eqref{eq:v0-c9-1}
-promete.
+\emph{Resolução.} As derivadas saem da regra da potência do
+Capítulo~\ref{sec:v0-derivadas}: $f(0) = 1$;
+$f'(\varepsilon) = 5(1+\varepsilon)^4$, logo $f'(0) = 5$;
+$f''(\varepsilon) = 20(1+\varepsilon)^3$, logo $f''(0) = 20$. Levando à
+Equação~\eqref{eq:v0-c9-1}, com $h = \varepsilon$:
+$$(1+\varepsilon)^5 \approx 1 + 5\,\varepsilon
+  + \frac{20}{2!}\,\varepsilon^2 = 1 + 5\,\varepsilon + 10\,\varepsilon^2.$$
+Com $\varepsilon = 0{,}02$, a primeira ordem dá $1 + 0{,}10 = 1{,}10$ ---
+exatamente o que a Equação~\eqref{eq:v0-c9-2} já fornecia --- e a segunda
+acrescenta $10 \times 4\times 10^{-4} = 0{,}004$, totalizando
+$1{,}104$. O valor exato é $1{,}10408$: a segunda ordem acerta quatro
+dígitos, contra dois da primeira.
 
-\textbf{Exercício 9.2 (soma geométrica e déficit remanescente).} Um sistema
-de primeira ordem é integrado com passo que deixa razão $r = 0{,}8$ entre
-déficits consecutivos. Quanto do déficit inicial resta após 10 passos, e
-para quanto converge a soma dos déficits?
+O termo seguinte, com $f'''(0) = 60$, vale
+$(60/3!)\,(0{,}02)^3 = 8\times 10^{-5}$ --- cinquenta vezes menor que o
+de segunda ordem. Quem encolhe os termos aqui é a potência
+$\varepsilon^k$, que multiplica por $0{,}02$ a cada ordem nova; o
+fatorial do denominador da Equação~\eqref{eq:v0-c9-1} tem outro papel,
+o de impedir que os coeficientes $f^{(k)}(0)/k!$ cresçam com a ordem.
+Por isso cada dígito a mais custa pouco, como a abertura deste capítulo
+anuncia --- e por isso truncar cedo é seguro para $\varepsilon$ pequeno,
+e deixa de ser para $\varepsilon$ grande.
 
-\emph{Resolução.} O déficit remanescente é $r^{10} = 0{,}8^{10} =
-0{,}107$: restam $10{,}7\,\%$ --- a leitura da meia-vida da
-Equação~\eqref{eq:v0-c8-3}, agora em passos discretos. A soma acumulada
-dos déficits é a série geométrica da Equação~\eqref{eq:v0-c9-3}:
-$1/(1 - 0{,}8) = 5$ --- a soma inteira vale cinco vezes o primeiro
-déficit, número que converge já nas primeiras dezenas de termos.
+\textbf{Exercício 9.2 (soma geométrica e distância ao regime).} Uma
+carcaça que esfria é integrada pelo passo de Euler da
+Equação~\eqref{eq:v0-c8-6} com $\Delta t = 0{,}2\,\tau$. Chame de
+\emph{déficit} $e_k = T_k - T_{\infty}$ o que ainda falta para o regime
+permanente no passo $k$; com esse passo, cada déficit é $r = 0{,}8$ do
+anterior. Que fração do déficit inicial resta após 10 passos, e para
+quanto converge a soma de todos os déficits?
+
+\emph{Resolução.} Os déficits formam uma progressão geométrica,
+$e_k = r^k\,e_0$. Após 10 passos resta
+$r^{10} = 0{,}8^{10} = 0{,}107$, isto é, $10{,}7\,\%$ do afastamento
+inicial --- o mesmo decaimento da Equação~\eqref{eq:v0-c8-3}, agora
+amostrado em passos discretos em vez de tempo contínuo. Somando todos
+eles pela Equação~\eqref{eq:v0-c9-3}:
+$\sum_{k\ge 0} r^k = 1/(1 - 0{,}8) = 5$, ou seja, cinco vezes o déficit
+inicial. A condição $|r| < 1$ é o que torna essa soma finita apesar de
+infinitos passos --- em termos da simulação, é a garantia de que o
+afastamento acumulado não cresce sem limite conforme se integra.
 
 \subsection{Síntese: premissas e ligação com os volumes seguintes}
 
@@ -1988,6 +2070,18 @@ ensinado.
 
 
 %=============================================================================
+
+% --- LISTAS DE FIGURAS E TABELAS (back matter: material de consulta) ---
+\clearpage
+\phantomsection
+\addcontentsline{toc}{section}{Lista de Figuras}
+\listoffigures
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{section}{Lista de Tabelas}
+\listoftables
+
 % BIBLIOGRAFIA
 %=============================================================================
 \newpage

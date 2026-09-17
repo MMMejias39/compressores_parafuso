@@ -222,6 +222,49 @@ também em "Pendências conhecidas" para não se perderem:
   Capítulo 19) como modelo para qualquer Parte futura (ex.: um 3º volume da
   enciclopédia).
 
+## Critério de elaboração de texto e de exercícios — regra permanente (13/09/2026)
+
+**Pedido literal do autor**, depois de ler os exercícios do Volume 0 e
+encontrar o defeito: *"a formulação usada na resposta não aparece na
+pergunta. Por favor, seja bem criterioso na elaboração de textos e de
+exercícios."* A regra que fecha isso, válida para qualquer volume e
+qualquer conteúdo novo:
+
+1. **Fechamento pergunta↔resposta.** Toda formulação que a resolução usa
+   tem de estar **anunciada no enunciado** (como dado, como equação citada
+   ou como o próprio produto que se pede) ou **ensinada no capítulo** —
+   nunca aparecer pela primeira vez dentro da resolução. Se a resolução
+   precisa de uma ferramenta que o capítulo não tem, a correção é
+   **ensinar a ferramenta no capítulo**, não contrabandeá-la na resposta.
+2. **Responder o que foi perguntado.** Se o enunciado pede um número, a
+   resolução entrega aquele número — não um substituto conveniente. Regra
+   prática (`4τ`, arredondamento de engenharia) entra como *comentário
+   depois* da resposta exata, nunca no lugar dela.
+3. **Enunciado sem redundância nem ambiguidade.** Cada grandeza aparece
+   uma vez, com o tipo certo (escalar × vetor) e sem repetir a mesma
+   informação em duas formas. Todo termo técnico do enunciado é definido
+   ali ou no capítulo — nada de símbolo ou nome ("déficit", "envelope")
+   que o leitor tenha de adivinhar.
+4. **Toda conta refeita à mão antes de entrar.** Inclusive as dos
+   comentários interpretativos ("uma faixa vinte vezes mais larga") — foi
+   exatamente aí que um fator 20 × 47 passou despercebido.
+5. **A leitura física tem de decorrer do que foi calculado.** Fecho de
+   exercício que compara grandezas não comparáveis, ou que conclui mais do
+   que os números mostram, é defeito — mesmo com a aritmética correta.
+6. **Coerência com o próprio texto.** A resolução não pode contradizer a
+   prosa do capítulo (aconteceu: o Cap. 9 dizia que precisão extra "custa
+   cada vez menos" e o exercício dizia que a série "cobra cada dígito a
+   mais caro"), nem atribuir um efeito à causa errada.
+
+**Como verificar** (barato, vale rodar ao fim de qualquer sessão que
+escreva exercício ou prosa nova): para cada símbolo, notação e equação
+citados numa resolução, `grep` o volume inteiro procurando onde ele é
+definido **antes** daquele ponto. Um símbolo que só aparece dentro da
+resolução é o sintoma. Foi assim que se achou `\binom` usado uma única
+vez no Volume 0, dentro do Exercício 9.1, sem jamais ter sido
+apresentado; e $\omega_d$/envelope usados no Exercício 8.2 sem existirem
+no Capítulo 8.
+
 ## Diagramação — convenções (relatório de 26/07/2026, todos os itens implementados)
 
 Em 26/07/2026 foi feita uma revisão completa de diagramação do PDF compilado (compilação limpa
@@ -4013,3 +4056,226 @@ overfull hboxes, o maior com 4,79 pt — **exatamente a soma dos baselines dos
 volumes** (36 do Vol. II a 2,01 pt + 2 do Vol. I, sendo o de 4,79 pt o conhecido
 da tabela de sensores do Cap. 9). Nenhum overfull novo introduzido pela
 montagem. Capa, verso e página de Parte conferidos por `pdftoppm`.
+
+## Auditoria dos exercícios do Volume 0 (13/09/2026)
+
+Observação do autor após ler o PDF: ``notei que os arquivos .tex e .pdf tinham
+muitos exercícios mal elaborados em sua pergunta e na resposta''. Os 18
+exercícios do Volume 0 (os Volumes I e II não têm nenhum) foram verificados um
+a um, com todas as contas refeitas à mão antes de qualquer edição.
+
+**Resultado da verificação:** nenhuma conta aritmética estava errada. O defeito
+era de **elaboração** — e o autor nomeou a raiz dele na mesma sessão: *"a
+formulação usada na resposta não aparece na pergunta"*. Isso virou regra
+permanente, registrada na seção ``Critério de elaboração de texto e de
+exercícios'' no topo deste arquivo. O achado que originou a regra:
+
+- **Ex. 9.1** — o enunciado mandava truncar a Equação 9.2 ``na segunda ordem'',
+  mas a 9.2 é só a forma de primeira ordem; a resolução recorria a
+  $\binom{5}{2}$, e `\binom` aparecia **uma única vez no volume inteiro**,
+  exatamente ali, nunca definido. Além disso atribuía ao fatorial um
+  decaimento que vem de $\varepsilon^k$ (o binomial $\binom{5}{2}=10$ é
+  *maior* que o coeficiente de primeira ordem), e contradizia a prosa do
+  próprio Cap. 9 quatro páginas antes.
+- **Ex. 8.2** — pedia $\omega_d$ e o envelope, **que o Cap. 8 nunca definiu**:
+  o capítulo só classificava os três regimes qualitativamente. Mesma classe de
+  defeito do 9.1.
+
+**Correções aplicadas** (7 exercícios tocados, mais uma equação nova):
+
+1. **Eq. 8.5 nova** — resposta livre subamortecida, com o envelope
+   $\mathrm{e}^{-\zeta\omega_n t}$ e $\omega_d = \omega_n\sqrt{1-\zeta^2}$, ao
+   fim da subseção 8.4. O capítulo passa a ensinar o que o exercício usa. O
+   passo de Euler foi renumerado 8.5 $\rightarrow$ **8.6** (6 citações, todas
+   internas ao volume, atualizadas juntas). Texto explicita que a Eq. 8.5 é a
+   resposta *livre* e que na resposta ao degrau da Figura 8.1 o mesmo envelope
+   governa o desvio em relação ao valor final — distinção que faltava.
+2. **Ex. 9.1** reescrito: aplica a Equação 9.1 (Taylor) a
+   $f(\varepsilon)=(1+\varepsilon)^5$, com as derivadas saindo da regra da
+   potência do Cap. 6; o coeficiente 10 agora vem de $f''(0)/2!$, não de um
+   binomial não apresentado. `\binom` sai do volume (0 ocorrências).
+3. **Ex. 8.2** passa a responder o que pergunta: $t=\tau\ln 50 = 2{,}6$ s. A
+   regra prática dos $4\tau$ (1,8 %) vira comentário *depois* da resposta
+   exata, não substituto dela.
+4. **Ex. 3.2** — dois números corrigidos: a faixa ignorava a incerteza de
+   $3{,}5$ min (o correto é 39,7 a 44,4 m³, não 40,2 a 43,8) e o fator
+   ``vinte vezes'' era na verdade ~47.
+5. **Ex. 8.1** — a leitura física comparava grandezas não comparáveis (variação
+   em 40 min × resíduo num instante). Trocada pela leitura correta: cada $\tau$
+   remove sempre 63 % do excesso, mas 63 % de um excesso que encolhe valem
+   41 °C, 15 °C e 6 °C em intervalos sucessivos.
+6. **Ex. 5.1** — enunciado declarava a perpendicularidade duas vezes e dava $F$
+   como escalar; agora dá $\bm{F} = 120\,\bm{j}$ N. A resolução exibe o
+   determinante da Equação 5.3 em vez de aludir a ele.
+7. **Ex. 9.2** — ``déficit'' passa a ser definido no próprio enunciado
+   ($e_k = T_k - T_\infty$), ancorado no passo de Euler da Equação 8.6 com
+   $\Delta t = 0{,}2\tau$; sai a chamada errada de ``meia-vida'' para um
+   decaimento geométrico.
+8. **Ex. 1.1** — deixou de ser uma pergunta sem produto (a resolução antiga
+   encerrava com ``nenhum número foi calculado aqui''): agora pede a forma do
+   balanço que descreve o sintoma e mapeia cada peça dela a um capítulo.
+
+**Verificação:** `pdflatex` 3 passagens — **42 páginas, 0 erros, 0 overfulls, 0
+referências indefinidas**; 37 equações (era 36, +1 a Eq. 8.5), varredura de
+auto-referência 0/37; 0 aspas retas; 0 hardcode de número de equação. Páginas
+9, 23, 34, 35, 36 e 38 renderizadas por `pdftoppm` e inspecionadas uma a uma.
+**Edição Completa regenerada** (`scripts/gerar_edicao_completa.py`) e
+recompilada: 309 páginas, 0 erros, 38 overfulls com máximo de 4,79 pt — o
+baseline exato já documentado, sem regressão.
+
+**Varredura nova, barata, que vale repetir:** para cada `\eqref{}` dentro de um
+bloco de exercício, conferir por script que o `\label{}` correspondente aparece
+**antes** no arquivo. Roda em segundos e pega a classe inteira de defeito que
+motivou esta sessão. Resultado atual: nenhuma ocorrência.
+
+**Nada commitado** --- regra permanente.
+
+## Estudo: posição do prefácio e da dedicatória no front matter (13/09/2026)
+
+Observação do autor: *"entendo que prefácio e dedicatória devem vir mais à
+frente do livro, faça uma análise e coloque no local adequado"*. Registro aqui
+o estudo inteiro, para que a decisão não precise ser refeita nem discutida de
+novo em volumes futuros da coleção.
+
+### Ordem que os três volumes tinham
+
+Idêntica nos três (`Volume_0`, `Volume_I`, `compressores`):
+
+    capa → dedicatória → PREFÁCIO → sumário → lista de figuras →
+    lista de tabelas → [nomenclatura, nos Vols. I e II] → corpo
+
+### O que dizem as duas tradições — conferido na fonte, não de memória
+
+**Chicago Manual of Style, 17ª ed., §1.4 (``Order of elements in a book'')** —
+half title, series title, title page, copyright, **dedication**, epigraph,
+**contents**, list of illustrations, list of tables, foreword, **preface**,
+acknowledgments, introduction, **abbreviations**. Ou seja: dedicatória *antes*
+do sumário; prefácio *depois* do sumário e das listas; lista de símbolos/
+abreviaturas *depois* do prefácio.
+
+**ABNT NBR 6029:2006** (norma obtida e lida diretamente — o PDF traz
+``Licença de uso exclusivo para Petrobras S/A''). A seção 4.2.1 enumera os
+elementos **pré-textuais** em 11 itens, 4.2.1.1 a 4.2.1.11, nesta ordem: falsa
+folha de rosto, folha de rosto, errata, **dedicatória** (4.2.1.4),
+agradecimento, epígrafe, lista de ilustrações, lista de tabelas, lista de
+abreviaturas e siglas, lista de símbolos, **sumário** (4.2.1.11). O prefácio
+**não está nessa lista** — ele aparece em 4.2.2, *Elementos textuais*, cujo
+texto literal é: ``Parte em que é desenvolvido o conteúdo, antecedida,
+opcionalmente, por prefácio e/ou apresentação'', e ``O prefácio e/ou
+apresentação deve começar em página ímpar, sem indicativo de seção''.
+
+**As duas concordam no ponto que importa**: o prefácio vem **depois** do
+sumário — pela ABNT porque ele já pertence aos elementos textuais, pela Chicago
+por posição explícita na lista. E as duas colocam a **dedicatória logo após a
+folha de rosto**, bem antes do sumário.
+
+### Decisão aplicada
+
+    capa → dedicatória → sumário → lista de figuras → lista de tabelas →
+    PREFÁCIO → [nomenclatura] → corpo
+
+- **Prefácio movido** nos três volumes. Era o único elemento fora do lugar, e é
+  exatamente o que o autor percebeu ao ler. Ganho prático coerente com a visão
+  do projeto (obra de consulta, não leitura linear): o leitor que abre o PDF
+  encontra a estrutura antes do texto de abertura.
+- **Dedicatória mantida** onde estava. As duas normas a colocam ali; movê-la
+  para depois do sumário a separaria da folha de rosto, o que nenhuma tradição
+  editorial faz. Se o autor quiser movê-la assim mesmo, é uma edição de um
+  bloco — mas a recomendação técnica é não mover.
+- **Nomenclatura não foi tocada** (segue depois do prefácio). Aqui as duas
+  tradições divergem: a ABNT trata lista de símbolos como pré-textual, *antes*
+  do sumário (4.2.1.10); a Chicago a põe *depois* do prefácio. A posição atual
+  segue a Chicago, e é a que faz sentido para esta coleção — a Nomenclatura do
+  Vol. II tem 6 páginas e empurraria o sumário para longe da capa.
+- **Página ímpar** (exigida pela NBR 6029 para dedicatória e prefácio) **não se
+  aplica**: os quatro documentos são `article` sem opção `twoside`, ou seja,
+  impressão em face única, onde não existe recto/verso. Se algum dia a coleção
+  for para impressão frente-e-verso, é aqui que essa exigência entra, com
+  `\cleardoublepage` no lugar de `\newpage`.
+
+### Defeito de cabeçalho — uma regressão e um achado pré-existente
+
+Mover o prefácio expôs a mesma classe de bug já registrada em 15/08/2026
+(``Verificação visual do PDF compilado''): `\section*` **não** atualiza o
+`\leftmark`, então uma seção estrelada herda o cabeçalho corrente da anterior.
+
+- **Regressão introduzida pela mudança**: o prefácio, que antes vinha logo após
+  a dedicatória e saía com cabeçalho vazio, passou a exibir ``Lista de
+  Tabelas''. Confirmado comparando com o PDF do commit anterior
+  (`git show HEAD:compressores.pdf`), não presumido.
+- **Achado colateral, pré-existente**: a **Nomenclatura** já exibia ``Lista de
+  Tabelas'' no cabeçalho de todas as suas páginas — nos Vols. I e II, desde
+  sempre. Nenhuma auditoria anterior tinha pego.
+
+Corrigidos com `\markboth{<título>}{}` logo após cada `\section*` de front
+matter — a técnica que o próprio `CONTEXTO.md` já registrava para reuso.
+**Regra permanente**: toda `\section*` de front matter (Prefácio, Nomenclatura,
+Glossário, Agradecimentos) precisa do `\markboth{}{}` correspondente; sem ele o
+cabeçalho mente sobre onde o leitor está, e o log de compilação não acusa nada.
+
+### Verificação
+
+`pdflatex` 3 passagens em cada documento, todos com **0 erros e 0 referências
+indefinidas**, e contagens idênticas ao baseline: Volume 0 **42 p., 0
+overfulls**; Volume I **87 p., 2 overfulls** (os dois de baseline); Volume II
+**183 p., 36 overfulls** (máx. 2,01 pt); Edição Completa regenerada e
+recompilada, **309 p., 38 overfulls** (máx. 4,79 pt). Ordem física conferida
+página a página nos quatro PDFs por extração de texto, e a página do prefácio
+do Volume II inspecionada por `pdftoppm`. Cabeçalho corrente conferido em todas
+as páginas de front matter dos três volumes.
+
+**Nada commitado** --- regra permanente.
+
+### Complemento (mesma sessão): front matter próprio da Edição Completa
+
+O estudo acima resolveu a posição do prefácio **dentro de cada volume**. Ao ver
+o resultado na edição reunida, o autor apontou o que faltava: *"o prefácio e a
+dedicatória ainda está no volume 0, acredito que tenha de estar antes do volume
+0"*. De fato — na edição única, cada volume trazia a sua dedicatória e o seu
+prefácio logo após a própria página de Parte, de modo que o leitor encontrava
+três de cada, espalhados, e nenhum deles abria o livro.
+
+**Decisão do autor, entre três arranjos oferecidos:** a Edição Completa passa a
+ter **dedicatória e prefácio próprios**, e os dos volumes **saem** da edição
+reunida (seguem intactos nos avulsos, que continuam canônicos).
+
+    p1   capa
+    p2   sobre esta edição
+    p3   DEDICATÓRIA DA EDIÇÃO      <- nova
+    p4   sumário geral
+    p14  lista de figuras / tabelas
+    p18  PREFÁCIO À EDIÇÃO COMPLETA <- novo
+    p19  VOLUME 0  → direto no Capítulo 1
+    p54  VOLUME I  → direto na Nomenclatura
+    p132 VOLUME II → direto na Nomenclatura
+
+**Dois arquivos novos, editáveis à mão** — mesmo padrão já adotado para
+`capa_edicao_completa.tex`, e pelo mesmo motivo (o gerador os inclui, nunca os
+sobrescreve): `dedicatoria_edicao_completa.tex` e
+`prefacio_edicao_completa.tex`. **Os dois textos que estão lá hoje são rascunho
+meu, marcados como tal no cabeçalho de cada arquivo, para o autor substituir.**
+O prefácio de partida evita deliberadamente qualquer número que envelheça
+(contagem de páginas, de equações) — o padrão de defeito já identificado nestes
+arquivos de apoio é justamente o status congelado.
+
+**Mudanças em `scripts/gerar_edicao_completa.py`:** `limpa_corpo()` passou a
+remover o bloco de dedicatória e o de prefácio de cada volume (duas regex
+novas, ancoradas nos comentários `% --- DEDICATÓRIA ---` / `% --- PREFÁCIO ---`
+que os três volumes já usavam); o cabeçalho ganhou os dois `\input` nas
+posições canônicas do estudo acima; e a lista de entradas de sumário que
+recebiam o rótulo do volume perdeu ``Prefácio'' (não há mais três) — seguem
+``Nomenclatura'' e ``Glossário de Anglicismos''. O docstring do gerador foi
+atualizado: ele dizia ``preserva prefácio, dedicatória, nomenclatura e todo o
+corpo'', o que deixou de ser verdade.
+
+**Verificação:** 3 passagens, **304 páginas, 0 erros, 0 referências
+indefinidas, 38 overfull hboxes com máximo de 4,79 pt** — o mesmo baseline de
+sempre. A contagem de páginas fecha exatamente: 309 $-$ 7 (três dedicatórias,
+uma página cada; prefácios de 1, 1 e 2 páginas) $+$ 2 (dedicatória e prefácio
+novos) $=$ 304. Sumário conferido (``Prefácio à Edição Completa'' em xv, sem
+nenhum ``Prefácio --- VOLUME X'' remanescente), aberturas dos três volumes
+conferidas por extração de texto e página do prefácio novo inspecionada por
+`pdftoppm`. `README.md` atualizado (304 páginas; os três arquivos editáveis à
+mão).
+
+**Nada commitado** --- regra permanente.

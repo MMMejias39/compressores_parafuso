@@ -107,10 +107,17 @@
 	\vspace*{\fill}
 
 
+	% --- SUMÁRIO ---
+	\newpage
+	\tableofcontents
+	\newpage
+
+
 % --- PREFÁCIO ---
 \newpage
 \section*{Prefácio}
 \addcontentsline{toc}{section}{Prefácio}
+\markboth{Prefácio}{}
 
 Este volume reúne os fundamentos teóricos que sustentam o projeto de máquinas
 rotodinâmicas em geral e o estudo detalhado de compressores de parafuso
@@ -136,236 +143,9 @@ rotodinâmicos. As equações são numeradas e referenciadas de modo consistente
 \vspace{1em}
 \hfill \textit{O Autor}
 
-	% --- SUMÁRIO ---
-	\newpage
-	\tableofcontents
-	\newpage
 
-	% --- LISTAS DE FIGURAS E TABELAS ---
-	\phantomsection
-	\addcontentsline{toc}{section}{Lista de Figuras}
-	\listoffigures
-	\newpage
-	\phantomsection
-	\addcontentsline{toc}{section}{Lista de Tabelas}
-	\listoftables
-	\newpage
 
-% --- NOMENCLATURA ---
-\newpage
-\section*{Nomenclatura}
-\addcontentsline{toc}{section}{Nomenclatura}
 
-A tabela abaixo reúne os símbolos de uso transversal neste volume. Símbolos
-específicos de cada capítulo são definidos localmente. A notação vetorial e
-tensorial segue a convenção usual da mecânica do contínuo: vetores em
-itálico com seta ($\vec{v}$) ou negrito ($\mathbf{v}$), tensores de segunda
-ordem em negrito ($\boldsymbol{\sigma}$), e componentes indicadas por
-índices ($v_i$, $\sigma_{ij}$).
-
-{\small
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.15}
-
-\subsection*{Grandezas Mecânicas e do Contínuo}
-\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
-	\toprule
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
-	\endhead
-	$\mathcal{B}$ & Grandeza extensiva genérica em balanço & conforme a grandeza & 1, 2 \\
-	$\beta$ & Grandeza intensiva associada a $\mathcal{B}$ (por unidade de massa) & conforme a grandeza & 1, 2 \\
-	$\mathbf{j}_\beta$ & Fluxo não convectivo de $\mathcal{B}$ & conforme a grandeza & 2 \\
-	$\dot{\mathcal{G}}_\beta$ & Taxa de geração volumétrica de $\mathcal{B}$ & conforme a grandeza & 2 \\
-	$\mathrm{Kn}$ & Número de Knudsen & adimensional & 2 \\
-	$\mathbf{F}$ & Gradiente de deformação (não confundir com força $\mathbf{F}$, Caps. 6 e 8) & adimensional & 2 \\
-	$J$ & Jacobiano da deformação, $\det\mathbf{F}$ & adimensional & 2 \\
-	$\mathbf{C}$ & Tensor de Cauchy-Green à direita & adimensional & 2 \\
-	$\mathbf{E}_L$ & Tensor de deformação de Green-Lagrange (não confundir com $E$, módulo de Young) & adimensional & 2 \\
-	$\mathbf{S}$ & Tensor taxa de deformação & s$^{-1}$ & 2, 4 \\
-	$\mathbf{W}$ & Tensor taxa de rotação, ou spin (não confundir com $W$, razão de umidade) & s$^{-1}$ & 2 \\
-	$\mathbf{t}_{(\mathbf{n})}$ & Vetor tensão sobre superfície de normal $\mathbf{n}$ & Pa & 2 \\
-	$\lambda_L$ & Primeira constante de Lamé & Pa & 2 \\
-	$\lambda_v$ & Segunda viscosidade (viscosidade volumétrica) & Pa\,s & 2 \\
-	$\sigma_{VM}$ & Tensão equivalente de von Mises & Pa & 2, 8 \\
-	$\mathbf{u}$ & Vetor deslocamento & m & 2, 8 \\
-	$\boldsymbol{\varepsilon}$ & Tensor deformação infinitesimal & adimensional & 2 \\
-	$\boldsymbol{\sigma}$ & Tensor tensão de Cauchy & Pa & 2 \\
-	$\rho$ & Massa específica & kg\,m$^{-3}$ & 2--6 \\
-	$\mathbf{v}$ & Vetor velocidade do material & m\,s$^{-1}$ & 2--4 \\
-	$\mathbf{a}$ & Vetor aceleração & m\,s$^{-2}$ & 2, 8 \\
-	$\boldsymbol{\omega}$ & Vetor velocidade angular & rad\,s$^{-1}$ & 2, 8 \\
-	$E$ & Módulo de elasticidade (Young) & Pa & 2, 8 \\
-	$\nu$ & Coeficiente de Poisson & adimensional & 2 \\
-	$G$ & Módulo de cisalhamento (= segunda constante de Lamé) & Pa & 2 \\
-	$\mu$ & Viscosidade dinâmica & Pa\,s & 2, 4 \\
-	$\nu_k$ & Viscosidade cinemática & m$^2$\,s$^{-1}$ & 4 \\
-	$\mathbf{g}$ & Aceleração da gravidade & m\,s$^{-2}$ & 2, 4, 8 \\
-	$J_p$ & Momento polar de inércia (não confundir com $J$, jacobiano, Cap. 2, nem $\mathbf{J}$, densidade de corrente, Cap. 7) & kg\,m$^2$ & 8 \\
-	$\tau$ & Torque (não confundir com $T$, temperatura, Caps. 3--5) & N\,m & 7, 8 \\ \bottomrule
-\end{longtable}
-
-\subsection*{Grandezas Termodinâmicas e de Transferência}
-\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
-	\toprule
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
-	\endhead
-	$T$ & Temperatura termodinâmica & K & 3--5 \\
-	$P$ & Pressão absoluta & Pa, bar & 2--6 \\
-	$v$ (minúscula) & Volume específico & m$^3$\,kg$^{-1}$ & 3 \\
-	$u$ (minúscula) & Energia interna específica & J\,kg$^{-1}$ & 3 \\
-	$h$ (minúscula) & Entalpia específica & J\,kg$^{-1}$ & 3--5 \\
-	$s$ (minúscula) & Entropia específica & J\,kg$^{-1}$\,K$^{-1}$ & 3 \\
-	$q$ & Calor por unidade de massa & J\,kg$^{-1}$ & 3 \\
-	$w$ & Trabalho por unidade de massa & J\,kg$^{-1}$ & 3 \\
-	$c_p$ & Calor específico a pressão constante & J\,kg$^{-1}$\,K$^{-1}$ & 3--5 \\
-	$c_v$ & Calor específico a volume constante & J\,kg$^{-1}$\,K$^{-1}$ & 3 \\
-	$\gamma$ & Razão de calores específicos ($c_p/c_v$) & adimensional & 3, 4 \\
-	$\Pi$ & Razão de pressão, $p_2/p_1$ & adimensional & 3 \\
-	$n$ & Índice politrópico (não confundir com a normal $\mathbf{n}$, Cap. 2) & adimensional & 3 \\
-	$\eta_{is}$ & Rendimento isentrópico & adimensional & 3 \\
-	$\eta_p$ & Rendimento politrópico & adimensional & 3 \\
-	$\eta_{ex}$ & Rendimento exergético & adimensional & 3 \\
-	$Z_c$ & Fator de compressibilidade (não confundir com $Z$, impedância, Cap. 7) & adimensional & 3 \\
-	$\psi$ & Exergia específica de fluxo & J\,kg$^{-1}$ & 3 \\
-	$\dot{S}_{gen}$ & Taxa de geração de entropia & W\,K$^{-1}$ & 3 \\
-	$\dot{E}_d$ & Taxa de destruição de exergia & W & 3 \\
-	$T_0$, $p_0$ & Temperatura e pressão do ambiente de referência & K, Pa & 3 \\
-	$R$ & Constante específica do gás & J\,kg$^{-1}$\,K$^{-1}$ & 3, 4 \\
-	$\dot{Q}$ & Taxa de transferência de calor & W & 3--6 \\
-	$\dot{W}$ & Potência (trabalho por unidade de tempo) & W & 2, 3, 8 \\
-	$k$ & Condutividade térmica & W\,m$^{-1}$\,K$^{-1}$ & 5 \\
-	$h$ (latino) & Coeficiente de convecção de calor & W\,m$^{-2}$\,K$^{-1}$ & 5 \\
-	$\varepsilon$ (griego) & Efetividade de trocador de calor & adimensional & 5 \\
-	$h_0$ & Entalpia de estagnação específica ($h_0 = h + v^2/2 + gz$) & J\,kg$^{-1}$ & 6 \\
-	$C_a$ & Capacitância de acúmulo (massa, energia ou carga por unidade de potencial) & unidade da grandeza & 6 \\
-	$\tau_a$ & Constante de tempo de 1ª ordem (distinta do torque $\tau$, Cap. 8) & s & 6 \\
-	$Nu$ & Número de Nusselt ($hL/k$) & adimensional & 5 \\
-	$Pr$ & Número de Prandtl & adimensional & 5 \\
-	$Bi$ & Número de Biot ($hL_c/k$) & adimensional & 5 \\
-	$L_c$ & Comprimento característico (transiente) & m & 5 \\
-	$U$ (latino) & Coeficiente global de transferência de calor (não confundir com $U$, incerteza, Cap. 9) & W\,m$^{-2}$\,K$^{-1}$ & 5 \\
-	$\Delta T_{ml}$ & Diferença média logarítmica de temperatura & K & 5 \\
-	$F$ & Fator de correção da LMTD (multipassagem/crossflow) & adimensional & 5 \\
-	$C_{min}$, $C_{max}$ & Capacitâncias térmicas do trocador ($\dot m c_p$) & W\,K$^{-1}$ & 5 \\
-	$C_r$ & Razão de capacitâncias ($C_{min}/C_{max}$) & adimensional & 5 \\
-	$NTU$ & Número de unidades de transferência ($UA/C_{min}$) & adimensional & 5 \\
-	$R_f$ & Fator de incrustação (fouling) & m$^2$\,K\,W$^{-1}$ & 5 \\
-	$T_s$, $T_\infty$ & Temperatura da superfície e do fluido distante & K & 5 \\ \bottomrule
-\end{longtable}
-
-\subsection*{Grandezas Elétricas e de Instrumentação}
-\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
-	\toprule
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
-	\endhead
-	$V$ & Tensão elétrica & V & 7 \\
-	$I$ & Corrente elétrica (não confundir com o momento de inércia, $J_p$, Cap. 8) & A & 7 \\
-	$R$ (latino) & Resistência elétrica & $\Omega$ & 7 \\
-	$Z$ (latino) & Impedância elétrica & $\Omega$ & 7 \\
-	$P_{el}$ & Potência elétrica ativa & W & 7 \\
-	$Q_{el}$ & Potência elétrica reativa & var & 7 \\
-	$S_{el}$ & Potência elétrica aparente & VA & 7 \\
-	$\cos\varphi$ & Fator de potência (de deslocamento) & adimensional & 7 \\
-	$\mathrm{THD}_i$ & Distorção harmônica total de corrente & adimensional & 7 \\
-	$f$ & Frequência elétrica/rotativa & Hz & 7, 8 \\
-	$\omega = 2\pi f$ & Frequência angular & rad\,s$^{-1}$ & 7, 8 \\
-	$\rho_q$ & Densidade volumétrica de carga & C\,m$^{-3}$ & 7 \\
-	$\rho_e$ & Resistividade elétrica (não confundir com $\rho_q$, densidade de carga, nem com $\rho$, massa específica) & $\Omega$\,m & 7 \\
-	$\mathbf{J}$ & Densidade de corrente (não confundir com $J$, jacobiano, Cap. 2, nem $J_p$, Cap. 8) & A\,m$^{-2}$ & 7 \\
-	$\mathbf{E}$ & Campo elétrico (não confundir com $E$, módulo de Young, nem $\mathbf{E}_L$, Cap. 2) & V\,m$^{-1}$ & 7 \\
-	$\mathbf{D}$ & Deslocamento elétrico & C\,m$^{-2}$ & 7 \\
-	$\mathbf{B}$, $\hat{B}$ & Indução magnética e sua amplitude & T & 7 \\
-	$\mathbf{H}$ & Campo magnético & A\,m$^{-1}$ & 7 \\
-	$\sigma_e$ & Condutividade elétrica (não confundir com $\boldsymbol{\sigma}$, tensão, Cap. 2) & S\,m$^{-1}$ & 7 \\
-	$\varepsilon_e$ & Permissividade elétrica (não confundir com a deformação, Cap. 2, nem com a efetividade, Cap. 5) & F\,m$^{-1}$ & 7 \\
-	$\mu_m$, $\mu_0$ & Permeabilidade magnética do meio e do vácuo (não confundir com $\mu$, viscosidade) & H\,m$^{-1}$ & 7 \\
-	$\lambda$, $\hat{\Phi}$ & Fluxo concatenado e fluxo por polo (não confundir com $\lambda_L$, $\lambda_v$, Cap. 2) & Wb & 7 \\
-	$\lambda_{em}$ & Comprimento de onda eletromagnético & m & 7 \\
-	$\delta_p$ & Profundidade pelicular & m & 7 \\
-	$p$ & Número de polos do enrolamento (não confundir com $p$, pressão, Cap. 3) & adimensional & 7 \\
-	$n_s$, $s$ & Velocidade síncrona e escorregamento (este $s$ não é a entropia específica, Cap. 3) & rpm, adimensional & 7 \\
-	$\tau_{em}$ & Torque eletromagnético & N\,m & 7, 8 \\
-	$P_{ag}$ & Potência de entreferro & W & 7 \\
-	$P_{fe}$ & Perda no núcleo (ferro) & W & 7 \\
-	$\eta_{mot}$ & Rendimento do motor & adimensional & 7 \\
-	$v_{cm}$ & Tensão de modo comum & V & 7 \\
-	$U$ & Incerteza expandida da medição & unidade da grandeza & 9 \\
-	$k$ (cobertura) & Fator de cobertura da incerteza & adimensional & 9 \\
-	$\sigma_x$ & Desvio padrão experimental & unidade da grandeza & 9 \\ \bottomrule
-\end{longtable}
-
-\subsection*{Grandezas de Psicrometria e Transferência de Massa}
-\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
-	\toprule
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
-	\endhead
-	$W$ & Razão de umidade (massa de vapor/massa de ar seco) & kg\,kg$^{-1}$ & 6, 11 \\
-	$\phi$ & Umidade relativa & adimensional & 11 \\
-	$P_{\text{sat}}$ & Pressão de saturação do vapor d'água & Pa & 11 \\
-	$T_{dp}$ & Ponto de orvalho & K, $^{\circ}$C & 11 \\
-	$h_{fg}$ & Entalpia de vaporização do água & J\,kg$^{-1}$ & 11, 17 \\
-	$c_{p,\text{úmido}}$ & Calor específico do ar úmido & J\,kg$^{-1}$\,K$^{-1}$ & 11 \\
-	$D_{AB}$ & Coeficiente de difusão mássica & m$^2$\,s$^{-1}$ & 11 \\
-	$q_{eq}$ & Capacidade de equilíbrio de adsorção & kg\,kg$^{-1}$ & 11 \\ \bottomrule
-\end{longtable}
-
-\subsection*{Grandezas de Escoamento Compressível}
-\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
-	\toprule
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
-	\endhead
-	$Ma$ & Número de Mach & adimensional & 4, 12 \\
-	$a$ & Velocidade do som no meio & m\,s$^{-1}$ & 4, 12, 15 \\
-	$\Phi$ & Função de escoamento compressível & adimensional & 12 \\
-	$r$ & Razão de pressão crítica/normalizada & adimensional & 12 \\
-	$K$ & Coeficiente de perda localizada & adimensional & 12 \\
-	$k_p$ & Permeabilidade do meio poroso & m$^2$ & 4, 12 \\
-	$Re$ & Número de Reynolds (inércia/viscosidade) & adimensional & 4 \\
-	$f_D$ & Fator de atrito de Darcy & adimensional & 4 \\
-	$\zeta$ & Coeficiente de perda de carga localizada & adimensional & 4 \\
-	$\delta_{cl}$ & Espessura da camada limite (distinta da folga $\delta$ do Vol.~II) & m & 4 \\
-	$\varepsilon_r$ & Rugosidade absoluta de parede (não confundir com a deformação $\varepsilon$) & m & 4 \\ \bottomrule
-\end{longtable}
-
-\subsection*{Grandezas de Lubrificação e Tribologia}
-\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
-	\toprule
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
-	\endhead
-	$\mu$ & Viscosidade dinâmica (também em Mecânica dos Fluidos) & Pa\,s & 4, 13 \\
-	$\Lambda$ & Número de Sommerfeld & adimensional & 13 \\
-	$h_{\text{filme}}$ & Espessura de filme lubrificante & m & 13 \\
-	$p_{\text{Hertz}}$ & Pressão de contato de Hertz & Pa & 13 \\
-	$\tau$ & Tensão cisalhante no fluido & Pa & 13 \\ \bottomrule
-\end{longtable}
-
-\subsection*{Grandezas de Engrenagens e Rolamentos}
-\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
-	\toprule
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
-	\endhead
-	$m$ & Módulo da engrenagem & m & 14 \\
-	$z$ & Número de dentes & adimensional & 14 \\
-	$Y$ & Fator de forma de Lewis & adimensional & 14 \\
-	$P_r$ & Carga equivalente do rolamento & N & 14 \\
-	$C$ & Carga dinâmica nominal do rolamento & N & 14 \\
-	$L_{10h}$ & Vida nominal do rolamento em horas & h & 14 \\
-	$p_{\text{rol}}$ & Expoente de vida do rolamento & adimensional & 14 \\ \bottomrule
-\end{longtable}
-
-\subsection*{Grandezas de Rotordinâmica e Acústica}
-\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
-	\toprule
-	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
-	\endhead
-	$k_{\text{mancal}}$ & Rigidez do mancal & N\,m$^{-1}$ & 15 \\
-	$\omega_c$ & Velocidade crítica angular & rad\,s$^{-1}$ & 15 \\
-	$GMF$ & Frequência de engrenamento & Hz & 15 \\
-	$f_{bp}$ & Frequência de passagem de lóbulos & Hz & 15 \\
-	$f_H$ & Frequência de ressonância de Helmholtz & Hz & 15 \\ \bottomrule
-\end{longtable}
-
-} % fim small
 
 \newpage
 
@@ -373,6 +153,23 @@ ordem em negrito ($\boldsymbol{\sigma}$), e componentes indicadas por
 % CAPÍTULO 1 — INTRODUÇÃO
 %=============================================================================
 \section{Introdução ao Volume I}
+
+% >>> NOMENCLATURA-CAP 1 — GERADO por scripts/gerar_nomenclatura_por_capitulo.py
+\paragraph{Símbolos deste capítulo}\mbox{}\\[-0.5em]
+{\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{9.2cm} >{\raggedright\arraybackslash}p{2.6cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} \\ \midrule
+	\endhead
+	$\mathcal{B}$ & Grandeza extensiva genérica em balanço & conforme a grandeza \\
+	$\beta$ & Grandeza intensiva associada a $\mathcal{B}$ (por unidade de massa) & conforme a grandeza \\
+	\bottomrule
+\end{longtable}
+}
+% <<< NOMENCLATURA-CAP 1
+
+
+
 
 \subsection{Por que um volume de fundamentos}
 
@@ -703,6 +500,50 @@ ser válida.
 % CAPÍTULO 2 — MECÂNICA DO CONTÍNUO
 %=============================================================================
 \section{Mecânica do Contínuo}\label{sec:continuo}
+
+% >>> NOMENCLATURA-CAP 2 — GERADO por scripts/gerar_nomenclatura_por_capitulo.py
+\paragraph{Símbolos deste capítulo}\mbox{}\\[-0.5em]
+{\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{9.2cm} >{\raggedright\arraybackslash}p{2.6cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} \\ \midrule
+	\endhead
+	$\mathcal{B}$ & Grandeza extensiva genérica em balanço & conforme a grandeza \\
+	$\beta$ & Grandeza intensiva associada a $\mathcal{B}$ (por unidade de massa) & conforme a grandeza \\
+	$\mathbf{j}_\beta$ & Fluxo não convectivo de $\mathcal{B}$ & conforme a grandeza \\
+	$\dot{\mathcal{G}}_\beta$ & Taxa de geração volumétrica de $\mathcal{B}$ & conforme a grandeza \\
+	$\mathrm{Kn}$ & Número de Knudsen & adimensional \\
+	$\mathbf{F}$ & Gradiente de deformação (não confundir com força $\mathbf{F}$, Caps. 6 e 8) & adimensional \\
+	$J$ & Jacobiano da deformação, $\det\mathbf{F}$ & adimensional \\
+	$\mathbf{C}$ & Tensor de Cauchy-Green à direita & adimensional \\
+	$\mathbf{E}_L$ & Tensor de deformação de Green-Lagrange (não confundir com $E$, módulo de Young) & adimensional \\
+	$\mathbf{S}$ & Tensor taxa de deformação & s$^{-1}$ \\
+	$\mathbf{W}$ & Tensor taxa de rotação, ou spin (não confundir com $W$, razão de umidade) & s$^{-1}$ \\
+	$\mathbf{t}_{(\mathbf{n})}$ & Vetor tensão sobre superfície de normal $\mathbf{n}$ & Pa \\
+	$\lambda_L$ & Primeira constante de Lamé & Pa \\
+	$\lambda_v$ & Segunda viscosidade (viscosidade volumétrica) & Pa\,s \\
+	$\sigma_{VM}$ & Tensão equivalente de von Mises & Pa \\
+	$\mathbf{u}$ & Vetor deslocamento & m \\
+	$\boldsymbol{\varepsilon}$ & Tensor deformação infinitesimal & adimensional \\
+	$\boldsymbol{\sigma}$ & Tensor tensão de Cauchy & Pa \\
+	$\rho$ & Massa específica & kg\,m$^{-3}$ \\
+	$\mathbf{v}$ & Vetor velocidade do material & m\,s$^{-1}$ \\
+	$\mathbf{a}$ & Vetor aceleração & m\,s$^{-2}$ \\
+	$\boldsymbol{\omega}$ & Vetor velocidade angular & rad\,s$^{-1}$ \\
+	$E$ & Módulo de elasticidade (Young) & Pa \\
+	$\nu$ & Coeficiente de Poisson & adimensional \\
+	$G$ & Módulo de cisalhamento (= segunda constante de Lamé) & Pa \\
+	$\mu$ & Viscosidade dinâmica & Pa\,s \\
+	$\mathbf{g}$ & Aceleração da gravidade & m\,s$^{-2}$ \\
+	$P$ & Pressão absoluta & Pa, bar \\
+	$\dot{W}$ & Potência (trabalho por unidade de tempo) & W \\
+	\bottomrule
+\end{longtable}
+}
+% <<< NOMENCLATURA-CAP 2
+
+
+
 
 Este capítulo estabelece a linguagem comum de todo o volume. Os capítulos
 seguintes não introduzem física nova: eles especializam o que está aqui,
@@ -1529,6 +1370,44 @@ Condução de calor & $\mathbf{q} = -k\nabla T$ & $k$ & Isotropia, meio sem mem�
 %=============================================================================
 \section{Termodinâmica}\label{sec:termodinamica}
 
+% >>> NOMENCLATURA-CAP 3 — GERADO por scripts/gerar_nomenclatura_por_capitulo.py
+\paragraph{Símbolos deste capítulo}\mbox{}\\[-0.5em]
+{\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{9.2cm} >{\raggedright\arraybackslash}p{2.6cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} \\ \midrule
+	\endhead
+	$T$ & Temperatura termodinâmica & K \\
+	$v$ (minúscula) & Volume específico & m$^3$\,kg$^{-1}$ \\
+	$u$ (minúscula) & Energia interna específica & J\,kg$^{-1}$ \\
+	$h$ (minúscula) & Entalpia específica & J\,kg$^{-1}$ \\
+	$s$ (minúscula) & Entropia específica & J\,kg$^{-1}$\,K$^{-1}$ \\
+	$q$ & Calor por unidade de massa & J\,kg$^{-1}$ \\
+	$w$ & Trabalho por unidade de massa & J\,kg$^{-1}$ \\
+	$c_p$ & Calor específico a pressão constante & J\,kg$^{-1}$\,K$^{-1}$ \\
+	$c_v$ & Calor específico a volume constante & J\,kg$^{-1}$\,K$^{-1}$ \\
+	$\gamma$ & Razão de calores específicos ($c_p/c_v$) & adimensional \\
+	$\Pi$ & Razão de pressão, $p_2/p_1$ & adimensional \\
+	$n$ & Índice politrópico (não confundir com a normal $\mathbf{n}$, Cap. 2) & adimensional \\
+	$\eta_{is}$ & Rendimento isentrópico & adimensional \\
+	$\eta_p$ & Rendimento politrópico & adimensional \\
+	$\eta_{ex}$ & Rendimento exergético & adimensional \\
+	$Z_c$ & Fator de compressibilidade (não confundir com $Z$, impedância, Cap. 7) & adimensional \\
+	$\psi$ & Exergia específica de fluxo & J\,kg$^{-1}$ \\
+	$\dot{S}_{gen}$ & Taxa de geração de entropia & W\,K$^{-1}$ \\
+	$\dot{E}_d$ & Taxa de destruição de exergia & W \\
+	$T_0$, $p_0$ & Temperatura e pressão do ambiente de referência & K, Pa \\
+	$R$ & Constante específica do gás & J\,kg$^{-1}$\,K$^{-1}$ \\
+	$\dot{Q}$ & Taxa de transferência de calor & W \\
+	$\dot{W}$ & Potência (trabalho por unidade de tempo) & W \\
+	\bottomrule
+\end{longtable}
+}
+% <<< NOMENCLATURA-CAP 3
+
+
+
+
 O Capítulo~\ref{sec:continuo} chegou a duas equações de campo --- o balanço de
 energia, Equação~\eqref{eq:v1-c2-25}, e o de entropia,
 Equação~\eqref{eq:v1-c2-26} --- que valem ponto a ponto e não mencionam
@@ -2088,6 +1967,37 @@ Gouy-Stodola & \eqref{eq:v1-c3-28} & Ambiente de referência fixo ($T_0$, $p_0$)
 %=============================================================================
 \section{Mecânica dos Fluidos}\label{sec:fluidos}
 
+% >>> NOMENCLATURA-CAP 4 — GERADO por scripts/gerar_nomenclatura_por_capitulo.py
+\paragraph{Símbolos deste capítulo}\mbox{}\\[-0.5em]
+{\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{9.2cm} >{\raggedright\arraybackslash}p{2.6cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} \\ \midrule
+	\endhead
+	$\mathbf{S}$ & Tensor taxa de deformação & s$^{-1}$ \\
+	$\mathbf{v}$ & Vetor velocidade do material & m\,s$^{-1}$ \\
+	$\mu$ & Viscosidade dinâmica & Pa\,s \\
+	$\nu_k$ & Viscosidade cinemática & m$^2$\,s$^{-1}$ \\
+	$\mathbf{g}$ & Aceleração da gravidade & m\,s$^{-2}$ \\
+	$\gamma$ & Razão de calores específicos ($c_p/c_v$) & adimensional \\
+	$R$ & Constante específica do gás & J\,kg$^{-1}$\,K$^{-1}$ \\
+	$Ma$ & Número de Mach & adimensional \\
+	$a$ & Velocidade do som no meio & m\,s$^{-1}$ \\
+	$k_p$ & Permeabilidade do meio poroso & m$^2$ \\
+	$Re$ & Número de Reynolds (inércia/viscosidade) & adimensional \\
+	$f_D$ & Fator de atrito de Darcy & adimensional \\
+	$\zeta$ & Coeficiente de perda de carga localizada & adimensional \\
+	$\delta_{cl}$ & Espessura da camada limite (distinta da folga $\delta$ do Vol.~II) & m \\
+	$\varepsilon_r$ & Rugosidade absoluta de parede (não confundir com a deformação $\varepsilon$) & m \\
+	$\mu$ & Viscosidade dinâmica (também em Mecânica dos Fluidos) & Pa\,s \\
+	\bottomrule
+\end{longtable}
+}
+% <<< NOMENCLATURA-CAP 4
+
+
+
+
 Este capítulo dá corpo à promessa da introdução: a mecânica dos fluidos é o
 balanço de quantidade de movimento do Capítulo~\ref{sec:continuo} fechado com
 uma relação constitutiva viscosa, e a termodinâmica do
@@ -2614,6 +2524,39 @@ Tabela~\ref{tab:v1-c4-2} existe para isso.
 % CAPÍTULO 5 — TRANSFERÊNCIA DE CALOR
 %=============================================================================
 \section{Transferência de Calor}\label{sec:calor}
+
+% >>> NOMENCLATURA-CAP 5 — GERADO por scripts/gerar_nomenclatura_por_capitulo.py
+\paragraph{Símbolos deste capítulo}\mbox{}\\[-0.5em]
+{\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{9.2cm} >{\raggedright\arraybackslash}p{2.6cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} \\ \midrule
+	\endhead
+	$T$ & Temperatura termodinâmica & K \\
+	$h$ (minúscula) & Entalpia específica & J\,kg$^{-1}$ \\
+	$c_p$ & Calor específico a pressão constante & J\,kg$^{-1}$\,K$^{-1}$ \\
+	$k$ & Condutividade térmica & W\,m$^{-1}$\,K$^{-1}$ \\
+	$h$ (latino) & Coeficiente de convecção de calor & W\,m$^{-2}$\,K$^{-1}$ \\
+	$\varepsilon$ (griego) & Efetividade de trocador de calor & adimensional \\
+	$Nu$ & Número de Nusselt ($hL/k$) & adimensional \\
+	$Pr$ & Número de Prandtl & adimensional \\
+	$Bi$ & Número de Biot ($hL_c/k$) & adimensional \\
+	$L_c$ & Comprimento característico (transiente) & m \\
+	$U$ (latino) & Coeficiente global de transferência de calor (não confundir com $U$, incerteza, Cap. 9) & W\,m$^{-2}$\,K$^{-1}$ \\
+	$\Delta T_{ml}$ & Diferença média logarítmica de temperatura & K \\
+	$F$ & Fator de correção da LMTD (multipassagem/crossflow) & adimensional \\
+	$C_{min}$, $C_{max}$ & Capacitâncias térmicas do trocador ($\dot m c_p$) & W\,K$^{-1}$ \\
+	$C_r$ & Razão de capacitâncias ($C_{min}/C_{max}$) & adimensional \\
+	$NTU$ & Número de unidades de transferência ($UA/C_{min}$) & adimensional \\
+	$R_f$ & Fator de incrustação (fouling) & m$^2$\,K\,W$^{-1}$ \\
+	$T_s$, $T_\infty$ & Temperatura da superfície e do fluido distante & K \\
+	\bottomrule
+\end{longtable}
+}
+% <<< NOMENCLATURA-CAP 5
+
+
+
 
 O Capítulo~\ref{sec:termodinamica} registrou o calor $\dot{Q}$ como uma das
 duas formas de energia em trânsito e fixou o que a primeira lei permite
@@ -3154,6 +3097,28 @@ Equação~\eqref{eq:v1-c5-16} & \ref{sub:v1-c5-trocadores} \\
 %=============================================================================
 \section{Sistemas de Transferência de Massa e Energia}\label{sec:sistemas}
 
+% >>> NOMENCLATURA-CAP 6 — GERADO por scripts/gerar_nomenclatura_por_capitulo.py
+\paragraph{Símbolos deste capítulo}\mbox{}\\[-0.5em]
+{\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{9.2cm} >{\raggedright\arraybackslash}p{2.6cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} \\ \midrule
+	\endhead
+	$\rho$ & Massa específica & kg\,m$^{-3}$ \\
+	$P$ & Pressão absoluta & Pa, bar \\
+	$\dot{Q}$ & Taxa de transferência de calor & W \\
+	$h_0$ & Entalpia de estagnação específica ($h_0 = h + v^2/2 + gz$) & J\,kg$^{-1}$ \\
+	$C_a$ & Capacitância de acúmulo (massa, energia ou carga por unidade de potencial) & unidade da grandeza \\
+	$\tau_a$ & Constante de tempo de 1ª ordem (distinta do torque $\tau$, Cap. 8) & s \\
+	$W$ & Razão de umidade (massa de vapor/massa de ar seco) & kg\,kg$^{-1}$ \\
+	\bottomrule
+\end{longtable}
+}
+% <<< NOMENCLATURA-CAP 6
+
+
+
+
 Este capítulo é onde os balanços dos capítulos anteriores se tornam contas.
 O Capítulo~\ref{sec:continuo} escreveu as leis de balanço na forma diferencial
 --- válida ponto a ponto --- e o Capítulo~\ref{sec:termodinamica} acrescentou
@@ -3555,6 +3520,53 @@ Tabela~\ref{tab:v1-c6-1} é o instrumento.
 % CAPÍTULO 7 — FUNDAMENTOS DE ELETRICIDADE
 %=============================================================================
 \section{Fundamentos de Eletricidade}\label{sec:eletrica}
+
+% >>> NOMENCLATURA-CAP 7 — GERADO por scripts/gerar_nomenclatura_por_capitulo.py
+\paragraph{Símbolos deste capítulo}\mbox{}\\[-0.5em]
+{\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{9.2cm} >{\raggedright\arraybackslash}p{2.6cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} \\ \midrule
+	\endhead
+	$\tau$ & Torque (não confundir com $T$, temperatura, Caps. 3--5) & N\,m \\
+	$V$ & Tensão elétrica & V \\
+	$I$ & Corrente elétrica (não confundir com o momento de inércia, $J_p$, Cap. 8) & A \\
+	$R$ (latino) & Resistência elétrica & $\Omega$ \\
+	$Z$ (latino) & Impedância elétrica & $\Omega$ \\
+	$P_{el}$ & Potência elétrica ativa & W \\
+	$Q_{el}$ & Potência elétrica reativa & var \\
+	$S_{el}$ & Potência elétrica aparente & VA \\
+	$\cos\varphi$ & Fator de potência (de deslocamento) & adimensional \\
+	$\mathrm{THD}_i$ & Distorção harmônica total de corrente & adimensional \\
+	$f$ & Frequência elétrica/rotativa & Hz \\
+	$\omega = 2\pi f$ & Frequência angular & rad\,s$^{-1}$ \\
+	$\rho_q$ & Densidade volumétrica de carga & C\,m$^{-3}$ \\
+	$\rho_e$ & Resistividade elétrica (não confundir com $\rho_q$, densidade de carga, nem com $\rho$, massa específica) & $\Omega$\,m \\
+	$\mathbf{J}$ & Densidade de corrente (não confundir com $J$, jacobiano, Cap. 2, nem $J_p$, Cap. 8) & A\,m$^{-2}$ \\
+	$\mathbf{E}$ & Campo elétrico (não confundir com $E$, módulo de Young, nem $\mathbf{E}_L$, Cap. 2) & V\,m$^{-1}$ \\
+	$\mathbf{D}$ & Deslocamento elétrico & C\,m$^{-2}$ \\
+	$\mathbf{B}$, $\hat{B}$ & Indução magnética e sua amplitude & T \\
+	$\mathbf{H}$ & Campo magnético & A\,m$^{-1}$ \\
+	$\sigma_e$ & Condutividade elétrica (não confundir com $\boldsymbol{\sigma}$, tensão, Cap. 2) & S\,m$^{-1}$ \\
+	$\varepsilon_e$ & Permissividade elétrica (não confundir com a deformação, Cap. 2, nem com a efetividade, Cap. 5) & F\,m$^{-1}$ \\
+	$\mu_m$, $\mu_0$ & Permeabilidade magnética do meio e do vácuo (não confundir com $\mu$, viscosidade) & H\,m$^{-1}$ \\
+	$\lambda$, $\hat{\Phi}$ & Fluxo concatenado e fluxo por polo (não confundir com $\lambda_L$, $\lambda_v$, Cap. 2) & Wb \\
+	$\lambda_{em}$ & Comprimento de onda eletromagnético & m \\
+	$\delta_p$ & Profundidade pelicular & m \\
+	$p$ & Número de polos do enrolamento (não confundir com $p$, pressão, Cap. 3) & adimensional \\
+	$n_s$, $s$ & Velocidade síncrona e escorregamento (este $s$ não é a entropia específica, Cap. 3) & rpm, adimensional \\
+	$\tau_{em}$ & Torque eletromagnético & N\,m \\
+	$P_{ag}$ & Potência de entreferro & W \\
+	$P_{fe}$ & Perda no núcleo (ferro) & W \\
+	$\eta_{mot}$ & Rendimento do motor & adimensional \\
+	$v_{cm}$ & Tensão de modo comum & V \\
+	\bottomrule
+\end{longtable}
+}
+% <<< NOMENCLATURA-CAP 7
+
+
+
 
 Os capítulos anteriores seguiram sempre a mesma construção: uma lei de balanço
 sobre uma fronteira, uma hipótese que autoriza tratar matéria discreta como
@@ -4650,6 +4662,33 @@ Degradação térmica do isolamento & Reflexão de onda e $\mathrm{d}v/\mathrm{d
 %=============================================================================
 \section{Fundamentos de Mecânica}\label{sec:mecanica}
 
+% >>> NOMENCLATURA-CAP 8 — GERADO por scripts/gerar_nomenclatura_por_capitulo.py
+\paragraph{Símbolos deste capítulo}\mbox{}\\[-0.5em]
+{\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{9.2cm} >{\raggedright\arraybackslash}p{2.6cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} \\ \midrule
+	\endhead
+	$\sigma_{VM}$ & Tensão equivalente de von Mises & Pa \\
+	$\mathbf{u}$ & Vetor deslocamento & m \\
+	$\mathbf{a}$ & Vetor aceleração & m\,s$^{-2}$ \\
+	$\boldsymbol{\omega}$ & Vetor velocidade angular & rad\,s$^{-1}$ \\
+	$E$ & Módulo de elasticidade (Young) & Pa \\
+	$\mathbf{g}$ & Aceleração da gravidade & m\,s$^{-2}$ \\
+	$J_p$ & Momento polar de inércia (não confundir com $J$, jacobiano, Cap. 2, nem $\mathbf{J}$, densidade de corrente, Cap. 7) & kg\,m$^2$ \\
+	$\tau$ & Torque (não confundir com $T$, temperatura, Caps. 3--5) & N\,m \\
+	$\dot{W}$ & Potência (trabalho por unidade de tempo) & W \\
+	$f$ & Frequência elétrica/rotativa & Hz \\
+	$\omega = 2\pi f$ & Frequência angular & rad\,s$^{-1}$ \\
+	$\tau_{em}$ & Torque eletromagnético & N\,m \\
+	\bottomrule
+\end{longtable}
+}
+% <<< NOMENCLATURA-CAP 8
+
+
+
+
 Este capítulo fecha a cadeia causal do volume: o Capítulo~\ref{sec:eletrica}
 terminou no torque eletromagnético $\tau_{em}$ que o motor entrega ao eixo, e
 é aqui que esse torque produz suas consequências --- aceleração, vibração e,
@@ -4999,6 +5038,24 @@ Vida de barras, parafusos e palhetas & Basquin e Miner & \ref{sub:v1-c8-fadiga} 
 %=============================================================================
 \section{Instrumentação e Medição}\label{sec:instrumentacao}
 
+% >>> NOMENCLATURA-CAP 9 — GERADO por scripts/gerar_nomenclatura_por_capitulo.py
+\paragraph{Símbolos deste capítulo}\mbox{}\\[-0.5em]
+{\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.6cm} >{\raggedright\arraybackslash}p{9.2cm} >{\raggedright\arraybackslash}p{2.6cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} \\ \midrule
+	\endhead
+	$U$ & Incerteza expandida da medição & unidade da grandeza \\
+	$k$ (cobertura) & Fator de cobertura da incerteza & adimensional \\
+	$\sigma_x$ & Desvio padrão experimental & unidade da grandeza \\
+	\bottomrule
+\end{longtable}
+}
+% <<< NOMENCLATURA-CAP 9
+
+
+
+
 \subsection{O papel da instrumentação}
 
 A instrumentação é o elo entre o modelo físico e o mundo real. Sem medições
@@ -5211,6 +5268,233 @@ Geitner~\cite{bloch2012}.
 
 
 %=============================================================================
+
+% --- ÍNDICE DE SÍMBOLOS (back matter: consulta e controle de colisão) ---
+\clearpage
+\section*{Índice de Símbolos}
+\addcontentsline{toc}{section}{Índice de Símbolos}
+\markboth{Índice de Símbolos}{}
+
+A tabela abaixo reúne os símbolos de uso transversal neste volume. Símbolos
+específicos de cada capítulo são definidos localmente. A notação vetorial e
+tensorial segue a convenção usual da mecânica do contínuo: vetores em
+itálico com seta ($\vec{v}$) ou negrito ($\mathbf{v}$), tensores de segunda
+ordem em negrito ($\boldsymbol{\sigma}$), e componentes indicadas por
+índices ($v_i$, $\sigma_{ij}$).
+
+{\small
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
+
+\subsection*{Grandezas Mecânicas e do Contínuo}
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
+	\endhead
+	$\mathcal{B}$ & Grandeza extensiva genérica em balanço & conforme a grandeza & 1, 2 \\
+	$\beta$ & Grandeza intensiva associada a $\mathcal{B}$ (por unidade de massa) & conforme a grandeza & 1, 2 \\
+	$\mathbf{j}_\beta$ & Fluxo não convectivo de $\mathcal{B}$ & conforme a grandeza & 2 \\
+	$\dot{\mathcal{G}}_\beta$ & Taxa de geração volumétrica de $\mathcal{B}$ & conforme a grandeza & 2 \\
+	$\mathrm{Kn}$ & Número de Knudsen & adimensional & 2 \\
+	$\mathbf{F}$ & Gradiente de deformação (não confundir com força $\mathbf{F}$, Caps. 6 e 8) & adimensional & 2 \\
+	$J$ & Jacobiano da deformação, $\det\mathbf{F}$ & adimensional & 2 \\
+	$\mathbf{C}$ & Tensor de Cauchy-Green à direita & adimensional & 2 \\
+	$\mathbf{E}_L$ & Tensor de deformação de Green-Lagrange (não confundir com $E$, módulo de Young) & adimensional & 2 \\
+	$\mathbf{S}$ & Tensor taxa de deformação & s$^{-1}$ & 2, 4 \\
+	$\mathbf{W}$ & Tensor taxa de rotação, ou spin (não confundir com $W$, razão de umidade) & s$^{-1}$ & 2 \\
+	$\mathbf{t}_{(\mathbf{n})}$ & Vetor tensão sobre superfície de normal $\mathbf{n}$ & Pa & 2 \\
+	$\lambda_L$ & Primeira constante de Lamé & Pa & 2 \\
+	$\lambda_v$ & Segunda viscosidade (viscosidade volumétrica) & Pa\,s & 2 \\
+	$\sigma_{VM}$ & Tensão equivalente de von Mises & Pa & 2, 8 \\
+	$\mathbf{u}$ & Vetor deslocamento & m & 2, 8 \\
+	$\boldsymbol{\varepsilon}$ & Tensor deformação infinitesimal & adimensional & 2 \\
+	$\boldsymbol{\sigma}$ & Tensor tensão de Cauchy & Pa & 2 \\
+	$\rho$ & Massa específica & kg\,m$^{-3}$ & 2--6 \\
+	$\mathbf{v}$ & Vetor velocidade do material & m\,s$^{-1}$ & 2--4 \\
+	$\mathbf{a}$ & Vetor aceleração & m\,s$^{-2}$ & 2, 8 \\
+	$\boldsymbol{\omega}$ & Vetor velocidade angular & rad\,s$^{-1}$ & 2, 8 \\
+	$E$ & Módulo de elasticidade (Young) & Pa & 2, 8 \\
+	$\nu$ & Coeficiente de Poisson & adimensional & 2 \\
+	$G$ & Módulo de cisalhamento (= segunda constante de Lamé) & Pa & 2 \\
+	$\mu$ & Viscosidade dinâmica & Pa\,s & 2, 4 \\
+	$\nu_k$ & Viscosidade cinemática & m$^2$\,s$^{-1}$ & 4 \\
+	$\mathbf{g}$ & Aceleração da gravidade & m\,s$^{-2}$ & 2, 4, 8 \\
+	$J_p$ & Momento polar de inércia (não confundir com $J$, jacobiano, Cap. 2, nem $\mathbf{J}$, densidade de corrente, Cap. 7) & kg\,m$^2$ & 8 \\
+	$\tau$ & Torque (não confundir com $T$, temperatura, Caps. 3--5) & N\,m & 7, 8 \\ \bottomrule
+\end{longtable}
+
+\subsection*{Grandezas Termodinâmicas e de Transferência}
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
+	\endhead
+	$T$ & Temperatura termodinâmica & K & 3--5 \\
+	$P$ & Pressão absoluta & Pa, bar & 2--6 \\
+	$v$ (minúscula) & Volume específico & m$^3$\,kg$^{-1}$ & 3 \\
+	$u$ (minúscula) & Energia interna específica & J\,kg$^{-1}$ & 3 \\
+	$h$ (minúscula) & Entalpia específica & J\,kg$^{-1}$ & 3--5 \\
+	$s$ (minúscula) & Entropia específica & J\,kg$^{-1}$\,K$^{-1}$ & 3 \\
+	$q$ & Calor por unidade de massa & J\,kg$^{-1}$ & 3 \\
+	$w$ & Trabalho por unidade de massa & J\,kg$^{-1}$ & 3 \\
+	$c_p$ & Calor específico a pressão constante & J\,kg$^{-1}$\,K$^{-1}$ & 3--5 \\
+	$c_v$ & Calor específico a volume constante & J\,kg$^{-1}$\,K$^{-1}$ & 3 \\
+	$\gamma$ & Razão de calores específicos ($c_p/c_v$) & adimensional & 3, 4 \\
+	$\Pi$ & Razão de pressão, $p_2/p_1$ & adimensional & 3 \\
+	$n$ & Índice politrópico (não confundir com a normal $\mathbf{n}$, Cap. 2) & adimensional & 3 \\
+	$\eta_{is}$ & Rendimento isentrópico & adimensional & 3 \\
+	$\eta_p$ & Rendimento politrópico & adimensional & 3 \\
+	$\eta_{ex}$ & Rendimento exergético & adimensional & 3 \\
+	$Z_c$ & Fator de compressibilidade (não confundir com $Z$, impedância, Cap. 7) & adimensional & 3 \\
+	$\psi$ & Exergia específica de fluxo & J\,kg$^{-1}$ & 3 \\
+	$\dot{S}_{gen}$ & Taxa de geração de entropia & W\,K$^{-1}$ & 3 \\
+	$\dot{E}_d$ & Taxa de destruição de exergia & W & 3 \\
+	$T_0$, $p_0$ & Temperatura e pressão do ambiente de referência & K, Pa & 3 \\
+	$R$ & Constante específica do gás & J\,kg$^{-1}$\,K$^{-1}$ & 3, 4 \\
+	$\dot{Q}$ & Taxa de transferência de calor & W & 3--6 \\
+	$\dot{W}$ & Potência (trabalho por unidade de tempo) & W & 2, 3, 8 \\
+	$k$ & Condutividade térmica & W\,m$^{-1}$\,K$^{-1}$ & 5 \\
+	$h$ (latino) & Coeficiente de convecção de calor & W\,m$^{-2}$\,K$^{-1}$ & 5 \\
+	$\varepsilon$ (griego) & Efetividade de trocador de calor & adimensional & 5 \\
+	$h_0$ & Entalpia de estagnação específica ($h_0 = h + v^2/2 + gz$) & J\,kg$^{-1}$ & 6 \\
+	$C_a$ & Capacitância de acúmulo (massa, energia ou carga por unidade de potencial) & unidade da grandeza & 6 \\
+	$\tau_a$ & Constante de tempo de 1ª ordem (distinta do torque $\tau$, Cap. 8) & s & 6 \\
+	$Nu$ & Número de Nusselt ($hL/k$) & adimensional & 5 \\
+	$Pr$ & Número de Prandtl & adimensional & 5 \\
+	$Bi$ & Número de Biot ($hL_c/k$) & adimensional & 5 \\
+	$L_c$ & Comprimento característico (transiente) & m & 5 \\
+	$U$ (latino) & Coeficiente global de transferência de calor (não confundir com $U$, incerteza, Cap. 9) & W\,m$^{-2}$\,K$^{-1}$ & 5 \\
+	$\Delta T_{ml}$ & Diferença média logarítmica de temperatura & K & 5 \\
+	$F$ & Fator de correção da LMTD (multipassagem/crossflow) & adimensional & 5 \\
+	$C_{min}$, $C_{max}$ & Capacitâncias térmicas do trocador ($\dot m c_p$) & W\,K$^{-1}$ & 5 \\
+	$C_r$ & Razão de capacitâncias ($C_{min}/C_{max}$) & adimensional & 5 \\
+	$NTU$ & Número de unidades de transferência ($UA/C_{min}$) & adimensional & 5 \\
+	$R_f$ & Fator de incrustação (fouling) & m$^2$\,K\,W$^{-1}$ & 5 \\
+	$T_s$, $T_\infty$ & Temperatura da superfície e do fluido distante & K & 5 \\ \bottomrule
+\end{longtable}
+
+\subsection*{Grandezas Elétricas e de Instrumentação}
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
+	\endhead
+	$V$ & Tensão elétrica & V & 7 \\
+	$I$ & Corrente elétrica (não confundir com o momento de inércia, $J_p$, Cap. 8) & A & 7 \\
+	$R$ (latino) & Resistência elétrica & $\Omega$ & 7 \\
+	$Z$ (latino) & Impedância elétrica & $\Omega$ & 7 \\
+	$P_{el}$ & Potência elétrica ativa & W & 7 \\
+	$Q_{el}$ & Potência elétrica reativa & var & 7 \\
+	$S_{el}$ & Potência elétrica aparente & VA & 7 \\
+	$\cos\varphi$ & Fator de potência (de deslocamento) & adimensional & 7 \\
+	$\mathrm{THD}_i$ & Distorção harmônica total de corrente & adimensional & 7 \\
+	$f$ & Frequência elétrica/rotativa & Hz & 7, 8 \\
+	$\omega = 2\pi f$ & Frequência angular & rad\,s$^{-1}$ & 7, 8 \\
+	$\rho_q$ & Densidade volumétrica de carga & C\,m$^{-3}$ & 7 \\
+	$\rho_e$ & Resistividade elétrica (não confundir com $\rho_q$, densidade de carga, nem com $\rho$, massa específica) & $\Omega$\,m & 7 \\
+	$\mathbf{J}$ & Densidade de corrente (não confundir com $J$, jacobiano, Cap. 2, nem $J_p$, Cap. 8) & A\,m$^{-2}$ & 7 \\
+	$\mathbf{E}$ & Campo elétrico (não confundir com $E$, módulo de Young, nem $\mathbf{E}_L$, Cap. 2) & V\,m$^{-1}$ & 7 \\
+	$\mathbf{D}$ & Deslocamento elétrico & C\,m$^{-2}$ & 7 \\
+	$\mathbf{B}$, $\hat{B}$ & Indução magnética e sua amplitude & T & 7 \\
+	$\mathbf{H}$ & Campo magnético & A\,m$^{-1}$ & 7 \\
+	$\sigma_e$ & Condutividade elétrica (não confundir com $\boldsymbol{\sigma}$, tensão, Cap. 2) & S\,m$^{-1}$ & 7 \\
+	$\varepsilon_e$ & Permissividade elétrica (não confundir com a deformação, Cap. 2, nem com a efetividade, Cap. 5) & F\,m$^{-1}$ & 7 \\
+	$\mu_m$, $\mu_0$ & Permeabilidade magnética do meio e do vácuo (não confundir com $\mu$, viscosidade) & H\,m$^{-1}$ & 7 \\
+	$\lambda$, $\hat{\Phi}$ & Fluxo concatenado e fluxo por polo (não confundir com $\lambda_L$, $\lambda_v$, Cap. 2) & Wb & 7 \\
+	$\lambda_{em}$ & Comprimento de onda eletromagnético & m & 7 \\
+	$\delta_p$ & Profundidade pelicular & m & 7 \\
+	$p$ & Número de polos do enrolamento (não confundir com $p$, pressão, Cap. 3) & adimensional & 7 \\
+	$n_s$, $s$ & Velocidade síncrona e escorregamento (este $s$ não é a entropia específica, Cap. 3) & rpm, adimensional & 7 \\
+	$\tau_{em}$ & Torque eletromagnético & N\,m & 7, 8 \\
+	$P_{ag}$ & Potência de entreferro & W & 7 \\
+	$P_{fe}$ & Perda no núcleo (ferro) & W & 7 \\
+	$\eta_{mot}$ & Rendimento do motor & adimensional & 7 \\
+	$v_{cm}$ & Tensão de modo comum & V & 7 \\
+	$U$ & Incerteza expandida da medição & unidade da grandeza & 9 \\
+	$k$ (cobertura) & Fator de cobertura da incerteza & adimensional & 9 \\
+	$\sigma_x$ & Desvio padrão experimental & unidade da grandeza & 9 \\ \bottomrule
+\end{longtable}
+
+\subsection*{Grandezas de Psicrometria e Transferência de Massa}
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
+	\endhead
+	$W$ & Razão de umidade (massa de vapor/massa de ar seco) & kg\,kg$^{-1}$ & 6, 11 \\
+	$\phi$ & Umidade relativa & adimensional & 11 \\
+	$P_{\text{sat}}$ & Pressão de saturação do vapor d'água & Pa & 11 \\
+	$T_{dp}$ & Ponto de orvalho & K, $^{\circ}$C & 11 \\
+	$h_{fg}$ & Entalpia de vaporização do água & J\,kg$^{-1}$ & 11, 17 \\
+	$c_{p,\text{úmido}}$ & Calor específico do ar úmido & J\,kg$^{-1}$\,K$^{-1}$ & 11 \\
+	$D_{AB}$ & Coeficiente de difusão mássica & m$^2$\,s$^{-1}$ & 11 \\
+	$q_{eq}$ & Capacidade de equilíbrio de adsorção & kg\,kg$^{-1}$ & 11 \\ \bottomrule
+\end{longtable}
+
+\subsection*{Grandezas de Escoamento Compressível}
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
+	\endhead
+	$Ma$ & Número de Mach & adimensional & 4, 12 \\
+	$a$ & Velocidade do som no meio & m\,s$^{-1}$ & 4, 12, 15 \\
+	$\Phi$ & Função de escoamento compressível & adimensional & 12 \\
+	$r$ & Razão de pressão crítica/normalizada & adimensional & 12 \\
+	$K$ & Coeficiente de perda localizada & adimensional & 12 \\
+	$k_p$ & Permeabilidade do meio poroso & m$^2$ & 4, 12 \\
+	$Re$ & Número de Reynolds (inércia/viscosidade) & adimensional & 4 \\
+	$f_D$ & Fator de atrito de Darcy & adimensional & 4 \\
+	$\zeta$ & Coeficiente de perda de carga localizada & adimensional & 4 \\
+	$\delta_{cl}$ & Espessura da camada limite (distinta da folga $\delta$ do Vol.~II) & m & 4 \\
+	$\varepsilon_r$ & Rugosidade absoluta de parede (não confundir com a deformação $\varepsilon$) & m & 4 \\ \bottomrule
+\end{longtable}
+
+\subsection*{Grandezas de Lubrificação e Tribologia}
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
+	\endhead
+	$\mu$ & Viscosidade dinâmica (também em Mecânica dos Fluidos) & Pa\,s & 4, 13 \\
+	$\Lambda$ & Número de Sommerfeld & adimensional & 13 \\
+	$h_{\text{filme}}$ & Espessura de filme lubrificante & m & 13 \\
+	$p_{\text{Hertz}}$ & Pressão de contato de Hertz & Pa & 13 \\
+	$\tau$ & Tensão cisalhante no fluido & Pa & 13 \\ \bottomrule
+\end{longtable}
+
+\subsection*{Grandezas de Engrenagens e Rolamentos}
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
+	\endhead
+	$m$ & Módulo da engrenagem & m & 14 \\
+	$z$ & Número de dentes & adimensional & 14 \\
+	$Y$ & Fator de forma de Lewis & adimensional & 14 \\
+	$P_r$ & Carga equivalente do rolamento & N & 14 \\
+	$C$ & Carga dinâmica nominal do rolamento & N & 14 \\
+	$L_{10h}$ & Vida nominal do rolamento em horas & h & 14 \\
+	$p_{\text{rol}}$ & Expoente de vida do rolamento & adimensional & 14 \\ \bottomrule
+\end{longtable}
+
+\subsection*{Grandezas de Rotordinâmica e Acústica}
+\begin{longtable}{>{\raggedright\arraybackslash}p{2.8cm} >{\raggedright\arraybackslash}p{6.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.8cm}}
+	\toprule
+	\textbf{Símbolo} & \textbf{Significado} & \textbf{Unidade} & \textbf{Capítulos} \\ \midrule
+	\endhead
+	$k_{\text{mancal}}$ & Rigidez do mancal & N\,m$^{-1}$ & 15 \\
+	$\omega_c$ & Velocidade crítica angular & rad\,s$^{-1}$ & 15 \\
+	$GMF$ & Frequência de engrenamento & Hz & 15 \\
+	$f_{bp}$ & Frequência de passagem de lóbulos & Hz & 15 \\
+	$f_H$ & Frequência de ressonância de Helmholtz & Hz & 15 \\ \bottomrule
+\end{longtable}
+
+% --- LISTAS DE FIGURAS E TABELAS (back matter: material de consulta) ---
+\clearpage
+\phantomsection
+\addcontentsline{toc}{section}{Lista de Figuras}
+\listoffigures
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{section}{Lista de Tabelas}
+\listoftables
+
 % BIBLIOGRAFIA
 %=============================================================================
 \newpage
