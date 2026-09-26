@@ -5,6 +5,8 @@
 *.toc
 *.lof
 *.lot
+*.bbl
+*.blg
 *.nav
 *.snm
 
@@ -22,6 +24,7 @@ aplicativo/iniciar_simulador.desktop
 
 # Configuração local do Claude Code (pessoal, não compartilhada)
 .claude/settings.local.json
+.claude/RESUME.md
 
 # Ferramentas locais baixadas (binários grandes, específicos da máquina).
 # .tools/ guarda o binário do tectonic (~60 MB) e o tarball de instalação
