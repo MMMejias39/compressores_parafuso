@@ -155,115 +155,53 @@ também em "Pendências conhecidas" para não se perderem:
 
 ## Convenções já estabelecidas no documento (siga-as, não reinvente)
 
-- **Numeração**: equações, tabelas e figuras são numeradas por capítulo via
-  `\numberwithin{...}{section}` (ex.: `eq:s5-13` = 5ª equação do Capítulo 5 → aparece
-  como (5.13) no texto). Sempre referencie pelo número usando `\eqref{}`/`\ref{}`,
-  nunca hardcode o número.
-- **Notação**: o alfabeto grego já está ~90% saturado (γ,δ,ε,ζ,η,θ,λ,μ,ν,ξ,π,ρ,σ,τ,φ,ω
-  todos em uso). Antes de introduzir um símbolo novo, verifique a tabela de
-  Nomenclatura (logo após o Sumário) para não colidir com um símbolo já usado com
-  outro significado em outro capítulo.
-- **"Diretriz Técnica Final"**: todo capítulo técnico e anexo termina com um bloco
-  padronizado `\textbf{Diretriz Técnica Final:} ...` — uma consequência prática do
-  conteúdo do capítulo para o funcionamento do Gêmeo Digital. Mantenha esse padrão em
-  qualquer capítulo novo.
-- **Explicação antes da equação, com o número citado**: toda equação deve ser
-  precedida de um parágrafo didático explicando o que ela representa e o
-  significado de cada termo — não apresente equações "cruas". **Isso inclui citar
-  o próprio número da equação via `\eqref{eq:sC-N}` no parágrafo que a antecede**,
-  exatamente a mesma disciplina já exigida abaixo para figuras e tabelas (ex.:
-  "A Equação~`\eqref{eq:s5-5}` calcula..." antes do `\begin{equation}`, não só
-  depois). Um parágrafo que apenas *explica o conceito* sem citar o número não
-  satisfaz esta regra — o objetivo é que o leitor já saiba "isto é a Equação X.Y"
-  antes de encontrá-la, igual já acontece com toda figura/tabela do documento.
-  **Achado em 15/08/2026**: uma varredura programática (contar, para cada
-  `\label{eq:sC-N}`, se `\eqref{eq:sC-N}` aparece no texto imediatamente anterior)
-  achou 110 das então 208 equações (53%) sem essa citação prévia — o padrão mais
-  comum era um item de `itemize` com `\textbf{Nome do Conceito:}` seguido de frase
-  explicativa, mas sem o `\eqref{}` de si mesma. Corrigido na mesma sessão (ver
-  entrada de log correspondente mais abaixo). **Regra permanente daqui em diante**:
-  toda equação nova precisa desse `\eqref{}` de si mesma no parágrafo anterior,
-  mesmo quando já introduzida por um título em negrito de item de lista.
-- **Figuras**: cada figura tem `\label{fig:C-N}` (C = capítulo, N = sequencial) e é
-  antecedida por um parágrafo que a referencia via `Figura~\ref{fig:C-N}` antes de
-  aparecer.
-- **Tabelas**: mesma regra das figuras — `\label{tab:C-N}` e um parágrafo que a
-  referencia por `Tabela~\ref{tab:C-N}` antes de ela aparecer, nunca "a tabela
-  abaixo" (padronizado em 29/07/2026 nas 15 tabelas do livro).
-- **Aspas**: sempre `` `` `` e `''`, **nunca** `"` reto — o babel-portuguese
-  torna `"` um caractere ativo que engole o espaço seguinte (ver "Aspas retas
-  quebram o espaçamento" mais abaixo). Exceção: dentro de `verbatim`, onde as
-  aspas do código Python devem continuar literais.
-- **Estrutura em duas Partes**: o livro é dividido em **Parte I — O Compressor e
-  Seus Elementos** (Capítulos 2 a 18: física, engenharia e mecanismos de falha de
-  cada componente) e **Parte II — Metodologia do Gêmeo Digital e Equacionamento
-  Integrado** (Capítulos 19 a 27: EKF, VAE, PIML, MPC, PSO, a integração de tudo
-  num motor de cálculo único, e a implementação de referência/frameworks). Os
-  Capítulos 26 e 27 (implementação) **não são Anexos** — em 26/07/2026 o `\appendix`
-  que os separava com numeração A/B foi removido a pedido do autor: como o livro já
-  está dividido em Parte I/II, não fazia sentido também isolar esses dois capítulos
-  como apêndices lettered dentro da Parte II. Eles são capítulos numerados normais,
-  na sequência (a numeração de equações `eq:s26-*`/`eq:s27-*` já pressupunha isso —
-  nenhuma equação precisou ser renomeada). O Capítulo 1 (Introdução) fica antes da
-  Parte I, como preâmbulo. A Seção 1.3 do próprio livro também descreve essa
-  divisão — mantenha as duas em sincronia se o capítulo final de alguma das partes
-  mudar.
-  **Implementação técnica — não use `\part{}` puro:** o comando `\part{}` padrão da
-  classe `article` neste documento renderiza o título **desalinhado à esquerda** em
-  vez de centralizado (causa não identificada — possivelmente interação com
-  `hyperref`; nem envolver `\part{}` num `\begin{center}` resolve, o `\part`
-  internamente escapa da centralização externa). A solução adotada foi **não usar
-  `\part{}` para exibição**: cada página de Parte é montada manualmente — bloco
+**A partir de 26/09/2026, as regras de redação (numeração e citação de
+equações/figuras/tabelas, aspas, estrutura de capítulo, veracidade de
+referências, critério de elaboração de exercícios) foram extraídas para a
+skill `redacao-tecnica`** (`.claude/skills/redacao-tecnica/SKILL.md`) — para
+não manter duas cópias que podem divergir com o tempo, carregue essa skill
+antes de escrever ou revisar prosa/equações em qualquer volume. Esta seção
+guarda só as decisões estruturais específicas deste projeto que não são
+regras de redação genéricas:
+
+- **Estrutura em duas Partes** (Volume II): **Parte I — O Compressor e Seus
+  Elementos** (Capítulos 2 a 18) e **Parte II — Metodologia do Gêmeo Digital
+  e Equacionamento Integrado** (Capítulos 19 a 27). Os Capítulos 26 e 27
+  (implementação) **não são Anexos** — em 26/07/2026 o `\appendix` que os
+  separava com numeração A/B foi removido a pedido do autor. O Capítulo 1
+  (Introdução) fica antes da Parte I, como preâmbulo. A Seção 1.3 do próprio
+  livro também descreve essa divisão — mantenha as duas em sincronia se o
+  capítulo final de alguma das partes mudar.
+  **Implementação técnica — não use `\part{}` puro:** o comando `\part{}`
+  padrão da classe `article` neste documento renderiza o título
+  **desalinhado à esquerda** em vez de centralizado (causa não identificada
+  — possivelmente interação com `hyperref`; nem envolver `\part{}` num
+  `\begin{center}` resolve). A solução adotada foi **não usar `\part{}` para
+  exibição**: cada página de Parte é montada manualmente — bloco
   `\clearpage`, `\thispagestyle{empty}`, `\phantomsection`,
-  `\addcontentsline{toc}{part}{...}` (para entrar no sumário/bookmarks do PDF) e
-  `\vspace*{\fill}...\begin{center}{\Huge\bfseries PARTE N}\\[2em]{\huge\bfseries
-  Título}\end{center}\vspace*{\fill}`, seguido de `\clearpage` antes do capítulo
-  seguinte. Ver as duas ocorrências no `.tex` (antes do Capítulo 2 e antes do
-  Capítulo 19) como modelo para qualquer Parte futura (ex.: um 3º volume da
-  enciclopédia).
+  `\addcontentsline{toc}{part}{...}` (para entrar no sumário/bookmarks do
+  PDF) e `\vspace*{\fill}...\begin{center}{\Huge\bfseries PARTE N}\\[2em]
+  {\huge\bfseries Título}\end{center}\vspace*{\fill}`, seguido de
+  `\clearpage` antes do capítulo seguinte. Ver as duas ocorrências no `.tex`
+  (antes do Capítulo 2 e antes do Capítulo 19) como modelo para qualquer
+  Parte futura (ex.: um 3º volume da enciclopédia).
 
 ## Critério de elaboração de texto e de exercícios — regra permanente (13/09/2026)
 
 **Pedido literal do autor**, depois de ler os exercícios do Volume 0 e
 encontrar o defeito: *"a formulação usada na resposta não aparece na
 pergunta. Por favor, seja bem criterioso na elaboração de textos e de
-exercícios."* A regra que fecha isso, válida para qualquer volume e
-qualquer conteúdo novo:
+exercícios."* A regra em si (fechamento pergunta↔resposta, responder o que
+foi perguntado, enunciado sem redundância, contas refeitas à mão, leitura
+física coerente, coerência com o texto do capítulo) está na skill
+`redacao-tecnica`, seção 6 — carregue-a antes de escrever ou revisar
+exercício novo.
 
-1. **Fechamento pergunta↔resposta.** Toda formulação que a resolução usa
-   tem de estar **anunciada no enunciado** (como dado, como equação citada
-   ou como o próprio produto que se pede) ou **ensinada no capítulo** —
-   nunca aparecer pela primeira vez dentro da resolução. Se a resolução
-   precisa de uma ferramenta que o capítulo não tem, a correção é
-   **ensinar a ferramenta no capítulo**, não contrabandeá-la na resposta.
-2. **Responder o que foi perguntado.** Se o enunciado pede um número, a
-   resolução entrega aquele número — não um substituto conveniente. Regra
-   prática (`4τ`, arredondamento de engenharia) entra como *comentário
-   depois* da resposta exata, nunca no lugar dela.
-3. **Enunciado sem redundância nem ambiguidade.** Cada grandeza aparece
-   uma vez, com o tipo certo (escalar × vetor) e sem repetir a mesma
-   informação em duas formas. Todo termo técnico do enunciado é definido
-   ali ou no capítulo — nada de símbolo ou nome ("déficit", "envelope")
-   que o leitor tenha de adivinhar.
-4. **Toda conta refeita à mão antes de entrar.** Inclusive as dos
-   comentários interpretativos ("uma faixa vinte vezes mais larga") — foi
-   exatamente aí que um fator 20 × 47 passou despercebido.
-5. **A leitura física tem de decorrer do que foi calculado.** Fecho de
-   exercício que compara grandezas não comparáveis, ou que conclui mais do
-   que os números mostram, é defeito — mesmo com a aritmética correta.
-6. **Coerência com o próprio texto.** A resolução não pode contradizer a
-   prosa do capítulo (aconteceu: o Cap. 9 dizia que precisão extra "custa
-   cada vez menos" e o exercício dizia que a série "cobra cada dígito a
-   mais caro"), nem atribuir um efeito à causa errada.
-
-**Como verificar** (barato, vale rodar ao fim de qualquer sessão que
-escreva exercício ou prosa nova): para cada símbolo, notação e equação
-citados numa resolução, `grep` o volume inteiro procurando onde ele é
-definido **antes** daquele ponto. Um símbolo que só aparece dentro da
-resolução é o sintoma. Foi assim que se achou `\binom` usado uma única
-vez no Volume 0, dentro do Exercício 9.1, sem jamais ter sido
-apresentado; e $\omega_d$/envelope usados no Exercício 8.2 sem existirem
-no Capítulo 8.
+**Achados que motivaram a regra**, preservados como referência histórica:
+`\binom` usado uma única vez no Volume 0, dentro do Exercício 9.1, sem
+jamais ter sido apresentado ao leitor; e $\omega_d$/envelope usados no
+Exercício 8.2 sem existirem no Capítulo 8 até então. Ambos corrigidos na
+mesma sessão (ver "Auditoria dos exercícios do Volume 0" mais abaixo).
 
 ## Diagramação — convenções (relatório de 26/07/2026, todos os itens implementados)
 
@@ -314,22 +252,9 @@ diagramação em aberto.
   figura composta/complexa do livro (Figura 3.1, render 3D). Ao adicionar uma figura nova, classifique-a
   numa dessas 3 categorias em vez de escolher uma largura ad-hoc.
 
-**Convenções permanentes para conteúdo novo** (para não reabrir a mesma dívida técnica):
-- Todo `\section` novo de capítulo deve vir precedido de `\clearpage` (o rótulo "Capítulo N" do
-  `titlesec` é automático, não precisa repetir manualmente).
-- Toda tabela nova deve usar `booktabs` (`\toprule`/`\midrule`/`\bottomrule`, sem barras verticais),
-  nunca `\hline`/grade antiga. Nunca usar `\begin{array}` em modo matemático só para desenhar uma
-  grade de texto — isso é uma tabela, use `tabular`.
-- Colunas de tabela com texto corrido (tipo as de Nomenclatura) devem usar
-  `>{\raggedright\arraybackslash}p{Xcm}` em vez de `p{Xcm}` justificado.
-- Figura nova: escolher uma das 3 larguras-padrão do item 8 acima conforme o tipo de conteúdo, não um
-  valor ad-hoc.
-- Toda figura e tabela nova precisa de **legenda curta e longa**:
-  `\caption[curta para a Lista]{longa para o corpo}` — o documento tem Lista de
-  Figuras e Lista de Tabelas desde 30/07/2026, e sem a forma curta a legenda
-  inteira vaza para a lista e a torna ilegível.
-- Termo técnico novo em inglês ou acrônimo novo que apareça com frequência: acrescentar ao
-  `\hyphenation{}` do preâmbulo (acrônimos entram sem nenhum hífen, para nunca serem partidos).
+**Convenções permanentes para conteúdo novo**: extraídas para a skill
+`redacao-tecnica` (seções 1, 2 e 3) — carregue-a antes de adicionar figura,
+tabela ou `\section` novo, em vez de reconferir esta lista.
 
 ## Figuras — como regenerar sem quebrar nada
 
@@ -461,14 +386,11 @@ branco — isso quebra a compilação (diferente de `$...$`, que tolera).
 
 ## Veracidade de referências e fontes — regra importante
 
-Antes de adicionar qualquer `\bibitem` novo ao `thebibliography`, verifique-o contra
-uma fonte real (editora, periódico, DOI, número de norma) — nunca confie num título,
-autor ou ano "de memória"/gerado por IA sem checar. Um GPAI anterior já havia
-introduzido 3 referências com títulos fabricados ou não verificáveis (`api684`,
-`dompc`, `lysholm` — corrigidas em 26/07/2026, ver "Estado atual" abaixo) que
-passaram despercebidas até uma varredura completa. Da mesma forma, qualquer
-informação factual (técnica, histórica, numérica) apresentada ao autor deve indicar
-a fonte de onde veio.
+Regra completa na skill `redacao-tecnica`, seção 5. Origem do achado que a
+motivou: um GPAI anterior havia introduzido 3 referências com títulos
+fabricados ou não verificáveis (`api684`, `dompc`, `lysholm` — corrigidas em
+26/07/2026, ver "Estado atual" abaixo) que passaram despercebidas até uma
+varredura completa.
 
 ## Documentos de apoio
 
@@ -525,15 +447,9 @@ símbolo em frases "Onde $X = ...$" logo após uma equação já numerada (ex.: 
 no Cap. 17, $\omega_s$ no Cap. 4) — esse é o padrão já estabelecido no documento
 para explicar um termo, não uma equação nova a referenciar.
 
-**Regra permanente daqui em diante**: toda fórmula que expresse uma relação
-física/matemática substantiva (não uma simples troca de símbolo por um valor
-numérico específico, nem a definição de um termo dentro do "Onde ... é ..." que
-já segue uma equação) deve estar em `\begin{equation}\label{eq:sC-N}...\end{equation}`,
-nunca solta em `$...$`/`$$...$$` dentro do texto corrido. Ao inserir uma equação
-no meio de um capítulo já numerado, renumere em cascata os labels seguintes
-daquele capítulo (e suas referências `\eqref` em qualquer capítulo do
-documento) para manter a correspondência "sufixo do label = número exibido"
-descrita na seção de Convenções.
+**Regra permanente daqui em diante**: skill `redacao-tecnica`, seção 1
+(equação numerada sempre em `\begin{equation}`, nunca solta em `$...$`;
+inserir no meio de um capítulo já numerado exige renumeração em cascata).
 
 ## Cobertura de desbalanço de fase no motor elétrico (26/07/2026)
 

@@ -99,37 +99,29 @@ Sobre autoria: a direção intelectual, o juízo de engenharia, a arquitetura do
 
 ### Livros (`compressores.tex`, `Volume_I_Fundamentos.tex`, `Volume_0_Notacoes_e_Calculo.tex`)
 
-- Compilar com `pdflatex` 3 vezes (ou `latexmk -pdf`), sempre conferindo o log.
-  **`compressores.log` é Latin-1** — use `grep -a`, senão a busca falha em
-  silêncio.
+**Regras de redação (numeração/citação de equação, figura, tabela, aspas,
+estrutura de capítulo, veracidade de referência, critério de exercício):
+carregar a skill `redacao-tecnica`** (`.claude/skills/redacao-tecnica/SKILL.md`)
+antes de escrever ou revisar prosa/equações — ela vale para qualquer IA que
+trabalhe neste repositório (Claude ou Kimi), não é específica de sessão.
+
+Fatos específicos deste projeto que a skill não cobre (não são regra de
+redação genérica, são convenção de organização de arquivo):
+- Compilar com `pdflatex` 3 vezes (ou `latexmk -pdf`). **`compressores.log` é
+  Latin-1** — use `grep -a`, senão a busca falha em silêncio.
 - Numeração de equações por volume: `eq:v0-c<cap>-<n>` (Vol. 0),
   `eq:v1-c<cap>-<n>` (Vol. I), `eq:s<cap>-<n>` (Vol. II).
-- **Toda equação cita `\eqref{}` de si mesma no parágrafo que a antecede** —
-  regra permanente, mesma disciplina já exigida de figuras e tabelas. Não basta
-  explicar o conceito: o número tem de aparecer antes.
-- **Equação nova entra ao fim do capítulo/subseção**, nunca no meio — a
-  numeração segue a posição física, então inserir no meio força renumeração em
-  cascata de todos os labels e `\eqref{}` seguintes.
 - Figuras do Vol. II em `figuras/fig_<cap>_<n>_<desc>.pdf`, geradas por
   `scripts/gen_figuras.py`. **Vol. 0 e Vol. I usam figuras vetoriais TikZ/
   pgfplots escritas no próprio `.tex`** — não há gerador externo para eles.
-- Larguras de figura padronizadas (Vol. II): 0.60 / 0.75 / 0.80 `\textwidth`
-  para gráficos e diagramas; 0.55 para fotos verticais/estreitas; 0.42 para
-  figura estreita ou thumbnail de capa.
 - `\clearpage` antes de todo `\section` de capítulo. **Exceção conhecida e
   ainda em aberto: o Volume I não usa nenhum `\clearpage`** (10 capítulos, 0
   ocorrências) — desvio da convenção, pendente de decisão do autor.
-- Tabelas em `booktabs` (`\toprule`/`\midrule`/`\bottomrule`), nunca `\hline`
-  ou barras verticais. Toda figura/tabela com `\caption[curta]{longa}`.
-- **Aspas sempre `` `` `` e `''`, nunca `"` reto** em prosa — o
-  babel-portuguese torna `"` um caractere ativo que engole o espaço seguinte.
-  Exceção: dentro de `verbatim`, onde o código deve continuar literal.
-- Nomenclatura centralizada no início de cada volume. O alfabeto grego está
-  ~90% saturado no Vol. II — verifique colisão antes de introduzir símbolo novo.
-- Referência nova só entra depois de conferida contra a fonte real. Quando outro
-  volume já traz o `\bibitem` validado, copie-o *verbatim* em vez de redigir
-  outro.
-- **Sem marcas de IA** em texto, comentários ou metadados dos `.tex`/`.pdf`.
+- Nomenclatura centralizada no início de cada volume (Volume II: distribuída
+  também por capítulo desde 13/09/2026, via
+  `scripts/gerar_nomenclatura_por_capitulo.py` — ver `CONTEXTO.md`,
+  "Backlog_edicao_completa.md" para o histórico do bug já corrigido nesse
+  gerador).
 
 ### App Python (`aplicativo/`)
 
@@ -218,8 +210,9 @@ Sobre autoria: a direção intelectual, o juízo de engenharia, a arquitetura do
 1. Ler `README.md`, `CONTEXTO.md` (fim) e `CONTEXTO_app.md` (fim).
 2. Verificar `git status` e `git log --oneline -10` para saber o estado real —
    nunca confiar em hash ou contagem citada de memória em arquivo de contexto.
-3. Se for mexer nos livros: compilar 3× e inspecionar visualmente as páginas
-   afetadas com `pdftoppm`.
+3. Se for mexer nos livros: carregar a skill `redacao-tecnica` antes de
+   escrever qualquer prosa/equação, depois compilar 3× e inspecionar
+   visualmente as páginas afetadas com `pdftoppm` (skill, seção 7).
 4. Se for mexer no app: recriar o `venv` se necessário, rodar `pytest tests/` e
    abrir o Streamlit no navegador (ou `AppTest`).
 5. Atualizar os `CONTEXTO*.md` correspondentes ao final da sessão, se o autor
@@ -228,8 +221,9 @@ Sobre autoria: a direção intelectual, o juízo de engenharia, a arquitetura do
 ## 8. Nota sobre qualidade e verificação
 
 Antes de declarar uma tarefa concluída:
-- Livro: `pdflatex` 3×, sem erros; conferir visualmente as páginas alteradas
-  com `pdftoppm` ou similar; rodar a varredura de auto-referência de equação.
+- Livro: checklist completo na skill `redacao-tecnica`, seção 7 (3 passagens
+  de `pdflatex`, comparação com o baseline de overfulls, `pdftoppm` visual,
+  varreduras de aspas/auto-referência).
 - App: `pytest tests/` passando; verificar a UI no navegador quando houver
   mudança visual.
 - Código: não deixar prints de debug, não alterar testes para encobrir bugs,
