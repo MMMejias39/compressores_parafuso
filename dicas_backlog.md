@@ -106,19 +106,22 @@ backlog do Volume 0 e evita corrigir o mesmo defeito duas vezes.
 
 ### 3.3 Restrições que o item precisa respeitar (ou vira item quebrado)
 
-- Equação nova entra **ao fim** do capítulo/subseção — inserir no meio força
-  renumeração em cascata de todos os `\label` e `\eqref` seguintes.
-- Toda equação é precedida de parágrafo didático que **cita o próprio número**.
-- Figura/tabela referenciada por `\ref` antes de aparecer; `\caption[curta]{longa}`.
+As regras de redação em si (equação ao fim do capítulo, `\eqref` de si mesma
+antes de aparecer, `\ref`/`\caption[curta]{longa}` de figura e tabela, prefixo
+de label por volume, sem marcas de IA) foram extraídas para a skill
+`redacao-tecnica` — carregue-a ao escrever o item, em vez de reconferir esta
+lista. Ficam aqui só as restrições específicas de **backlog** (não de prosa):
+
 - Compilar 3× após cada bloco e conferir o log com `grep -a`; nunca editar `.toc`.
-- Preservar `\label` existentes; novos seguem o prefixo do volume
-  (`eq:v0-`, `eq:v1-`, `eq:s`).
-- **Sem marcas de IA** em texto, comentário ou metadado.
-- A Edição Completa é **derivada e descartável**: mudou volume → regenerar e
-  recompilar 3×. E `compressores.tex` está **quebrado no estado atual** (52
-  blocos `NOMENCLATURA-CAP` dentro do argumento do `\section`) — qualquer
-  backlog que dependa de recompilar o Vol. II precisa do passo 0 de corrigir
-  isso (ver `Backlog_edicao_completa.md`).
+- A Edição Completa é **derivada e descartável**: mudou volume → regenerar
+  (`scripts/gerar_edicao_completa.py`) e recompilar 3×; nunca editar
+  `Enciclopedia_Completa.tex` à mão.
+- **[Resolvido em 26/09/2026]** O `compressores.tex` chegou a ficar quebrado
+  (13 blocos `NOMENCLATURA-CAP` inseridos dentro do argumento do `\section`,
+  por um regex do gerador que não tratava `\textbf{}` aninhado) — já
+  corrigido no `.tex` e no próprio gerador
+  (`scripts/gerar_nomenclatura_por_capitulo.py`). Ver `Backlog_edicao_completa.md`
+  para o diagnóstico completo; nenhum backlog novo precisa mais desse passo 0.
 
 ### 3.4 Fechamento de um item de livro
 

@@ -1,12 +1,19 @@
 # Backlog — Edição Completa (`Enciclopedia_Completa.tex`)
 
+> **STATUS: ENCERRADO — bloqueio corrigido e outline verificado (26/09/2026).**
+> Os dois itens implementados na sessão de 16/09/2026 (pacote `bookmark` +
+> âncoras por volume) já estavam corretos; o que impedia a verificação era
+> um bug real no gerador de nomenclatura por capítulo, não nos dois itens em
+> si. Ambos confirmados funcionando nesta sessão — ver "Verificação final"
+> abaixo.
+
 **Origem:** o autor apontou (16/09/2026) que, na união dos três volumes, os
 marcadores do PDF (outline/sidebar) mostram os Volumes I e II aninhados como
 subitens do Volume 0 — cada capítulo fica um nível abaixo do anterior, e o
-Volume I termina no nível 11, o II no nível 22. Os volumes são obras
+Volume I terminava no nível 11, o II no nível 22. Os volumes são obras
 independentes e devem aparecer como entradas irmãs de nível máximo.
 
-## Implementado (nesta sessão, pendente de verificação)
+## Implementado em 16/09/2026 (confirmado correto nesta sessão)
 
 Em `scripts/gerar_edicao_completa.py`:
 
@@ -16,50 +23,93 @@ Em `scripts/gerar_edicao_completa.py`:
    `\addcontentsline{toc}{part}`; o `bookmark` recalcula os níveis a partir
    dos níveis absolutos gravados no `.out`.
 2. **Âncoras únicas por volume** (`ancora_volume()`): junto ao
-   `\setcounter{section}{0}` de cada volume, o gerador agora emite
+   `\setcounter{section}{0}` de cada volume, o gerador emite
    `\renewcommand` de `\theHsection`, `\theHequation`, `\theHfigure` e
-   `\theHtable` com prefixo `v0`/`v1`/`v2`. Antes disso o log tinha **633
-   destinos duplicados** (`equation.` 368, `figure.` 38, `table.` 27,
-   `section.` 20) — links e marcadores apontavam para a primeira ocorrência
-   do nome, isto é, para o volume errado.
+   `\theHtable` com prefixo `v0`/`v1`/`v2`, evitando destinos duplicados
+   entre volumes.
 
-## Bloqueio que impediu a verificação nesta sessão
+## Bloqueio real (encontrado e corrigido em 26/09/2026)
 
-O `compressores.tex` **atual da árvore não compila** (estado pré-existente,
-não introduzido nesta sessão): os blocos `NOMENCLATURA-CAP <n>` gerados por
-`scripts/gerar_nomenclatura_por_capitulo.py` (arquivo não rastreado, trabalho
-em andamento) foram inseridos **dentro** do argumento do `\section{...}` de
-cada capítulo — entre o título e a chave de fechamento. Erro resultante:
-`Paragraph ended before \ttl@straight@i was complete` (titlesec), fatal já no
-Cap. 2.
+**Causa raiz — não era o `compressores.tex` em si, era o gerador auxiliar.**
+`scripts/gerar_nomenclatura_por_capitulo.py` (trabalho em andamento de
+13/09/2026, que insere a tabela "Símbolos deste capítulo" logo após o
+`\section{...}` de cada capítulo) tinha um regex que não lida com chaves
+aninhadas:
 
-## Próximos passos (na ordem)
+```python
+re.finditer(r"\\section\{([^}]*)\}(\s*\\label\{[^}]*\})?", texto)
+```
 
-1. Corrigir o ponto de inserção da nomenclatura por capítulo: o bloco
-   `% >>> NOMENCLATURA-CAP` ... `% <<< NOMENCLATURA-CAP` deve ficar **depois**
-   do fechamento do `\section{...}` (provável correção em
-   `scripts/gerar_nomenclatura_por_capitulo.py` + reaplicação, ou edição
-   direta dos 20+ pontos de inserção). Confirmar que `compressores.tex`
-   compila 3× sem erros antes de seguir.
-2. Regenerar: `python3 scripts/gerar_edicao_completa.py` e compilar
-   `Enciclopedia_Completa.tex` 3× (o pacote `bookmark` precisa de uma
-   passagem extra para estabilizar o `.bkm`).
-3. Verificar o outline: `mutool show Enciclopedia_Completa.pdf outline` —
-   VOLUME 0/I/II devem estar no nível máximo (irmãos), capítulos um nível
-   abaixo, subseções dois níveis abaixo. Conferir também onde ficam as
-   Partes I/II/III internas do Volume II (hoje entram como nível `part`,
-   mesmo nível visual dos volumes no sumário impresso — decidir se isso é
-   aceitável ou se devem aparecer um nível abaixo do Volume II).
-4. Verificar o log (`grep -a`): 0 erros, `same identifier` reduzido ao
-   caso conhecido e inofensivo `page.1` (numeração romana/arábica);
-   overfulls dentro do baseline (38, máx. 4,79 pt).
-5. Inspeção visual das páginas do sumário (`pdftoppm`) para confirmar que o
-   sumário impresso não mudou de aparência (a correção mira só os
-   marcadores/âncoras).
+A maioria dos capítulos usa `\section{\textbf{Título}}` — duas chaves de
+fechamento em sequência. `[^}]*` para no **primeiro** `}` encontrado, que é o
+do `\textbf{}`, não o do `\section{}`. O script então inseria o bloco de
+nomenclatura **entre** as duas chaves de fechamento, deixando o `\section{}`
+aberto por cima de um bloco inteiro (parágrafo com `\begin{longtable}`) —
+exatamente a violação de argumento-de-um-parágrafo-só que o `titlesec`
+reportava (`Paragraph ended before \ttl@straight@i was complete`). Afetou
+**13 capítulos** que usam `\textbf{}` no título (2–13 e 15); os capítulos sem
+essa marcação (14, 16 em diante) nunca tiveram o bug, porque `[^}]*` fecha
+corretamente quando há só uma chave de nível.
 
-## Observação
+**Correção aplicada:**
+1. `compressores.tex` corrigido diretamente (fechamento das 13 seções +
+   remoção da chave solta que a inserção tinha deixado para trás), depois
+   **regenerado do zero** rodando o gerador já corrigido — a versão final em
+   árvore é a saída do script, não a edição manual intermediária.
+2. `scripts/gerar_nomenclatura_por_capitulo.py`: o regex de localização de
+   `\section{...}` agora trata explicitamente o caso `\textbf{...}` aninhado
+   antes de cair no caso genérico:
+   ```python
+   padrao_secao = re.compile(
+       r"\\section\{(?:\\textbf\{[^}]*\}|[^}]*)\}(\s*\\label\{[^}]*\})?"
+   )
+   ```
+   Rodar `python3 scripts/gerar_nomenclatura_por_capitulo.py --check` depois
+   de qualquer edição na Nomenclatura confirma que a contagem de capítulos
+   com tabela própria (26) e de entradas (154) não muda sem querer.
+3. Como efeito colateral **corrigido, não introduzido**: o `\markboth{}{}`
+   do Capítulo 9 (encurta o cabeçalho corrente, ver `CONTEXTO.md`,
+   "Verificação visual do PDF compilado") tinha sido deslocado pela mesma
+   corrupção — a regenteração pelo script já corrigido o recolocou na
+   posição certa (logo após `\section{...}`, antes do bloco de
+   nomenclatura), sem edição manual adicional.
 
-A regeneração desta sessão sobrescreveu o `Enciclopedia_Completa.tex` da
-árvore (arquivo gerado, descartável por definição) com conteúdo derivado do
-fonte atualmente quebrado — não commitado de propósito. Após o passo 1, o
-passo 2 o recria correto.
+## Verificação final (26/09/2026)
+
+1. **`compressores.tex`**: `pdflatex` 3×, **196 páginas, 0 erros, 0
+   referências indefinidas, 0 labels duplicados** (fora o `page.1` já
+   conhecido e inofensivo). **36 overfull hboxes, máximo 2,01 pt** — mesmo
+   baseline documentado, sem regressão.
+2. **Inspeção visual** (`pdftoppm`) da abertura do Capítulo 2 (página 16) e
+   do Capítulo 9 (página 57): título, tabela "Símbolos deste capítulo" e
+   corpo do texto renderizando corretamente, sem sobreposição; cabeçalho
+   corrente do Capítulo 9 em uma linha só, sem colisão com o número de
+   página.
+3. **Regeneração**: `python3 scripts/gerar_edicao_completa.py` e
+   `pdflatex -interaction=nonstopmode Enciclopedia_Completa.tex` 3× —
+   **314 páginas, 0 erros, 0 referências indefinidas, 0 labels duplicados**
+   (fora `page.1`). **38 overfull hboxes, máximo 4,79 pt** — mesmo baseline
+   já documentado (soma dos baselines dos volumes avulsos), sem regressão.
+4. **Outline** (`mutool show Enciclopedia_Completa.pdf outline`): "VOLUME 0",
+   "VOLUME I" e "VOLUME II" aparecem todos com a mesma indentação (1 tab) —
+   **irmãos de nível máximo**, não mais aninhados progressivamente. Os
+   capítulos de cada volume ficam um nível abaixo (2 tabs) e as subseções
+   dois níveis abaixo (3 tabs), como esperado.
+5. **Sumário impresso** conferido por `pdftoppm` — aparência inalterada; a
+   correção mirou só marcadores/âncoras, como previsto.
+
+## Observação registrada, não corrigida (decisão do autor, não bug)
+
+As **Partes I/II/III internas do Volume II** continuam entrando no outline no
+mesmo nível dos volumes (`\addcontentsline{toc}{part}{...}`, herdado de
+`compressores.tex`, não alterado nesta sessão). Isso já estava assim antes do
+bloqueio e é uma decisão de arquitetura em aberto, não uma regressão: se o
+autor quiser as Partes um nível abaixo do respectivo volume no outline, é uma
+mudança separada em `gerar_edicao_completa.py` (rotular essas entradas com um
+nível de bookmark explícito via `\pdfbookmark`/`\belowpdfbookmark` em vez de
+`\addcontentsline{toc}{part}{...}`).
+
+## Nada commitado
+
+Regra permanente do projeto — aguardando revisão e autorização explícita do
+autor antes de qualquer commit.

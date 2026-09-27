@@ -127,8 +127,15 @@ def processa(arquivo: Path, check: bool) -> None:
         texto = texto[: alvo.start()] + bloco + texto[alvo.start():]
 
     # tabela por capítulo, logo após o \section{...} de cada um
+    # (o título vem envolvido em \textbf{...} na maioria dos capítulos —
+    # "[^}]*" sozinho para no primeiro "}" que aparece, que é o do \textbf,
+    # não o do \section; por isso a alternativa cobre esse aninhamento
+    # explicitamente antes de cair no caso sem \textbf{}.)
     inseridas = 0
-    for m in list(re.finditer(r"\\section\{([^}]*)\}(\s*\\label\{[^}]*\})?", texto))[::-1]:
+    padrao_secao = re.compile(
+        r"\\section\{(?:\\textbf\{[^}]*\}|[^}]*)\}(\s*\\label\{[^}]*\})?"
+    )
+    for m in list(padrao_secao.finditer(texto))[::-1]:
         n = texto[: m.start()].count("\\section{") + 1
         linhas = por_cap.get(n)
         if not linhas:

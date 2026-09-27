@@ -1,6 +1,20 @@
 # Plano de Melhorias Técnicas e Próximos Passos — Gêmeo Digital de Sistemas de Compressão Offshore
 
-> **STATUS: MAJORITARIAMENTE VENCIDO — verificado em 13/09/2026.**
+> **STATUS: MAJORITARIAMENTE VENCIDO — verificado em 13/09/2026, reverificado em 26/09/2026.**
+>
+> Reverificação de 26/09/2026 (mesma sessão que corrigiu o bloqueio de
+> compilação do `compressores.tex`, ver `Backlog_edicao_completa.md`): os
+> itens de "Ainda válido" abaixo seguem válidos, com uma nuance real —
+> `Sobol`/`Morris` continua em 0 ocorrências (análise de sensibilidade
+> formal não iniciada), mas o **UKF passou a ser mencionado em prosa** no
+> Cap. 20 (ao lado do MHE já registrado) desde uma sessão entre 13/09 e
+> 26/09 — ainda sem equação própria, então a lacuna de equacionamento
+> continua, só não é mais "UKF não é mencionado" (ver o mesmo achado em
+> `dicas_ollama.md`, item 6). MLOps/persistência: `InfluxDB`/`TimescaleDB`
+> aparecem citados uma vez como item de arquitetura desejada no pseudocódigo
+> do supervisório de frota (Cap. 26) — ainda **não é implementação**, só
+> nomeação do componente; a lacuna de MLOps de fato (versionamento,
+> pipeline de retreino) segue inteira.
 >
 > Este plano foi escrito antes das sessões de 16/08/2026 em diante, que
 > implementaram boa parte do que ele pede. Conferido item a item contra
