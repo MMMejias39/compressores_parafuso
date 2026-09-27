@@ -2046,9 +2046,10 @@ ${new Date().toISOString()},CMP01:SPC_REAL,6.240`;
                         </div>
                         <span class="text-xs px-2.5 py-1 rounded font-bold bg-slate-800 text-slate-200 border border-slate-700">${stTxt}</span>
                     </div>
-                    <div class="grid grid-cols-3 gap-3 my-3 text-xs font-mono bg-slate-900/80 p-3 rounded border border-slate-800">
+                    <div class="grid grid-cols-4 gap-3 my-3 text-xs font-mono bg-slate-900/80 p-3 rounded border border-slate-800">
                         <div><span class="text-slate-400 block">Health Index:</span><span class="font-bold text-sm" style="color:${hiCor};">${(m.hi * 100).toFixed(1)}%</span></div>
-                        <div><span class="text-slate-400 block">RUL Estimado:</span><span class="font-bold text-sm text-blue-400">${m.rul_estimado_dias.toFixed(0)} dias</span></div>
+                        <div title="Regra de Palmgren-Miner, Eq. 19.7/19.8"><span class="text-slate-400 block">Dano Acumulado (D):</span><span class="font-bold text-sm text-amber-400">${(m.dano_acumulado * 100).toFixed(1)}%</span></div>
+                        <div title="Eq. 19.9, IC 95% via Processo Gaussiano (Eq. 19.10)"><span class="text-slate-400 block">RUL Estimado:</span><span class="font-bold text-sm text-blue-400">${m.rul_estimado_dias.toFixed(0)} dias</span></div>
                         <div><span class="text-slate-400 block">Auditoria NIS:</span><span class="font-bold ${m.nis <= 14.07 ? 'text-emerald-400' : 'text-red-400'}">${m.nis.toFixed(2)}</span></div>
                     </div>
                     <div class="flex justify-between items-center text-xs pt-1">

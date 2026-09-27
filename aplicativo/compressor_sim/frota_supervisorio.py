@@ -4,10 +4,17 @@ Implementa:
 1. Painel supervisório de N_frota compressores em paralelo (Seção 26.6 do livro).
 2. Cálculo do Health Index (HI) composto com saturações bilaterais (Eq. 26.4).
 3. Auditoria de consistência estatística do EKF via NIS ~ χ² (Eq. 21.7).
-4. Prognóstico de Vida Útil Remanescente (RUL) com quantificação de incerteza (Eq. 19.10 / Eq. 29.1).
-5. Ordenação automática de prioridade por urgência de intervenção offshore.
+4. Prognóstico de Vida Útil Remanescente (RUL) por acúmulo de dano — Regra de
+   Palmgren-Miner sobre a curva S-N de Basquin, com incerteza propagada por
+   Processo Gaussiano (Eqs. 19.7-19.10; ver `fadiga.py`). Substitui, em
+   27/09/2026, o RUL probabilístico anterior (regressão linear da folga) —
+   ver CONTEXTO_app.md.
+5. Exergetic Health Index (EHI, Eq. 19.6): razão de eficiência exergética
+   (`eta_global`, Eq. 17.4) descontada pelo erro de reconstrução do VAE.
+6. Ordenação automática de prioridade por urgência de intervenção offshore.
 
-Baseado nos Capítulos 16, 18, 21, 26 e 29 do livro "Gêmeo Digital de Sistemas de Compressão Offshore".
+Baseado nos Capítulos 16, 18, 19, 21, 22, 26 e 29 do livro "Gêmeo Digital de
+Sistemas de Compressão Offshore".
 """
 
 from __future__ import annotations
@@ -17,7 +24,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 import numpy as np
 
-from . import constantes, ekf, nucleo, pi_telemetry, sistema
+from . import constantes, ekf, fadiga, nucleo, pi_telemetry, sistema, vae
 
 
 @dataclass
@@ -33,8 +40,26 @@ class MaquinaFrota:
     historico_folga: List[float] = field(default_factory=list)
     historico_hi: List[float] = field(default_factory=list)
     historico_nis: List[float] = field(default_factory=list)
+    dano_acumulado: float = 0.0
+    historico_dano: List[float] = field(default_factory=list)
     falha_simulada_id: Optional[str] = None
     severidade_falha: float = 0.0
+
+
+_VAE_FROTA_CACHE: Dict[str, Any] = {}
+
+
+def _obter_vae_frota(params_base: Dict[str, Any]) -> Dict[str, Any]:
+    """VAE de referência da frota, treinado uma única vez (cache em
+    processo) sobre um envelope saudável representativo — reaproveitado
+    para todas as máquinas e ciclos, em vez de retreinar por máquina a cada
+    varredura (custo proibitivo para um supervisório contínuo). Mesma
+    simplificação documentada em CONTEXTO_app.md: a "assinatura de saúde"
+    é da arquitetura do trem, não de cada unidade física individual."""
+    if "info" not in _VAE_FROTA_CACHE:
+        x_tr = vae.gerar_dataset_saudavel(200, params_base, seed=7)
+        _VAE_FROTA_CACHE["info"] = vae.treinar(x_tr, n_epocas=200, seed=7)
+    return _VAE_FROTA_CACHE["info"]
 
 
 def calcular_health_index_composto(
@@ -78,64 +103,24 @@ def calcular_health_index_composto(
     return hi
 
 
-def projetar_rul_probabilistico(
-    historico_folga: List[float],
-    limiar_critico: float = 0.020,
-    dt_passo_dias: float = 1.0,
-) -> Dict[str, Any]:
-    """Estima o RUL (Remaining Useful Life) com intervalo de confiança de 95% (Eq. 29.1).
-
-    Utiliza a taxa média de deriva recente do EKF com variância estocástica.
-    """
-    if len(historico_folga) < 3:
-        return {
-            "rul_dias_estimado": 180.0,
-            "rul_ic_95_min": 120.0,
-            "rul_ic_95_max": 240.0,
-            "taxa_deriva_diaria": 0.0001,
-            "confiabilidade": "Baixa (poucos pontos históricos)",
-        }
-
-    y = np.array(historico_folga)
-    n = len(y)
-    t = np.arange(n) * dt_passo_dias
-
-    # Regressão linear sobre os pontos de folga estimada
-    A = np.vstack([t, np.ones(n)]).T
-    m_deriva, c_intercept = np.linalg.lstsq(A, y, rcond=None)[0]
-    m_deriva = max(1e-7, float(m_deriva))
-
-    # Variância residual dos pontos
-    residuos = y - (m_deriva * t + c_intercept)
-    sigma_res = float(np.std(residuos)) if len(residuos) > 2 else 0.0005
-
-    folga_atual = float(y[-1])
-    folga_restante = max(0.0, limiar_critico - folga_atual)
-
-    rul_central = folga_restante / m_deriva
-
-    # Margem de incerteza de 95% (2 sigma de dispersão na taxa de deriva)
-    desvio_taxa = sigma_res / max(1.0, np.sqrt(n))
-    taxa_min = max(1e-7, m_deriva - 1.96 * desvio_taxa)
-    taxa_max = m_deriva + 1.96 * desvio_taxa
-
-    rul_min = max(0.0, folga_restante / taxa_max)
-    rul_max = max(rul_central, folga_restante / taxa_min)
-
-    return {
-        "rul_dias_estimado": float(rul_central),
-        "rul_ic_95_min": float(rul_min),
-        "rul_ic_95_max": float(rul_max),
-        "taxa_deriva_diaria": float(m_deriva),
-        "confiabilidade": "Alta" if n >= 15 else "Média",
-    }
-
-
 def criar_frota_padrao_offshore(n_maquinas: int = 4, fad_unitario: float = 10.0) -> List[MaquinaFrota]:
     """Cria uma frota realista de N compressores para simulação em plataforma offshore (FPSO) ou planta de processo."""
     frota = []
     params_base = sistema.parametros_default()
     total = max(1, n_maquinas)
+
+    # Tensão/RPM nominais para a semeadura sintética de dano (Eqs. 19.7/19.8):
+    # calculados pela própria cascata física, não um valor de catálogo fixo —
+    # o "valor_nom" de MEC_SIGMA_B em pi_telemetry.py (120 MPa) é só uma
+    # referência de exibição e diverge do que sistema.simular() realmente
+    # produz no ponto de operação default (~26 MPa); semear com o valor de
+    # catálogo produzia dano ~10^5 vezes mais rápido que o dos ciclos reais
+    # subsequentes, uma descontinuidade visível na estatística de Ḋ do GP
+    # logo após os primeiros ciclos reais (achado em verificação, 27/09/2026).
+    _res_nom = sistema.simular(dict(params_base, fad_m3_min=fad_unitario, n_compressores=total))
+    _snap_nom = pi_telemetry.extrair_snapshot_pi(_res_nom, params_base, prefixo="NOM", adicionar_ruido=False)
+    SIGMA_B_NOMINAL = _snap_nom["NOM:MEC_SIGMA_B"]["valor"]
+    RPM_NOMINAL = _snap_nom["NOM:MEC_RPM"]["valor"]
 
     for i in range(total):
         letra = chr(ord('A') + (i % 26))
@@ -161,6 +146,16 @@ def criar_frota_padrao_offshore(n_maquinas: int = 4, fad_unitario: float = 10.0)
         rng = np.random.default_rng(i + 10)
         hist_folga = list(np.linspace(0.002, folga, 20) + rng.normal(0, 0.0002, 20))
 
+        # Dano acumulado sintético (Eqs. 19.7/19.8): taxa nominal de fadiga
+        # (σ_b/RPM nominais, MEC_SIGMA_B/MEC_RPM em pi_telemetry.py) projetada
+        # sobre os dias já operados, amplificada pela severidade de falha
+        # simulada — mesmo papel demonstrativo de `hist_folga` acima.
+        dano_diario_nominal = fadiga.dano_incremental(SIGMA_B_NOMINAL, RPM_NOMINAL, 1.0)
+        dano_total = dano_diario_nominal * float(dias) * (1.0 + 3.0 * sev)
+        hist_dano = list(
+            np.clip(np.linspace(0.0, dano_total, 20) + rng.normal(0, dano_total * 0.01 + 1e-6, 20), 0.0, None)
+        )
+
         maq = MaquinaFrota(
             id=f"CMP-{i+1:02d}",
             nome=nome,
@@ -169,6 +164,8 @@ def criar_frota_padrao_offshore(n_maquinas: int = 4, fad_unitario: float = 10.0)
             t_operacao_dias=float(dias),
             x_hat=np.array([folga, rf]),
             historico_folga=hist_folga,
+            dano_acumulado=float(hist_dano[-1]),
+            historico_dano=hist_dano,
             falha_simulada_id=falha,
             severidade_falha=float(sev),
         )
@@ -234,20 +231,36 @@ def executar_ciclo_supervisorio_frota(
                     "status": tag_data["status_alarme"],
                 })
 
-        # 5. Prognóstico RUL
-        prognostico = projetar_rul_probabilistico(maq.historico_folga, dt_passo_dias=dt_dias)
+        # 5. Dano acumulado por fadiga (Eqs. 19.7/19.8) e RUL por Miner (Eq. 19.9),
+        # com incerteza de Ḋ propagada por Processo Gaussiano (Eq. 19.10)
+        sigma_b_mpa = snap[f"{maq.tag_prefix}:MEC_SIGMA_B"]["valor"]
+        rpm_atual = snap[f"{maq.tag_prefix}:MEC_RPM"]["valor"]
+        maq.dano_acumulado += fadiga.dano_incremental(sigma_b_mpa, rpm_atual, dt_dias)
+        maq.historico_dano.append(maq.dano_acumulado)
+        prognostico = fadiga.projetar_rul_fadiga(maq.historico_dano, dt_dias=dt_dias)
+
+        # 6. Exergetic Health Index (Eq. 19.6): razão de eficiência exergética
+        # (eta_global, Eq. 17.4) descontada pelo erro de reconstrução do VAE
+        info_vae = _obter_vae_frota(maq.params)
+        feat = vae.extrair_features(res)[None, :]
+        e_rec = float(vae.erro_reconstrucao(info_vae, feat)[0])
+        ehi = fadiga.calcular_ehi(res["kpis"]["eta_global"], e_rec)
 
         painel.append({
             "maquina_id": maq.id,
             "nome": maq.nome,
             "tag_prefix": maq.tag_prefix,
             "hi": hi,
+            "ehi": ehi,
+            "e_rec_vae": e_rec,
             "nis": nis_valor,
             "nis_status": "Consistente (Auditado OK)" if nis_valor <= 14.07 else "Inconsistente (Atenção)",
             "tem_alarmes": len(alarmes_ativos) > 0,
             "alarmes": alarmes_ativos,
             "n_alarmes": len(alarmes_ativos),
             "t_operacao_dias": maq.t_operacao_dias,
+            "dano_acumulado": prognostico["dano_acumulado"],
+            "taxa_dano_diaria": prognostico["taxa_dano_diaria"],
             "rul_estimado_dias": prognostico["rul_dias_estimado"],
             "rul_ic_min": prognostico["rul_ic_95_min"],
             "rul_ic_max": prognostico["rul_ic_95_max"],

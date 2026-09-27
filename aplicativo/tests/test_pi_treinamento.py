@@ -138,7 +138,11 @@ def test_frota_supervisorio():
     assert len(painel) == 4
     for item in painel:
         assert 0.0 <= item["hi"] <= 1.0
+        assert 0.0 <= item["ehi"] <= 1.0
+        assert item["e_rec_vae"] >= 0.0
         assert item["rul_estimado_dias"] > 0.0
+        assert item["rul_ic_min"] <= item["rul_estimado_dias"] <= item["rul_ic_max"]
+        assert item["dano_acumulado"] >= 0.0
         assert "CMP0" in item["tag_prefix"]
 
 

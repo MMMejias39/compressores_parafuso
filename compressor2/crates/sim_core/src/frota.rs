@@ -4,8 +4,15 @@
 //! 1. Painel supervisório de N_frota compressores em paralelo (Seção 26.6).
 //! 2. Health Index (HI) composto com saturações bilaterais (Eq. 26.4).
 //! 3. Auditoria de consistência estatística via NIS (Eq. 21.7).
-//! 4. Prognóstico de RUL com intervalo de confiança de 95% (Eq. 19.10 / 29.1).
+//! 4. Prognóstico de RUL por acúmulo de dano — Regra de Palmgren-Miner sobre
+//!    a curva S-N de Basquin, com incerteza propagada por Processo Gaussiano
+//!    (Eqs. 19.7-19.10; ver `fadiga.rs`). Substitui, em 27/09/2026, o RUL
+//!    probabilístico anterior (regressão linear da folga).
 //! 5. Ordenação por urgência de intervenção offshore.
+//!
+//! **Não implementado neste crate:** o Exergetic Health Index (EHI, Eq. 19.6)
+//! depende do erro de reconstrução de um VAE (Eq. 20.4/22.5); VAE/PIML ainda
+//! não foram portados para Rust (só EKF/MPC/PSO) — ver CONTEXTO_app.md.
 
 use rand::prelude::*;
 use rand_distr::ChiSquared;
@@ -25,6 +32,10 @@ pub struct MaquinaFrota {
     pub historico_folga: Vec<f64>,
     pub historico_hi: Vec<f64>,
     pub historico_nis: Vec<f64>,
+    #[serde(default)]
+    pub dano_acumulado: f64,
+    #[serde(default)]
+    pub historico_dano: Vec<f64>,
     pub falha_simulada_id: Option<String>,
     pub severidade_falha: f64,
 }
@@ -40,6 +51,8 @@ pub struct PainelMaquina {
     pub tem_alarmes: bool,
     pub n_alarmes: usize,
     pub t_operacao_dias: f64,
+    pub dano_acumulado: f64,
+    pub taxa_dano_diaria: f64,
     pub rul_estimado_dias: f64,
     pub rul_ic_min: f64,
     pub rul_ic_max: f64,
@@ -75,53 +88,6 @@ pub fn calcular_health_index_composto(
     (1.0 - penalidade).clamp(0.0, 1.0)
 }
 
-pub fn projetar_rul_probabilistico(
-    historico_folga: &[f64],
-    limiar_critico: f64,
-    dt_passo_dias: f64,
-) -> (f64, f64, f64, f64, String) {
-    let n = historico_folga.len();
-    if n < 3 {
-        return (180.0, 120.0, 240.0, 0.0001, "Baixa (poucos pontos históricos)".to_string());
-    }
-
-    let t: Vec<f64> = (0..n).map(|i| i as f64 * dt_passo_dias).collect();
-    let sum_t: f64 = t.iter().sum();
-    let sum_y: f64 = historico_folga.iter().sum();
-    let sum_tt: f64 = t.iter().map(|&ti| ti * ti).sum();
-    let sum_ty: f64 = t.iter().zip(historico_folga.iter()).map(|(&ti, &yi)| ti * yi).sum();
-
-    let denom = (n as f64) * sum_tt - sum_t * sum_t;
-    let m_deriva = if denom.abs() > 1e-12 {
-        (((n as f64) * sum_ty - sum_t * sum_y) / denom).max(1e-7)
-    } else {
-        0.0001
-    };
-    let c_intercept = (sum_y - m_deriva * sum_t) / (n as f64);
-
-    let mut var_res = 0.0;
-    for i in 0..n {
-        let pred = m_deriva * t[i] + c_intercept;
-        let diff = historico_folga[i] - pred;
-        var_res += diff * diff;
-    }
-    let sigma_res = (var_res / (n.max(3) - 2) as f64).sqrt();
-
-    let folga_atual = *historico_folga.last().unwrap_or(&0.002);
-    let folga_restante = (limiar_critico - folga_atual).max(0.0);
-
-    let rul_central = folga_restante / m_deriva;
-    let desvio_taxa = sigma_res / (n as f64).sqrt().max(1.0);
-    let taxa_min = (m_deriva - 1.96 * desvio_taxa).max(1e-7);
-    let taxa_max = m_deriva + 1.96 * desvio_taxa;
-
-    let rul_min = (folga_restante / taxa_max).max(0.0);
-    let rul_max = (folga_restante / taxa_min).max(rul_central);
-    let conf = if n >= 15 { "Alta".to_string() } else { "Média".to_string() };
-
-    (rul_central, rul_min, rul_max, m_deriva, conf)
-}
-
 pub fn criar_frota_padrao_offshore(n_maquinas: usize) -> Vec<MaquinaFrota> {
     criar_frota_com_capacidade(n_maquinas, 10.0)
 }
@@ -129,6 +95,18 @@ pub fn criar_frota_padrao_offshore(n_maquinas: usize) -> Vec<MaquinaFrota> {
 pub fn criar_frota_com_capacidade(n_maquinas: usize, fad_unitario: f64) -> Vec<MaquinaFrota> {
     let mut frota = Vec::new();
     let total = n_maquinas.max(1);
+
+    // Tensão/RPM nominais reais (não valores de catálogo) para a semeadura
+    // sintética de dano — ver frota_supervisorio.py para a justificativa
+    // completa (evita descontinuidade entre a taxa de dano semeada e a dos
+    // ciclos reais subsequentes).
+    let mut params_nom = Params::default();
+    params_nom.fad_m3_min = fad_unitario;
+    params_nom.n_compressores = total as u32;
+    let res_nom = sistema::simular(&params_nom);
+    let snap_nom = extrair_snapshot_pi(&res_nom, &params_nom, "NOM", false, Some(0));
+    let sigma_b_nominal = snap_nom.get("NOM:MEC_SIGMA_B").map(|t| t.valor).unwrap_or(120.0);
+    let rpm_nominal = snap_nom.get("NOM:MEC_RPM").map(|t| t.valor).unwrap_or(3528.0);
 
     for i in 0..total {
         let letra = (b'A' + (i % 26) as u8) as char;
@@ -185,6 +163,15 @@ pub fn criar_frota_com_capacidade(n_maquinas: usize, fad_unitario: f64) -> Vec<M
             hist_folga.push(base);
         }
 
+        // Dano acumulado sintético (Eqs. 19.7/19.8), mesmo papel demonstrativo
+        // de hist_folga acima — ver frota_supervisorio.py para a justificativa.
+        let dano_diario_nominal = crate::fadiga::dano_incremental(sigma_b_nominal, rpm_nominal, 1.0);
+        let dano_total = dano_diario_nominal * dias * (1.0 + 3.0 * sev);
+        let mut hist_dano = Vec::new();
+        for step in 0..20 {
+            hist_dano.push((dano_total * (step as f64 / 19.0)).max(0.0));
+        }
+
         let maq = MaquinaFrota {
             id,
             nome,
@@ -195,6 +182,8 @@ pub fn criar_frota_com_capacidade(n_maquinas: usize, fad_unitario: f64) -> Vec<M
             historico_folga: hist_folga,
             historico_hi: Vec::new(),
             historico_nis: Vec::new(),
+            dano_acumulado: hist_dano.last().copied().unwrap_or(0.0),
+            historico_dano: hist_dano,
             falha_simulada_id: falha,
             severidade_falha: sev,
         };
@@ -233,8 +222,13 @@ pub fn executar_ciclo_supervisorio_frota(
             }
         }
 
-        let (rul_est, rul_min, rul_max, _taxa, _conf) =
-            projetar_rul_probabilistico(&maq.historico_folga, 0.020, dt_dias);
+        // Dano acumulado por fadiga (Eqs. 19.7/19.8) e RUL por Miner (Eq. 19.9),
+        // com incerteza de Ḋ propagada por Processo Gaussiano (Eq. 19.10)
+        let sigma_b_mpa = snap.get(&format!("{}:MEC_SIGMA_B", maq.tag_prefix)).map(|t| t.valor).unwrap_or(120.0);
+        let rpm_atual = snap.get(&format!("{}:MEC_RPM", maq.tag_prefix)).map(|t| t.valor).unwrap_or(3528.0);
+        maq.dano_acumulado += crate::fadiga::dano_incremental(sigma_b_mpa, rpm_atual, dt_dias);
+        maq.historico_dano.push(maq.dano_acumulado);
+        let prognostico = crate::fadiga::projetar_rul_fadiga(&maq.historico_dano, dt_dias);
 
         let exergia_dest = (res.potencias.w_total - res.potencias.w_isotermico).max(0.0) / 1000.0;
 
@@ -252,9 +246,11 @@ pub fn executar_ciclo_supervisorio_frota(
             tem_alarmes: n_alarmes > 0,
             n_alarmes,
             t_operacao_dias: maq.t_operacao_dias,
-            rul_estimado_dias: rul_est,
-            rul_ic_min: rul_min,
-            rul_ic_max: rul_max,
+            dano_acumulado: prognostico.dano_acumulado,
+            taxa_dano_diaria: prognostico.taxa_dano_diaria,
+            rul_estimado_dias: prognostico.rul_dias_estimado,
+            rul_ic_min: prognostico.rul_ic_95_min,
+            rul_ic_max: prognostico.rul_ic_95_max,
             folga_atual_um: maq.x_hat[0] * 1000.0,
             rf_atual: maq.x_hat[1],
             consumo_spc: res.kpis.spc,

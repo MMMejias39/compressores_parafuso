@@ -197,3 +197,37 @@ DEMANDA_M3_MIN = 8.0       # m³/min FAD de consumo da rede — ASSUMIDO
 
 # --- PDP alvo ---
 PDP_ALVO_C = -40.0         # °C, ISO 8573-1 Classe 2 (:2305)
+
+# --- Fadiga do dente de engrenagem: Regra de Palmgren-Miner (Eqs. 19.7-19.9, 27/09/2026) ---
+# O livro descreve a curva S-N de Basquin (sigma^b_f * N = C) e cita a AGMA 2001 como
+# referência normativa, mas não fixa valores numéricos de C e b_f para um material
+# específico — ambos ASSUMIDOS aqui a partir de dois pontos típicos de fadiga em flexão
+# de dente de engrenagem cementada/temperada (aço-liga, grau AGMA 1-2): resistência de
+# ~700 MPa em N=1e4 ciclos (baixo ciclo) e limite de resistência (~SIGMA_B_ADM_MPA) em
+# N=1e7 ciclos (vida "infinita" característica de aços endurecidos). Reaproveita o
+# limiar HH já definido para a tag MEC_SIGMA_B (pi_telemetry.py) como sigma_adm — nunca
+# duplicar um valor que já existe noutro nome (MANUTENCAO.md, "Onde não mexer").
+SIGMA_B_ADM_MPA = 300.0    # MPa, limite admissível de tensão na raiz do dente — mesmo
+                            # valor do alarme HH da tag MEC_SIGMA_B (Eq. 24.2, sigma_adm)
+N_REF_ENDURANCE = 1.0e7    # ciclos, vida no limite de resistência — ASSUMIDO (aço-liga
+                            # endurecido, referência AGMA 2001)
+SIGMA_REF_BAIXO_CICLO_MPA = 700.0  # MPa, resistência em baixo ciclo (N=1e4) — ASSUMIDO
+N_REF_BAIXO_CICLO = 1.0e4  # ciclos — ASSUMIDO, par com SIGMA_REF_BAIXO_CICLO_MPA para
+                            # ajustar a inclinação log-log da curva de Basquin (b_f)
+
+# --- Processo Gaussiano da taxa de acúmulo de dano (Eq. 19.10, 27/09/2026) ---
+GP_SIGMA_F = 0.02          # desvio padrão do processo (dano acumulado, adimensional)
+                            # — ASSUMIDO, ordem de grandeza de D crescendo lentamente
+GP_ELL_DIAS = 30.0         # dias, comprimento de escala do kernel — ASSUMIDO (correlação
+                            # de dano ao longo de ~1 mês de operação)
+GP_SIGMA_N = 0.002         # desvio padrão do ruído de medição de D — ASSUMIDO
+
+RUL_TETO_DIAS = 10_950.0   # 30 anos — teto de exibição/decisão do RUL por
+                            # fadiga: em operação bem abaixo do limite de
+                            # resistência (comum, já que o equipamento é
+                            # projetado com margem), a Eq. 19.9 projeta RUL
+                            # de milhões de dias, tecnicamente correto mas
+                            # sem utilidade operacional — além desse
+                            # horizonte, a fadiga do dente deixa de ser o
+                            # modo de falha que importa (outros — folga,
+                            # fouling — já teriam exigido intervenção antes)
