@@ -11,16 +11,19 @@ bastante para justificar (nova convenção, nova figura derivada, arquivo novo).
 
 ## O que é este projeto
 
-`compressores.tex` é um livro técnico (**183 páginas** em 13/09/2026 — o "~84
-páginas" que este parágrafo trazia desde 26/07/2026 estava congelado) sobre
-construção de um Gêmeo Digital completo para compressores de parafuso rotativo
+`compressores.tex` é um livro técnico (**196 páginas** em 27/09/2026 — o "183
+páginas" que este parágrafo trazia desde 13/09/2026 estava congelado; o salto
+não veio de conteúdo novo, veio da tabela de nomenclatura por capítulo que só
+passou a compilar de fato depois da correção registrada em
+`Backlog_edicao_completa.md`, 26/09/2026) sobre construção de um Gêmeo Digital
+completo para compressores de parafuso rotativo
 isentos de óleo usados em plantas de ar comprimido offshore (óleo e gás). O autor
 escreveu o conteúdo original com apoio de um GPAI e vem revisando/expandindo o
 documento em conjunto com o Claude ao longo de várias sessões.
 
 **A coleção hoje tem três volumes**, não só este: `Volume_0_Notacoes_e_Calculo.tex`
 (42 p., pré-requisitos matemáticos), `Volume_I_Fundamentos.tex` (87 p., fundamentos
-teóricos) e `compressores.tex` (183 p., o Volume II descrito acima). Mais duas
+teóricos) e `compressores.tex` (196 p., o Volume II descrito acima). Mais duas
 implementações de referência: `aplicativo/` (Streamlit/Python) e `compressor2/`
 (Rust/Axum).
 
@@ -129,7 +132,7 @@ também em "Pendências conhecidas" para não se perderem:
 ## Arquivos e pastas
 
 - `compressores.tex` — Volume II, o documento principal (fonte única de verdade).
-- `compressores.pdf` — PDF compilado (**183 páginas** em 13/09/2026).
+- `compressores.pdf` — PDF compilado (**196 páginas** em 27/09/2026).
 - `Volume_I_Fundamentos.tex`/`.pdf` — Volume I, fundamentos teóricos (87 páginas,
   158 equações, ~50 figuras vetoriais TikZ/pgfplots escritas no próprio `.tex` —
   **não** usa `scripts/gen_figuras.py`, que é do Volume II). Nome canônico desde
@@ -4195,3 +4198,51 @@ conferidas por extração de texto e página do prefácio novo inspecionada por
 mão).
 
 **Nada commitado** --- regra permanente.
+
+## Correção do bloqueio de compilação + skill `redacao-tecnica` (26–27/09/2026)
+
+Pedido do autor: atualizar o backlog e ajustar os `.md` de contexto para criar
+uma skill de redação técnica. Diagnóstico completo e verificação estão em
+`Backlog_edicao_completa.md` (reescrito nesta sessão como encerrado); resumo
+aqui por ser mudança estrutural que muda a contagem de páginas do Volume II.
+
+**Causa raiz do bloqueio**: `scripts/gerar_nomenclatura_por_capitulo.py`
+localizava o fim de `\section{...}` com um regex (`[^}]*`) que não trata
+`\textbf{}` aninhado no título — parava na chave de fechamento do `\textbf`,
+não na do `\section`, e inseria o bloco "Símbolos deste capítulo" **dentro**
+do argumento do `\section`. Afetou os 13 capítulos que usam `\textbf{}` no
+título (2–13 e 15); os demais (14, 16 em diante, sem `\textbf{}`) nunca
+tiveram o bug. Corrigido o regex do gerador e regenerado `compressores.tex` a
+partir dele — a versão em árvore é saída do script, não edição manual.
+`compressores.tex` foi a **196 páginas** depois da correção (era 183 no
+último registro real deste arquivo, de 13/09/2026 — o número não mudou por
+conteúdo novo, só porque a tabela de nomenclatura por capítulo, criada em
+13/09 mas nunca compilada de fato até agora, finalmente entrou). **228
+equações** (`\label{eq:s*}`) — já eram 228 antes desta sessão; o "227" que
+este arquivo e `CONTEXTO_kimi.md`/`SISTEMA_MULTI_MODELOS.md` citavam desde
+20/08/2026 já estava um a menos, sem que nenhuma sessão tivesse notado.
+Figuras seguem 28, sem mudança. Edição Completa regenerada e recompilada:
+**314 páginas** (era 304), outline verificado com `mutool` — VOLUME 0/I/II
+como irmãos de nível máximo, fechando o bug original relatado pelo autor em
+16/09/2026.
+
+**Skill nova**: `.claude/skills/redacao-tecnica/SKILL.md` reúne as regras de
+redação dos volumes — numeração/citação de equação, figura e tabela, aspas,
+estrutura de capítulo, veracidade de referências, critério de elaboração de
+exercícios — para ser carregada por qualquer sessão (Claude ou Kimi) antes de
+escrever ou revisar prosa do livro. As seções de "Convenções" deste arquivo e
+de `CONTEXTO_kimi.md` foram enxugadas: o texto da regra virou ponteiro para a
+skill, o histórico de achados/decisões continua intacto.
+
+**Varredura de status congelado** nos arquivos de apoio: `dicas_ollama.md`
+(itens 2–5, 7 reconfirmados pendentes; item 6 ganhou nuance — UKF passou a
+ser mencionado em prosa no Cap. 20, ainda sem equação própria),
+`melhorias_gemini.md` (mesma nuance do UKF; MLOps segue sem implementação,
+`InfluxDB`/`TimescaleDB` só citados como item de arquitetura desejada no
+pseudocódigo do Cap. 26), `dicas_backlog.md` (removida a nota de que
+`compressores.tex` estava quebrado — já resolvido).
+
+**Commits desta frente já feitos e enviados ao remoto** em sessão anterior a
+esta entrada: `15fe25e` (correção do bloqueio + backlog) e `a813988` (skill +
+enxugamento dos contextos). Esta entrada e a correção das contagens de página
+acima (183→196, 227→228) ainda aguardam commit no momento em que foi escrita.

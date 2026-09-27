@@ -26,7 +26,7 @@ implementações de referência que a acompanham:
    Digital de Sistemas de Compressão Offshore*. Trata de compressores de
    parafuso rotativo isentos de óleo em plantas offshore e a metodologia de
    Gêmeo Digital (EKF, VAE, PIML, MPC, PSO, catálogo de 59 mecanismos de
-   falha). 183 páginas, 227 equações, 28 figuras.
+   falha). 196 páginas, 228 equações, 28 figuras.
 4. **O aplicativo Python** (`aplicativo/`): simulador web em Streamlit que
    implementa boa parte do Volume II. Cada equação do código cita a equação
    correspondente no livro. **5 abas** operacionais (Supervisório de Frota,
@@ -146,7 +146,7 @@ redação genérica, são convenção de organização de arquivo):
   (servidor em `localhost:8080`).
 - Física espelhada do Python: `sistema.rs` e `sistema.py` devem concordar.
 
-## 6. Estado atual (verificado em 13/09/2026)
+## 6. Estado atual (verificado em 13/09/2026, reverificado em 27/09/2026)
 
 ### Volume 0 — `Volume_0_Notacoes_e_Calculo.tex`
 - Criado em 12/09/2026; backlog por criticidade (`Backlog_volume0.md`)
@@ -174,15 +174,24 @@ redação genérica, são convenção de organização de arquivo):
   quando forem a melhor da categoria.
 
 ### Volume II — `compressores.tex`
-- 183 páginas, 227 equações, 28 figuras, 59 mecanismos de falha catalogados
+- **196 páginas, 228 equações**, 28 figuras, 59 mecanismos de falha catalogados
   (Tabela 28.2). 36 overfull hboxes, o maior com 2,01 pt — baseline
-  documentado e cosmeticamente insignificante.
+  documentado e cosmeticamente insignificante. *(Reverificado 27/09/2026: o
+  "183 páginas, 227 equações" registrado desde 13/09 estava congelado — a
+  contagem de páginas subiu porque um bug real no gerador de nomenclatura por
+  capítulo impedia `compressores.tex` de compilar até 26/09/2026 (ver
+  `Backlog_edicao_completa.md`); a de equações porque já eram 228 desde
+  20/08/2026 e nenhuma sessão tinha notado a divergência.)*
 - Partes I (Caps. 2–18), II (19–27) e III (28–29, metodologia + estudo de caso
   integrado). Glossário de Anglicismos ao fim, antes da bibliografia.
+- **Regras de redação (equação/figura/tabela/aspas/exercício)**: skill
+  `redacao-tecnica` (`.claude/skills/redacao-tecnica/SKILL.md`), criada em
+  26/09/2026 — carregar antes de escrever ou revisar prosa de qualquer volume.
 - Todos os relatórios externos recebidos até hoje estão **encerrados**:
   `relatorio_diagramacao.md`, `dicas_kimi.md` (31/07 e 16/08),
   `dicas_COPILOT.md`, `Manus_parecer_final_compressores.md`,
-  `Backlog_kimi_compress.md` (13/13) e `Gemini_ajuste.pdf`.
+  `Backlog_kimi_compress.md` (13/13), `Backlog_edicao_completa.md` (bloqueio
+  corrigido em 26/09/2026) e `Gemini_ajuste.pdf`.
   `melhorias_gemini.md` está majoritariamente vencido — ver o cabeçalho de
   status no próprio arquivo.
 
@@ -196,9 +205,10 @@ redação genérica, são convenção de organização de arquivo):
 - Pendências do app: 49 mecanismos de falha restantes, treino multi-mecanismo,
   sensores portáteis, $\zeta_{valv}$, supervisório com estado persistente.
 
-### Pendências abertas nos livros (verificadas em 13/09/2026)
-1. `dicas_ollama.md` itens 2, 3, 4, 5, 7 e 8 — ver o próprio arquivo, que traz
-   o estado conferido de cada um.
+### Pendências abertas nos livros (verificadas em 13/09/2026, reconferidas em 27/09/2026)
+1. `dicas_ollama.md` itens 2, 3, 4, 5 e 7 — ver o próprio arquivo, que traz
+   o estado conferido de cada um (item 8 já foi resolvido em 13/09/2026; item
+   6 é só parcial, com uma nuance nova de 27/09 sobre o UKF).
 2. Cap. 6 do Vol. II segue sem nenhuma figura (única lacuna gráfica da Parte I).
 3. Volume I sem `\clearpage` — decisão do autor.
 4. Vol. II: validação do gêmeo contra dados reais e hierarquia de fidelidade
