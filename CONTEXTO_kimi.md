@@ -26,7 +26,7 @@ implementações de referência que a acompanham:
    Digital de Sistemas de Compressão Offshore*. Trata de compressores de
    parafuso rotativo isentos de óleo em plantas offshore e a metodologia de
    Gêmeo Digital (EKF, VAE, PIML, MPC, PSO, catálogo de 59 mecanismos de
-   falha). 196 páginas, 228 equações, 28 figuras.
+   falha). 204 páginas, 228 equações, 28 figuras.
 4. **O aplicativo Python** (`aplicativo/`): simulador web em Streamlit que
    implementa boa parte do Volume II. Cada equação do código cita a equação
    correspondente no livro. **5 abas** operacionais (Supervisório de Frota,
@@ -174,14 +174,18 @@ redação genérica, são convenção de organização de arquivo):
   quando forem a melhor da categoria.
 
 ### Volume II — `compressores.tex`
-- **196 páginas, 228 equações**, 28 figuras, 59 mecanismos de falha catalogados
+- **204 páginas, 228 equações**, 28 figuras, 59 mecanismos de falha catalogados
   (Tabela 28.2). 36 overfull hboxes, o maior com 2,01 pt — baseline
   documentado e cosmeticamente insignificante. *(Reverificado 27/09/2026: o
   "183 páginas, 227 equações" registrado desde 13/09 estava congelado — a
   contagem de páginas subiu porque um bug real no gerador de nomenclatura por
   capítulo impedia `compressores.tex` de compilar até 26/09/2026 (ver
   `Backlog_edicao_completa.md`); a de equações porque já eram 228 desde
-  20/08/2026 e nenhuma sessão tinha notado a divergência.)*
+  20/08/2026 e nenhuma sessão tinha notado a divergência. Novo salto de 196
+  para 204 páginas, mesmo dia: Objetivos de Aprendizagem e Exercícios
+  Resolvidos acrescentados aos nove capítulos da Parte II — ver CONTEXTO.md,
+  "Objetivos de Aprendizagem e Exercícios Resolvidos na Parte II"; nenhuma
+  equação nova, por isso a contagem de equações não mudou.)*
 - Partes I (Caps. 2–18), II (19–27) e III (28–29, metodologia + estudo de caso
   integrado). Glossário de Anglicismos ao fim, antes da bibliografia.
 - **Regras de redação (equação/figura/tabela/aspas/exercício)**: skill

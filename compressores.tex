@@ -2977,10 +2977,19 @@ A inflação de $\mathcal{R}$ da Equação~\eqref{eq:s18-6} completa essa unific
 }
 % <<< NOMENCLATURA-CAP 19
 
-
-
-
-
+\textbf{Objetivos de Aprendizagem.} Ao final deste capítulo, o leitor deve ser
+capaz de:
+\begin{itemize}
+	\item explicar a estrutura da função de perda híbrida do PIML e o papel
+	dos pesos que equilibram dados e física;
+	\item descrever como o Autoencoder Variacional comprime as variáveis
+	monitoradas num espaço latente e como o vetor de resíduo isola a
+	variável em falha;
+	\item formular a função objetivo do MPC e sua restrição estrutural de
+	tensão admissível;
+	\item calcular o Exergetic Health Index e o RUL por acúmulo de dano,
+	incluindo a propagação de incerteza por Processo Gaussiano.
+\end{itemize}
 
 Este capítulo descreve a engenharia de integração do Gêmeo Digital, detalhando como o vasto equacionamento multidisciplinar é fundido em um motor de inferência robusto e como a complexidade de dados é tratada para diagnósticos de alta fidelidade. A abordagem proposta transcende o monitoramento convencional ao integrar modelos de primeira ordem com algoritmos de aprendizado profundo.
 
@@ -3087,6 +3096,44 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 	Onde $K_{\text{GP}}$ é a matriz de covariâncias entre os pontos observados de $D(t)$, $\mathbf{k}_{*,\text{GP}}$ é o vetor de covariâncias entre $t_*$ e esses pontos, $\mathbf{d}$ é o vetor das taxas de dano observadas, $\sigma_n^2$ é a variância do ruído de medição e $\ell_{\text{GP}}$ (não confundir com o vetor latente $\ell$ do VAE) é o comprimento de escala do \textit{kernel} — quanto maior, mais suave e mais correlacionada no tempo é a curva de dano assumida. A variância predita entra diretamente na Equação~\eqref{eq:s25-3} (propagação de incerteza, Capítulo de Diretrizes de Desenvolvimento) para produzir um intervalo de confiança em torno do RUL pontual da Equação~\eqref{eq:s19-9}, preservando a camada probabilística da formulação original do documento, mas agora como quantificação de incerteza em torno de um dano fisicamente calculado, e não como substituto da física.
 \end{itemize}
 
+\subsection{Exercícios Resolvidos}
+
+\textbf{Exercício 19.1 (Exergetic Health Index).} Um compressor opera com
+trabalho mínimo reversível $\dot{W}_{\text{min,rev}} = 850\ \mathrm{kW}$ e
+trabalho real $\dot{W}_{\text{real}} = 1000\ \mathrm{kW}$; o Autoencoder
+Variacional reporta erro de reconstrução $E_{\text{rec}} = 0{,}05$. Calcule
+o EHI pela Equação~\eqref{eq:s19-6} e diga se o valor reflete uma máquina
+próxima do ideal termodinâmico, com dados confiáveis.
+
+\emph{Resolução.} A razão de eficiência exergética é
+$\dot{W}_{\text{min,rev}}/\dot{W}_{\text{real}} = 850/1000 = 0{,}850$. O
+fator de desconto é $\exp(-E_{\text{rec}}) = \exp(-0{,}05) \approx 0{,}9512$.
+Pela Equação~\eqref{eq:s19-6}:
+$$EHI = 0{,}850 \times 0{,}9512 \approx 0{,}808.$$
+O valor é alto (próximo de 1) porque as duas condições da
+Equação~\eqref{eq:s19-6} se satisfazem juntas: a máquina opera perto do
+limite reversível (razão de 0,850) \textbf{e} o erro de reconstrução do VAE
+é pequeno, de modo que o desconto exponencial penaliza pouco o índice. Um
+EHI baixo poderia vir de qualquer um dos dois fatores isoladamente --- daí
+a necessidade de examinar a razão e $E_{\text{rec}}$ separadamente antes de
+confiar só no produto final.
+
+\textbf{Exercício 19.2 (RUL por acúmulo de dano).} Uma janela móvel de
+operação acumulou dano $D = 0{,}62$ pela Regra de Palmgren-Miner, com taxa
+de acúmulo recente $\dot{D} = 0{,}004$ por dia. Calcule o RUL pela
+Equação~\eqref{eq:s19-9} e interprete o resultado.
+
+\emph{Resolução.} Pela Equação~\eqref{eq:s19-9}:
+$$RUL = \frac{1 - D}{\dot{D}} = \frac{1 - 0{,}62}{0{,}004} =
+\frac{0{,}38}{0{,}004} = 95\ \text{dias}.$$
+O resultado projeta 95 dias até $D = 1$ (falha prevista pela Regra de
+Miner), assumindo que a taxa de acúmulo $\dot{D}$ observada na janela
+recente se mantém constante. Essa é exatamente a hipótese que a
+Equação~\eqref{eq:s19-10} relaxa: em vez de tratar $\dot{D}$ como um número
+fixo, o Processo Gaussiano ajustado sobre $D(t)$ fornece também a variância
+de $\dot{D}(t_*)$, permitindo transformar os 95 dias pontuais aqui
+calculados num intervalo de confiança.
+
 \vspace{1em}
 \hrule
 \vspace{1em}
@@ -3127,11 +3174,20 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 }
 % <<< NOMENCLATURA-CAP 20
 
+	\textbf{Objetivos de Aprendizagem.} Ao final deste capítulo, o leitor
+	deve ser capaz de:
+	\begin{itemize}
+		\item explicar a decomposição gray-box do estado real em um
+		componente físico determinístico e um componente estocástico
+		aprendido pela IA;
+		\item descrever o ciclo de predição-correção do EKF e o papel das
+		jacobianas $F_k$, $G_k$ e das covariâncias $Q$, $\mathcal{R}$;
+		\item calcular o erro de reconstrução do VAE e reconhecer quando
+		ele indica anomalia;
+		\item formular a função de perda do PIML e as restrições
+		estruturais que o MPC nunca pode violar.
+	\end{itemize}
 
-
-
-
-	
 	Este capítulo estabelece a arquitetura analítica e o rigor metodológico necessários para a implementação do Gêmeo Digital (DT). A abordagem integra a mecânica clássica, a termodinâmica avançada e o aprendizado de máquina para criar um sistema de suporte à decisão prescritiva em operações offshore.
 	
 	\subsection{Pilares Teóricos da Modelagem Híbrida}
@@ -3237,11 +3293,57 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 		\item \textbf{Avaliação de Integridade e Exergia:} Cálculo simultâneo da tensão na raiz ($\sigma_b$) e da destruição de exergia ($\dot{I}$).
 		\item \textbf{Prognóstico e Prescrição:} Estimativa da Vida Útil Remanescente (RUL) e geração de recomendações de ajuste de carga ou manutenção.
 	\end{enumerate}
-	
+
+	\subsection{Exercícios Resolvidos}
+
+	\textbf{Exercício 20.1 (erro de reconstrução do VAE).} Por simplicidade
+	de cálculo, considere apenas três das 26 variáveis monitoradas pelo
+	VAE: pressão de descarga ($z_1=105\ \mathrm{bar}$, reconstrução
+	$\hat{z}_1=102\ \mathrm{bar}$, $\sigma_1=1{,}5\ \mathrm{bar}$),
+	temperatura de descarga ($z_2=92\,^{\circ}\mathrm{C}$,
+	$\hat{z}_2=90\,^{\circ}\mathrm{C}$, $\sigma_2=2\,^{\circ}\mathrm{C}$) e
+	vibração global ($z_3=4{,}2\ \mathrm{mm\,s^{-1}}$,
+	$\hat{z}_3=4{,}0\ \mathrm{mm\,s^{-1}}$,
+	$\sigma_3=0{,}5\ \mathrm{mm\,s^{-1}}$). Calcule $E_{\text{rec}}$ pela
+	Equação~\eqref{eq:s20-4} restrita a essas três parcelas, compare com o
+	limiar $\tau=3{,}0$ e diga qual variável mais contribui para o desvio.
+
+	\emph{Resolução.} Pela Equação~\eqref{eq:s20-4}, cada parcela é
+	$(z_i-\hat{z}_i)^2/\sigma_i^2$:
+	$$\left(\frac{105-102}{1{,}5}\right)^2 = 2^2 = 4{,}00,$$
+	$$\left(\frac{92-90}{2}\right)^2 = 1^2 = 1{,}00,$$
+	$$\left(\frac{4{,}2-4{,}0}{0{,}5}\right)^2 = 0{,}4^2 = 0{,}16.$$
+	Somando: $E_{\text{rec}} = 4{,}00+1{,}00+0{,}16 = 5{,}16$. Como
+	$5{,}16 > \tau = 3{,}0$, o algoritmo de diagnóstico seria disparado. A
+	pressão de descarga responde por $4{,}00/5{,}16 \approx 77{,}5\%$ do
+	desvio total --- é a variável a investigar primeiro, mesmo com as
+	outras duas dentro do esperado.
+
+	\textbf{Exercício 20.2 (decomposição gray-box).} Um sensor registra a
+	potência elétrica real do motor de acionamento como
+	$y_{\text{real}} = 128{,}4\ \mathrm{kW}$ num instante em que o modelo
+	físico determinístico prevê $f_{\text{física}}(x,\theta) =
+	121{,}9\ \mathrm{kW}$ com os parâmetros nominais correntes. Calcule o
+	componente atribuído à camada de IA pela Equação~\eqref{eq:s20-1} e
+	comente o que um valor persistente e crescente desse componente
+	indicaria sobre o compressor.
+
+	\emph{Resolução.} Isolando $\epsilon_{\text{IA}}$ na
+	Equação~\eqref{eq:s20-1}:
+	$$\epsilon_{\text{IA}} = y_{\text{real}} - f_{\text{física}}(x,\theta)
+	= 128{,}4 - 121{,}9 = 6{,}5\ \mathrm{kW}.$$
+	Um resíduo de $6{,}5\ \mathrm{kW}$ isolado pode ser apenas ruído de
+	medição. Já um $\epsilon_{\text{IA}}$ que cresce de forma sustentada ao
+	longo do tempo, como o próprio capítulo descreve, é o sintoma de algo
+	que o modelo físico não captura --- desgaste de selos, incrustação
+	progressiva ou variação na composição do gás --- e não uma falha do
+	modelo em si: é exatamente a deriva que a camada de IA existe para
+	capturar.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
-	
+
 	\textbf{Diretriz Técnica Final:} A integração desses algoritmos permite que o Gêmeo Digital compreenda a \textbf{causalidade física} por trás dos dados. A metodologia garante que a otimização energética nunca comprometa a integridade estrutural, transformando o DT em um agente ativo de segurança e eficiência, síntese que a Equação~\eqref{eq:s20-9} resume.
 
 	\begin{equation}\label{eq:s20-9}
@@ -3275,10 +3377,19 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 }
 % <<< NOMENCLATURA-CAP 21
 
-
-
-
-
+	\textbf{Objetivos de Aprendizagem.} Ao final deste capítulo, o leitor
+	deve ser capaz de:
+	\begin{itemize}
+		\item explicar por que o EKF lineariza via jacobianos e o que esse
+		truncamento de primeira ordem custa;
+		\item definir o vetor de estado e o vetor de medições deste trem
+		de compressão e justificar por que cada grandeza entra em um ou
+		em outro;
+		\item verificar a condição de observabilidade local e interpretar
+		a estatística NIS como diagnóstico de saúde do filtro;
+		\item reconhecer os limites da linearização e quando o UKF ou o
+		MHE (Capítulo 27) seriam a evolução necessária.
+	\end{itemize}
 
 	Este capítulo detalha o motor de estimação de estados não observáveis, fundamental para a percepção de variáveis internas do compressor que não possuem instrumentação direta. O filtro de Kalman foi publicado por Rudolf Kalman em 1960 como solução recursiva ótima para estimação linear sob ruído gaussiano \cite{kalman}; sua extensão a sistemas não lineares (EKF), usada aqui, tornou-se padrão em estimação de estado de processos físicos desde então \cite{simon}.
 	
@@ -3384,6 +3495,48 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	Quando esses regimes forem relevantes para a aplicação, duas alternativas se impõem. O \textbf{Filtro de Kalman \textit{Unscented}} (UKF) substitui a linearização analítica pela propagação determinística de um conjunto de pontos amostrais (\textit{sigma points}) através da função não linear, capturando a média e a covariância com precisão de segunda ordem sem calcular Jacobianos — o que também elimina a necessidade de derivar $F_k$ e $G_k$ analiticamente, tarefa trabalhosa e propensa a erro num modelo com dezenas de acoplamentos. A \textbf{Estimação de Horizonte Móvel} (MHE), por sua vez, abandona a recursão de passo único e resolve, a cada instante, um problema de otimização sobre uma janela de medições passadas, o que permite impor \textbf{restrições explícitas} ao estado estimado — por exemplo, que a folga $\delta$ não pode ser negativa nem diminuir com o tempo, uma informação física que o EKF não tem como incorporar. Essa é precisamente a capacidade oferecida pelo \textit{framework} do-mpc discutido no Capítulo 27, e é o caminho natural de evolução deste módulo.
 
+	\subsection{Exercícios Resolvidos}
+
+	\textbf{Exercício 21.1 (condição de observabilidade --- exemplo
+	reduzido).} Para ilustrar a Equação~\eqref{eq:s21-5} num caso pequeno
+	(não o modelo real de cinco estados da Equação~\eqref{eq:s21-2}),
+	considere um sistema linearizado de apenas dois estados, com
+	jacobianas $G_k = \begin{bmatrix}1 & 0\end{bmatrix}$ (o sensor só
+	enxerga o primeiro estado diretamente) e
+	$F_k = \begin{bmatrix}0{,}9 & 0\\ 0 & 0{,}8\end{bmatrix}$ (os dois
+	estados evoluem de forma desacoplada). O segundo estado é observável?
+
+	\emph{Resolução.} Pela Equação~\eqref{eq:s21-5}, com $n_x=2$:
+	$$\mathcal{O} = \begin{bmatrix} G_k \\ G_k F_k \end{bmatrix}
+	= \begin{bmatrix} 1 & 0 \\ 0{,}9 & 0 \end{bmatrix}.$$
+	A segunda coluna é toda nula, logo
+	$\det(\mathcal{O}) = 1\cdot 0 - 0\cdot 0{,}9 = 0$ e
+	$\text{posto}(\mathcal{O}) = 1 < n_x = 2$. O sistema \textbf{não} é
+	observável: como o sensor mede só o primeiro estado e a dinâmica é
+	desacoplada ($F_k$ diagonal), nenhuma variação do segundo estado
+	jamais aparece em $z_k$. É exatamente o cenário de risco descrito no
+	capítulo --- o EKF continuaria propagando um valor para esse estado,
+	mas sem nenhum dado sustentando-o.
+
+	\textbf{Exercício 21.2 (estatística NIS).} Num instante $k$, o EKF
+	calcula inovação $\tilde z_k = 2{,}1$ e covariância de inovação
+	$S_k = 1{,}0$ para uma única medição (caso escalar simplificado,
+	$n_z=1$, da Equação~\eqref{eq:s21-6}). Calcule o NIS pela
+	Equação~\eqref{eq:s21-7} e compare com o percentil 95\% da
+	distribuição $\chi^2_1$, que vale $3{,}84$. O que esse único valor
+	permite concluir?
+
+	\emph{Resolução.} No caso escalar, a Equação~\eqref{eq:s21-7} se
+	reduz a $\text{NIS}_k = \tilde z_k^2 / S_k = 2{,}1^2/1{,}0 = 4{,}41$.
+	Como $4{,}41 > 3{,}84$, esse instante isolado excede o limiar de
+	95\% da $\chi^2_1$ --- estatisticamente incomum se as premissas do
+	filtro estivessem corretas. Mas, como o próprio capítulo enfatiza, o
+	diagnóstico de saúde do EKF é sobre a \textbf{tendência} da sequência
+	de inovações, não sobre uma amostra isolada: um único NIS alto pode
+	ser apenas a cauda da distribuição esperada por acaso; só um NIS
+	\textbf{consistentemente} acima da faixa esperada, ao longo de vários
+	passos, sustenta a conclusão de modelo defasado ou $Q$ subestimada.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
@@ -3414,11 +3567,21 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 }
 % <<< NOMENCLATURA-CAP 22
 
+	\textbf{Objetivos de Aprendizagem.} Ao final deste capítulo, o leitor
+	deve ser capaz de:
+	\begin{itemize}
+		\item justificar por que o VAE é preferível ao PCA e ao
+		autoencoder determinístico para este diagnóstico;
+		\item interpretar os dois termos do ELBO e como eles se traduzem
+		na função de perda do VAE;
+		\item calcular a divergência KL em forma fechada para um espaço
+		latente gaussiano e reconhecer os dois modos de falha de sintonia
+		do peso $\beta$;
+		\item explicar por que o VAE exige treinamento só com dados
+		saudáveis e como o limiar de disparo é derivado por quantil, não
+		por valor absoluto.
+	\end{itemize}
 
-
-
-
-	
 	A redução de dimensionalidade via VAE permite a compressão de dados complexos em assinaturas de saúde simplificadas, facilitando a detecção precoce de anomalias. A formulação usada aqui é a de Kingma e Welling \cite{vae}, que introduziu o autoencoder variacional como modelo generativo treinável por gradiente.
 
 	\subsection{Por que um VAE, e não PCA ou um Autoencoder Simples}
@@ -3508,6 +3671,50 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	Onde $\bar{\ell}_{\text{sadio}}$ e $\Sigma_{\text{sadio}}$ são a média e a covariância dos códigos latentes do conjunto saudável. A utilidade operacional é que, acumulando histórico, as regiões do espaço latente podem ser \textbf{rotuladas} com os modos de falha efetivamente observados na planta — transformando o VAE de detector genérico de anomalia em classificador de causa raiz, alimentado pela mesma matriz de mecanismos de falha construída na Parte I.
 
+	\subsection{Exercícios Resolvidos}
+
+	\textbf{Exercício 22.1 (divergência KL em forma fechada).} Um espaço
+	latente de $d=2$ dimensões produz, para uma amostra de operação,
+	$\mu_1=0{,}3$, $\sigma_1=1{,}1$ na primeira dimensão e $\mu_2=-0{,}2$,
+	$\sigma_2=0{,}9$ na segunda. Calcule $D_{KL}$ pela
+	Equação~\eqref{eq:s22-4} e diga se o resultado é compatível com um
+	encoder próximo do alvo $\mathcal{N}(0,1)$.
+
+	\emph{Resolução.} Pela Equação~\eqref{eq:s22-4}, somando as duas
+	parcelas $1+\log\sigma_j^2-\mu_j^2-\sigma_j^2$:
+	$$j=1:\ 1+\log(1{,}21)-0{,}3^2-1{,}1^2 \approx 1+0{,}1906-0{,}09-1{,}21
+	= -0{,}1094,$$
+	$$j=2:\ 1+\log(0{,}81)-(-0{,}2)^2-0{,}9^2 \approx
+	1-0{,}2107-0{,}04-0{,}81 = -0{,}0607.$$
+	Somando as duas parcelas e aplicando o $-\frac{1}{2}$ da
+	Equação~\eqref{eq:s22-4}:
+	$$D_{KL} = -\frac{1}{2}(-0{,}1094-0{,}0607) \approx 0{,}085.$$
+	O valor é pequeno e positivo --- a Equação~\eqref{eq:s22-4} se anula
+	exatamente em $\mu_j=0$, $\sigma_j=1$, e $0{,}085$ está próximo desse
+	mínimo. O encoder está bem organizado, longe tanto do
+	\textit{posterior collapse} ($D_{KL}\to 0$ à custa de ignorar a
+	entrada) quanto de um espaço latente disperso demais.
+
+	\textbf{Exercício 22.2 (limiar por quantil, com exigência de
+	persistência).} Um conjunto de validação com 10 medições saudáveis de
+	$E_{\text{rec}}$, ordenadas do menor para o maior, vale: $0{,}12$;
+	$0{,}15$; $0{,}18$; $0{,}20$; $0{,}22$; $0{,}25$; $0{,}28$; $0{,}31$;
+	$0{,}40$; $0{,}55$. Usando o critério de posto mais próximo
+	(\textit{nearest-rank}) com $\alpha=0{,}10$ (aceitando 1 falso alarme
+	em cada 10 pontos saudáveis), determine $\tau_{\text{limiar}}$ pela
+	Equação~\eqref{eq:s22-6}. Se, em operação, o resíduo atinge
+	$E_{\text{rec}}=0{,}52$ por um único ciclo de amostragem e depois
+	volta a $0{,}20$, o alarme deveria disparar? Por quê?
+
+	\emph{Resolução.} O posto mais próximo para o quantil $1-\alpha=0{,}90$
+	sobre $N=10$ pontos é $\lceil 0{,}90 \times 10 \rceil = 9$: o nono
+	valor da lista ordenada, $\tau_{\text{limiar}} = 0{,}40$. Embora
+	$E_{\text{rec}}=0{,}52$ ultrapasse esse limiar, o alarme \textbf{não}
+	deveria disparar: como o próprio capítulo exige, o disparo depende de
+	ultrapassagem \textbf{sustentada} por uma janela temporal mínima, não
+	de um único ponto isolado --- e aqui o resíduo já retornou a
+	$0{,}20$, bem abaixo do limiar, no ciclo seguinte.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
@@ -3535,10 +3742,20 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 }
 % <<< NOMENCLATURA-CAP 23
 
-
-
-
-
+	\textbf{Objetivos de Aprendizagem.} Ao final deste capítulo, o leitor
+	deve ser capaz de:
+	\begin{itemize}
+		\item explicar como o resíduo físico $\mathcal{F}$ transforma leis
+		de conservação em termo de perda treinável;
+		\item descrever o papel dos pontos de colocação e da
+		diferenciação automática, e por que eles permitem extrapolar sem
+		violar a física onde não há dados;
+		\item calcular a função de perda híbrida do PIML e o efeito do
+		balanceamento adaptativo do peso $\lambda$;
+		\item distinguir o papel do PIML (offline, modelo substituto) do
+		EKF (online, estimação de estado) e reconhecer quando a
+		identificação por problema inverso se aplica.
+	\end{itemize}
 
 	O aprendizado informado pela física garante que a inteligência artificial opere estritamente dentro dos limites impostos pelas leis termodinâmicas e mecânicas. A formulação de redes neurais informadas pela física (PINNs), que fundamenta o PIML aqui aplicado, foi sistematizada por Raissi, Perdikaris e Karniadakis em 2019 como forma de incorporar equações diferenciais diretamente na função de perda de redes neurais \cite{piml}, e consolidada como campo de pesquisa na revisão abrangente de Karniadakis e colaboradores \cite{piml2}.
 	
@@ -3621,6 +3838,44 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	Essa técnica responde a uma limitação real deste documento: os parâmetros de catálogo usados na Parte I são valores de referência de fabricante, calibrados em condições padronizadas de bancada, e podem variar de forma sistemática de uma instalação real para outra — por qualidade de montagem, tipo de invólucro (Capítulo 2), condições ambientais do sítio ou o lote de fabricação do componente. Um problema inverso resolvido sobre o histórico de operação de \textbf{cada} unidade instalada devolve o valor efetivo daquele parâmetro \textit{para aquele local e aquele tipo de instalação específicos}, em vez de herdar cegamente o valor de catálogo — o mesmo objetivo da Seção~28.1, por um caminho offline e capaz de lidar com parâmetros distribuídos no espaço, não só no tempo.
 
+	\subsection{Exercícios Resolvidos}
+
+	\textbf{Exercício 23.1 (função de perda híbrida).} Um lote de
+	treinamento tem $N=50$ pontos de dados medidos, com soma dos erros
+	quadráticos $\sum (y-\hat{y})^2 = 12{,}5$, e $N_f=200$ pontos de
+	colocação, com soma dos resíduos físicos ao quadrado
+	$\sum \| \mathcal{F}(\hat{y}) \|^2 = 840$. Com $\lambda=0{,}05$,
+	calcule $L_{\text{PIML}}$ pela Equação~\eqref{eq:s23-3}.
+
+	\emph{Resolução.} Pela Equação~\eqref{eq:s23-3}:
+	$$L_{\text{PIML}} = \frac{12{,}5}{50} + 0{,}05 \times \frac{840}{200}
+	= 0{,}250 + 0{,}05 \times 4{,}200 = 0{,}250 + 0{,}210 = 0{,}460.$$
+	O termo de dados (0,250) e o termo físico ponderado (0,210)
+	contribuem de forma comparável para a perda total --- sinal de que,
+	nesta iteração, $\lambda=0{,}05$ está mantendo os dois objetivos em
+	equilíbrio, e não deixando um dominar o outro.
+
+	\textbf{Exercício 23.2 (balanceamento adaptativo de $\lambda$).} Numa
+	iteração de treinamento, $\lambda^{(t)}=0{,}05$, a magnitude média do
+	gradiente do termo de dados é $\overline{|\nabla_\theta
+	L_{\text{dados}}|}=0{,}008$ e a do termo físico é
+	$\overline{|\nabla_\theta L_{\text{física}}|}=0{,}002$, com fator de
+	suavização $\kappa=0{,}3$. Calcule $\lambda^{(t+1)}$ pela
+	Equação~\eqref{eq:s23-4} e explique a direção do ajuste.
+
+	\emph{Resolução.} Pela Equação~\eqref{eq:s23-4}:
+	$$\lambda^{(t+1)} = (1-0{,}3)\times 0{,}05 + 0{,}3 \times
+	\frac{0{,}008}{0{,}002} = 0{,}035 + 0{,}3 \times 4{,}00 = 0{,}035 +
+	1{,}200 = 1{,}235.$$
+	O gradiente do termo de dados é quatro vezes maior que o do termo
+	físico --- exatamente o desbalanço que a Equação~\eqref{eq:s23-4}
+	existe para corrigir: o peso $\lambda$ sobe de $0{,}05$ para
+	$1{,}235$ para amplificar a contribuição do termo físico no próximo
+	passo de otimização, evitando que ele fique invisível ao otimizador
+	diante do gradiente maior do termo de dados. O fator $\kappa=0{,}3$
+	garante que esse ajuste seja parcial (30\% na direção da razão de
+	gradientes, 70\% do valor anterior preservado), não um salto abrupto.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
@@ -3651,11 +3906,22 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 }
 % <<< NOMENCLATURA-CAP 24
 
+	\textbf{Objetivos de Aprendizagem.} Ao final deste capítulo, o leitor
+	deve ser capaz de:
+	\begin{itemize}
+		\item formular o problema de otimização quadrática do MPC e
+		dimensionar o horizonte $H$ e o peso $\rho$ a partir da dinâmica
+		do vaso pulmão e do compromisso entre desempenho e integridade
+		mecânica;
+		\item distinguir restrições duras de brandas e calcular o efeito
+		de variáveis de folga na viabilidade do MPC;
+		\item atualizar a velocidade e a posição de uma partícula do PSO
+		e explicar o papel dos coeficientes $w$, $c_1$ e $c_2$;
+		\item justificar a divisão de papéis entre MPC (tempo real) e PSO
+		(sintonia offline) e por que o modelo substituto do PIML é
+		requisito de arquitetura, não acessório.
+	\end{itemize}
 
-
-
-
-	
 	A camada de decisão e otimização utiliza algoritmos preditivos e heurísticos para maximizar a eficiência exergética e a vida útil dos componentes.
 	
 	\subsection{Controle Preditivo Baseado em Modelo (MPC)}
@@ -3744,6 +4010,45 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 		\label{fig:24-2}
 	\end{figure}
 
+	\subsection{Exercícios Resolvidos}
+
+	\textbf{Exercício 24.1 (custo quadrático do MPC).} Num horizonte
+	$H=3$, o modelo prevê os desvios $y(k)-y_{\text{ref}}(k)$ iguais a
+	$0{,}8$, $0{,}5$ e $0{,}2$ para $k=1,2,3$, e as variações de controle
+	$\Delta u(k)$ iguais a $1{,}5$, $0{,}8$ e $0{,}3$ para $k=0,1,2$, com
+	peso $\rho=0{,}4$. Calcule $J$ pela Equação~\eqref{eq:s24-1}.
+
+	\emph{Resolução.} Somando os desvios quadráticos de saída:
+	$0{,}8^2+0{,}5^2+0{,}2^2 = 0{,}64+0{,}25+0{,}04 = 0{,}93$. Somando os
+	esforços de controle quadráticos:
+	$1{,}5^2+0{,}8^2+0{,}3^2 = 2{,}25+0{,}64+0{,}09 = 2{,}98$. Pela
+	Equação~\eqref{eq:s24-1}:
+	$$J = 0{,}93 + 0{,}4 \times 2{,}98 = 0{,}93 + 1{,}192 = 2{,}122.$$
+	Note que o esforço de controle pesado ($0{,}4 \times 2{,}98=1{,}192$)
+	domina o desvio de saída ($0{,}93$) nesta trajetória --- sinal de que
+	$\Delta u$ está variando mais do que o necessário para o desvio que
+	está corrigindo, exatamente o padrão que um $\rho$ maior penalizaria
+	com mais força.
+
+	\textbf{Exercício 24.2 (atualização do PSO).} Uma partícula tem
+	posição $x_i^t=4{,}0$ e velocidade $v_i^t=0{,}5$; sua melhor posição
+	individual é $p_{\text{best},i}=5{,}2$ e a melhor do enxame é
+	$g_{\text{best}}=6{,}0$. Com $w=0{,}7$, $c_1=c_2=2{,}0$ e números
+	aleatórios sorteados $r_1=0{,}6$, $r_2=0{,}4$, calcule $v_i^{t+1}$ e
+	$x_i^{t+1}$ pelas Equações~\eqref{eq:s24-3} e~\eqref{eq:s24-4}.
+
+	\emph{Resolução.} Pela Equação~\eqref{eq:s24-3}:
+	$$v_i^{t+1} = 0{,}7 \times 0{,}5 + 2{,}0 \times 0{,}6 \times
+	(5{,}2-4{,}0) + 2{,}0 \times 0{,}4 \times (6{,}0-4{,}0)$$
+	$$= 0{,}35 + 1{,}2 \times 1{,}2 + 0{,}8 \times 2{,}0 = 0{,}35+1{,}44+1{,}60
+	= 3{,}39.$$
+	Pela Equação~\eqref{eq:s24-4}: $x_i^{t+1} = 4{,}0 + 3{,}39 = 7{,}39$.
+	O puxão social ($0{,}8\times 2{,}0=1{,}60$) supera o puxão cognitivo
+	($1{,}2\times 1{,}2=1{,}44$) nesta iteração, e ambos superam a
+	inércia herdada ($0{,}35$) --- a partícula avança predominantemente
+	em direção ao melhor ponto do enxame, não ao seu próprio melhor
+	histórico.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
@@ -3752,7 +4057,21 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 
 	\clearpage
 	\section{Diretrizes para o Desenvolvimento e Evolução do Gêmeo Digital}
-	
+
+	\textbf{Objetivos de Aprendizagem.} Ao final deste capítulo, o leitor
+	deve ser capaz de:
+	\begin{itemize}
+		\item aplicar o filtro de Savitzky-Golay e explicar por que ele
+		preserva transientes reais que uma média móvel simples
+		suavizaria;
+		\item calcular o escore de anomalia do \textit{Isolation Forest}
+		e interpretá-lo como indicador de probabilidade de anomalia;
+		\item propagar a incerteza de sensores individuais para um KPI
+		global pela fórmula clássica de propagação de erro;
+		\item descrever o papel dos valores de SHAP na explicabilidade e
+		do monitoramento de \textit{drift} no ciclo de vida do modelo.
+	\end{itemize}
+
 	Este capítulo apresenta recomendações técnicas essenciais para futuros desenvolvedores, focando na robustez, escalabilidade e confiabilidade do sistema em ambientes operacionais offshore.
 	
 	\subsection{Governança de Dados e Pré-processamento Robusto}
@@ -3810,11 +4129,54 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 		\item \textbf{Detecção de Drift:} Monitoramento contínuo do erro de reconstrução do VAE. Se o erro crescer consistentemente após uma manutenção, o modelo deve ser retreinado.
 		\item \textbf{Pipeline de Retreinamento:} Automação do fluxo de coleta de dados históricos para ajuste dos pesos sinápticos ($\theta, \phi$) do modelo híbrido.
 	\end{itemize}
-	
+
+	\subsection{Exercícios Resolvidos}
+
+	\textbf{Exercício 25.1 (propagação de incerteza).} A destruição de
+	exergia $\dot{I}$ depende de duas temperaturas medidas, com
+	sensibilidades $\partial \dot{I}/\partial T_1 = 0{,}8\ \mathrm{kW/K}$
+	(incerteza do sensor $u(T_1)=0{,}5\ \mathrm{K}$) e
+	$\partial \dot{I}/\partial T_2 = -0{,}3\ \mathrm{kW/K}$ (incerteza
+	$u(T_2)=1{,}0\ \mathrm{K}$). Calcule $u(\dot{I})$ pela
+	Equação~\eqref{eq:s25-3}.
+
+	\emph{Resolução.} Pela Equação~\eqref{eq:s25-3}, cada termo é
+	$(\partial \dot{I}/\partial T_i \cdotp u(T_i))^2$:
+	$$(0{,}8 \times 0{,}5)^2 = 0{,}4^2 = 0{,}16, \qquad
+	(-0{,}3 \times 1{,}0)^2 = 0{,}3^2 = 0{,}09.$$
+	Somando em quadratura:
+	$$u(\dot{I}) = \sqrt{0{,}16+0{,}09} = \sqrt{0{,}25} = 0{,}5\
+	\mathrm{kW}.$$
+	O sinal negativo da segunda sensibilidade não reduz a incerteza total
+	--- a Equação~\eqref{eq:s25-3} eleva cada contribuição ao quadrado
+	antes de somar, porque o que importa para a incerteza é o quanto cada
+	sensor pode desviar o resultado, em qualquer direção, não o sinal do
+	desvio.
+
+	\textbf{Exercício 25.2 (escore do \textit{Isolation Forest}).} Para
+	uma floresta calibrada com $n_{\text{IF}}=100$ pontos por amostra, um
+	ponto de operação tem comprimento médio de caminho de isolamento
+	$E[L_{\text{iso}}(x)] = 3{,}5$. Calcule $s_{\text{IF}}(x)$ pela
+	Equação~\eqref{eq:s25-2} e diga se o ponto é mais compatível com
+	operação normal ou com anomalia.
+
+	\emph{Resolução.} Primeiro o termo de normalização, com
+	$\gamma_{\text{EM}} \approx 0{,}5772$:
+	$$c(100) = 2\left[\ln(99) + 0{,}5772\right] - \frac{2 \times 99}{100}
+	= 2(4{,}5951+0{,}5772) - 1{,}98 = 10{,}3446 - 1{,}98 = 8{,}365.$$
+	Pela Equação~\eqref{eq:s25-2}:
+	$$s_{\text{IF}}(x) = 2^{-3{,}5/8{,}365} = 2^{-0{,}4185} \approx
+	0{,}748.$$
+	Como $0{,}748$ está bem acima de $0{,}5$ e caminha em direção a 1,
+	o caminho de isolamento deste ponto é curto o suficiente para
+	sinalizar anomalia --- ele deveria ser marcado para triagem antes de
+	alimentar o EKF ou o VAE, e não descartado como ruído comum de
+	instrumentação.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
-	
+
 	\textbf{Diretriz Técnica Final:} O desenvolvedor deve tratar o Gêmeo Digital como um organismo vivo. A calibração contínua via EKF e a consistência física via PIML são os diferenciais que garantem a segurança estrutural e a eficiência exergética em tempo real.
 	
 	\newpage
@@ -3837,10 +4199,20 @@ O acompanhamento evolui de simples leituras de sensores para indicadores sintét
 }
 % <<< NOMENCLATURA-CAP 26
 
-
-
-
-
+	\textbf{Objetivos de Aprendizagem.} Ao final deste capítulo, o leitor
+	deve ser capaz de:
+	\begin{itemize}
+		\item reconhecer a stack tecnológica de referência e o papel de
+		cada componente na arquitetura de produção;
+		\item identificar, no código de referência do EKF, os cuidados
+		numéricos que distinguem um protótipo de uma implementação de
+		produção;
+		\item calcular a eficiência exergética e o \textit{Health Index}
+		a partir de indicadores individuais, e explicar por que o HI é
+		ferramenta de priorização, não de proteção;
+		\item descrever os requisitos de passagem para produção e as
+		filosofias de redundância de frota.
+	\end{itemize}
 
 	Este capítulo descreve a infraestrutura fundamental e a lógica de programação para a execução do Gêmeo Digital em ambiente de produção, utilizando bibliotecas de código aberto consagradas e integração com sistemas legados.
 	
@@ -3988,6 +4360,44 @@ def ciclo_supervisorio(frota, t_k):
 		\item \textbf{Redundância $2N$ (Dupla Redundância Integral):} Dois trens independentes de $100\%$ de capacidade, reservada para serviços críticos de segurança de processo e instrumentação de emergência (ESD).
 	\end{enumerate}
 
+	\subsection{Exercícios Resolvidos}
+
+	\textbf{Exercício 26.1 (eficiência exergética).} Um compressor recebe
+	exergia total $\dot{E}x_{\text{in}} = 300\ \mathrm{kW}$ e destrói
+	$\dot{I} = 45\ \mathrm{kW}$ nesse processo. Calcule $\eta_{\text{ex}}$
+	pela Equação~\eqref{eq:s26-3}.
+
+	\emph{Resolução.} Pela Equação~\eqref{eq:s26-3}:
+	$$\eta_{\text{ex}} = 1 - \frac{45}{300} = 1 - 0{,}15 = 0{,}85.$$
+	A máquina aproveita 85\% da exergia de entrada; os 15\% restantes são
+	irreversibilidade destruída no processo, não energia perdida no
+	sentido da Primeira Lei --- distinção que a Parte I deste documento já
+	estabelece.
+
+	\textbf{Exercício 26.2 (\textit{Health Index}).} Um Gêmeo Digital
+	acompanha dois indicadores. A folga estimada pelo EKF está em
+	$\Theta_1 = 0{,}35\ \mathrm{mm}$ (referência
+	$\Theta_{1,\text{ref}}=0{,}05\ \mathrm{mm}$, limite de falha
+	$\Theta_{1,\text{lim}}=0{,}30\ \mathrm{mm}$, peso $\varpi_1=0{,}5$); o
+	erro de reconstrução do VAE está em $\Theta_2 = 0{,}6$ (referência
+	$\Theta_{2,\text{ref}}=0{,}2$, limite $\Theta_{2,\text{lim}}=1{,}0$,
+	peso $\varpi_2=0{,}5$). Calcule o $HI$ pela Equação~\eqref{eq:s26-4}.
+
+	\emph{Resolução.} Para $j=1$:
+	$\max(0,\,0{,}35-0{,}05)=0{,}30$; a razão é
+	$0{,}30/(0{,}30-0{,}05)=0{,}30/0{,}25=1{,}2$, e
+	$\min(1,\,1{,}2)=1{,}0$ --- a saturação superior da
+	Equação~\eqref{eq:s26-4} entra em ação porque a folga já ultrapassou
+	seu próprio limite de falha. Contribuição: $0{,}5 \times 1{,}0 =
+	0{,}50$. Para $j=2$: $\max(0,\,0{,}6-0{,}2)=0{,}4$; a razão é
+	$0{,}4/(1{,}0-0{,}2)=0{,}5$, sem saturar. Contribuição:
+	$0{,}5 \times 0{,}5 = 0{,}25$. Somando:
+	$$HI = 1 - (0{,}50+0{,}25) = 1 - 0{,}75 = 0{,}25.$$
+	O $HI$ baixo é dominado pelo indicador de folga, já saturado --- mas o
+	número $0{,}25$ sozinho não revela isso ao operador. É exatamente o
+	alerta do capítulo: o $HI$ prioriza, mas a decisão de intervenção deve
+	olhar os indicadores individuais, não só o agregado.
+
 	\vspace{1em}
 	\hrule
 	\vspace{1em}
@@ -3998,7 +4408,22 @@ def ciclo_supervisorio(frota, t_k):
 	
 	\clearpage
 	\section{Implementação de Alta Performance e Physics-ML}
-	
+
+	\textbf{Objetivos de Aprendizagem.} Ao final deste capítulo, o leitor
+	deve ser capaz de:
+	\begin{itemize}
+		\item descrever o papel do NVIDIA Modulus e do DeepXDE como
+		camadas de simulação substituta e de problema inverso sobre
+		EDPs;
+		\item explicar por que o do-mpc oferece MHE como alternativa ao
+		EKF em regimes de restrição severa;
+		\item calcular fator de aceleração e \textit{throughput} a
+		partir de tempos de execução comparados entre Python e Rust;
+		\item justificar, a partir da Tabela~\ref{tab:27-1}, a divisão de
+		responsabilidades entre a stack de pesquisa e a stack de
+		produção nativa.
+	\end{itemize}
+
 	Este capítulo detalha o uso de frameworks de vanguarda para simulações de alta fidelidade, operadores neurais e a transição para arquiteturas de software nativas compiladas em tempo real.
 	
 	\subsection{Frameworks de Physics-ML (NVIDIA Modulus)}
@@ -4025,7 +4450,7 @@ def ciclo_supervisorio(frota, t_k):
 		\item \textbf{Throughput de Simulação Estática:} Aceleração de $7.6\times$ ($13.17\ \mu\text{s}$ por simulação de 7 nós em Rust versus $100.75\ \mu\text{s}$ em Python), atingindo mais de $75.000$ simulações completas por segundo.
 		\item \textbf{Dinâmica Transiente de Vasos (ASME VIII):} Aceleração de $30.7\times$ ($0.22\text{ ms}$ em Rust contra $6.72\text{ ms}$ em Python para integração de $3.600$ passos de Euler), permitindo previsões antecipatórias em tempo real no laço do MPC.
 		\item \textbf{Otimização Global PSO:} Aceleração de $63.1\times$ ($0.016\text{ ms}$ por convergência em Rust versus $1.01\text{ ms}$ em Python).
-		\item \textbf{Consumo de Memória RAM:} Redução de $\approx 25\times$ na pegada de memória ($~10\text{ MB}$ em binário estático Rust contra $~280\text{ MB}$ em ambiente Python/PyTorch), viabilizando implantação em servidores de borda (\textit{Edge Computing} no FPSO) sem concorrência de recursos com o SCADA.
+		\item \textbf{Consumo de Memória RAM:} Redução de $\approx 25\times$ na pegada de memória ($\approx 10\text{ MB}$ em binário estático Rust contra $\approx 280\text{ MB}$ em ambiente Python/PyTorch), viabilizando implantação em servidores de borda (\textit{Edge Computing} no FPSO) sem concorrência de recursos com o SCADA.
 	\end{itemize}
 	
 	\subsection{Resumo da Stack de Vanguarda}
@@ -4047,6 +4472,44 @@ def ciclo_supervisorio(frota, t_k):
 	\caption[Camadas da stack de alta performance]{Divisão de responsabilidades entre as camadas do Gêmeo Digital: pesquisa versus produção de alta performance.}
 	\label{tab:27-1}
 	\end{table}
+
+	\subsection{Exercícios Resolvidos}
+
+	\textbf{Exercício 27.1 (\textit{throughput} e fator de aceleração).}
+	O texto relata que uma simulação estática de 7 nós leva
+	$13{,}17\ \mu\text{s}$ em Rust e $100{,}75\ \mu\text{s}$ em Python.
+	Calcule (a) quantas simulações por segundo o binário Rust sustenta e
+	(b) o fator de aceleração relativo ao Python, e confira se ambos os
+	números batem com os citados no texto ("mais de $75.000$ simulações
+	por segundo" e "$7{,}6\times$").
+
+	\emph{Resolução.} (a) O número de simulações por segundo é o inverso
+	do tempo de uma simulação:
+	$$\frac{1}{13{,}17\times 10^{-6}\ \mathrm{s}} \approx 75{.}930\
+	\text{simulações/s},$$
+	que de fato ultrapassa as $75.000$ citadas. (b) O fator de aceleração
+	é a razão entre os dois tempos:
+	$$\frac{100{,}75}{13{,}17} \approx 7{,}65,$$
+	que arredonda para os $7{,}6\times$ do texto. Os dois números
+	conferem.
+
+	\textbf{Exercício 27.2 (números aproximados e divisão literal).} O
+	texto cita $\approx 10\ \text{MB}$ para o binário Rust e
+	$\approx 280\ \text{MB}$ para o ambiente Python/PyTorch, com fator de
+	redução "$\approx 25\times$". Divida $280$ por $10$ e compare com o
+	$25\times$ citado. Há um erro no texto?
+
+	\emph{Resolução.} A divisão literal dá $280/10 = 28$, não $25$. Não é
+	um erro: o sinal de aproximação ($\approx$) em ambos os valores já
+	avisa que $10\ \text{MB}$ e $280\ \text{MB}$ são arredondamentos de
+	exibição,
+	não as medições exatas. O fator $\approx 25\times$ citado no texto foi
+	calculado sobre os valores medidos \textbf{antes} do arredondamento
+	para exibição --- dividir os dois números já arredondados dá um
+	resultado próximo, mas não idêntico, ao fator original. A lição
+	prática vale para qualquer conferência de números de desempenho: uma
+	verificação de consistência deve ser feita sobre os dados brutos,
+	nunca sobre valores já arredondados para leitura.
 
 	\vspace{1em}
 	\hrule

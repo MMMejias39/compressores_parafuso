@@ -11,19 +11,21 @@ bastante para justificar (nova convenção, nova figura derivada, arquivo novo).
 
 ## O que é este projeto
 
-`compressores.tex` é um livro técnico (**196 páginas** em 27/09/2026 — o "183
-páginas" que este parágrafo trazia desde 13/09/2026 estava congelado; o salto
-não veio de conteúdo novo, veio da tabela de nomenclatura por capítulo que só
-passou a compilar de fato depois da correção registrada em
-`Backlog_edicao_completa.md`, 26/09/2026) sobre construção de um Gêmeo Digital
-completo para compressores de parafuso rotativo
+`compressores.tex` é um livro técnico (**204 páginas** em 27/09/2026 — o "196
+páginas" que este parágrafo trazia desde mais cedo no mesmo dia já refletia a
+correção do bloqueio de compilação registrada em `Backlog_edicao_completa.md`;
+o salto para 204 veio de conteúdo didático novo, não de correção: Objetivos de
+Aprendizagem e Exercícios Resolvidos em cada um dos nove capítulos da Parte II,
+ver "Objetivos de Aprendizagem e Exercícios Resolvidos na Parte II" abaixo)
+sobre construção de um Gêmeo Digital completo para compressores de parafuso
+rotativo
 isentos de óleo usados em plantas de ar comprimido offshore (óleo e gás). O autor
 escreveu o conteúdo original com apoio de um GPAI e vem revisando/expandindo o
 documento em conjunto com o Claude ao longo de várias sessões.
 
 **A coleção hoje tem três volumes**, não só este: `Volume_0_Notacoes_e_Calculo.tex`
 (42 p., pré-requisitos matemáticos), `Volume_I_Fundamentos.tex` (87 p., fundamentos
-teóricos) e `compressores.tex` (196 p., o Volume II descrito acima). Mais duas
+teóricos) e `compressores.tex` (204 p., o Volume II descrito acima). Mais duas
 implementações de referência: `aplicativo/` (Streamlit/Python) e `compressor2/`
 (Rust/Axum).
 
@@ -132,7 +134,7 @@ também em "Pendências conhecidas" para não se perderem:
 ## Arquivos e pastas
 
 - `compressores.tex` — Volume II, o documento principal (fonte única de verdade).
-- `compressores.pdf` — PDF compilado (**196 páginas** em 27/09/2026).
+- `compressores.pdf` — PDF compilado (**204 páginas** em 27/09/2026).
 - `Volume_I_Fundamentos.tex`/`.pdf` — Volume I, fundamentos teóricos (87 páginas,
   158 equações, ~50 figuras vetoriais TikZ/pgfplots escritas no próprio `.tex` —
   **não** usa `scripts/gen_figuras.py`, que é do Volume II). Nome canônico desde
@@ -4246,3 +4248,64 @@ pseudocódigo do Cap. 26), `dicas_backlog.md` (removida a nota de que
 esta entrada: `15fe25e` (correção do bloqueio + backlog) e `a813988` (skill +
 enxugamento dos contextos). Esta entrada e a correção das contagens de página
 acima (183→196, 227→228) ainda aguardam commit no momento em que foi escrita.
+
+## Objetivos de Aprendizagem e Exercícios Resolvidos na Parte II (27/09/2026)
+
+Pedido do autor: implementar o item 5 de `dicas_ollama.md` §3 (pendente desde
+12/09/2026, reverificado sem mudança em 13/09 e 26/09) — Objetivos de
+Aprendizagem no início de cada capítulo e Exercícios Resolvidos ao fim, no
+mesmo padrão já validado no Volume 0. Duas ambiguidades do item original
+foram fechadas com o autor antes de escrever: (1) os Objetivos de
+Aprendizagem valem só para os nove capítulos da Parte II (Caps. 19–27, não os
+27 capítulos de `compressores.tex` inteiro); (2) os exercícios são resolvidos
+*inline*, na própria subseção "Exercícios Resolvidos" de cada capítulo — como
+o Volume 0 já faz — e não num apêndice de gabarito separado, apesar do texto
+do item mencionar "gabarito em apêndice".
+
+**Implementado:** os nove capítulos da Parte II (19 — Modelos de Solução; 20
+— Fundamentos Teóricos, Algoritmos e Metodologia; 21 — EKF; 22 — VAE; 23 —
+PIML; 24 — MPC e PSO; 25 — Diretrizes de Desenvolvimento; 26 — Implementação
+Base; 27 — Implementação de Alta Performance) ganharam cada um: um bloco
+`\textbf{Objetivos de Aprendizagem.}` com 4 bullets (2–4 conforme o item
+pedia), logo após a tabela de nomenclatura do capítulo (ou logo após
+`\section{}` nos dois capítulos sem tabela própria, 25 e 27) e antes do corpo
+do texto; e uma `\subsection{Exercícios Resolvidos}` com 2 exercícios cada,
+logo antes do bloco `Diretriz Técnica Final`, seguindo o critério de
+elaboração da skill `redacao-tecnica` (fechamento pergunta-resposta, nenhum
+símbolo/fórmula usado na resolução sem estar no enunciado ou já ensinado no
+capítulo, toda conta refeita à mão). Os 18 exercícios usam as equações já
+existentes de cada capítulo (nenhuma equação nova foi criada) — cálculo do
+EHI e RUL (Cap. 19), erro de reconstrução do VAE e decomposição gray-box
+(Cap. 20), observabilidade e estatística NIS (Cap. 21), divergência KL e
+limiar por quantil (Cap. 22), função de perda híbrida e balanceamento
+adaptativo de λ (Cap. 23), custo do MPC e atualização do PSO (Cap. 24),
+propagação de incerteza e escore do Isolation Forest (Cap. 25), eficiência
+exergética e Health Index (Cap. 26), e verificação de throughput/fator de
+aceleração e uma discussão de números arredondados (Cap. 27) — todos
+recalculados em Python durante a escrita para conferir a aritmética antes de
+aceitar como corretos.
+
+**Bug real encontrado e corrigido de passagem:** a frase sobre consumo de
+memória RAM do Cap. 27 usava `~10 MB`/`~280 MB` em modo matemático — `~` em
+LaTeX é o comando de espaço intocável, não um glifo visível, então o PDF
+renderizava só um espaço em branco antes do número, sem nenhum sinal de
+aproximação (só percebido por inspeção visual com `pdftoppm`, o log de
+compilação não acusa nada). Trocado por `\approx`, consistente com o
+`\approx 25\times` já correto na mesma frase.
+
+**Verificação:** `compressores.tex` recompilado 3×, **204 páginas** (era
+196), 0 erros, 0 referências indefinidas, 0 labels duplicados, **36 overfull
+hboxes, máximo 2,01 pt** — mesmo baseline, sem regressão (um overfull de
+11,27 pt apareceu numa primeira versão do Exercício 20.1, corrigido quebrando
+uma equação com três frações lado a lado em três linhas separadas).
+`python3 scripts/gerar_nomenclatura_por_capitulo.py --check` confirma 154
+entradas / 26 capítulos com tabela própria, sem mudança. Edição Completa
+regenerada e recompilada 3×: **321 páginas** (era 314), 0 erros, 0
+referências indefinidas, **38 overfull hboxes, máximo 4,79 pt** — mesmo
+baseline. Outline (`mutool`) confirma VOLUME 0/I/II ainda irmãos de nível
+máximo. Inspeção visual (`pdftoppm`) de todas as 9 páginas de exercícios
+novas em `compressores.pdf`, mais as páginas correspondentes na Edição
+Completa. Contagem de equações inalterada (228 no Volume II) — nenhuma
+equação nova foi criada, só `\eqref{}` das já existentes.
+
+**Nada commitado** — regra permanente, aguardando revisão do autor.

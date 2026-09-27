@@ -56,7 +56,7 @@ mais duas implementações de referência:
 |---|---|
 | **Volume 0** `Volume_0_Notacoes_e_Calculo.tex` | 42 p., 36 eq., 18 exercícios — backlog 8/8 |
 | **Volume I** `Volume_I_Fundamentos.tex` | 87 p., 158 eq., ~50 figuras vetoriais |
-| **Volume II** `compressores.tex` | 196 p., 228 eq., 28 figuras, 59 mecanismos de falha |
+| **Volume II** `compressores.tex` | 204 p., 228 eq., 28 figuras, 59 mecanismos de falha |
 | **App Python** `aplicativo/` | Streamlit, 5 abas, 86 funções de teste / 102 casos |
 | **App Rust** `compressor2/` | Axum + `sim_core`, 26 testes, WCAG 2.1 AA |
 
