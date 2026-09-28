@@ -155,27 +155,21 @@ só aparece dentro da resolução é o sintoma.
 
 ## 7. Antes de declarar pronto
 
-1. `pdflatex -interaction=nonstopmode <arquivo>.tex` **3 vezes** (ou
-   `latexmk -pdf`) — 0 erros, 0 referências indefinidas, 0 labels
-   duplicados. `<arquivo>.log` é **Latin-1**: use `grep -a`, nunca `grep`
-   puro, ou a busca falha em silêncio.
-2. Comparar contagem de overfull hboxes contra o baseline documentado
-   (Volume 0 = 0; Volume I = 2, máx. 4,79 pt; Volume II = 36, máx. 2,01 pt;
-   Edição Completa = 38, máx. 4,79 pt) — overfull novo é regressão até
-   provado o contrário.
-3. `pdftoppm` nas páginas alteradas e inspeção visual direta — o log limpo
-   não garante que a página renderiza bem (colisão de cabeçalho, tabela
-   cortada, figura com eixo trocado nunca aparecem como erro/warning).
-4. Varreduras baratas de regressão, quando a sessão escreveu prosa nova:
-   - Aspas retas: `grep -o '"' <arquivo>.tex | wc -l`, conferir cada
-     ocorrência contra as legítimas já conhecidas (comentário de preâmbulo,
-     `verbatim`).
-   - Auto-referência de equação: cada `\label{eq:...}` tem `\eqref{}` de si
-     mesma no parágrafo anterior?
-   - `grep -noE "Equaç(ão|ões)~?[0-9]+\.[0-9]+"` — qualquer resultado é um
-     hardcode de número que deveria ser `\eqref{}`.
-5. Se a Edição Completa também precisa refletir a mudança: regenerar com
-   `python3 scripts/gerar_edicao_completa.py` e recompilar 3× — nunca editar
-   `Enciclopedia_Completa.tex` à mão, é artefato gerado e descartável.
-6. **Nada de commit sem pedido explícito do autor** — regra permanente do
+Checklist genérico de compilação/inspeção visual (pdflatex 3×, log Latin-1
+com `grep -a`, baseline de overfull hbox, `pdftoppm`, varreduras de
+regressão, artefato derivado descartável) está na skill `qa-compilacao-latex`
+— carregue-a junto desta. Específico desta coleção:
+
+1. Baseline de overfull hbox documentado: Volume 0 = 0; Volume I = 2, máx.
+   4,79 pt; Volume II = 36, máx. 2,01 pt; Edição Completa = 38, máx. 4,79 pt.
+2. Varreduras de regressão desta coleção: aspas retas (`grep -o '"'
+   <arquivo>.tex | wc -l`, conferindo contra as legítimas já conhecidas —
+   comentário de preâmbulo, `verbatim`); auto-referência de equação (cada
+   `\label{eq:...}` tem `\eqref{}` de si mesma no parágrafo anterior?);
+   `grep -noE "Equaç(ão|ões)~?[0-9]+\.[0-9]+"` para hardcode de número que
+   deveria ser `\eqref{}`.
+3. Artefato derivado desta coleção: `Enciclopedia_Completa.tex` — regenerar
+   com `python3 scripts/gerar_edicao_completa.py` e recompilar 3×, nunca
+   editar à mão.
+4. **Nada de commit sem pedido explícito do autor** — regra permanente do
    projeto inteiro, livro e código.

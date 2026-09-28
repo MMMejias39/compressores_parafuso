@@ -4309,3 +4309,35 @@ Completa. Contagem de equações inalterada (228 no Volume II) — nenhuma
 equação nova foi criada, só `\eqref{}` das já existentes.
 
 **Nada commitado** — regra permanente, aguardando revisão do autor.
+
+## Três skills genéricas novas, extraídas de `dicas_backlog.md` e da skill `redacao-tecnica` (28/09/2026)
+
+Pedido do autor: reler os `.md` do repositório e considerar, além da skill
+`redacao-tecnica` já existente, outras skills reaproveitáveis em projetos
+futuros — não amarradas a compressores/rotordinâmica. Três candidatas foram
+levantadas e aprovadas pelo autor:
+
+- **`gestao-backlog`** (`.claude/skills/gestao-backlog/SKILL.md`): a
+  metodologia genérica de `dicas_backlog.md` §1 (princípios), §2 (template de
+  item com par Gap/Verificação), §5 (anti-padrões) e §6 (rotina de fim de
+  sessão) — sem as partes específicas de LaTeX/compressores.
+- **`calibracao-revisor-externo`** (`.claude/skills/calibracao-revisor-externo/SKILL.md`):
+  o antigo item 7 de `dicas_backlog.md` §1 — como tratar achado de revisor
+  externo (Copilot/Kimi/Gemini/Manus, ou qualquer outro) como hipótese a
+  verificar na fonte, não como escopo fechado.
+- **`qa-compilacao-latex`** (`.claude/skills/qa-compilacao-latex/SKILL.md`): a
+  antiga seção 7 de `redacao-tecnica` — compilar 3×, ler o log Latin-1 com
+  `grep -a`, manter baseline de overfull hbox, inspecionar visualmente com
+  `pdftoppm`, varreduras de regressão — generalizada para qualquer projeto
+  LaTeX, sem os prefixos de label desta coleção.
+
+**Enxugamento para evitar divergência** (mesmo tratamento já dado a
+`CONTEXTO.md`/`CONTEXTO_kimi.md` quando `redacao-tecnica` foi criada,
+26–27/09/2026): `dicas_backlog.md` teve §1, §2, §5 e §6 substituídas por
+ponteiros para as duas skills novas, mantendo só o que é específico deste
+projeto (§3 varreduras do livro, §4 backlog de código, §7 exemplos
+aplicados). A seção 7 de `redacao-tecnica` (`.claude/skills/redacao-tecnica/SKILL.md`)
+também foi enxugada para ponteiro + baseline/varreduras específicos desta
+coleção, com o checklist genérico movido para `qa-compilacao-latex`.
+
+**Nada commitado** — regra permanente, aguardando revisão do autor.

@@ -1,68 +1,16 @@
 # Dicas de melhoria — como gerar backlog (livro e programação)
 
-**Objetivo:** padronizar a *geração* de backlog neste repositório — não a implementação
-em si, que já tem convenção em `CONTEXTO.md`, `CONTEXTO_kimi.md` e
+**Objetivo:** especializar, para este repositório, a metodologia genérica de
+backlog — princípios gerais, template de item e anti-padrões viraram a skill
+`gestao-backlog` (`.claude/skills/gestao-backlog/SKILL.md`; carregue-a antes
+de escrever ou revisar qualquer item). A calibração de achado de revisor
+externo (Copilot/Kimi/Gemini/Manus) virou a skill `calibracao-revisor-externo`
+(`.claude/skills/calibracao-revisor-externo/SKILL.md`). Este arquivo traz só o
+que é específico deste projeto: as varreduras do livro (`.tex`), as quatro
+fontes de backlog de código, e os exemplos aplicados aos dois domínios. A
+implementação em si já tem convenção em `CONTEXTO.md`, `CONTEXTO_kimi.md` e
 `aplicativo/MANUTENCAO.md`. Sintetiza o que funcionou (`Backlog_volume0.md`,
-`arquivos_apoio/Backlog_kimi_compress.md`, `Backlog_edicao_completa.md`) e os dois
-defeitos de processo que já custaram tempo neste projeto: **status congelado** e
-**achado de revisor externo tratado como escopo fechado**.
-
----
-
-## 1. Princípios gerais (valem para livro e código)
-
-1. **Verificar antes de listar.** Nenhum item entra no backlog por lembrança de
-   registro anterior: toda lacuna vem de `grep`/contagem/execução feita na data.
-   O erro recorrente nos `.md` de apoio não foi conteúdo errado — foi **status
-   congelado**: o relatório descrevia bem o dia em que foi escrito, e a linha de
-   "pendente" envelheceu. Uma leitura apressada produziria uma lista com ~20
-   itens já feitos (ver `CONTEXTO.md`, "Reverificação geral de 13/09/2026").
-2. **Criticidade ≠ ordem de descoberta.** Priorizar pelo que bloqueia ou degrada
-   o consumo do artefato (a leitura dos volumes seguintes, a cobertura do livro
-   pelo app), não pela ordem em que o item apareceu. Foi o critério do
-   `Backlog_volume0.md`: cada item citava o capítulo e a equação exata dos
-   volumes seguintes que pressupunham o conteúdo.
-3. **Item sem verificação não é item.** Cada um traz o comando que confirma que
-   ele ainda está aberto — de modo que a próxima sessão re-verifique em segundos
-   e não precise reler o histórico. Os arquivos encerrados trazem o comando de
-   verificação de cada checkbox; é o padrão a manter.
-4. **Fechar o item no arquivo de origem.** Ao implementar, atualizar o status
-   *no backlog em que o item nasceu* e depois no `CONTEXTO.md` — nunca só num
-   dos dois.
-5. **Separar item executável de decisão do autor.** "Implementar se possível"
-   não é backlog. Ou se decide com o autor, ou o item vai para a lista de
-   escopo/observação.
-6. **Não reabrir o que está encerrado por decisão.** Todos os relatórios
-   externos estão encerrados, e há itens deliberadamente recusados (ex.: mudar o
-   título "Enciclopédia" — recusado com justificativa registrada). Reabrir sem o
-   autor levantar o assunto é desperdício.
-7. **Revisor externo é ponto de partida, não escopo fechado.** Histórico de
-   calibração do projeto: o Copilot acertou o sintoma e errou a causa; o Kimi
-   subestimou a extensão (relatou 1 tabela com overfull grave, a varredura achou
-   5); o Gemini trouxe 1 falso positivo (Eq. 13.2); o Manus confirmou os 3
-   achados normativos na fonte primária. Verificar **a causa**, não só o
-   sintoma, e verificar **antes** de implementar (regra permanente de 16/08/2026).
-
----
-
-## 2. Template de item
-
-```markdown
-### <ID> — <título curto>
-- **Onde é exigido:** <arquivo:linha / capítulo+equação / módulo>, com o ponto
-  exato onde o conteúdo é consumido (não onde ele nasceu).
-- **Gap (evidência de hoje):** comando + resultado. Ex.:
-  `grep -ci "hierarquia de fidelidade" compressores.tex` → 0.
-- **Ação:** o que entra, em que ponto, respeitando as convenções (equação nova
-  ao fim do capítulo; `\eqref` de si mesma no parágrafo anterior; etc.).
-- **Verificação:** os comandos de compilação/teste + conferência visual.
-- **Prioridade:** P1–P4, com a justificativa em uma linha.
-- **Status:** pendente | em andamento | implementado (data, commit).
-```
-
-A diferença entre um item bom e um mau é o par **"Gap (evidência)" ×
-"Verificação"**: o primeiro prova que o item existe hoje, o segundo prova que
-ele deixou de existir amanhã.
+`arquivos_apoio/Backlog_kimi_compress.md`, `Backlog_edicao_completa.md`).
 
 ---
 
@@ -201,37 +149,26 @@ mede nada de verdade.**
 
 ---
 
-## 5. Anti-padrões — o que já fez item perder tempo aqui
+## 5. Anti-padrões
 
-1. Item sem comando de verificação — impossível de conferir depois sem reler
-   tudo.
-2. Item vindo de revisor externo sem checagem na fonte (falso positivo da
-   Gemini; causa errada do Copilot).
-3. Implementar primeiro e verificar o achado depois (regra permanente proibida
-   desde 16/08/2026).
-4. Reabrir item encerrado por decisão deliberada do autor.
-5. Duplicar item que já está em "Pendências conhecidas" sem conferir o estado
-   atual por `grep`.
-6. "Implementar se possível"/"avaliar viabilidade" sem decisão — vira status
-   congelado na sessão seguinte.
-7. Inserir equação no meio de capítulo (renumeração em cascata).
-8. Reescrever entradas antigas dos `CONTEXTO*.md` — sempre acrescentar; o
-   registro cronológico é a ferramenta de auditoria do projeto.
-9. Declarar pronto sem compilar/rodar testes — o padrão é "verificar antes de
-   declarar pronto", nunca o contrário.
+Lista genérica (item sem verificação, revisor externo sem checagem, reabrir
+item encerrado, etc.) na skill `gestao-backlog`. Específico deste projeto,
+fora da lista genérica:
+
+- Inserir equação no meio de capítulo (renumeração em cascata) — regra
+  completa na skill `redacao-tecnica`.
 
 ---
 
-## 6. Rotina barata de fim de sessão (pega regressão antes que ela entre)
+## 6. Rotina barata de fim de sessão
 
-- Varreduras da §3.1 aplicáveis ao que foi editado (aspas, auto-referência,
-  booktabs, labels duplicados).
-- Contagens comparadas ao baseline: páginas, equações, overfulls, número de
-  testes.
-- `grep` dos símbolos citados em prosa/exercício novo — cada um definido antes
-  daquele ponto no volume.
-- Status atualizado nos `.md` de origem dos itens tocados.
-- `git status` limpo ou explicado (nada commitado sem pedido).
+Rotina genérica (varreduras do que foi editado, comparar contra baseline,
+atualizar status, estado do repositório limpo) na skill `gestao-backlog`, §5.
+Neste projeto, a rotina completa de compilação/inspeção visual está na skill
+`qa-compilacao-latex`; as varreduras específicas do livro (aspas,
+auto-referência, booktabs, labels duplicados) estão na tabela §3.1 acima, e o
+baseline de páginas/equações/overfulls está documentado em `CONTEXTO.md` e na
+skill `redacao-tecnica`, §7.
 
 ---
 
