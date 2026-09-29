@@ -1,5 +1,61 @@
 # Plano de Melhorias Técnicas e Próximos Passos — Gêmeo Digital de Sistemas de Compressão Offshore
 
+> **STATUS: MAJORITARIAMENTE VENCIDO — verificado em 13/09/2026, reverificado em 26/09/2026.**
+>
+> Reverificação de 26/09/2026 (mesma sessão que corrigiu o bloqueio de
+> compilação do `compressores.tex`, ver `Backlog_edicao_completa.md`): os
+> itens de "Ainda válido" abaixo seguem válidos, com uma nuance real —
+> `Sobol`/`Morris` continua em 0 ocorrências (análise de sensibilidade
+> formal não iniciada), mas o **UKF passou a ser mencionado em prosa** no
+> Cap. 20 (ao lado do MHE já registrado) desde uma sessão entre 13/09 e
+> 26/09 — ainda sem equação própria, então a lacuna de equacionamento
+> continua, só não é mais "UKF não é mencionado" (ver o mesmo achado em
+> `dicas_ollama.md`, item 6). MLOps/persistência: `InfluxDB`/`TimescaleDB`
+> aparecem citados uma vez como item de arquitetura desejada no pseudocódigo
+> do supervisório de frota (Cap. 26) — ainda **não é implementação**, só
+> nomeação do componente; a lacuna de MLOps de fato (versionamento,
+> pipeline de retreino) segue inteira.
+>
+> Este plano foi escrito antes das sessões de 16/08/2026 em diante, que
+> implementaram boa parte do que ele pede. Conferido item a item contra
+> `compressores.tex` e o `aplicativo/`:
+>
+> **Já implementado (não reabrir):**
+> - $\zeta_{valv}$ como coeficiente parametrizado de válvulas — Eq. 5.16 do
+>   livro (10 ocorrências no `.tex`), vetor $\Lambda$ da Eq. 28.1 estendido de
+>   3 para 4 elementos.
+> - EKF com estado aumentado para identificação de parâmetro — Eqs. 28.1/28.2 e
+>   `aplicativo/compressor_sim/ekf.py::simular_ekf_aumentado()`. **Ressalva
+>   honesta:** só $K$ é de fato identificável; $\eta_{mec}$, $\zeta_{ref}$ e
+>   $\zeta_{valv}$ exigiriam canais de medição que nem o EKF nem a Tabela 18.1
+>   têm hoje.
+> - Classificador automático multi-mecanismo $\hat{m}_{falha}$ — Eq. 29.2 e
+>   `compressor_sim/treinamento_falhas.py`.
+> - Supervisório contínuo de frota — Cap. 26 (`ciclo_supervisorio`),
+>   `compressor_sim/frota_supervisorio.py` e `compressor2/crates/sim_core/src/frota.rs`.
+> - Soft-sensor de vazão de água $\dot m_w$ — Eq. 12.8 (5 ocorrências).
+> - Balanceamento adaptativo de $\lambda$ no PIML — Eq. 23.4, implementado de
+>   fato via `torch.autograd.grad`.
+> - Problema inverso via PINN — Cap. 23.8, Eq. 23.5,
+>   `piml.py::treinar_com_identificacao()`.
+> - Teste NIS $\chi^2$ para auditoria do filtro — Eq. 21.7, nos dois apps.
+>
+> **Ainda válido:**
+> - Toda a **Seção 2 (calibração experimental)** — isotermas de adsorção,
+>   $k_{ads,ref}$, esfericidade real, coeficientes de Vogel, curvas S-N,
+>   condutâncias térmicas. Depende de bancada e de dados de campo, não de
+>   edição. O `k_ads_ref` continua explicitamente não verificado (registrado
+>   como tal no código, na UI e na Tabela 15.2 do livro).
+> - **Análise de sensibilidade de Sobol/Morris** — 0 ocorrências no `.tex`.
+> - **UKF ou MHE substituindo o EKF** — o MHE ganhou subseção (Cap. 27.4,
+>   `do-mpc`), mas segue sem equacionamento próprio; UKF não é mencionado.
+> - **Instrumentação nova** (ΔP de válvula, medição trifásica contínua, anel de
+>   aterramento instrumentado, vazão de água) — é justamente o que destrava os
+>   três parâmetros de $\Lambda$ ainda não identificáveis. Depende de hardware.
+> - **MLOps/persistência** (InfluxDB/TimescaleDB, MLflow/DVC, deriva de modelo)
+>   e o **dataset sintético multi-falha** $\mathcal{D}_{multi}$ — nenhum
+>   iniciado.
+
 Este documento consolida as lacunas técnicas identificadas, os parâmetros que demandam calibração experimental, os aprimoramentos nos algoritmos e a infraestrutura necessária para a evolução do Gêmeo Digital.
 
 ---

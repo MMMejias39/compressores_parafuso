@@ -17,7 +17,13 @@ arquivo fica como registro do planejamento; as descrições abaixo referem-se
 ao estado do volume **antes** da implementação. Estado pós-implementação:
 42 páginas, 36 equações, 7 figuras, 7 tabelas, 18 exercícios resolvidos,
 compilação 3× com 0 erros / 0 overfulls / 0 referências indefinidas, 0
-violações de auto-referência. Nada commitado sem pedido explícito do autor.
+violações de auto-referência.
+
+*(Atualizado em 13/09/2026: a linha "Nada commitado sem pedido explícito do
+autor" que fechava este bloco **não vale mais** — o autor autorizou, e o
+trabalho está em dois commits: `5210d92` (criação do volume) e `7db0080`
+(implementação deste backlog). A regra permanente do projeto segue valendo para
+trabalho novo; o que mudou é só o estado deste item.)*
 
 ---
 

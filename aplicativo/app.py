@@ -1043,7 +1043,7 @@ with tab_frota:
 
         st.markdown(f"<div class='{card_class}'>", unsafe_allow_html=True)
 
-        c1, c2, c3, c4, c5, c6 = st.columns([1.8, 1.0, 1.0, 1.2, 1.0, 0.9])
+        c1, c2, c3, c4, c5, c6, c7 = st.columns([1.6, 0.9, 0.9, 1.0, 1.2, 1.0, 0.9])
         c1.markdown(
             f"<div style='font-size:1.1em;font-weight:700;'>{status_emoji} {item['nome']}</div>"
             f"<div style='font-size:0.8em;color:#64748b;'>{item['maquina_id']}</div>",
@@ -1059,14 +1059,18 @@ with tab_frota:
             f"style='width:{hi_pct:.0f}%;background:{hi_cor};'></div></div>",
             unsafe_allow_html=True
         )
-        c3.metric("NIS (χ²)", f"{item['nis']:.2f}", help=item["nis_status"])
-        c4.metric("RUL", f"{item['rul_estimado_dias']:.0f} dias",
-                  help=f"IC 95%: [{item['rul_ic_min']:.0f}, {item['rul_ic_max']:.0f}] dias")
-        c5.metric("SPC", f"{item['consumo_spc']:.3f}", help="kW·m⁻³·min")
+        c3.metric("EHI", f"{item['ehi']*100:.1f}%",
+                  help="Exergetic Health Index (Eq. 19.6) — eficiência exergética "
+                       f"descontada pelo erro de reconstrução do VAE (E_rec={item['e_rec_vae']:.2f})")
+        c4.metric("NIS (χ²)", f"{item['nis']:.2f}", help=item["nis_status"])
+        c5.metric("RUL", f"{item['rul_estimado_dias']:.0f} dias",
+                  help=f"Acúmulo de dano por fadiga (Eq. 19.9), D={item['dano_acumulado']:.3f} — "
+                       f"IC 95%: [{item['rul_ic_min']:.0f}, {item['rul_ic_max']:.0f}] dias")
+        c6.metric("SPC", f"{item['consumo_spc']:.3f}", help="kW·m⁻³·min")
 
         # Botão Analisar — seleciona o ativo e direciona ao Dashboard
         _btn_key = f"analisar_{item['maquina_id']}"
-        if c6.button("🔍 Analisar", key=_btn_key, help=f"Abrir Dashboard de {item['maquina_id']}"):
+        if c7.button("🔍 Analisar", key=_btn_key, help=f"Abrir Dashboard de {item['maquina_id']}"):
             _mapa_id = {"CMP-01": 0, "CMP-02": 1, "CMP-03": 2, "CMP-04": 3}
             st.session_state["ativo_idx"] = _mapa_id.get(item["maquina_id"], 0)
             st.toast(f"✅ {item['maquina_id']} selecionado — Acesse a aba 📊 Dashboard do Ativo", icon="🔍")

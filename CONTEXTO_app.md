@@ -22,6 +22,10 @@ Code leu o código deste diretório.
 
 ## Estrutura
 
+> ⚠️ A árvore abaixo é a de 01/08/2026 (3 abas, 6 módulos). A estrutura atual
+> está em `aplicativo/README.md` e `aplicativo/GUIA_CODIGO.md`, que são os
+> documentos destilados e mantidos; este arquivo é o registro cronológico.
+
 ```
 aplicativo/
 ├── app.py                  # interface Streamlit (ponto de entrada, 3 abas)
@@ -915,7 +919,12 @@ falha simultaneamente" registrada em `../CONTEXTO.md`.
 
 **Nada foi commitado ainda** — aguardando revisão do autor.
 
-## Estado atual
+## Estado atual (registro de 15/08/2026 — DESATUALIZADO)
+
+> ⚠️ **Esta seção ficou congelada em 15/08/2026** e descreve o app com 4 abas e
+> 66 testes. O estado real está em "Estado atual verificado (13/09/2026)", ao
+> fim deste arquivo. Preservada aqui como registro cronológico, seguindo a
+> convenção do projeto de nunca reescrever entradas antigas.
 
 Código compila sem erro de sintaxe, **66/66 testes passam**
 (`venv/bin/pytest tests/ -q`, ~8-10s) — 41 após a Eq. 9.6, mais 7 do
@@ -1618,3 +1627,145 @@ acima, sem gerador sistemático de dataset.
    - Mapeamento das 26+ tags da Tabela 18.1, gerador sintético e importador com validação EKF.
 6. **Auditoria de Acessibilidade Visual e Alto Contraste (WCAG 2.1 AA)**:
    - Auditada automaticamente via Chrome Headless em todas as 7 telas com 0 falhas nos modos Claro e Escuro.
+
+---
+
+## Estado atual verificado (13/09/2026)
+
+Levantamento feito por leitura direta do código e dos arquivos, a pedido do
+autor ("verifique se os erros e dicas ainda valem"). Substitui a seção "Estado
+atual" de 15/08/2026, que ficou congelada.
+
+**Abas: 5, não 6 nem 7.** `app.py:158` declara, nesta ordem: `tab_frota`,
+`tab_dashboard`, `tab_diagnostico`, `tab_sistema`, `tab_config` — 🚢
+Supervisório de Frota, 📊 Dashboard do Ativo, 🔬 Diagnóstico & IA, 🛠️ Sistema &
+Dinâmica, ⚙️ Configurações. O **Modo Treinamento** deixou de ser aba e é
+ativado por botão na barra lateral, com banner em todas as abas; o **Painel de
+Falhas** virou sub-aba de "Diagnóstico & IA" ("🚨 Laboratório de Falhas &
+Classificador m̂_falha"); a antiga aba "📂 Dados Medidos" virou sub-aba de
+"Sistema & Dinâmica" ("📂 Conector PI System"). As entradas cronológicas acima
+que falam em 6 ou 7 abas descrevem estados intermediários reais — não são erro
+de registro, só ficaram para trás.
+
+**Testes: 86 funções, 102 casos.** `tests/test_simulador.py` tem 77 funções
+`def test_` e `tests/test_pi_treinamento.py` tem 9; três são parametrizadas
+(PDP, `n_vasos` e o catálogo de 10 cenários de falha), elevando o total
+executado a 102. `aplicativo/GUIA_CODIGO.md` já registrava esse número
+corretamente.
+
+**Não foi possível executar a suíte nesta sessão:** `aplicativo/venv/` não
+existe na árvore, e streamlit/torch/scipy também não estão no Python do
+sistema. Antes de rodar ou testar o app:
+`python3 -m venv venv && venv/bin/pip install -r requirements.txt`. Note que
+`requirements.txt` hoje inclui `torch>=2.4` diretamente (o comentário no
+próprio arquivo explica a troca do build CPU-only pelo build padrão do PyPI, em
+16/08/2026) — a nota "torch fica de fora da instalação automática", em entradas
+antigas deste arquivo, não vale mais.
+
+**Catálogo de falhas:** `cenarios_falha.py::CATALOGO_CENARIOS` tem **10**
+cenários, contra os **59** mecanismos da Tabela 28.2 do livro (contagem
+verificada; entradas antigas deste arquivo dizem "56 mecanismos" e o livro
+chegou a dizer "57" — o número correto e já usado no `.tex` é 59). A frase
+correta é, portanto, "10 de 59".
+
+**Lado Rust (`compressor2/`):** 26 `#[test]` declarados, `cargo` disponível na
+máquina. Não coberto por este arquivo — ver `compressor2/README.md` e o
+`CONTEXTO.md` principal.
+
+**Pendências do app que continuam válidas:** os 49 mecanismos de falha
+restantes; treino multi-mecanismo com gerador sistemático de dataset; sensores
+portáteis/wireless (Eq. 18.6); $\zeta_{valv}$ (Eq. 5.16) e os outros dois
+elementos de $\Lambda$ ainda sem canal de medição; supervisório com estado
+persistente entre sessões; `k_ads_ref` nunca verificado contra literatura;
+Parte III como pipeline único encadeado (os algoritmos existem isolados).
+
+## RUL por Miner + EHI — sincronia com o Cap. 19 do livro (27/09/2026)
+
+Pedido do autor: "atualizar o aplicativo com as novas bases teóricas e
+colocar para rodar". Investigação prévia (mesma sessão que escreveu os
+Objetivos de Aprendizagem/Exercícios da Parte II — ver `CONTEXTO.md`)
+encontrou que o Cap. 19 do livro trocou o RUL de um modelo probabilístico
+para acúmulo de dano por fadiga (Regra de Palmgren-Miner + curva S-N de
+Basquin + Processo Gaussiano, Eqs. 19.6-19.10) em 17/09/2026
+(`bafec39`) — mas nem `frota_supervisorio.py` nem `compressor2/.../frota.rs`
+tinham sido atualizados; ambos ainda usavam o RUL antigo (regressão linear
+da folga, commit `2585b1e`, 27/08/2026). O EHI (Eq. 19.6) nunca tinha sido
+implementado em nenhum dos dois. Confirmado com o autor antes de escrever
+código: sim, RUL por Miner + EHI, nos dois apps, substituindo (não somando
+a) o modelo antigo.
+
+**Novo módulo `compressor_sim/fadiga.py`** (espelhado em
+`compressor2/crates/sim_core/src/fadiga.rs`): `dano_incremental()` (Eqs.
+19.7/19.8, ciclos de carga aproximados pelas rotações do eixo no período —
+o app não simula histórico de carga vibratória que justificasse contagem
+por *rainflow*), `taxa_dano_gp()` (Eq. 19.10, regressão de Processo
+Gaussiano implementada diretamente da forma fechada da equação, sem
+dependência nova), `projetar_rul_fadiga()` (Eq. 19.9) e `calcular_ehi()`
+(Eq. 19.6). Constantes novas em `constantes.py`/`constantes.rs`: C e b_f da
+curva de Basquin são ASSUMIDOS (o livro cita AGMA 2001 mas não fixa
+valores) a partir de dois pontos de referência para aço de engrenagem
+cementado/temperado; `SIGMA_B_ADM_MPA` reaproveita o limiar HH já existente
+da tag `MEC_SIGMA_B` (nunca duplicar valor que já existe noutro nome).
+
+**EHI só no app Python.** O primeiro fator (Ẇ_min,rev/Ẇ_real) reaproveita
+`eta_global` (já calculado em `sistema.py`, mesma noção de eficiência
+exergética da Eq. 17.4). O segundo fator (exp(-E_rec)) depende de um VAE
+(Eq. 20.4/22.5) — e o Rust nunca teve VAE/PIML portados (só EKF/MPC/PSO,
+"Parte II no app" acima). Implementar um VAE em Rust do zero é fora de
+escopo desta sessão; `frota.rs` documenta a lacuna no próprio docstring do
+módulo. Decisão registrada aqui para a próxima sessão que for portar
+VAE/PIML para Rust: quando isso acontecer, `calcular_ehi` já está pronta do
+lado Rust em `fadiga.rs`, falta só o `E_rec`.
+
+**Três bugs reais encontrados e corrigidos durante a verificação** (nenhum
+existia antes desta sessão — todos introduzidos pela própria implementação
+nova e pegos por rodar o app de ponta a ponta, não só os testes):
+1. `projetar_rul_fadiga` reconstruía o eixo de tempo da regressão como
+   `t = arange(n) * dt_dias`, usando o `dt_dias` da chamada **atual** para
+   o histórico **inteiro**. O painel da frota chama a função também com
+   `dt_dias=0.0` para "espiar" o estado sem avançar o tempo (renderização
+   inicial da aba) — isso colapsava todo o eixo em zero e dividia por zero
+   nas taxas, produzindo RUL de milhões de dias. Corrigido usando um eixo
+   por índice (`t = arange(n)`), independente de `dt_dias`.
+2. O piso de `taxa_min` em `1e-7` absoluto explodia `rul_ic_95_max` sempre
+   que a variância do GP era um pouco maior que o normal — $\sigma_b$
+   entra na Eq. 19.8 elevado a $b_f\approx8{,}15$, então um desvio pequeno
+   em termos absolutos já é grande o bastante para isso. Corrigido com um
+   piso relativo (10% da média estimada).
+3. A semeadura sintética do histórico de dano usava $\sigma_b=120$ MPa
+   (o "valor_nom" de catálogo da tag `MEC_SIGMA_B`) — mas o ponto de
+   operação default do simulador produz $\sigma_b\approx26$ MPa de
+   verdade. A taxa de dano semeada ficava ~$10^5$ vezes mais rápida que a
+   dos ciclos reais subsequentes, uma descontinuidade que reaparecia como
+   explosão de RUL a cada poucos ciclos. Corrigido calculando o
+   $\sigma_b$/RPM nominais a partir da própria cascata física
+   (`sistema.simular()`), não de um valor fixo.
+
+Como consequência física legítima (não um bug): no ponto de operação
+default, $\sigma_b\approx26$ MPa está bem abaixo do limite de resistência
+assumido (300 MPa), então a Eq. 19.9 projeta RUL de milhões de dias para
+todas as quatro máquinas de demonstração — tecnicamente correto (fadiga do
+dente genuinamente não é o modo de falha limitante nesse regime), mas sem
+utilidade de exibição. Acrescentado um teto de decisão/exibição
+`RUL_TETO_DIAS = 10950` (30 anos) em `constantes.py`/`constantes.rs`,
+aplicado só na saída de `projetar_rul_fadiga` (o `dano_acumulado` interno
+não é tocado). Achado colateral: como folga/fouling (os dois modos de
+falha simulados na frota demo) afetam predominantemente a saúde
+termodinâmica, não a tensão de flexão do dente, RUL por fadiga e HI/EHI
+são sinais de saúde legitimamente independentes neste modelo — não uma
+falha de diferenciação entre as máquinas saudáveis e degradadas da
+demonstração.
+
+**Verificação:** `venv/bin/pytest tests/ -q` — 110 casos (era 102; +8 em
+`tests/test_fadiga.py` novo, +4 asserções em `test_frota_supervisorio`
+existente). `cargo test --workspace` — 31 casos (era 26; +5 em
+`fadiga.rs`). App Python rodado de ponta a ponta via
+`claude-in-chrome` (Streamlit em `localhost:8501`, servidor reiniciado do
+zero para descartar `session_state` sujo de execuções anteriores): aba
+Supervisório de Frota inspecionada visualmente antes e depois de múltiplos
+cliques em "Executar Ciclo de Varredura", EHI e RUL exibidos corretamente
+para as 4 máquinas, sem erro no console do navegador nem no log do
+servidor. `cargo build --workspace` limpo (só um aviso de import não
+usado, pré-existente, não tocado por esta sessão).
+
+**Nada commitado** — aguardando revisão do autor.

@@ -4,13 +4,6 @@
       "type": "http",
       "url": "https://mcp.semgrep.ai/mcp"
     },
-    "heat-transfer-mcp": {
-      "command": "/home/mejias/tools/heat-transfer-mcp/venv/bin/python",
-      "args": ["/home/mejias/tools/heat-transfer-mcp/server.py"]
-    },
-    "semantic-scholar-mcp": {
-      "command": "/home/mejias/tools/semantic-scholar-mcp/venv/bin/semantic-scholar-mcp"
-    },
     "context7": {
       "type": "http",
       "url": "https://mcp.context7.com/mcp"

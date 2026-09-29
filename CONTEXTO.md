@@ -11,11 +11,23 @@ bastante para justificar (nova convenção, nova figura derivada, arquivo novo).
 
 ## O que é este projeto
 
-`compressores.tex` é um livro técnico (~84 páginas) sobre construção de um Gêmeo
-Digital completo para compressores de parafuso rotativo isentos de óleo usados em
-plantas de ar comprimido offshore (óleo e gás). O autor escreveu o conteúdo original
-com apoio de um GPAI e vem revisando/expandindo o documento em conjunto com o Claude
-ao longo de várias sessões.
+`compressores.tex` é um livro técnico (**204 páginas** em 27/09/2026 — o "196
+páginas" que este parágrafo trazia desde mais cedo no mesmo dia já refletia a
+correção do bloqueio de compilação registrada em `Backlog_edicao_completa.md`;
+o salto para 204 veio de conteúdo didático novo, não de correção: Objetivos de
+Aprendizagem e Exercícios Resolvidos em cada um dos nove capítulos da Parte II,
+ver "Objetivos de Aprendizagem e Exercícios Resolvidos na Parte II" abaixo)
+sobre construção de um Gêmeo Digital completo para compressores de parafuso
+rotativo
+isentos de óleo usados em plantas de ar comprimido offshore (óleo e gás). O autor
+escreveu o conteúdo original com apoio de um GPAI e vem revisando/expandindo o
+documento em conjunto com o Claude ao longo de várias sessões.
+
+**A coleção hoje tem três volumes**, não só este: `Volume_0_Notacoes_e_Calculo.tex`
+(42 p., pré-requisitos matemáticos), `Volume_I_Fundamentos.tex` (87 p., fundamentos
+teóricos) e `compressores.tex` (204 p., o Volume II descrito acima). Mais duas
+implementações de referência: `aplicativo/` (Streamlit/Python) e `compressor2/`
+(Rust/Axum).
 
 Estrutura lógica do livro: primeiro a física e a engenharia de cada componente
 (motor, gearbox, rotores, resfriamento, secagem PSA, vasos de pressão, instrumentação),
@@ -48,8 +60,10 @@ comporte novos volumes de outros equipamentos sem reescrever o que já existe; (
 eventualmente um esquema de versionamento explícito — **repositório git
 inicializado em 26/07/2026** (ver `.gitignore` na raiz, que exclui artefatos de
 build do LaTeX `*.aux/.log/.out/.toc/.nav/.snm` e o ambiente Python
-`scripts/venv/`, `scripts/__pycache__/`). Ainda não há nenhum commit — nunca crie
-commits sem pedido explícito do autor.
+`scripts/venv/`, `scripts/__pycache__/`). O repositório tem histórico extenso
+desde então (`git log --oneline` para o estado real — nunca cite hash de
+memória) — mas a regra segue idêntica: **nunca crie commits sem pedido
+explícito do autor.**
 
 ## Fluxo conceitual do pipeline completo (raciocínio do autor, 16/08/2026)
 
@@ -119,8 +133,17 @@ também em "Pendências conhecidas" para não se perderem:
 
 ## Arquivos e pastas
 
-- `compressores.tex` — documento principal (fonte única de verdade).
-- `compressores.pdf` — PDF compilado (84 páginas na última revisão).
+- `compressores.tex` — Volume II, o documento principal (fonte única de verdade).
+- `compressores.pdf` — PDF compilado (**204 páginas** em 27/09/2026).
+- `Volume_I_Fundamentos.tex`/`.pdf` — Volume I, fundamentos teóricos (87 páginas,
+  158 equações, ~50 figuras vetoriais TikZ/pgfplots escritas no próprio `.tex` —
+  **não** usa `scripts/gen_figuras.py`, que é do Volume II). Nome canônico desde
+  11/09/2026; `teorias.*`/`theorias.*` eram nomes de trabalho, removidos.
+- `Volume_0_Notacoes_e_Calculo.tex`/`.pdf` — Volume 0, pré-requisitos
+  matemáticos (42 páginas, 36 equações, 18 exercícios resolvidos). Mesmo padrão
+  de figuras vetoriais no próprio `.tex`.
+- `compressor2/` — implementação Rust 2.0 (workspace Cargo, `sim_core` +
+  servidor Axum), 26 testes. Criada em 27/08/2026.
 - `figuras/` — todos os PDFs de figura usados via `\includegraphics`. **Não edite
   estes PDFs diretamente** — regenere a partir da fonte (ver seção "Figuras" abaixo).
 - `scripts/gen_figuras.py` — script Python (matplotlib) que gera a maior parte das
@@ -137,72 +160,53 @@ também em "Pendências conhecidas" para não se perderem:
 
 ## Convenções já estabelecidas no documento (siga-as, não reinvente)
 
-- **Numeração**: equações, tabelas e figuras são numeradas por capítulo via
-  `\numberwithin{...}{section}` (ex.: `eq:s5-13` = 5ª equação do Capítulo 5 → aparece
-  como (5.13) no texto). Sempre referencie pelo número usando `\eqref{}`/`\ref{}`,
-  nunca hardcode o número.
-- **Notação**: o alfabeto grego já está ~90% saturado (γ,δ,ε,ζ,η,θ,λ,μ,ν,ξ,π,ρ,σ,τ,φ,ω
-  todos em uso). Antes de introduzir um símbolo novo, verifique a tabela de
-  Nomenclatura (logo após o Sumário) para não colidir com um símbolo já usado com
-  outro significado em outro capítulo.
-- **"Diretriz Técnica Final"**: todo capítulo técnico e anexo termina com um bloco
-  padronizado `\textbf{Diretriz Técnica Final:} ...` — uma consequência prática do
-  conteúdo do capítulo para o funcionamento do Gêmeo Digital. Mantenha esse padrão em
-  qualquer capítulo novo.
-- **Explicação antes da equação, com o número citado**: toda equação deve ser
-  precedida de um parágrafo didático explicando o que ela representa e o
-  significado de cada termo — não apresente equações "cruas". **Isso inclui citar
-  o próprio número da equação via `\eqref{eq:sC-N}` no parágrafo que a antecede**,
-  exatamente a mesma disciplina já exigida abaixo para figuras e tabelas (ex.:
-  "A Equação~`\eqref{eq:s5-5}` calcula..." antes do `\begin{equation}`, não só
-  depois). Um parágrafo que apenas *explica o conceito* sem citar o número não
-  satisfaz esta regra — o objetivo é que o leitor já saiba "isto é a Equação X.Y"
-  antes de encontrá-la, igual já acontece com toda figura/tabela do documento.
-  **Achado em 15/08/2026**: uma varredura programática (contar, para cada
-  `\label{eq:sC-N}`, se `\eqref{eq:sC-N}` aparece no texto imediatamente anterior)
-  achou 110 das então 208 equações (53%) sem essa citação prévia — o padrão mais
-  comum era um item de `itemize` com `\textbf{Nome do Conceito:}` seguido de frase
-  explicativa, mas sem o `\eqref{}` de si mesma. Corrigido na mesma sessão (ver
-  entrada de log correspondente mais abaixo). **Regra permanente daqui em diante**:
-  toda equação nova precisa desse `\eqref{}` de si mesma no parágrafo anterior,
-  mesmo quando já introduzida por um título em negrito de item de lista.
-- **Figuras**: cada figura tem `\label{fig:C-N}` (C = capítulo, N = sequencial) e é
-  antecedida por um parágrafo que a referencia via `Figura~\ref{fig:C-N}` antes de
-  aparecer.
-- **Tabelas**: mesma regra das figuras — `\label{tab:C-N}` e um parágrafo que a
-  referencia por `Tabela~\ref{tab:C-N}` antes de ela aparecer, nunca "a tabela
-  abaixo" (padronizado em 29/07/2026 nas 15 tabelas do livro).
-- **Aspas**: sempre `` `` `` e `''`, **nunca** `"` reto — o babel-portuguese
-  torna `"` um caractere ativo que engole o espaço seguinte (ver "Aspas retas
-  quebram o espaçamento" mais abaixo). Exceção: dentro de `verbatim`, onde as
-  aspas do código Python devem continuar literais.
-- **Estrutura em duas Partes**: o livro é dividido em **Parte I — O Compressor e
-  Seus Elementos** (Capítulos 2 a 18: física, engenharia e mecanismos de falha de
-  cada componente) e **Parte II — Metodologia do Gêmeo Digital e Equacionamento
-  Integrado** (Capítulos 19 a 27: EKF, VAE, PIML, MPC, PSO, a integração de tudo
-  num motor de cálculo único, e a implementação de referência/frameworks). Os
-  Capítulos 26 e 27 (implementação) **não são Anexos** — em 26/07/2026 o `\appendix`
-  que os separava com numeração A/B foi removido a pedido do autor: como o livro já
-  está dividido em Parte I/II, não fazia sentido também isolar esses dois capítulos
-  como apêndices lettered dentro da Parte II. Eles são capítulos numerados normais,
-  na sequência (a numeração de equações `eq:s26-*`/`eq:s27-*` já pressupunha isso —
-  nenhuma equação precisou ser renomeada). O Capítulo 1 (Introdução) fica antes da
-  Parte I, como preâmbulo. A Seção 1.3 do próprio livro também descreve essa
-  divisão — mantenha as duas em sincronia se o capítulo final de alguma das partes
-  mudar.
-  **Implementação técnica — não use `\part{}` puro:** o comando `\part{}` padrão da
-  classe `article` neste documento renderiza o título **desalinhado à esquerda** em
-  vez de centralizado (causa não identificada — possivelmente interação com
-  `hyperref`; nem envolver `\part{}` num `\begin{center}` resolve, o `\part`
-  internamente escapa da centralização externa). A solução adotada foi **não usar
-  `\part{}` para exibição**: cada página de Parte é montada manualmente — bloco
+**A partir de 26/09/2026, as regras de redação (numeração e citação de
+equações/figuras/tabelas, aspas, estrutura de capítulo, veracidade de
+referências, critério de elaboração de exercícios) foram extraídas para a
+skill `redacao-tecnica`** (`.claude/skills/redacao-tecnica/SKILL.md`) — para
+não manter duas cópias que podem divergir com o tempo, carregue essa skill
+antes de escrever ou revisar prosa/equações em qualquer volume. Esta seção
+guarda só as decisões estruturais específicas deste projeto que não são
+regras de redação genéricas:
+
+- **Estrutura em duas Partes** (Volume II): **Parte I — O Compressor e Seus
+  Elementos** (Capítulos 2 a 18) e **Parte II — Metodologia do Gêmeo Digital
+  e Equacionamento Integrado** (Capítulos 19 a 27). Os Capítulos 26 e 27
+  (implementação) **não são Anexos** — em 26/07/2026 o `\appendix` que os
+  separava com numeração A/B foi removido a pedido do autor. O Capítulo 1
+  (Introdução) fica antes da Parte I, como preâmbulo. A Seção 1.3 do próprio
+  livro também descreve essa divisão — mantenha as duas em sincronia se o
+  capítulo final de alguma das partes mudar.
+  **Implementação técnica — não use `\part{}` puro:** o comando `\part{}`
+  padrão da classe `article` neste documento renderiza o título
+  **desalinhado à esquerda** em vez de centralizado (causa não identificada
+  — possivelmente interação com `hyperref`; nem envolver `\part{}` num
+  `\begin{center}` resolve). A solução adotada foi **não usar `\part{}` para
+  exibição**: cada página de Parte é montada manualmente — bloco
   `\clearpage`, `\thispagestyle{empty}`, `\phantomsection`,
-  `\addcontentsline{toc}{part}{...}` (para entrar no sumário/bookmarks do PDF) e
-  `\vspace*{\fill}...\begin{center}{\Huge\bfseries PARTE N}\\[2em]{\huge\bfseries
-  Título}\end{center}\vspace*{\fill}`, seguido de `\clearpage` antes do capítulo
-  seguinte. Ver as duas ocorrências no `.tex` (antes do Capítulo 2 e antes do
-  Capítulo 19) como modelo para qualquer Parte futura (ex.: um 3º volume da
-  enciclopédia).
+  `\addcontentsline{toc}{part}{...}` (para entrar no sumário/bookmarks do
+  PDF) e `\vspace*{\fill}...\begin{center}{\Huge\bfseries PARTE N}\\[2em]
+  {\huge\bfseries Título}\end{center}\vspace*{\fill}`, seguido de
+  `\clearpage` antes do capítulo seguinte. Ver as duas ocorrências no `.tex`
+  (antes do Capítulo 2 e antes do Capítulo 19) como modelo para qualquer
+  Parte futura (ex.: um 3º volume da enciclopédia).
+
+## Critério de elaboração de texto e de exercícios — regra permanente (13/09/2026)
+
+**Pedido literal do autor**, depois de ler os exercícios do Volume 0 e
+encontrar o defeito: *"a formulação usada na resposta não aparece na
+pergunta. Por favor, seja bem criterioso na elaboração de textos e de
+exercícios."* A regra em si (fechamento pergunta↔resposta, responder o que
+foi perguntado, enunciado sem redundância, contas refeitas à mão, leitura
+física coerente, coerência com o texto do capítulo) está na skill
+`redacao-tecnica`, seção 6 — carregue-a antes de escrever ou revisar
+exercício novo.
+
+**Achados que motivaram a regra**, preservados como referência histórica:
+`\binom` usado uma única vez no Volume 0, dentro do Exercício 9.1, sem
+jamais ter sido apresentado ao leitor; e $\omega_d$/envelope usados no
+Exercício 8.2 sem existirem no Capítulo 8 até então. Ambos corrigidos na
+mesma sessão (ver "Auditoria dos exercícios do Volume 0" mais abaixo).
 
 ## Diagramação — convenções (relatório de 26/07/2026, todos os itens implementados)
 
@@ -253,22 +257,9 @@ diagramação em aberto.
   figura composta/complexa do livro (Figura 3.1, render 3D). Ao adicionar uma figura nova, classifique-a
   numa dessas 3 categorias em vez de escolher uma largura ad-hoc.
 
-**Convenções permanentes para conteúdo novo** (para não reabrir a mesma dívida técnica):
-- Todo `\section` novo de capítulo deve vir precedido de `\clearpage` (o rótulo "Capítulo N" do
-  `titlesec` é automático, não precisa repetir manualmente).
-- Toda tabela nova deve usar `booktabs` (`\toprule`/`\midrule`/`\bottomrule`, sem barras verticais),
-  nunca `\hline`/grade antiga. Nunca usar `\begin{array}` em modo matemático só para desenhar uma
-  grade de texto — isso é uma tabela, use `tabular`.
-- Colunas de tabela com texto corrido (tipo as de Nomenclatura) devem usar
-  `>{\raggedright\arraybackslash}p{Xcm}` em vez de `p{Xcm}` justificado.
-- Figura nova: escolher uma das 3 larguras-padrão do item 8 acima conforme o tipo de conteúdo, não um
-  valor ad-hoc.
-- Toda figura e tabela nova precisa de **legenda curta e longa**:
-  `\caption[curta para a Lista]{longa para o corpo}` — o documento tem Lista de
-  Figuras e Lista de Tabelas desde 30/07/2026, e sem a forma curta a legenda
-  inteira vaza para a lista e a torna ilegível.
-- Termo técnico novo em inglês ou acrônimo novo que apareça com frequência: acrescentar ao
-  `\hyphenation{}` do preâmbulo (acrônimos entram sem nenhum hífen, para nunca serem partidos).
+**Convenções permanentes para conteúdo novo**: extraídas para a skill
+`redacao-tecnica` (seções 1, 2 e 3) — carregue-a antes de adicionar figura,
+tabela ou `\section` novo, em vez de reconferir esta lista.
 
 ## Figuras — como regenerar sem quebrar nada
 
@@ -400,14 +391,11 @@ branco — isso quebra a compilação (diferente de `$...$`, que tolera).
 
 ## Veracidade de referências e fontes — regra importante
 
-Antes de adicionar qualquer `\bibitem` novo ao `thebibliography`, verifique-o contra
-uma fonte real (editora, periódico, DOI, número de norma) — nunca confie num título,
-autor ou ano "de memória"/gerado por IA sem checar. Um GPAI anterior já havia
-introduzido 3 referências com títulos fabricados ou não verificáveis (`api684`,
-`dompc`, `lysholm` — corrigidas em 26/07/2026, ver "Estado atual" abaixo) que
-passaram despercebidas até uma varredura completa. Da mesma forma, qualquer
-informação factual (técnica, histórica, numérica) apresentada ao autor deve indicar
-a fonte de onde veio.
+Regra completa na skill `redacao-tecnica`, seção 5. Origem do achado que a
+motivou: um GPAI anterior havia introduzido 3 referências com títulos
+fabricados ou não verificáveis (`api684`, `dompc`, `lysholm` — corrigidas em
+26/07/2026, ver "Estado atual" abaixo) que passaram despercebidas até uma
+varredura completa.
 
 ## Documentos de apoio
 
@@ -464,15 +452,9 @@ símbolo em frases "Onde $X = ...$" logo após uma equação já numerada (ex.: 
 no Cap. 17, $\omega_s$ no Cap. 4) — esse é o padrão já estabelecido no documento
 para explicar um termo, não uma equação nova a referenciar.
 
-**Regra permanente daqui em diante**: toda fórmula que expresse uma relação
-física/matemática substantiva (não uma simples troca de símbolo por um valor
-numérico específico, nem a definição de um termo dentro do "Onde ... é ..." que
-já segue uma equação) deve estar em `\begin{equation}\label{eq:sC-N}...\end{equation}`,
-nunca solta em `$...$`/`$$...$$` dentro do texto corrido. Ao inserir uma equação
-no meio de um capítulo já numerado, renumere em cascata os labels seguintes
-daquele capítulo (e suas referências `\eqref` em qualquer capítulo do
-documento) para manter a correspondência "sufixo do label = número exibido"
-descrita na seção de Convenções.
+**Regra permanente daqui em diante**: skill `redacao-tecnica`, seção 1
+(equação numerada sempre em `\begin{equation}`, nunca solta em `$...$`;
+inserir no meio de um capítulo já numerado exige renumeração em cascata).
 
 ## Cobertura de desbalanço de fase no motor elétrico (26/07/2026)
 
@@ -2105,14 +2087,24 @@ aproximada de valor:
    *trip* etc. sem tradução sistemática. A forma sugerida é: seção de glossário
    ao final, mais a primeira ocorrência de cada termo no texto ajustada para
    "termo em português (original)".
-2. **Capítulos 11 (864 palavras), 14 (923), 20 (974) e 6 (976)** são os mais
-   curtos do livro depois da expansão dos Capítulos 12 e 13 — se o critério de
-   "capítulo desenvolvido, não nota técnica" for aplicado adiante, começar por
-   eles. (Contagem por `awk` sobre o `.tex`, incluindo marcação; serve para
-   ranquear, não como número absoluto.)
-3. **Redes Bayesianas (Cap. 25)** e os detalhes de MHE do `do-mpc` (Cap. 27)
-   continuam citados só por nome, sem equação — pendência herdada do
-   "Inventário de algoritmos da Parte II" acima.
+2. **Capítulos mais curtos do livro** — se o critério de "capítulo
+   desenvolvido, não nota técnica" (parecer Manus) for aplicado adiante,
+   começar por eles. **Contagem refeita em 13/09/2026: Cap. 27 (605 palavras),
+   Cap. 25 (1.022), Cap. 6 (1.075) e Cap. 20 (1.091).** A lista anterior desta
+   pendência — "Caps. 11 (864), 14 (923), 20 (974) e 6 (976)" — está vencida:
+   os Caps. 11 e 14 cresceram desde então e saíram do fim da fila, e o Cap. 27
+   (Implementação de Alta Performance) passou a ser o mais curto, logo depois de
+   ganhar a seção da stack Rust. O Cap. 6 é o único que aparece nas duas listas
+   — e é também o único capítulo da Parte I sem nenhuma figura (pendência
+   separada), o que o torna o candidato mais forte. (Contagem por script Python
+   sobre o `.tex`, incluindo marcação; serve para ranquear, não como número
+   absoluto.)
+3. **Redes Bayesianas (Cap. 25)** continuam citadas só por nome, sem equação —
+   pendência herdada do "Inventário de algoritmos da Parte II" acima.
+   *(Atualização de 13/09/2026: a metade sobre **MHE do `do-mpc`** saiu desta
+   pendência — ganhou subseção própria, "Controle Preditivo e MHE (do-mpc)",
+   `compressores.tex:3648`. Segue sem equacionamento próprio, mas não é mais
+   "só uma citação por nome".)*
 4. ~~Estudo de caso numérico de ponta a ponta~~ — **feito em 15/08/2026**,
    ver "Parte III — Estudo de Caso Integrado, Capítulo 28" acima.
 5. ~~Sensores móveis/portáteis~~ — **feito no livro em 16/08/2026**, restrito
@@ -3775,3 +3767,577 @@ atualizada (7 entradas, incluindo a 4.2 nova); capa renderizada
 permanente. **Achado colateral pendente de decisão do autor:** o Volume I
 não usa `\clearpage` nenhum (caps. começam no meio da página), desviando da
 convenção da coleção.
+
+## Reverificação geral de pendências e relatórios externos (13/09/2026)
+
+Pedido do autor: "verifique se os erros e dicas ainda valem, pois muito já foi
+ajustado". Cada item pendente dos arquivos de apoio foi conferido **por busca
+direta nos `.tex` e no código**, não por leitura de registro anterior. O
+resultado está anotado dentro de cada arquivo; o resumo:
+
+**Encerrados — não reabrir.** `relatorio_diagramacao.md` (8/8),
+`arquivos_apoio/dicas_kimi.md` de 31/07 (checklist inteiro),
+`dicas_kimi.md` de 16/08 (5/5), `dicas_COPILOT.md`,
+`Manus_parecer_final_compressores.md` (3 achados normativos + glossário de
+anglicismos), `Backlog_kimi_compress.md` (13/13), `Backlog_volume0.md` (8/8) e
+`Gemini_ajuste.pdf` (5 correções + 5 adições). `melhorias_gemini.md` está
+majoritariamente vencido — ganhou cabeçalho de status listando o que já entrou
+e o que resta (essencialmente calibração de bancada, Sobol/Morris, UKF e
+MLOps).
+
+**Conformidade estrutural conferida nesta data** (vale como baseline para a
+próxima auditoria): 227 labels `eq:s*-*`, **1** sem `\eqref{}` prévio
+(`eq:s22-5` — caso limítrofe: o parágrafo cita a `eq:s20-4` porque a equação é
+reprodução declarada dela); **0** `\hline`/`tabular{|`/`array{|`; **50**
+`\caption[`, **0** `\caption{`; **0** floats `[h!]`, 47 `[h!tbp]`; 36 overfull
+hboxes, o maior com 2,01 pt (baseline documentado).
+
+**Regressão real encontrada e corrigida na mesma sessão:** quatro aspas retas
+voltaram à prosa do Capítulo 29 (`compressores.tex`, seção "Generalização: da
+Atribuição Pontual ao Treino Multi-Mecanismo", escrita em 16/08/2026),
+violando a regra permanente registrada em 30/07/2026. **O defeito era visível
+no PDF** — `pdftotext` devolvia `PIML"(incrustaçã` e `PIML"— que`, com o
+espaço seguinte engolido pelo *shorthand* do babel, exatamente o sintoma
+descrito na regra. Corrigidas para `` `` ``/`''`. As 22 aspas retas restantes
+no arquivo são legítimas (2 em comentário de preâmbulo, 4 no bloco `verbatim`
+de Python, e as demais em contextos equivalentes).
+
+**Lição de processo:** a regra das aspas foi criada em 30/07/2026 e violada de
+novo em 16/08/2026, em conteúdo escrito nesta mesma linha de sessões — ou seja,
+uma regra permanente registrada no `CONTEXTO.md` não impede a reincidência por
+si só. A varredura é barata (`grep -o '"' compressores.tex | wc -l`, esperando
+apenas as ocorrências legítimas conhecidas) e vale rodar ao fim de qualquer
+sessão que escreva prosa nova, junto com a varredura de auto-referência de
+equação que já é rotina.
+
+**Pendências que continuam válidas** (verificadas uma a uma):
+1. `dicas_ollama.md` itens 2, 3, 4, 5, 7 e 8 — o item 8 (mover
+   `Gemini_ajuste.pdf`) foi resolvido nesta sessão; os demais seguem abertos, e
+   o arquivo agora traz o comando de verificação de cada um. **Cuidado com o
+   item 4**: existe um Glossário *de Anglicismos* (Cap. final, desde
+   23/08/2026), mas o que falta é o glossário *de notação* cruzando
+   termodinâmica × mecânica × ML — são itens distintos, fáceis de confundir.
+2. O item 6 do `dicas_ollama.md` deixou de ser pendente por inteiro e passou a
+   **parcial**: estimação de estados ✅ (Caps. 21/28) e quantificação de
+   incerteza ✅ (subseção própria, `:3431`); faltam **validação do gêmeo contra
+   dados reais** e **hierarquia de fidelidade** (0 ocorrências de ambas), e
+   sincronização/latência aparecem só como bullet.
+3. Cap. 6 do Volume II segue sem nenhuma figura — última lacuna gráfica da
+   Parte I (o documento tem 28 figuras no total).
+4. **Volume I não usa nenhum `\clearpage`** (10 capítulos, 0 ocorrências) —
+   achado colateral registrado em 12/09, ainda pendente de decisão do autor. O
+   Volume 0 já segue a convenção (10/10).
+5. Redes Bayesianas (Cap. 25) sem equação.
+
+**Estado do Volume I nesta data**, corrigindo o registro de 24/08 que listava
+metade dos capítulos como esqueleto: **todos os capítulos de conteúdo já foram
+reescritos** ao padrão da coleção — Cap. 2 (825 linhas), 3 (559), 4 (527), 5
+(539), 6 (402), 7 (1094), 8 (349). O único que ainda não passou pela reescrita
+é o **Cap. 9, Instrumentação e Medição (135 linhas)** — candidato natural para
+a próxima expansão. O Cap. 10 (Síntese, 138 linhas) é curto por natureza.
+
+**Ambiente:** o `aplicativo/venv/` **não existe na árvore atual** — precisa ser
+recriado (`python3 -m venv venv && venv/bin/pip install -r requirements.txt`)
+antes de rodar ou testar o app Python; streamlit/torch/scipy também não estão
+no Python do sistema. O lado Rust está operacional (`cargo` instalado, 26
+`#[test]` declarados).
+
+**Dois ajustes aplicados nesta mesma sessão, a pedido do autor:**
+1. As quatro aspas retas do Cap. 29 corrigidas (acima). Recompilado em 3
+   passagens: **183 páginas, 0 erros, 0 referências indefinidas, 36 overfulls
+   com máximo de 2,01 pt** — baseline preservado, sem regressão. Confirmado no
+   PDF por `pdftotext`: agora sai `PIML” (incrustação` e `coluna “Detecção`,
+   com o espaço preservado.
+2. `Gemini_ajuste.pdf` movido para `arquivos_apoio/` com `git mv` (item 8 do
+   `dicas_ollama.md`), preservando o histórico — o git registrou a operação
+   como rename (`R`). Nenhum `.tex` ou `.md` referenciava o caminho antigo.
+
+**Correção de fato sobre `arquivos_apoio/`:** este arquivo afirma, na seção
+"Estado atual (última sessão)", que o subdiretório "continua **não rastreado
+pelo git**". **Isso não é mais verdade** — `git ls-files arquivos_apoio/`
+devolve 8 arquivos rastreados. A afirmação valia em 02/08/2026, quando a pasta
+foi criada, e nunca foi atualizada. A **regra de conteúdo continua valendo
+integralmente**: não mexer em nenhum arquivo de `arquivos_apoio/` sem pedido
+explícito do autor — o que mudou é só o status de versionamento, não a
+permissão.
+
+**Segunda rodada, mesma sessão — status defasado nos arquivos de apoio.** O
+autor pediu para atualizar também os `.md` onde as melhorias estavam
+desatualizadas, o que autorizou explicitamente mexer em `arquivos_apoio/`
+(a regra permanente exige pedido explícito — este foi ele; a regra continua
+valendo para sessões futuras). Corrigidos:
+
+- **`arquivos_apoio/Backlog_kimi_compress.md`** — a proposta **V0-01** (criar o
+  Volume 0) ainda dizia "proposta de trabalho — nada implementado", de 08/09.
+  O Volume 0 existe, está completo e commitado desde 12/09. Atualizado com o
+  estado final e com a resposta às quatro decisões que a proposta deixava em
+  aberto.
+- **`Backlog_volume0.md`** — dizia "Nada commitado sem pedido explícito do
+  autor"; o trabalho está em `5210d92` e `7db0080`.
+- **`arquivos_apoio/dicas_kimi.md`** (31/07) — checklist de 7 itens inteiro
+  desmarcado, embora implementado em 01/08. Marcado, com o comando de
+  verificação de cada item e um aviso para não confundir este relatório com o
+  `dicas_kimi.md` da raiz, que é outro (16/08).
+- **`arquivos_apoio/dicas_COPILOT.md`** — encerrava com uma pergunta em aberto
+  ("Deseja seguir com essa conferência automática?") já respondida e executada
+  em 02/08. Cabeçalho de status cobrindo os cinco blocos A–E.
+- **`arquivos_apoio/Manus_parecer_final_compressores.md`** — cabeçalho com o
+  estado das 5 recomendações prioritárias. Vale notar que a recomendação 2
+  (dois níveis de leitura) acabou atendida por um caminho que o parecer não
+  previu: em vez de estratificar o mesmo livro, a coleção ganhou o Volume 0 e o
+  Volume I inteiros.
+- **`SISTEMA_MULTI_MODELOS.md`** — a linha "Projeto ativo" ainda descrevia o
+  repositório como "material de ensino, avaliação 6,0/10, revisão em curso pelo
+  Kimi". Substituída por uma tabela dos cinco artefatos com o estado medido.
+
+**Padrão observado, que vale para a próxima auditoria:** o erro recorrente
+nestes arquivos não é conteúdo errado — é **status congelado**. Cada relatório
+descreve corretamente o que viu no dia em que foi escrito, e o que envelhece é a
+linha de "pendente"/"nada implementado"/"nada commitado" no topo. Uma leitura
+apressada dos arquivos de apoio, hoje, produziria uma lista de tarefas com pelo
+menos 20 itens já feitos. Ao encerrar um item de backlog, **atualizar o status
+no próprio arquivo de origem**, não só no `CONTEXTO.md` — foi exatamente essa
+lacuna que exigiu esta rodada.
+
+## Edição Completa: os três volumes num único documento (13/09/2026)
+
+Pedido do autor: "empacotar tudo em um único arquivo também e com capa de livro
+com excelente qualidade de Designer", com a ressalva explícita, dada em
+seguida, de **não apagar os volumes separados**. A edição completa é, portanto,
+um artefato adicional — os avulsos continuam canônicos.
+
+**Decisão de arquitetura: gerar, não duplicar.** Em vez de um quarto `.tex`
+editável à mão, `scripts/gerar_edicao_completa.py` monta
+`Enciclopedia_Completa.tex` a partir dos três volumes a cada execução. O
+motivo é a lição já registrada em "Aprendizados operacionais": este projeto já
+gastou tempo com duplicatas que divergiram (`teorias`/`theorias`, cópias
+datadas). Aqui a fonte da verdade continua sendo o volume avulso; a edição
+completa é derivada e descartável, e o cabeçalho do arquivo gerado avisa
+"ARQUIVO GERADO — não edite à mão".
+
+**O que o gerador faz, por volume:** descarta a capa própria (substituída pela
+página de Parte) e os sumários/listas locais (há versões globais); preserva
+prefácio, dedicatória, nomenclatura e todo o corpo; extrai os `\bibitem` para
+uma bibliografia única deduplicada por chave; e **zera o contador de seção na
+abertura de cada volume**.
+
+**Esse `\setcounter{section}{0}` é o ponto crítico da montagem.** Sem ele, a
+numeração contínua faria o Capítulo 5 do Volume II virar Capítulo 25, e com
+`\numberwithin{equation}{section}` toda equação seria renumerada — quebrando de
+uma vez a prosa dos três livros e as citações `# Eq. 5.5` espalhadas pelo
+código dos simuladores. Com o reset, a numeração fica idêntica à da edição
+avulsa. **Verificado, não presumido:** as 422 equações dos três volumes (36 +
+158 + 228) aparecem todas no PDF da edição completa, nenhuma ausente.
+
+**Compatibilidade dos volumes, medida antes de começar** — melhor do que o
+esperado: mesma classe (`article`, 12pt, a4paper) nos três, preâmbulos quase
+idênticos, **zero labels duplicados** entre os arquivos (as convenções de
+prefixo `eq:v0-`/`eq:v1-`/`eq:s` funcionaram) e apenas 4 chaves de bibliografia
+repetidas (`erdman`, `iec60034`, `nemamg1`, `nussenzveig`) — 90 entradas brutas
+viram 86 únicas.
+
+**Dois defeitos encontrados na montagem e corrigidos:**
+1. A primeira versão trazia a lista de pacotes escrita à mão no gerador e
+   faltavam `tabularx` e `bm` — erro de compilação. Corrigido fazendo o gerador
+   **derivar a união dos `\usepackage` das próprias fontes**, com `cmap`
+   primeiro (regra permanente) e `hyperref` por último. Um volume que passe a
+   usar um pacote novo não quebra mais a edição completa.
+2. As Partes internas do Volume II entravam no sumário como "I", "II", "III",
+   no mesmo nível das Partes-volume — um "VOLUME II" seguido de um "II"
+   indistinguível. O gerador passou a rotulá-las "Parte I — ...", só no arquivo
+   derivado; `compressores.tex` não foi tocado.
+
+**Capa** (`capa_edicao_completa.tex`, arquivo separado e editável à mão): TikZ
+vetorial puro, sem imagem externa — nada a licenciar, nada que falte num clone,
+escala sem perda. Paleta herdada do projeto (NAVY `#1f3b57`, BLUE `#2b6cb0`,
+mais um ouro `#c8a24b` de apoio). Motivo: o par de rotores em **elevação**, com
+as hélices traçadas parametricamente.
+
+**Duas iterações descartadas antes de chegar lá, ambas por inspeção visual do
+render — nenhuma seria pega pelo log de compilação:**
+- A 1ª tentou o **corte transversal** com curvas de Bézier e produziu formas
+  arredondadas sem leitura mecânica — exatamente o defeito "primitivas
+  genéricas" que o autor já havia rejeitado na Figura 2.3 em 26/07/2026. A
+  malha de fundo também dominava a página e o nome do autor colidia com o
+  subtítulo.
+- A 2ª desenhou as hélices como **senoides completas**; as faces da frente e de
+  trás se cruzavam e o conjunto lia como treliça. Corrigido traçando apenas a
+  face voltada ao observador (fase de -90° a +90°, onde $\cos > 0$),
+  parametricamente — aí as hélices viram curvas paralelas e o objeto passa a
+  ler como rotor de parafuso.
+
+**Lição que vale para qualquer figura nova:** as três correções da capa vieram
+de olhar o PNG renderizado, não do log — que esteve limpo em todas as versões.
+É a mesma lição já registrada para as figuras 3D em 20/08/2026, e ela se aplica
+igualmente a capa e a diagrama.
+
+**Verificação final:** 3 passagens de `pdflatex`, **309 páginas, 0 erros, 0
+referências indefinidas, 0 labels duplicados, 0 citações indefinidas**. 38
+overfull hboxes, o maior com 4,79 pt — **exatamente a soma dos baselines dos
+volumes** (36 do Vol. II a 2,01 pt + 2 do Vol. I, sendo o de 4,79 pt o conhecido
+da tabela de sensores do Cap. 9). Nenhum overfull novo introduzido pela
+montagem. Capa, verso e página de Parte conferidos por `pdftoppm`.
+
+## Auditoria dos exercícios do Volume 0 (13/09/2026)
+
+Observação do autor após ler o PDF: ``notei que os arquivos .tex e .pdf tinham
+muitos exercícios mal elaborados em sua pergunta e na resposta''. Os 18
+exercícios do Volume 0 (os Volumes I e II não têm nenhum) foram verificados um
+a um, com todas as contas refeitas à mão antes de qualquer edição.
+
+**Resultado da verificação:** nenhuma conta aritmética estava errada. O defeito
+era de **elaboração** — e o autor nomeou a raiz dele na mesma sessão: *"a
+formulação usada na resposta não aparece na pergunta"*. Isso virou regra
+permanente, registrada na seção ``Critério de elaboração de texto e de
+exercícios'' no topo deste arquivo. O achado que originou a regra:
+
+- **Ex. 9.1** — o enunciado mandava truncar a Equação 9.2 ``na segunda ordem'',
+  mas a 9.2 é só a forma de primeira ordem; a resolução recorria a
+  $\binom{5}{2}$, e `\binom` aparecia **uma única vez no volume inteiro**,
+  exatamente ali, nunca definido. Além disso atribuía ao fatorial um
+  decaimento que vem de $\varepsilon^k$ (o binomial $\binom{5}{2}=10$ é
+  *maior* que o coeficiente de primeira ordem), e contradizia a prosa do
+  próprio Cap. 9 quatro páginas antes.
+- **Ex. 8.2** — pedia $\omega_d$ e o envelope, **que o Cap. 8 nunca definiu**:
+  o capítulo só classificava os três regimes qualitativamente. Mesma classe de
+  defeito do 9.1.
+
+**Correções aplicadas** (7 exercícios tocados, mais uma equação nova):
+
+1. **Eq. 8.5 nova** — resposta livre subamortecida, com o envelope
+   $\mathrm{e}^{-\zeta\omega_n t}$ e $\omega_d = \omega_n\sqrt{1-\zeta^2}$, ao
+   fim da subseção 8.4. O capítulo passa a ensinar o que o exercício usa. O
+   passo de Euler foi renumerado 8.5 $\rightarrow$ **8.6** (6 citações, todas
+   internas ao volume, atualizadas juntas). Texto explicita que a Eq. 8.5 é a
+   resposta *livre* e que na resposta ao degrau da Figura 8.1 o mesmo envelope
+   governa o desvio em relação ao valor final — distinção que faltava.
+2. **Ex. 9.1** reescrito: aplica a Equação 9.1 (Taylor) a
+   $f(\varepsilon)=(1+\varepsilon)^5$, com as derivadas saindo da regra da
+   potência do Cap. 6; o coeficiente 10 agora vem de $f''(0)/2!$, não de um
+   binomial não apresentado. `\binom` sai do volume (0 ocorrências).
+3. **Ex. 8.2** passa a responder o que pergunta: $t=\tau\ln 50 = 2{,}6$ s. A
+   regra prática dos $4\tau$ (1,8 %) vira comentário *depois* da resposta
+   exata, não substituto dela.
+4. **Ex. 3.2** — dois números corrigidos: a faixa ignorava a incerteza de
+   $3{,}5$ min (o correto é 39,7 a 44,4 m³, não 40,2 a 43,8) e o fator
+   ``vinte vezes'' era na verdade ~47.
+5. **Ex. 8.1** — a leitura física comparava grandezas não comparáveis (variação
+   em 40 min × resíduo num instante). Trocada pela leitura correta: cada $\tau$
+   remove sempre 63 % do excesso, mas 63 % de um excesso que encolhe valem
+   41 °C, 15 °C e 6 °C em intervalos sucessivos.
+6. **Ex. 5.1** — enunciado declarava a perpendicularidade duas vezes e dava $F$
+   como escalar; agora dá $\bm{F} = 120\,\bm{j}$ N. A resolução exibe o
+   determinante da Equação 5.3 em vez de aludir a ele.
+7. **Ex. 9.2** — ``déficit'' passa a ser definido no próprio enunciado
+   ($e_k = T_k - T_\infty$), ancorado no passo de Euler da Equação 8.6 com
+   $\Delta t = 0{,}2\tau$; sai a chamada errada de ``meia-vida'' para um
+   decaimento geométrico.
+8. **Ex. 1.1** — deixou de ser uma pergunta sem produto (a resolução antiga
+   encerrava com ``nenhum número foi calculado aqui''): agora pede a forma do
+   balanço que descreve o sintoma e mapeia cada peça dela a um capítulo.
+
+**Verificação:** `pdflatex` 3 passagens — **42 páginas, 0 erros, 0 overfulls, 0
+referências indefinidas**; 37 equações (era 36, +1 a Eq. 8.5), varredura de
+auto-referência 0/37; 0 aspas retas; 0 hardcode de número de equação. Páginas
+9, 23, 34, 35, 36 e 38 renderizadas por `pdftoppm` e inspecionadas uma a uma.
+**Edição Completa regenerada** (`scripts/gerar_edicao_completa.py`) e
+recompilada: 309 páginas, 0 erros, 38 overfulls com máximo de 4,79 pt — o
+baseline exato já documentado, sem regressão.
+
+**Varredura nova, barata, que vale repetir:** para cada `\eqref{}` dentro de um
+bloco de exercício, conferir por script que o `\label{}` correspondente aparece
+**antes** no arquivo. Roda em segundos e pega a classe inteira de defeito que
+motivou esta sessão. Resultado atual: nenhuma ocorrência.
+
+**Nada commitado** --- regra permanente.
+
+## Estudo: posição do prefácio e da dedicatória no front matter (13/09/2026)
+
+Observação do autor: *"entendo que prefácio e dedicatória devem vir mais à
+frente do livro, faça uma análise e coloque no local adequado"*. Registro aqui
+o estudo inteiro, para que a decisão não precise ser refeita nem discutida de
+novo em volumes futuros da coleção.
+
+### Ordem que os três volumes tinham
+
+Idêntica nos três (`Volume_0`, `Volume_I`, `compressores`):
+
+    capa → dedicatória → PREFÁCIO → sumário → lista de figuras →
+    lista de tabelas → [nomenclatura, nos Vols. I e II] → corpo
+
+### O que dizem as duas tradições — conferido na fonte, não de memória
+
+**Chicago Manual of Style, 17ª ed., §1.4 (``Order of elements in a book'')** —
+half title, series title, title page, copyright, **dedication**, epigraph,
+**contents**, list of illustrations, list of tables, foreword, **preface**,
+acknowledgments, introduction, **abbreviations**. Ou seja: dedicatória *antes*
+do sumário; prefácio *depois* do sumário e das listas; lista de símbolos/
+abreviaturas *depois* do prefácio.
+
+**ABNT NBR 6029:2006** (norma obtida e lida diretamente — o PDF traz
+``Licença de uso exclusivo para Petrobras S/A''). A seção 4.2.1 enumera os
+elementos **pré-textuais** em 11 itens, 4.2.1.1 a 4.2.1.11, nesta ordem: falsa
+folha de rosto, folha de rosto, errata, **dedicatória** (4.2.1.4),
+agradecimento, epígrafe, lista de ilustrações, lista de tabelas, lista de
+abreviaturas e siglas, lista de símbolos, **sumário** (4.2.1.11). O prefácio
+**não está nessa lista** — ele aparece em 4.2.2, *Elementos textuais*, cujo
+texto literal é: ``Parte em que é desenvolvido o conteúdo, antecedida,
+opcionalmente, por prefácio e/ou apresentação'', e ``O prefácio e/ou
+apresentação deve começar em página ímpar, sem indicativo de seção''.
+
+**As duas concordam no ponto que importa**: o prefácio vem **depois** do
+sumário — pela ABNT porque ele já pertence aos elementos textuais, pela Chicago
+por posição explícita na lista. E as duas colocam a **dedicatória logo após a
+folha de rosto**, bem antes do sumário.
+
+### Decisão aplicada
+
+    capa → dedicatória → sumário → lista de figuras → lista de tabelas →
+    PREFÁCIO → [nomenclatura] → corpo
+
+- **Prefácio movido** nos três volumes. Era o único elemento fora do lugar, e é
+  exatamente o que o autor percebeu ao ler. Ganho prático coerente com a visão
+  do projeto (obra de consulta, não leitura linear): o leitor que abre o PDF
+  encontra a estrutura antes do texto de abertura.
+- **Dedicatória mantida** onde estava. As duas normas a colocam ali; movê-la
+  para depois do sumário a separaria da folha de rosto, o que nenhuma tradição
+  editorial faz. Se o autor quiser movê-la assim mesmo, é uma edição de um
+  bloco — mas a recomendação técnica é não mover.
+- **Nomenclatura não foi tocada** (segue depois do prefácio). Aqui as duas
+  tradições divergem: a ABNT trata lista de símbolos como pré-textual, *antes*
+  do sumário (4.2.1.10); a Chicago a põe *depois* do prefácio. A posição atual
+  segue a Chicago, e é a que faz sentido para esta coleção — a Nomenclatura do
+  Vol. II tem 6 páginas e empurraria o sumário para longe da capa.
+- **Página ímpar** (exigida pela NBR 6029 para dedicatória e prefácio) **não se
+  aplica**: os quatro documentos são `article` sem opção `twoside`, ou seja,
+  impressão em face única, onde não existe recto/verso. Se algum dia a coleção
+  for para impressão frente-e-verso, é aqui que essa exigência entra, com
+  `\cleardoublepage` no lugar de `\newpage`.
+
+### Defeito de cabeçalho — uma regressão e um achado pré-existente
+
+Mover o prefácio expôs a mesma classe de bug já registrada em 15/08/2026
+(``Verificação visual do PDF compilado''): `\section*` **não** atualiza o
+`\leftmark`, então uma seção estrelada herda o cabeçalho corrente da anterior.
+
+- **Regressão introduzida pela mudança**: o prefácio, que antes vinha logo após
+  a dedicatória e saía com cabeçalho vazio, passou a exibir ``Lista de
+  Tabelas''. Confirmado comparando com o PDF do commit anterior
+  (`git show HEAD:compressores.pdf`), não presumido.
+- **Achado colateral, pré-existente**: a **Nomenclatura** já exibia ``Lista de
+  Tabelas'' no cabeçalho de todas as suas páginas — nos Vols. I e II, desde
+  sempre. Nenhuma auditoria anterior tinha pego.
+
+Corrigidos com `\markboth{<título>}{}` logo após cada `\section*` de front
+matter — a técnica que o próprio `CONTEXTO.md` já registrava para reuso.
+**Regra permanente**: toda `\section*` de front matter (Prefácio, Nomenclatura,
+Glossário, Agradecimentos) precisa do `\markboth{}{}` correspondente; sem ele o
+cabeçalho mente sobre onde o leitor está, e o log de compilação não acusa nada.
+
+### Verificação
+
+`pdflatex` 3 passagens em cada documento, todos com **0 erros e 0 referências
+indefinidas**, e contagens idênticas ao baseline: Volume 0 **42 p., 0
+overfulls**; Volume I **87 p., 2 overfulls** (os dois de baseline); Volume II
+**183 p., 36 overfulls** (máx. 2,01 pt); Edição Completa regenerada e
+recompilada, **309 p., 38 overfulls** (máx. 4,79 pt). Ordem física conferida
+página a página nos quatro PDFs por extração de texto, e a página do prefácio
+do Volume II inspecionada por `pdftoppm`. Cabeçalho corrente conferido em todas
+as páginas de front matter dos três volumes.
+
+**Nada commitado** --- regra permanente.
+
+### Complemento (mesma sessão): front matter próprio da Edição Completa
+
+O estudo acima resolveu a posição do prefácio **dentro de cada volume**. Ao ver
+o resultado na edição reunida, o autor apontou o que faltava: *"o prefácio e a
+dedicatória ainda está no volume 0, acredito que tenha de estar antes do volume
+0"*. De fato — na edição única, cada volume trazia a sua dedicatória e o seu
+prefácio logo após a própria página de Parte, de modo que o leitor encontrava
+três de cada, espalhados, e nenhum deles abria o livro.
+
+**Decisão do autor, entre três arranjos oferecidos:** a Edição Completa passa a
+ter **dedicatória e prefácio próprios**, e os dos volumes **saem** da edição
+reunida (seguem intactos nos avulsos, que continuam canônicos).
+
+    p1   capa
+    p2   sobre esta edição
+    p3   DEDICATÓRIA DA EDIÇÃO      <- nova
+    p4   sumário geral
+    p14  lista de figuras / tabelas
+    p18  PREFÁCIO À EDIÇÃO COMPLETA <- novo
+    p19  VOLUME 0  → direto no Capítulo 1
+    p54  VOLUME I  → direto na Nomenclatura
+    p132 VOLUME II → direto na Nomenclatura
+
+**Dois arquivos novos, editáveis à mão** — mesmo padrão já adotado para
+`capa_edicao_completa.tex`, e pelo mesmo motivo (o gerador os inclui, nunca os
+sobrescreve): `dedicatoria_edicao_completa.tex` e
+`prefacio_edicao_completa.tex`. **Os dois textos que estão lá hoje são rascunho
+meu, marcados como tal no cabeçalho de cada arquivo, para o autor substituir.**
+O prefácio de partida evita deliberadamente qualquer número que envelheça
+(contagem de páginas, de equações) — o padrão de defeito já identificado nestes
+arquivos de apoio é justamente o status congelado.
+
+**Mudanças em `scripts/gerar_edicao_completa.py`:** `limpa_corpo()` passou a
+remover o bloco de dedicatória e o de prefácio de cada volume (duas regex
+novas, ancoradas nos comentários `% --- DEDICATÓRIA ---` / `% --- PREFÁCIO ---`
+que os três volumes já usavam); o cabeçalho ganhou os dois `\input` nas
+posições canônicas do estudo acima; e a lista de entradas de sumário que
+recebiam o rótulo do volume perdeu ``Prefácio'' (não há mais três) — seguem
+``Nomenclatura'' e ``Glossário de Anglicismos''. O docstring do gerador foi
+atualizado: ele dizia ``preserva prefácio, dedicatória, nomenclatura e todo o
+corpo'', o que deixou de ser verdade.
+
+**Verificação:** 3 passagens, **304 páginas, 0 erros, 0 referências
+indefinidas, 38 overfull hboxes com máximo de 4,79 pt** — o mesmo baseline de
+sempre. A contagem de páginas fecha exatamente: 309 $-$ 7 (três dedicatórias,
+uma página cada; prefácios de 1, 1 e 2 páginas) $+$ 2 (dedicatória e prefácio
+novos) $=$ 304. Sumário conferido (``Prefácio à Edição Completa'' em xv, sem
+nenhum ``Prefácio --- VOLUME X'' remanescente), aberturas dos três volumes
+conferidas por extração de texto e página do prefácio novo inspecionada por
+`pdftoppm`. `README.md` atualizado (304 páginas; os três arquivos editáveis à
+mão).
+
+**Nada commitado** --- regra permanente.
+
+## Correção do bloqueio de compilação + skill `redacao-tecnica` (26–27/09/2026)
+
+Pedido do autor: atualizar o backlog e ajustar os `.md` de contexto para criar
+uma skill de redação técnica. Diagnóstico completo e verificação estão em
+`Backlog_edicao_completa.md` (reescrito nesta sessão como encerrado); resumo
+aqui por ser mudança estrutural que muda a contagem de páginas do Volume II.
+
+**Causa raiz do bloqueio**: `scripts/gerar_nomenclatura_por_capitulo.py`
+localizava o fim de `\section{...}` com um regex (`[^}]*`) que não trata
+`\textbf{}` aninhado no título — parava na chave de fechamento do `\textbf`,
+não na do `\section`, e inseria o bloco "Símbolos deste capítulo" **dentro**
+do argumento do `\section`. Afetou os 13 capítulos que usam `\textbf{}` no
+título (2–13 e 15); os demais (14, 16 em diante, sem `\textbf{}`) nunca
+tiveram o bug. Corrigido o regex do gerador e regenerado `compressores.tex` a
+partir dele — a versão em árvore é saída do script, não edição manual.
+`compressores.tex` foi a **196 páginas** depois da correção (era 183 no
+último registro real deste arquivo, de 13/09/2026 — o número não mudou por
+conteúdo novo, só porque a tabela de nomenclatura por capítulo, criada em
+13/09 mas nunca compilada de fato até agora, finalmente entrou). **228
+equações** (`\label{eq:s*}`) — já eram 228 antes desta sessão; o "227" que
+este arquivo e `CONTEXTO_kimi.md`/`SISTEMA_MULTI_MODELOS.md` citavam desde
+20/08/2026 já estava um a menos, sem que nenhuma sessão tivesse notado.
+Figuras seguem 28, sem mudança. Edição Completa regenerada e recompilada:
+**314 páginas** (era 304), outline verificado com `mutool` — VOLUME 0/I/II
+como irmãos de nível máximo, fechando o bug original relatado pelo autor em
+16/09/2026.
+
+**Skill nova**: `.claude/skills/redacao-tecnica/SKILL.md` reúne as regras de
+redação dos volumes — numeração/citação de equação, figura e tabela, aspas,
+estrutura de capítulo, veracidade de referências, critério de elaboração de
+exercícios — para ser carregada por qualquer sessão (Claude ou Kimi) antes de
+escrever ou revisar prosa do livro. As seções de "Convenções" deste arquivo e
+de `CONTEXTO_kimi.md` foram enxugadas: o texto da regra virou ponteiro para a
+skill, o histórico de achados/decisões continua intacto.
+
+**Varredura de status congelado** nos arquivos de apoio: `dicas_ollama.md`
+(itens 2–5, 7 reconfirmados pendentes; item 6 ganhou nuance — UKF passou a
+ser mencionado em prosa no Cap. 20, ainda sem equação própria),
+`melhorias_gemini.md` (mesma nuance do UKF; MLOps segue sem implementação,
+`InfluxDB`/`TimescaleDB` só citados como item de arquitetura desejada no
+pseudocódigo do Cap. 26), `dicas_backlog.md` (removida a nota de que
+`compressores.tex` estava quebrado — já resolvido).
+
+**Commits desta frente já feitos e enviados ao remoto** em sessão anterior a
+esta entrada: `15fe25e` (correção do bloqueio + backlog) e `a813988` (skill +
+enxugamento dos contextos). Esta entrada e a correção das contagens de página
+acima (183→196, 227→228) ainda aguardam commit no momento em que foi escrita.
+
+## Objetivos de Aprendizagem e Exercícios Resolvidos na Parte II (27/09/2026)
+
+Pedido do autor: implementar o item 5 de `dicas_ollama.md` §3 (pendente desde
+12/09/2026, reverificado sem mudança em 13/09 e 26/09) — Objetivos de
+Aprendizagem no início de cada capítulo e Exercícios Resolvidos ao fim, no
+mesmo padrão já validado no Volume 0. Duas ambiguidades do item original
+foram fechadas com o autor antes de escrever: (1) os Objetivos de
+Aprendizagem valem só para os nove capítulos da Parte II (Caps. 19–27, não os
+27 capítulos de `compressores.tex` inteiro); (2) os exercícios são resolvidos
+*inline*, na própria subseção "Exercícios Resolvidos" de cada capítulo — como
+o Volume 0 já faz — e não num apêndice de gabarito separado, apesar do texto
+do item mencionar "gabarito em apêndice".
+
+**Implementado:** os nove capítulos da Parte II (19 — Modelos de Solução; 20
+— Fundamentos Teóricos, Algoritmos e Metodologia; 21 — EKF; 22 — VAE; 23 —
+PIML; 24 — MPC e PSO; 25 — Diretrizes de Desenvolvimento; 26 — Implementação
+Base; 27 — Implementação de Alta Performance) ganharam cada um: um bloco
+`\textbf{Objetivos de Aprendizagem.}` com 4 bullets (2–4 conforme o item
+pedia), logo após a tabela de nomenclatura do capítulo (ou logo após
+`\section{}` nos dois capítulos sem tabela própria, 25 e 27) e antes do corpo
+do texto; e uma `\subsection{Exercícios Resolvidos}` com 2 exercícios cada,
+logo antes do bloco `Diretriz Técnica Final`, seguindo o critério de
+elaboração da skill `redacao-tecnica` (fechamento pergunta-resposta, nenhum
+símbolo/fórmula usado na resolução sem estar no enunciado ou já ensinado no
+capítulo, toda conta refeita à mão). Os 18 exercícios usam as equações já
+existentes de cada capítulo (nenhuma equação nova foi criada) — cálculo do
+EHI e RUL (Cap. 19), erro de reconstrução do VAE e decomposição gray-box
+(Cap. 20), observabilidade e estatística NIS (Cap. 21), divergência KL e
+limiar por quantil (Cap. 22), função de perda híbrida e balanceamento
+adaptativo de λ (Cap. 23), custo do MPC e atualização do PSO (Cap. 24),
+propagação de incerteza e escore do Isolation Forest (Cap. 25), eficiência
+exergética e Health Index (Cap. 26), e verificação de throughput/fator de
+aceleração e uma discussão de números arredondados (Cap. 27) — todos
+recalculados em Python durante a escrita para conferir a aritmética antes de
+aceitar como corretos.
+
+**Bug real encontrado e corrigido de passagem:** a frase sobre consumo de
+memória RAM do Cap. 27 usava `~10 MB`/`~280 MB` em modo matemático — `~` em
+LaTeX é o comando de espaço intocável, não um glifo visível, então o PDF
+renderizava só um espaço em branco antes do número, sem nenhum sinal de
+aproximação (só percebido por inspeção visual com `pdftoppm`, o log de
+compilação não acusa nada). Trocado por `\approx`, consistente com o
+`\approx 25\times` já correto na mesma frase.
+
+**Verificação:** `compressores.tex` recompilado 3×, **204 páginas** (era
+196), 0 erros, 0 referências indefinidas, 0 labels duplicados, **36 overfull
+hboxes, máximo 2,01 pt** — mesmo baseline, sem regressão (um overfull de
+11,27 pt apareceu numa primeira versão do Exercício 20.1, corrigido quebrando
+uma equação com três frações lado a lado em três linhas separadas).
+`python3 scripts/gerar_nomenclatura_por_capitulo.py --check` confirma 154
+entradas / 26 capítulos com tabela própria, sem mudança. Edição Completa
+regenerada e recompilada 3×: **321 páginas** (era 314), 0 erros, 0
+referências indefinidas, **38 overfull hboxes, máximo 4,79 pt** — mesmo
+baseline. Outline (`mutool`) confirma VOLUME 0/I/II ainda irmãos de nível
+máximo. Inspeção visual (`pdftoppm`) de todas as 9 páginas de exercícios
+novas em `compressores.pdf`, mais as páginas correspondentes na Edição
+Completa. Contagem de equações inalterada (228 no Volume II) — nenhuma
+equação nova foi criada, só `\eqref{}` das já existentes.
+
+**Nada commitado** — regra permanente, aguardando revisão do autor.
+
+## Três skills genéricas novas, extraídas de `dicas_backlog.md` e da skill `redacao-tecnica` (28/09/2026)
+
+Pedido do autor: reler os `.md` do repositório e considerar, além da skill
+`redacao-tecnica` já existente, outras skills reaproveitáveis em projetos
+futuros — não amarradas a compressores/rotordinâmica. Três candidatas foram
+levantadas e aprovadas pelo autor:
+
+- **`gestao-backlog`** (`.claude/skills/gestao-backlog/SKILL.md`): a
+  metodologia genérica de `dicas_backlog.md` §1 (princípios), §2 (template de
+  item com par Gap/Verificação), §5 (anti-padrões) e §6 (rotina de fim de
+  sessão) — sem as partes específicas de LaTeX/compressores.
+- **`calibracao-revisor-externo`** (`.claude/skills/calibracao-revisor-externo/SKILL.md`):
+  o antigo item 7 de `dicas_backlog.md` §1 — como tratar achado de revisor
+  externo (Copilot/Kimi/Gemini/Manus, ou qualquer outro) como hipótese a
+  verificar na fonte, não como escopo fechado.
+- **`qa-compilacao-latex`** (`.claude/skills/qa-compilacao-latex/SKILL.md`): a
+  antiga seção 7 de `redacao-tecnica` — compilar 3×, ler o log Latin-1 com
+  `grep -a`, manter baseline de overfull hbox, inspecionar visualmente com
+  `pdftoppm`, varreduras de regressão — generalizada para qualquer projeto
+  LaTeX, sem os prefixos de label desta coleção.
+
+**Enxugamento para evitar divergência** (mesmo tratamento já dado a
+`CONTEXTO.md`/`CONTEXTO_kimi.md` quando `redacao-tecnica` foi criada,
+26–27/09/2026): `dicas_backlog.md` teve §1, §2, §5 e §6 substituídas por
+ponteiros para as duas skills novas, mantendo só o que é específico deste
+projeto (§3 varreduras do livro, §4 backlog de código, §7 exemplos
+aplicados). A seção 7 de `redacao-tecnica` (`.claude/skills/redacao-tecnica/SKILL.md`)
+também foi enxugada para ponteiro + baseline/varreduras específicos desta
+coleção, com o checklist genérico movido para `qa-compilacao-latex`.
+
+**Nada commitado** — regra permanente, aguardando revisão do autor.

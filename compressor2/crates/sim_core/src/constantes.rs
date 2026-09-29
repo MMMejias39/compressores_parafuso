@@ -108,6 +108,27 @@ pub const PDP_ALVO_C: f64 = -40.0; // °C (ISO 8573-1 Classe 2)
 // ── Duto de admissão ─────────────────────────────────────────────────────────
 pub const D_DUTO_ADMISSAO: f64 = 0.10; // m — ASSUMIDO
 
+// ── Fadiga do dente de engrenagem: Regra de Palmgren-Miner (Eqs. 19.7-19.9,
+// 27/09/2026) ─────────────────────────────────────────────────────────────────
+// Espelha aplicativo/compressor_sim/constantes.py — mesma justificativa: o
+// livro descreve a curva S-N de Basquin (sigma^b_f * N = C) e cita a AGMA
+// 2001, mas não fixa C/b_f para um material específico; ambos ASSUMIDOS a
+// partir de dois pontos típicos de fadiga em flexão de dente cementado/
+// temperado (aço-liga, grau AGMA 1-2). SIGMA_B_ADM_MPA reaproveita o limiar
+// HH já definido para a tag MEC_SIGMA_B (pi_telemetry.rs).
+pub const SIGMA_B_ADM_MPA: f64 = 300.0;          // MPa — sigma_adm (Eq. 24.2)
+pub const N_REF_ENDURANCE: f64 = 1.0e7;          // ciclos — ASSUMIDO
+pub const SIGMA_REF_BAIXO_CICLO_MPA: f64 = 700.0; // MPa — ASSUMIDO
+pub const N_REF_BAIXO_CICLO: f64 = 1.0e4;        // ciclos — ASSUMIDO
+
+// ── Processo Gaussiano da taxa de dano (Eq. 19.10, 27/09/2026) ────────────────
+pub const GP_SIGMA_F: f64 = 0.02;   // desvio padrão do processo — ASSUMIDO
+pub const GP_ELL_DIAS: f64 = 30.0;  // dias, comprimento de escala — ASSUMIDO
+pub const GP_SIGMA_N: f64 = 0.002;  // desvio padrão do ruído de medição — ASSUMIDO
+
+// 30 anos — teto de exibição/decisão do RUL por fadiga (ver fadiga.py)
+pub const RUL_TETO_DIAS: f64 = 10_950.0;
+
 // ── Materiais dessecantes ─────────────────────────────────────────────────────
 
 /// Propriedades de um material dessecante para secador PSA.

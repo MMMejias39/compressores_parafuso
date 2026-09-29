@@ -23,6 +23,7 @@ pub mod dinamica;
 pub mod mpc;
 pub mod pso;
 pub mod ekf;
+pub mod fadiga;
 pub mod pi_telemetry;
 pub mod frota;
 pub mod treinamento;

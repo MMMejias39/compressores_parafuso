@@ -373,7 +373,31 @@ formados há mais tempo relembrem". Atende também a recomendação do parecer
 Manus (26/07/2026, item 2): um capítulo preparatório para ampliar o público,
 criando dois níveis de leitura.
 
-**Status:** proposta de trabalho — nada implementado.
+**Status:** ✅ **IMPLEMENTADO — o Volume 0 existe e está completo.**
+*(Atualizado em 13/09/2026; este bloco dizia "proposta de trabalho — nada
+implementado" desde 08/09.)*
+
+O volume foi criado em **12/09/2026** como `Volume_0_Notacoes_e_Calculo.tex`
+(commit `5210d92`) e, no mesmo dia, passou por um backlog próprio por
+criticidade, implementado 8/8 (commit `7db0080`). Estado final: **42 páginas,
+10 capítulos, 36 equações, 7 figuras, 7 tabelas, 18 exercícios resolvidos**,
+compilação 3× com 0 erros / 0 overfulls / 0 referências indefinidas e varredura
+de auto-referência 0/36.
+
+**Como as quatro decisões em aberto foram resolvidas:**
+1. **Formato** — documento separado, como recomendado aqui.
+2. **Numeração** — mantida: o Volume 0 é anterior e opcional, I e II não mudaram.
+3. **Profundidade** — intuição geométrica + regra de uso, sem demonstrações.
+4. **Exercícios** — decidido **a favor** pelo autor: 18 exercícios resolvidos,
+   2 por capítulo de conteúdo.
+
+O escopo sugerido abaixo foi cumprido quase integralmente, com uma correção de
+fato encontrada na implementação: o **"teorema de Stokes"** citado no escopo é,
+no Volume I, a *hipótese* de Stokes (fluido newtoniano) — o teorema integral do
+rotacional **não** é usado na coleção, e entrou apenas como menção de uma frase.
+
+O planejamento detalhado e o resultado item a item estão em `Backlog_volume0.md`
+(na raiz). O texto abaixo fica como registro da proposta original.
 
 **Conceito.** Um volume de entrada da coleção *Enciclopédia de Máquinas
 Rotodinâmicas*, posicionado antes do Volume I, cuja única função é remover a
