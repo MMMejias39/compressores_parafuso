@@ -31,8 +31,13 @@ compressor2/
     │       └── treinamento.rs # Diagnóstico causal de falhas e arena de treinamento
     └── app/                   # Aplicação servidora Axum e Single-Page Application (SPA)
         ├── Cargo.toml
+        ├── assets/
+        │   ├── tailwind.input.css   # Fonte do design system (tokens + componentes)
+        │   ├── app.css              # Gerado pelo Tailwind CLI — versionado
+        │   └── chart.umd.min.js     # Chart.js 4.4.1 vendorizado (MIT) — versionado
         └── src/
-            ├── main.rs        # Servidor assíncrono Tokio/Axum, rotas REST e interface industrial
+            ├── main.rs        # Servidor assíncrono Tokio/Axum, rotas REST e assets embutidos
+            ├── index.html     # SPA industrial (HTML + CSS componentizado + JS)
             └── bin/benchmark.rs # Benchmark de tempo de resposta das rotas
 ```
 
@@ -63,13 +68,70 @@ cargo run --bin compressor2
 ```
 Acesse: **`http://localhost:8080`**
 
+A porta pode ser trocada por variável de ambiente, útil quando a 8080 já está
+ocupada por outro serviço ou reservada pelo sistema (nesse caso o `bind` falha
+com `WSAEACCES`):
+
+```bash
+PORT=8090 cargo run --bin compressor2   # bash
+$env:PORT=8090; cargo run --bin compressor2   # PowerShell
+```
+
+### Interface: totalmente offline
+
+A SPA não depende de nenhuma CDN. O `main.rs` embute os assets no binário com
+`include_bytes!` e os serve em `/assets/app.css`, `/assets/chart.umd.js` e
+`/favicon.svg`. Isso é requisito de operação offshore (rede isolada): a
+interface abre completa mesmo sem internet.
+
+### Alterar a interface
+
+O HTML vive em `crates/app/src/index.html` e o CSS-fonte em
+`crates/app/assets/tailwind.input.css`. Depois de editar qualquer um dos dois,
+regenere o CSS compilado:
+
+```bash
+cd crates/app
+tailwindcss -i assets/tailwind.input.css -o assets/app.css \
+            --content src/index.html --minify
+```
+
+`assets/app.css` é **versionado de propósito**: assim `cargo build` funciona
+sem Node/npm instalado. Use o [Tailwind CLI standalone](https://github.com/tailwindlabs/tailwindcss/releases)
+(v3.4.x) — não é necessário `package.json`. Depois de regerar o CSS, basta
+`cargo build` (o `include_str!`/`include_bytes!` já registra a dependência).
+
+---
+
+## 🎛️ Notas de interface
+
+- **Acessibilidade**: abas seguem o padrão ARIA (`role="tablist"`/`tab`/`tabpanel`,
+  `aria-selected`, `aria-controls`), navegação por setas/Home/End, regiões de
+  alarme com `aria-live`, link de salto para o conteúdo, anel de foco visível em
+  todos os controles e respeito a `prefers-reduced-motion`.
+- **Temas**: claro/escuro/auto via `localStorage`, com contraste AA nos dois modos.
+- **Responsivo**: barra lateral e abas se reorganizam abaixo de 1024 px; todo o
+  conteúdo é servido por um único binário.
+- **Impressão**: `@media print` esconde navegação e sombras para gerar relatórios.
+- **Mapa do Conjunto**: aba com a elevação do pacote e a vista 3D, os 12 pontos de
+  medição com as tags PI e download das figuras em PDF vetorial. As imagens são
+  geradas por `scripts/desenhar_conjunto.py` e `scripts/desenhar_conjunto_3d.py`
+  e ficam embutidas no binário.
+
 ---
 
 ## 📡 Endpoints REST da API
 
 | Rota | Método | Descrição |
 | :--- | :---: | :--- |
-| `/` | `GET` | SPA Web Industrial completa (HTML5 / Tailwind / Chart.js) |
+| `/` | `GET` | SPA Web Industrial completa (HTML5 + CSS compilado + Chart.js) |
+| `/assets/app.css` | `GET` | Design system compilado (embutido no binário) |
+| `/assets/chart.umd.js` | `GET` | Chart.js 4.4.1 vendorizado (embutido no binário) |
+| `/assets/conjunto-pontos.png` | `GET` | Elevação do conjunto com os pontos de medição A–I |
+| `/assets/conjunto-pontos.pdf` | `GET` | A mesma figura em vetor (para impressão) |
+| `/assets/conjunto-3d.png` | `GET` | Vista 3D do conjunto |
+| `/assets/conjunto-3d.pdf` | `GET` | A vista 3D em vetor |
+| `/favicon.svg` | `GET` | Ícone da aplicação |
 | `/api/health` | `GET` | Health check da aplicação e versão |
 | `/api/simular` | `POST` | Executa o balanço estático dos 7 nós termodinâmicos |
 | `/api/frota` | `GET` | Retorna o painel da frota de compressores (`?n_compressores=N&fad_unitario=X`) |

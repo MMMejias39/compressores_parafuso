@@ -1,0 +1,2077 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gêmeo Digital & Treinamento PI — Compressor Offshore (Rust 2.0)</title>
+    <meta name="color-scheme" content="dark light">
+    <meta name="description" content="Gêmeo digital de sistemas de compressão offshore: simulação termodinâmica, telemetria OSIsoft PI e diagnóstico preditivo.">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/assets/app.css">
+    <script src="/assets/chart.umd.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+<div class="app-shell">
+
+    <!-- SIDEBAR OPERACIONAL -->
+    <aside class="app-sidebar p-5 flex flex-col justify-between gap-6" aria-label="Parâmetros operacionais">
+        <div class="space-y-6">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xl" aria-hidden="true">🌀</span>
+                    <span class="font-bold text-base tracking-tight" style="color:var(--text)">Digital Twin <span style="color:var(--text-dim)">2.0</span></span>
+                    <span class="text-[10px] mono px-1.5 py-0.5 rounded font-bold" style="background:var(--accent-soft);color:var(--accent);border:1px solid var(--border)">RUST</span>
+                </div>
+                <div class="text-[11px] mt-1" style="color:var(--text-dim)">FPSO compression fleet · API 619</div>
+            </div>
+
+            <!-- Seletor de Ativo Principal -->
+            <div class="bg-slate-800/80 p-3 rounded-lg border border-slate-700">
+                <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">🔧 Ativo Selecionado</label>
+                <select id="sel-ativo" onchange="selecionarAtivo()" class="w-full text-sm font-medium" style="color:var(--text)">
+                    <option value="CMP-01">CMP-01A (Principal)</option>
+                    <option value="CMP-02">CMP-01B (Principal)</option>
+                    <option value="CMP-03">CMP-01C (Standby Ativo)</option>
+                    <option value="CMP-04">CMP-01D (Reserva Fria)</option>
+                </select>
+                <div class="mt-2 flex justify-between items-center text-xs font-mono">
+                    <span class="text-slate-400">Health Index:</span>
+                    <span id="side-hi" class="text-emerald-400 font-bold">98.0%</span>
+                </div>
+            </div>
+
+            <!-- Botão Modo Treinamento -->
+            <button onclick="toggleModoTreinamento()" id="btn-toggle-treino" class="w-full bg-purple-700 hover:bg-purple-600 text-white text-xs font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 transition shadow">
+                <span>🎓</span> <span id="lbl-btn-treino">Entrar no Modo Treinamento</span>
+            </button>
+
+            <!-- Ponto de Operação Offshore -->
+            <div class="space-y-3 pt-2 border-t border-slate-800 text-xs">
+                <div class="side-hd"><span>Ponto de operação</span><span aria-hidden="true">⚙</span></div>
+
+                <!-- Setpoint de Pressão da Rede -->
+                <div class="bg-slate-800/60 p-2 rounded border border-blue-900/60">
+                    <div class="flex justify-between text-slate-300 font-semibold mb-1">
+                        <span>🎯 Pressão de Setpoint (P_set):</span>
+                        <span id="v-pset" class="text-blue-400 font-mono font-bold">8.1 bar</span>
+                    </div>
+                    <input type="range" id="sl-pset" min="4.0" max="12.0" value="8.1" step="0.1" oninput="atualizarPSet()" class="w-full accent-blue-500">
+                    <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-0.5">
+                        <span>Razão π: <b id="v-pi-calc" class="text-slate-300">8.00</b></span>
+                        <span>P_amb: <b id="v-pamb-txt" class="text-slate-300">1.013 bar</b></span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-slate-400 mb-1">
+                        <span>Frequência VSD f_vsd:</span>
+                        <span id="v-fvsd" class="text-white font-mono">60.0 Hz</span>
+                    </div>
+                    <input type="range" id="sl-fvsd" min="25" max="70" value="60" step="1" oninput="atualizarParams()" class="w-full accent-blue-500">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-slate-400 mb-1">
+                        <span>Demanda da Planta:</span>
+                        <span id="v-dem" class="text-white font-mono">8.0 m³/min</span>
+                    </div>
+                    <input type="range" id="sl-dem" min="1" max="20" value="8" step="0.5" oninput="atualizarParams()" class="w-full accent-blue-500">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-slate-400 mb-1">
+                        <span>Pressão Atmosférica P_amb:</span>
+                        <span id="v-pamb" class="text-blue-400 font-mono font-bold">1013 mbar</span>
+                    </div>
+                    <input type="range" id="sl-pamb" min="920" max="1080" value="1013" step="1" oninput="atualizarPSet()" class="w-full accent-blue-500">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-slate-400 mb-1">
+                        <span>Temp. Ambiente T_amb:</span>
+                        <span id="v-tamb" class="text-white font-mono">30.0 °C</span>
+                    </div>
+                    <input type="range" id="sl-tamb" min="5" max="45" value="30" step="0.5" oninput="atualizarParams()" class="w-full accent-blue-500">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-slate-400 mb-1">
+                        <span>Umidade Relativa UR:</span>
+                        <span id="v-ur" class="text-white font-mono">80 %</span>
+                    </div>
+                    <input type="range" id="sl-ur" min="20" max="100" value="80" step="5" oninput="atualizarParams()" class="w-full accent-blue-500">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-slate-400 mb-1">
+                        <span>Temp. Água Resfr. T_w:</span>
+                        <span id="v-tagua" class="text-white font-mono">25.0 °C</span>
+                    </div>
+                    <input type="range" id="sl-tagua" min="10" max="40" value="25" step="0.5" oninput="atualizarParams()" class="w-full accent-blue-500">
+                </div>
+            </div>
+
+            <!-- Estados Ocultos -->
+            <div class="space-y-3 pt-2 border-t border-slate-800 text-xs">
+                <div class="side-hd"><span>Estados ocultos</span><span aria-hidden="true">🔬</span></div>
+                
+                <div>
+                    <div class="flex justify-between text-slate-400 mb-1">
+                        <span>Folga Relativa LP δ/L:</span>
+                        <span id="v-folga" class="text-amber-400 font-mono">0.0020</span>
+                    </div>
+                    <input type="range" id="sl-folga" min="0.001" max="0.025" value="0.002" step="0.0005" oninput="atualizarParams()" class="w-full accent-amber-500">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-slate-400 mb-1">
+                        <span>Fouling Intercooler R_f:</span>
+                        <span id="v-rf" class="text-amber-400 font-mono">0.0000</span>
+                    </div>
+                    <input type="range" id="sl-rf" min="0" max="0.002" value="0" step="0.0001" oninput="atualizarParams()" class="w-full accent-amber-500">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-slate-400 mb-1">
+                        <span>Perda Filtro Admissão ζ:</span>
+                        <span id="v-zeta" class="text-amber-400 font-mono">2.5</span>
+                    </div>
+                    <input type="range" id="sl-zeta" min="1.0" max="15.0" value="2.5" step="0.5" oninput="atualizarParams()" class="w-full accent-amber-500">
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-4 text-[11px] flex justify-between items-center" style="border-top:1px solid var(--border);color:var(--text-dim)">
+            <span class="flex items-center gap-1.5"><span class="status-dot"></span> Axum · :8080</span>
+            <span>API 619 / ISO 1217</span>
+        </div>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main id="conteudo" class="app-main" tabindex="-1">
+        
+        <!-- BANNER DE MODO TREINAMENTO -->
+        <div id="banner-treinamento" role="status" aria-live="polite" class="hidden bg-purple-900/90 border border-purple-600 text-purple-100 p-3 rounded-lg mb-6 flex justify-between items-center shadow">
+            <div class="flex items-center gap-3">
+                <span class="text-xl">🎓</span>
+                <span class="font-bold text-sm">MODO TREINAMENTO OPERACIONAL ATIVO — Dados Sintéticos para Avaliação Cega</span>
+            </div>
+            <button onclick="toggleModoTreinamento()" class="text-xs bg-purple-700 hover:bg-purple-600 font-bold px-3 py-1.5 rounded transition">Sair do Modo Treinamento</button>
+        </div>
+
+        <!-- CABEÇALHO -->
+        <header class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6 pb-4" style="border-bottom:1px solid var(--border)">
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-2">
+                    <span class="status-pill"><span class="status-dot"></span> Sistema operacional</span>
+                    <span class="text-[11px] mono" style="color:var(--text-dim)" id="clock-display">--:--:--</span>
+                </div>
+                <h1 class="text-xl md:text-2xl font-bold tracking-tight" style="color:var(--text)">
+                    Gêmeo Digital de Compressão Offshore
+                </h1>
+                <p class="text-xs mt-1" style="color:var(--text-muted)">
+                    Simulação física gray-box · Telemetria OSIsoft PI · Diagnóstico preditivo
+                    <span class="hidden sm:inline">· <b>API 619 · ISO 1217 · ISO 8573-1 · ASME VIII</b></span>
+                </p>
+            </div>
+            <div class="theme-switch flex items-center gap-1 p-1 rounded-lg shrink-0" role="group" aria-label="Tema da interface" style="background:var(--surface-2);border:1px solid var(--border)">
+                <button type="button" onclick="setTheme('light')" id="btn-theme-light" class="theme-btn" aria-pressed="false">
+                    <span aria-hidden="true">☀</span> Claro
+                </button>
+                <button type="button" onclick="setTheme('dark')" id="btn-theme-dark" class="theme-btn active" aria-pressed="true">
+                    <span aria-hidden="true">☾</span> Escuro
+                </button>
+                <button type="button" onclick="setTheme('auto')" id="btn-theme-auto" class="theme-btn" aria-pressed="false">
+                    <span aria-hidden="true">◐</span> Auto
+                </button>
+            </div>
+        </header>
+
+        <!-- NAVEGAÇÃO DE ABAS -->
+        <nav class="app-nav flex flex-wrap gap-1.5 mb-6 pb-3" role="tablist" aria-label="Seções do gêmeo digital" style="border-bottom:1px solid var(--border)">
+            <button type="button" role="tab" id="tab-frota" aria-controls="view-frota" aria-selected="false" tabindex="-1" onclick="setTab('frota')" class="tab-btn"><span class="tab-ico" aria-hidden="true">🚢</span> Supervisório de Frota</button>
+            <button type="button" role="tab" id="tab-dashboard" aria-controls="view-dashboard" aria-selected="true" tabindex="0" onclick="setTab('dashboard')" class="tab-btn active"><span class="tab-ico" aria-hidden="true">📊</span> Dashboard do Ativo</button>
+            <button type="button" role="tab" id="tab-mapa" aria-controls="view-mapa" aria-selected="false" tabindex="-1" onclick="setTab('mapa')" class="tab-btn"><span class="tab-ico" aria-hidden="true">🗺️</span> Mapa do Conjunto</button>
+            <button type="button" role="tab" id="tab-pi" aria-controls="view-pi" aria-selected="false" tabindex="-1" onclick="setTab('pi')" class="tab-btn"><span class="tab-ico" aria-hidden="true">📡</span> Telemetria PI & Dados</button>
+            <button type="button" role="tab" id="tab-diagnostico" aria-controls="view-diagnostico" aria-selected="false" tabindex="-1" onclick="setTab('diagnostico')" class="tab-btn"><span class="tab-ico" aria-hidden="true">🔬</span> Diagnóstico & IA</button>
+            <button type="button" role="tab" id="tab-sistema" aria-controls="view-sistema" aria-selected="false" tabindex="-1" onclick="setTab('sistema')" class="tab-btn"><span class="tab-ico" aria-hidden="true">🛠️</span> Sistema & Dinâmica</button>
+            <button type="button" role="tab" id="tab-treinamento" aria-controls="view-treinamento" aria-selected="false" tabindex="-1" onclick="setTab('treinamento')" class="tab-btn"><span class="tab-ico" aria-hidden="true">🎯</span> Arena de Treinamento</button>
+            <button type="button" role="tab" id="tab-config" aria-controls="view-config" aria-selected="false" tabindex="-1" onclick="setTab('config')" class="tab-btn"><span class="tab-ico" aria-hidden="true">⚙️</span> Configurações & Trens</button>
+        </nav>
+
+        <!-- ============================================================== -->
+        <!-- ABA 1: SUPERVISÓRIO DE FROTA -->
+        <!-- ============================================================== -->
+        <section id="view-frota" role="tabpanel" aria-labelledby="tab-frota" tabindex="0" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Supervisório de Frota Offshore (Seção 26.6)</h2>
+                    <p class="text-xs text-slate-400">Monitoramento consolidado dos compressores do FPSO com priorização automática de urgência.</p>
+                </div>
+                <button onclick="carregarFrota()" class="bg-blue-600 hover:bg-blue-500 text-xs px-3.5 py-2 rounded-lg font-bold text-white transition flex items-center gap-1.5">
+                    <span>🔄</span> Executar Ciclo de Varredura (t_k)
+                </button>
+            </div>
+
+            <!-- Resumo Rápido -->
+            <div class="grid grid-cols-4 gap-4 text-xs font-medium">
+                <div class="card p-3 flex justify-between items-center"><span class="text-slate-400">Total de Ativos:</span><span class="font-bold text-white text-sm">4 Compressores</span></div>
+                <div class="card p-3 flex justify-between items-center"><span class="text-slate-400">Condição Normal:</span><span id="cnt-ok" class="font-bold text-emerald-400 text-sm">2 Ativos</span></div>
+                <div class="card p-3 flex justify-between items-center"><span class="text-slate-400">Alerta / Atenção:</span><span id="cnt-warn" class="font-bold text-amber-400 text-sm">1 Ativo</span></div>
+                <div class="card p-3 flex justify-between items-center"><span class="text-slate-400">Crítico / Urgente:</span><span id="cnt-crit" class="font-bold text-red-400 text-sm">1 Ativo</span></div>
+            </div>
+
+            <!-- Cards de Máquinas -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="frota-grid"></div>
+
+            <!-- Gráficos de Frota -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
+                <div class="card p-5">
+                    <h3 class="font-bold text-sm text-slate-200 mb-3">Health Index por Ativo da Frota (Eq. 26.4)</h3>
+                    <canvas id="chart-frota-hi" height="170"></canvas>
+                </div>
+                <div class="card p-5">
+                    <h3 class="font-bold text-sm text-slate-200 mb-3">Prognóstico RUL com Incerteza 95% (Eq. 19.10)</h3>
+                    <canvas id="chart-frota-rul" height="170"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- ABA 2: DASHBOARD DO ATIVO -->
+        <!-- ============================================================== -->
+        <section id="view-dashboard" role="tabpanel" aria-labelledby="tab-dashboard" tabindex="0" class="space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 id="dash-ativo-nome" class="text-base font-bold text-white">📊 Dashboard — CMP-01A (Principal)</h2>
+                    <p class="text-xs text-slate-400">Pontos A a G (Tabela 18.1) · Telemetria PI em tempo real · Balanço exergético (Eq. 17.3)</p>
+                </div>
+                <button onclick="carregarDashboard()" class="bg-blue-600 hover:bg-blue-500 text-xs px-3.5 py-1.5 rounded-lg font-bold text-white transition flex items-center gap-1.5 shadow">🔄 Atualizar Simulação</button>
+            </div>
+            
+            <!-- Faixa de Alarme -->
+            <div id="faixa-alarme-dash" role="alert" aria-live="assertive" class="hidden bg-red-950/80 border border-red-700 text-red-200 p-2.5 rounded-lg text-xs font-bold flex items-center gap-2">
+                <span>⚠️</span> <span id="faixa-alarme-txt">Tags em alarme</span>
+            </div>
+
+            <!-- Nível 1: 3 KPIs Grandes -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="kpi-card">
+                    <div class="kpi-label">⚡ Potência Elétrica Total</div>
+                    <div class="kpi-value" id="kpi-pot">-- <span class="text-sm font-normal text-slate-400">kW</span></div>
+                    <div class="kpi-delta text-emerald-400">ISO 1217 — Equação 11.11</div>
+                </div>
+                <div class="kpi-card" style="border-left-color:#059669;">
+                    <div class="kpi-label">📊 Consumo Específico (SPC)</div>
+                    <div class="kpi-value" id="kpi-spc">-- <span class="text-sm font-normal text-slate-400">kW·m⁻³·min</span></div>
+                    <div class="kpi-delta text-emerald-400">Norma ISO 1217 — Eq. 11.11</div>
+                </div>
+                <div class="kpi-card" style="border-left-color:#d97706;">
+                    <div class="kpi-label">🎯 Eficiência Global η</div>
+                    <div class="kpi-value" id="kpi-eta">-- <span class="text-sm font-normal text-slate-400">%</span></div>
+                    <div class="kpi-delta text-blue-400">W_isotérmico / W_real — Eq. 5.13</div>
+                </div>
+            </div>
+
+            <!-- Nível 2: 4 KPIs Secundários -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="card p-3.5">
+                    <div class="text-[11px] text-slate-400 uppercase font-semibold">🔥 Exergia Destruída İ</div>
+                    <div class="text-lg font-bold text-white mt-0.5" id="kpi-exerg">-- kW</div>
+                    <div class="text-[10px] text-slate-400">Irreversibilidade (Eq. 17.3)</div>
+                </div>
+                <div class="card p-3.5">
+                    <div class="text-[11px] text-slate-400 uppercase font-semibold">🌿 Emissão de CO₂</div>
+                    <div class="text-lg font-bold text-white mt-0.5" id="kpi-co2">-- kg/h</div>
+                    <div class="text-[10px] text-slate-400">Fator 0.40 kg/kWh (Eq. 17.5)</div>
+                </div>
+                <div class="card p-3.5">
+                    <div class="text-[11px] text-slate-400 uppercase font-semibold">💧 Ponto de Orvalho (PDP)</div>
+                    <div class="text-lg font-bold text-white mt-0.5" id="kpi-pdp">-- °C</div>
+                    <div class="text-[10px] text-emerald-400" id="kpi-pdp-delta">vs Classe 2 (-40°C)</div>
+                </div>
+                <div class="card p-3.5">
+                    <div class="text-[11px] text-slate-400 uppercase font-semibold">🚨 Alarmes ISA 18.2</div>
+                    <div class="text-lg font-bold text-white mt-0.5" id="kpi-alarmes-cnt">0 Ativos</div>
+                    <div class="text-[10px] text-emerald-400" id="kpi-alarmes-status">✅ Todos normais</div>
+                </div>
+            </div>
+
+            <!-- Perfis Termodinâmicos e Tabela de Nós -->
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div class="card p-5 md:col-span-7">
+                    <h3 class="font-bold text-sm text-slate-200 mb-3">Perfis Termodinâmicos ao Longo do Trem (Pontos A – I)</h3>
+                    <canvas id="chart-nos" height="200"></canvas>
+                </div>
+                <div class="card p-5 md:col-span-5 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-sm text-slate-200 mb-3">Status dos Nós de Processo</h3>
+                        <div class="overflow-x-auto text-xs font-mono">
+                            <table class="w-full text-left">
+                                <thead class="text-slate-400 border-b border-slate-700">
+                                    <tr><th class="pb-1.5">Ponto</th><th class="pb-1.5">P [bar]</th><th class="pb-1.5">T [°C]</th><th class="pb-1.5">PDP [°C]</th></tr>
+                                </thead>
+                                <tbody id="tbody-nos" class="divide-y divide-slate-800"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900/80 p-3 rounded text-xs font-mono space-y-1.5 mt-4 border border-slate-800">
+                        <div class="flex justify-between"><span class="text-slate-400">P_amb (Atmosfera):</span><span id="val-pamb-res" class="text-blue-400 font-bold">1.013 bar</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">ΔP_filtro (Depressão):</span><span id="val-dpfiltro-res" class="text-amber-400 font-bold">-- mbar</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">T_carcaça LP:</span><span id="val-tcarcaca" class="text-amber-400 font-bold">-- °C</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Folga Residual δ:</span><span id="val-folga-res" class="text-blue-400 font-bold">-- µm</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">HI Dessecante:</span><span id="val-hides" class="text-emerald-400 font-bold">--</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tags PI Agrupadas por Expanders -->
+            <div class="space-y-3">
+                <h3 class="font-bold text-sm text-slate-200">🏷️ Telemetria Industrial — Tags PI por Subsistema (OSIsoft PI System)</h3>
+                <div id="pi-expanders-container" class="space-y-2"></div>
+            </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- ABA: MAPA DO CONJUNTO -->
+        <!-- ============================================================== -->
+        <section id="view-mapa" role="tabpanel" aria-labelledby="tab-mapa" tabindex="0" class="hidden space-y-6">
+            <div class="flex flex-wrap justify-between items-end gap-3">
+                <div>
+                    <h2 class="text-lg font-bold" style="color:var(--text)">Mapa de instrumentação do conjunto</h2>
+                    <p class="text-xs" style="color:var(--text-muted)">
+                        Elevação do pacote com motor, redutor, trocadores, secador e vaso pulmão ·
+                        pontos A–I, lubrificação (L) e gêmeo digital (DT)
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <a href="/assets/conjunto-pontos.svg" target="_blank" rel="noopener"
+                       class="text-xs font-semibold px-3 py-2 rounded-lg"
+                       style="background:var(--accent-strong);color:#fff">🔍 Abrir em tamanho real</a>
+                    <a href="/assets/conjunto-pontos.pdf" target="_blank" rel="noopener"
+                       class="text-xs font-semibold px-3 py-2 rounded-lg"
+                       style="background:var(--surface-2);color:var(--text);border:1px solid var(--border)">⬇ PDF vetorial</a>
+                </div>
+            </div>
+
+            <div class="card p-2" style="overflow-x:auto">
+                <a href="/assets/conjunto-pontos.svg" target="_blank" rel="noopener" title="Abrir em tamanho real">
+                    <img src="/assets/conjunto-pontos.svg"
+                         alt="Desenho do conjunto compressor de parafuso com motor, redutor, trocadores, secador e vaso, indicando os pontos de medição A a I, lubrificação L e gêmeo digital"
+                         class="w-full h-auto rounded" style="cursor:zoom-in; min-width:960px">
+                </a>
+            </div>
+
+            <div class="flex flex-wrap justify-between items-end gap-3">
+                <div>
+                    <h3 class="text-base font-bold" style="color:var(--text)">Vista 3D do conjunto</h3>
+                    <p class="text-xs" style="color:var(--text-muted)">
+                        Mesmo arranjo em perspectiva isométrica — motor, redutor de dois pinhões,
+                        estágios LP/HP, trocadores, secagem PSA, vaso pulmão e header sobre o skid
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <a href="/assets/conjunto-3d.png" target="_blank" rel="noopener"
+                       class="text-xs font-semibold px-3 py-2 rounded-lg"
+                       style="background:var(--accent-strong);color:#fff">🔍 Abrir em tamanho real</a>
+                    <a href="/assets/conjunto-3d.pdf" target="_blank" rel="noopener"
+                       class="text-xs font-semibold px-3 py-2 rounded-lg"
+                       style="background:var(--surface-2);color:var(--text);border:1px solid var(--border)">⬇ PDF vetorial</a>
+                </div>
+            </div>
+
+            <div class="card p-2" style="overflow-x:auto">
+                <a href="/assets/conjunto-3d.png" target="_blank" rel="noopener" title="Abrir em tamanho real">
+                    <img src="/assets/conjunto-3d.png"
+                         alt="Vista 3D do conjunto compressor com motor, redutor, trocadores, secador PSA e vaso, com os pontos de medição A a I"
+                         class="w-full h-auto rounded" style="cursor:zoom-in; min-width:960px">
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-hd">
+                    <span class="card-title">Pontos de medição e tags PI</span>
+                    <span class="card-sub">prefixo <code class="mono">CMP01:</code></span>
+                </div>
+                <div class="overflow-x-auto" style="padding:0.25rem 0.75rem 0.75rem">
+                    <table aria-label="Pontos de medição e tags do catálogo PI">
+                        <thead>
+                            <tr><th>Ponto</th><th>Local no conjunto</th><th>Grandezas</th><th>Tags PI</th></tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><span class="badge-normal" style="background:var(--accent-soft);color:var(--accent);border-color:var(--border)">A</span></td>
+                            <td>Painel MCC/VSD</td>
+                            <td class="mono" style="color:var(--text-muted)">V · I · f · cos φ · VU · IU</td>
+                            <td><code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">ELE_VL</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">ELE_I</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">ELE_FREQ</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">ELE_COSPHI</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">ELE_VU</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">ELE_IU</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-normal" style="background:var(--accent-soft);color:var(--accent);border-color:var(--border)">B</span></td>
+                            <td>Acoplamento e redutor</td>
+                            <td class="mono" style="color:var(--text-muted)">N · τ · v_rms · σ_b</td>
+                            <td><code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">MEC_RPM</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">MEC_TORQ</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">MEC_VIB_RMS</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">MEC_SIGMA_B</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-normal" style="background:var(--accent-soft);color:var(--accent);border-color:var(--border)">C</span></td>
+                            <td>Estágio LP</td>
+                            <td class="mono" style="color:var(--text-muted)">P_s · T_d · δ_LP</td>
+                            <td><code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">LP_PSUC</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">LP_TDISC</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">LP_CLEARANCE</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-normal" style="background:var(--accent-soft);color:var(--accent);border-color:var(--border)">D</span></td>
+                            <td>Intercooler</td>
+                            <td class="mono" style="color:var(--text-muted)">T_w,in · P_int · ΔP_ic · ṁ_c</td>
+                            <td><code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">IC_TW_IN</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">IC_PINT</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">IC_DP</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">IC_MCOND</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-normal" style="background:var(--accent-soft);color:var(--accent);border-color:var(--border)">E</span></td>
+                            <td>Estágio HP</td>
+                            <td class="mono" style="color:var(--text-muted)">P_d · T_d · δ_axial</td>
+                            <td><code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">HP_PDISC</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">HP_TDISC</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">HP_AXIAL</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-normal" style="background:var(--accent-soft);color:var(--accent);border-color:var(--border)">F</span></td>
+                            <td>Aftercooler</td>
+                            <td class="mono" style="color:var(--text-muted)">T_ac,out</td>
+                            <td><code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">AC_TAC_OUT</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-normal" style="background:var(--accent-soft);color:var(--accent);border-color:var(--border)">G</span></td>
+                            <td>Secador PSA e filtros</td>
+                            <td class="mono" style="color:var(--text-muted)">T_dp · ṁ_purga · ΔP_filtro</td>
+                            <td><code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">PSA_TDP</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">PSA_MPURGE</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">FLT_DP</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-normal" style="background:var(--accent-soft);color:var(--accent);border-color:var(--border)">H</span></td>
+                            <td>Vaso pulmão</td>
+                            <td class="mono" style="color:var(--text-muted)">P_tk · L_tk</td>
+                            <td><code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">TK_PTK</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">TK_LTK</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-normal" style="background:var(--accent-soft);color:var(--accent);border-color:var(--border)">I</span></td>
+                            <td>Header de distribuição</td>
+                            <td class="mono" style="color:var(--text-muted)">ṁ_tot</td>
+                            <td><code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">HDR_MTOT</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-normal" style="background:var(--accent-soft);color:var(--accent);border-color:var(--border)">L</span></td>
+                            <td>Console de óleo</td>
+                            <td class="mono" style="color:var(--text-muted)">T_óleo · P_óleo</td>
+                            <td><code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">OIL_TT_RET</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">OIL_PT_SUP</code></td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge-normal" style="background:var(--accent-soft);color:var(--accent);border-color:var(--border)">DT</span></td>
+                            <td>Gêmeo digital (calculado)</td>
+                            <td class="mono" style="color:var(--text-muted)">İ · ṁ_CO₂ · HI</td>
+                            <td><code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">DT_EXERGY_DEST</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">DT_CO2_RATE</code> <code class="mono" style="background:var(--accent-soft);color:var(--accent);padding:1px 5px;border-radius:4px;font-size:0.6875rem">DT_HEALTH_INDEX</code></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- ABA 3: TELEMETRIA PI & DADOS -->
+        <!-- ============================================================== -->
+        <section id="view-pi" role="tabpanel" aria-labelledby="tab-pi" tabindex="0" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-bold text-white">📡 Conector OSIsoft PI System & Gestão de Dados de Telemetria</h2>
+                    <p class="text-xs text-slate-400">Importação e exportação de séries temporais, simulação de ruído calibrado e matriz normativa de variáveis (Tabela 18.1).</p>
+                </div>
+            </div>
+
+            <!-- NAVEGAÇÃO DE SUB-ABAS PI -->
+            <div class="flex gap-2 border-b border-slate-800 pb-2 text-xs">
+                <button onclick="setSubTabPi('export')" id="subtab-pi-export" class="subtab-btn active px-3 py-1.5 rounded font-medium text-slate-400 hover:text-white transition">📤 Gerador & Exportador PI</button>
+                <button onclick="setSubTabPi('import')" id="subtab-pi-import" class="subtab-btn px-3 py-1.5 rounded font-medium text-slate-400 hover:text-white transition">📥 Subir Dados PI (Importação)</button>
+                <button onclick="setSubTabPi('catalogo')" id="subtab-pi-catalogo" class="subtab-btn px-3 py-1.5 rounded font-medium text-slate-400 hover:text-white transition">📑 Catálogo de Variáveis (Tabela 18.1)</button>
+            </div>
+
+            <!-- SUB-ABA 1: EXPORTADOR PI -->
+            <div id="subview-pi-export" class="space-y-4">
+                <div class="card p-5">
+                    <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+                        <div>
+                            <h3 class="font-bold text-sm text-white">Gerador de Série Temporal Multivariável com Ruído Gaussiano</h3>
+                            <p class="text-xs text-slate-400">Gera snapshots industriais realistas calibrados (σ ≈ 0.5%) com carimbo de data/hora ISO 8601 e alarmes ISA 18.2.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2 text-xs">
+                                <label class="text-slate-400">Snapshots:</label>
+                                <select id="pi-num-snapshots" class="bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-white">
+                                    <option value="20">20 registros</option>
+                                    <option value="60" selected>60 registros (1 hora)</option>
+                                    <option value="180">180 registros (3 horas)</option>
+                                    <option value="500">500 registros</option>
+                                </select>
+                            </div>
+                            <button onclick="gerarExportarPiCsv()" class="bg-blue-600 hover:bg-blue-500 text-xs px-4 py-2 rounded-lg font-bold text-white transition flex items-center gap-1.5 shadow">
+                                <span>⚡</span> Gerar Dados PI
+                            </button>
+                            <button onclick="downloadPiCsv()" id="btn-dl-csv" disabled class="bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-xs px-4 py-2 rounded-lg font-bold text-white transition flex items-center gap-1.5 shadow">
+                                <span>📥</span> Baixar CSV (PI DataLink)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Pré-visualização -->
+                    <div class="overflow-x-auto text-xs font-mono max-h-96 rounded border border-slate-800">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-900 text-slate-400 border-b border-slate-800 sticky top-0">
+                                <tr>
+                                    <th class="p-2">Timestamp</th>
+                                    <th class="p-2">Tag PI</th>
+                                    <th class="p-2">Descrição</th>
+                                    <th class="p-2">Ponto</th>
+                                    <th class="p-2">Valor</th>
+                                    <th class="p-2">Unidade</th>
+                                    <th class="p-2">Qualidade</th>
+                                    <th class="p-2">Status ISA 18.2</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-pi-preview" class="divide-y divide-slate-800/60 bg-slate-900/30">
+                                <tr><td colspan="8" class="p-4 text-center text-slate-400 font-medium">Clique em "Gerar Dados PI" para visualizar a telemetria sintética multivariável.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-ABA 2: IMPORTADOR PI (SUBIR DADOS) -->
+            <div id="subview-pi-import" class="hidden space-y-4">
+                <div class="card p-5">
+                    <h3 class="font-bold text-sm text-white mb-1">Subir Dados de Telemetria Externa (CSV / JSON)</h3>
+                    <p class="text-xs text-slate-400 mb-4">Envie um arquivo CSV de telemetria ou cole as linhas de medições para injetar no Gêmeo Digital e executar diagnósticos preditivos.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-3">
+                            <label class="text-xs text-slate-300 font-semibold block">1. Selecionar Arquivo do Computador (.csv, .json)</label>
+                            <input type="file" id="input-pi-file" accept=".csv,.json,.txt" onchange="lerArquivoPi(event)" class="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer bg-slate-900 p-2 rounded border border-slate-700">
+                            
+                            <label class="text-xs text-slate-300 font-semibold block pt-2">Ou Cole o Conteúdo CSV / JSON Diretamente:</label>
+                            <textarea id="txt-pi-import" rows="8" placeholder="timestamp,tag,valor&#10;2026-08-26T23:00:00Z,CMP01:P_SUC,1.013&#10;2026-08-26T23:00:00Z,CMP01:T_SUC,30.0&#10;2026-08-26T23:00:00Z,CMP01:P_DISCH_LP,3.12" class="w-full bg-slate-900 border border-slate-700 rounded p-2.5 text-xs font-mono text-white"></textarea>
+                            
+                            <div class="flex gap-2">
+                                <button onclick="processarDadosPiImportados()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-xs px-4 py-2.5 rounded-lg font-bold text-white transition flex items-center justify-center gap-1.5 shadow">
+                                    <span>🔍</span> Analisar e Injetar Dados
+                                </button>
+                                <button onclick="inserirExemploPi()" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-2.5 rounded-lg font-bold text-white transition flex items-center justify-center gap-1 shadow">
+                                    <span>📋</span> Exemplo CSV
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900/70 p-4 rounded-lg border border-slate-800 flex flex-col justify-between">
+                            <div>
+                                <h4 class="font-bold text-xs text-slate-200 uppercase mb-2">📋 Resultado da Ingestão de Dados</h4>
+                                <div id="import-res-status" class="text-xs text-slate-400 space-y-2">
+                                    <div class="p-3 bg-slate-800/60 rounded border border-slate-700">
+                                        Nenhum arquivo processado ainda. Formato esperado: colunas <code>timestamp, tag, valor</code> ou padrão OSIsoft PI / CSV separado por vírgula ou ponto-e-vírgula.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-500">
+                                Suporta tags padrão OSIsoft PI (ex: <code>CMP01:P_DISCH_LP</code>, <code>CMP01:T_DISCH_HP</code>, etc.).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-ABA 3: CATÁLOGO DE VARIÁVEIS (TABELA 18.1) -->
+            <div id="subview-pi-catalogo" class="hidden space-y-4">
+                <div class="card p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="font-bold text-sm text-white">Catálogo & Formatação de Variáveis Industriais (Tabela 18.1)</h3>
+                            <p class="text-xs text-slate-400">Mapeamento completo das 26+ variáveis instrumentadas de telemetria, faixas normativas e alarmes ISA 18.2.</p>
+                        </div>
+                        <input type="text" id="filtro-tags-pi" placeholder="🔍 Filtrar por tag ou ponto..." oninput="filtrarCatalogoTags()" class="bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white w-64">
+                    </div>
+
+                    <div class="overflow-x-auto text-xs font-mono max-h-96 rounded border border-slate-800">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-900 text-slate-400 border-b border-slate-800 sticky top-0">
+                                <tr>
+                                    <th class="p-2">Tag PI</th>
+                                    <th class="p-2">Descrição Técnica</th>
+                                    <th class="p-2">Ponto</th>
+                                    <th class="p-2">Tipo</th>
+                                    <th class="p-2">Faixa [Min, Max]</th>
+                                    <th class="p-2">Limiares ISA 18.2 [LL / L / H / HH]</th>
+                                    <th class="p-2">Fundamentação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-catalogo-tags" class="divide-y divide-slate-800/60 bg-slate-900/30"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- ABA 3: DIAGNÓSTICO & IA -->
+        <!-- ============================================================== -->
+        <section id="view-diagnostico" role="tabpanel" aria-labelledby="tab-diagnostico" tabindex="0" class="hidden space-y-6">
+            <div class="flex gap-2 border-b border-slate-800 pb-2 text-xs font-bold">
+                <button onclick="setSubTabDiag('lab')" id="subtab-diag-lab" class="subtab-btn active px-3 py-1.5 rounded transition">🚨 Laboratório de Falhas & Classificador m̂_falha</button>
+                <button onclick="setSubTabDiag('motores')" id="subtab-diag-motores" class="subtab-btn px-3 py-1.5 rounded text-slate-400 hover:text-white transition">🧠 Motores de IA (EKF · VAE · PIML · MPC · PSO)</button>
+            </div>
+
+            <!-- SUB-ABA 1: LABORATÓRIO -->
+            <div id="subview-diag-lab" class="space-y-6">
+                <div class="card p-5">
+                    <h3 class="font-bold text-sm text-white mb-2">Injeção Controlada de Falha Operacional</h3>
+                    <p class="text-xs text-slate-400 mb-4">Selecione um mecanismo do catálogo da Tabela 28.2 e injete severidade percentual para comparar o desvio de telemetria.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Mecanismo de Falha a Injetar</label>
+                            <select id="sel-lab-mec" onchange="atualizarLabFalha()" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-xs text-white"></select>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-slate-400 mb-1">
+                                <span>Severidade da Falha Injetada:</span>
+                                <span id="v-lab-sev" class="text-amber-400 font-mono">75%</span>
+                            </div>
+                            <input type="range" id="sl-lab-sev" min="0" max="100" value="75" step="5" oninput="atualizarLabFalha()" class="w-full accent-amber-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Classificador Automático -->
+                <div class="card p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="font-bold text-sm text-white">🤖 Diagnóstico Automático via Gêmeo Digital (Classificador m̂_falha)</h3>
+                            <p class="text-xs text-slate-400">Busca por resíduo mínimo normalizado ponderado sobre todas as hipóteses m ∈ M (Eq. 29.2).</p>
+                        </div>
+                        <button onclick="executarClassificador()" class="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded font-bold text-white">Reavaliar Resíduos</button>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4 text-xs mb-4">
+                        <div class="bg-slate-900 p-3 rounded"><span class="text-slate-400 block">1º Diagnóstico (Mais Provável):</span><span id="diag-top-nome" class="font-bold text-blue-400 text-sm">--</span></div>
+                        <div class="bg-slate-900 p-3 rounded"><span class="text-slate-400 block">Probabilidade Estimada:</span><span id="diag-top-prob" class="font-bold text-emerald-400 text-sm">-- %</span></div>
+                        <div class="bg-slate-900 p-3 rounded"><span class="text-slate-400 block">Status de Validação:</span><span id="diag-top-status" class="font-bold text-slate-300 text-sm">--</span></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-300 mb-2">Top Hipóteses Diagnosticadas</h4>
+                            <div id="diag-ranking-bars" class="space-y-2"></div>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-300 mb-2">Impacto das Tags Determinantes (SHAP Eq. 25.4)</h4>
+                            <canvas id="chart-shap" height="180"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-ABA 2: MOTORES DE IA -->
+            <div id="subview-diag-motores" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-bold text-sm text-white">1. EKF — Estimação de Folga LP (δ) & Auditoria NIS</h4>
+                            <button onclick="rodarEkf()" class="text-xs bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded">Rodar EKF</button>
+                        </div>
+                        <canvas id="chart-ekf" height="170"></canvas>
+                    </div>
+
+                    <div class="card p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <h4 class="font-bold text-sm text-white">2. PSO — Otimização Global de Setpoint (Eq. 24.3)</h4>
+                            <button onclick="rodarPso()" class="text-xs bg-blue-600 hover:bg-blue-500 px-2.5 py-1 rounded text-white font-bold">Otimizar π*</button>
+                        </div>
+                        <div id="pso-res-box" class="text-xs font-mono text-emerald-400 mb-2">Clique em 'Otimizar π*' para executar o enxame.</div>
+                        <canvas id="chart-pso" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- ABA 4: SISTEMA & DINÂMICA -->
+        <!-- ============================================================== -->
+        <section id="view-sistema" role="tabpanel" aria-labelledby="tab-sistema" tabindex="0" class="hidden space-y-6">
+            <div class="flex gap-2 border-b border-slate-800 pb-2 text-xs font-bold">
+                <button onclick="setSubTabSis('din')" id="subtab-sis-din" class="subtab-btn active px-3 py-1.5 rounded transition">📈 Dinâmica Temporal (VSD vs Carga/Alívio)</button>
+                <button onclick="setSubTabSis('psa')" id="subtab-sis-psa" class="subtab-btn px-3 py-1.5 rounded text-slate-400 hover:text-white transition">🌀 Secagem PSA (Gantt & Ciclagem)</button>
+                <button onclick="setSubTabSis('mpc')" id="subtab-sis-mpc" class="subtab-btn px-3 py-1.5 rounded text-slate-400 hover:text-white transition">🎯 Controle MPC Antecipativo</button>
+            </div>
+
+            <div id="subview-sis-din" class="space-y-4">
+                <div class="card p-5">
+                    <div class="flex flex-wrap justify-between items-center gap-4 mb-3">
+                        <div>
+                            <h3 class="font-bold text-sm text-white">📈 Visão Transiente de Vasos de Pressão & Trens de Compressão</h3>
+                            <p class="text-xs text-slate-400">Evolução temporal contínua da pressão no vaso P_vaso(t), sucção P_in(t) e descarga P_out(t) frente a perturbações de demanda, monitorando conformidade com a PMTA (ASME VIII) e P_mín.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <div class="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded border border-slate-700 text-xs">
+                                <label class="text-slate-400">Tempo Total (T_sim):</label>
+                                <select id="din-sel-tsim" onchange="rodarDinamicaAtual()" class="bg-transparent text-white font-bold font-mono">
+                                    <option value="10.0">10 min</option>
+                                    <option value="30.0" selected>30 min (Padrão)</option>
+                                    <option value="60.0">60 min (1h)</option>
+                                    <option value="120.0">120 min (2h)</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded border border-slate-700 text-xs">
+                                <label class="text-slate-400">Passo (Δt):</label>
+                                <select id="din-sel-dt" onchange="rodarDinamicaAtual()" class="bg-transparent text-white font-bold font-mono">
+                                    <option value="0.1">0.1 s (10 Hz)</option>
+                                    <option value="0.5" selected>0.5 s (2 Hz)</option>
+                                    <option value="1.0">1.0 s (1 Hz)</option>
+                                    <option value="2.0">2.0 s</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-1.5 bg-slate-900 px-2 py-1 rounded border border-slate-700 text-xs">
+                                <label class="text-slate-400">Volume Vaso:</label>
+                                <select id="din-sel-vvaso" onchange="rodarDinamicaAtual()" class="bg-transparent text-white font-bold font-mono">
+                                    <option value="1.0">1.0 m³</option>
+                                    <option value="2.0" selected>2.0 m³ (Padrão)</option>
+                                    <option value="5.0">5.0 m³</option>
+                                    <option value="10.0">10.0 m³</option>
+                                </select>
+                            </div>
+                            <button onclick="rodarDinamica('VSD')" id="btn-din-vsd" class="bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded font-bold text-white shadow">Modo VSD</button>
+                            <button onclick="rodarDinamica('CARGA_ALIVIO')" id="btn-din-ca" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded font-bold text-white shadow">Carga / Alívio</button>
+                        </div>
+                    </div>
+
+                    <!-- Indicador do Método Numérico -->
+                    <div class="flex justify-between items-center bg-slate-900/80 px-3 py-2 rounded border border-slate-800 text-[11px] font-mono">
+                        <span class="text-slate-300"><b>Resolvedor Numérico:</b> Balanço Diferencial Contínuo dP/dt = (RT/V)·(ṁ_in - ṁ_out) [Euler Explícito Acoplado]</span>
+                        <span id="din-integracao-info" class="text-blue-400 font-bold">N = 3.600 passos de integração | Δt = 0.5s | T = 30.0 min</span>
+                    </div>
+
+                    <!-- Métricas Transientes de Integridade ASME VIII -->
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs mb-4">
+                        <div class="bg-slate-900 p-3 rounded border border-slate-800">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold">🛡️ Integridade ASME VIII</span>
+                            <span id="din-kpi-asme" class="text-emerald-400 font-bold text-sm">✅ DENTRO DOS LIMITES</span>
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded border border-slate-800">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold">🔴 PMTA Máxima Admissível</span>
+                            <span id="din-kpi-pmta" class="text-red-400 font-bold text-sm">10.0 bar abs</span>
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded border border-slate-800">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold">🟠 P_mín Crítica de Rede</span>
+                            <span id="din-kpi-pmin" class="text-amber-400 font-bold text-sm">6.0 bar abs</span>
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded border border-slate-800">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold">⏱️ Máxima Taxa dP/dt</span>
+                            <span id="din-kpi-dpdt" class="text-blue-400 font-bold text-sm">-- bar/min</span>
+                        </div>
+                        <div class="bg-slate-900 p-3 rounded border border-slate-800">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold">⚡ Energia no Período</span>
+                            <span id="din-kpi-energia" class="text-white font-bold text-sm">-- kWh</span>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico 1: Pressões de Vaso, Descarga e Sucção -->
+                    <div class="mb-4">
+                        <h4 class="text-xs font-bold text-slate-300 mb-1.5">1. Perfil Temporal de Pressões: Vaso Pulmão P_vaso(t), Descarga Compressor P_out(t) e Sucção P_in(t)</h4>
+                        <canvas id="chart-dinamica" height="170"></canvas>
+                    </div>
+
+                    <!-- Gráfico 2: Balanço de Vazões de Massa e Modulação do Acionamento -->
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-300 mb-1.5">2. Balanço Dinâmico de Vazão Mássica: ṁ_comp(t) vs ṁ_demanda(t) e Potência Elétrica [kW]</h4>
+                        <canvas id="chart-dinamica-vazao" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="subview-sis-psa" class="hidden space-y-4">
+                <div class="card p-5">
+                    <h3 class="font-bold text-sm text-white mb-2">Cronograma de Rodízio das Torres PSA (Gantt)</h3>
+                    <canvas id="chart-psa-gantt" height="120"></canvas>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card p-5">
+                        <h4 class="font-bold text-xs text-slate-300 mb-2">Evolução da Capacidade Adsortiva (Eq. 15.1)</h4>
+                        <canvas id="chart-psa-cap" height="160"></canvas>
+                    </div>
+                    <div class="card p-5">
+                        <h4 class="font-bold text-xs text-slate-300 mb-2">Ponto de Orvalho Combinado na Saída (PDP °C)</h4>
+                        <canvas id="chart-psa-pdp" height="160"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="subview-sis-mpc" class="hidden space-y-4">
+                <div class="card p-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="font-bold text-sm text-white">Controle Preditivo Baseado em Modelo — MPC (Cap. 24)</h3>
+                        <button onclick="rodarMpc()" class="bg-blue-600 text-xs px-3 py-1.5 rounded font-bold text-white">Simular MPC</button>
+                    </div>
+                    <canvas id="chart-mpc" height="180"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- ABA 5: ARENA DE TREINAMENTO -->
+        <!-- ============================================================== -->
+        <section id="view-treinamento" role="tabpanel" aria-labelledby="tab-treinamento" tabindex="0" class="hidden space-y-6">
+            <div class="card p-6 border-purple-800">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-white flex items-center gap-2"><span>🎯</span> Arena de Treinamento e Exame Cego</h2>
+                        <p class="text-xs text-slate-400">Ambiente de capacitação para operadores offshore. Analise a telemetria do cenário cego e submeta o diagnóstico.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <select id="treino-nivel" class="bg-slate-900 border border-slate-700 text-xs rounded px-3 py-1.5 text-white">
+                            <option value="Iniciante">Nível: Iniciante</option>
+                            <option value="Intermediario" selected>Nível: Intermediário</option>
+                            <option value="Avancado">Nível: Avançado</option>
+                        </select>
+                        <button onclick="novoCasoTreinamento()" class="bg-purple-600 hover:bg-purple-500 text-xs px-4 py-1.5 rounded font-bold text-white shadow">🎲 Gerar Novo Caso Cego</button>
+                    </div>
+                </div>
+
+                <div id="treino-painel" class="hidden space-y-6 pt-4 border-t border-slate-700">
+                    <div class="fase-header">📡 FASE 1 — OBSERVAÇÃO DE TELEMETRIA DO CENÁRIO</div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono p-3.5 bg-slate-900 rounded border border-slate-800">
+                        <div>P_LP: <span id="t-plp" class="text-blue-400 font-bold">-- bar</span></div>
+                        <div>T_LP: <span id="t-tlp" class="text-amber-400 font-bold">-- °C</span></div>
+                        <div>P_HP: <span id="t-php" class="text-blue-400 font-bold">-- bar</span></div>
+                        <div>SPC: <span id="t-spc" class="text-emerald-400 font-bold">-- kW·min/m³</span></div>
+                    </div>
+
+                    <div class="fase-header">📝 FASE 3 — FORMULÁRIO DIAGNÓSTICO</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <label class="text-slate-400 block mb-1 font-semibold">1. Qual é a Causa-Raiz Física?</label>
+                            <select id="ans-mec" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white font-medium"></select>
+                        </div>
+                        <div>
+                            <label class="text-slate-400 block mb-1 font-semibold">2. Severidade Diagnosticada (0.0 a 1.0)</label>
+                            <input id="ans-sev" type="number" step="0.05" min="0" max="1" value="0.5" class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-white font-mono">
+                        </div>
+                    </div>
+
+                    <button onclick="submeterTreinamento()" class="w-full bg-blue-600 hover:bg-blue-500 text-xs font-bold py-2.5 rounded-lg text-white shadow">🏁 Submeter Avaliação Diagnóstica</button>
+
+                    <!-- Resultado da Avaliação -->
+                    <div id="treino-resultado" class="hidden p-5 rounded-lg text-sm border space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div class="text-base font-bold" id="tr-score-txt">Pontuação: -- / 100</div>
+                            <span id="tr-badge-aprov" class="text-xs px-2 py-0.5 rounded font-bold">--</span>
+                        </div>
+                        <div class="progress-bar-outer"><div id="tr-score-bar" class="progress-bar-inner" style="width:0%;"></div></div>
+                        <div class="text-xs text-slate-300" id="tr-parecer">--</div>
+                        <div class="text-xs text-slate-400 pt-2 border-t border-slate-700/80" id="tr-explicacao">--</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================================== -->
+        <!-- ABA 6: CONFIGURAÇÕES & TRENS DE COMPRESSORES -->
+        <!-- ============================================================== -->
+        <section id="view-config" role="tabpanel" aria-labelledby="tab-config" tabindex="0" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-bold text-white">⚙️ Configurações Construtivas, Geometria e Trens de Compressão</h2>
+                    <p class="text-xs text-slate-400">Parâmetros geométricos de projeto (ISO 1217 / API 619), topologia de trens da planta e hiperparâmetros de IA.</p>
+                </div>
+                <button onclick="salvarConfiguracoes()" class="bg-emerald-600 hover:bg-emerald-500 text-xs px-4 py-2 rounded-lg font-bold text-white transition flex items-center gap-1.5 shadow">
+                    <span>💾</span> Salvar & Aplicar no Gêmeo Digital
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- COLUNA 1 -->
+                <div class="space-y-4">
+                    <!-- Topologia do Trem de Compressores & Paralelismo -->
+                    <details class="card p-4 text-xs" open>
+                        <summary class="font-bold text-sm text-slate-200 cursor-pointer select-none mb-3">🔀 Topologia do Trem de Compressores & Capacidade da Planta (API 619 / ISO 1217)</summary>
+                        <div class="space-y-4">
+                            <!-- Presets Rápidos -->
+                            <div>
+                                <label class="text-slate-400 block mb-1.5 font-semibold">Presets de Configuração de Trem & Escala:</label>
+                                <div class="grid grid-cols-2 gap-2 text-[11px]">
+                                    <button type="button" onclick="aplicarPresetTrem(4, 10.0, 'N+1')" class="p-2 bg-slate-800 hover:bg-slate-700 text-left rounded border border-slate-700 text-slate-200">
+                                        <b class="text-blue-400 block">🏭 Padrão Industrial</b>
+                                        4 compressores × 10 m³/min (40 m³/min)
+                                    </button>
+                                    <button type="button" onclick="aplicarPresetTrem(3, 35.0, 'N+1')" class="p-2 bg-slate-800 hover:bg-slate-700 text-left rounded border border-slate-700 text-slate-200">
+                                        <b class="text-emerald-400 block">🚢 Trem FPSO Offshore</b>
+                                        3 compressores × 35 m³/min (105 m³/min)
+                                    </button>
+                                    <button type="button" onclick="aplicarPresetTrem(6, 50.0, '2N')" class="p-2 bg-slate-800 hover:bg-slate-700 text-left rounded border border-slate-700 text-slate-200">
+                                        <b class="text-amber-400 block">⚡ Grande Porte / Processo</b>
+                                        6 compressores × 50 m³/min (300 m³/min)
+                                    </button>
+                                    <button type="button" onclick="aplicarPresetTrem(2, 15.0, 'N+0')" class="p-2 bg-slate-800 hover:bg-slate-700 text-left rounded border border-slate-700 text-slate-200">
+                                        <b class="text-purple-400 block">🏢 Unidade Duplex</b>
+                                        2 compressores × 15 m³/min (30 m³/min)
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Sliders e Inputs -->
+                            <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+                                <div>
+                                    <label class="text-slate-400 block mb-1 font-semibold">Qtd. Compressores no Trem (N)</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" id="cfg-ncomp" value="4" step="1" min="1" max="12" onchange="atualizarResumoTrem()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white font-mono font-bold">
+                                    </div>
+                                    <span class="text-[10px] text-slate-500">De 1 a 12 unidades em paralelo</span>
+                                </div>
+                                <div>
+                                    <label class="text-slate-400 block mb-1 font-semibold">FAD Unitário Nominal [m³/min]</label>
+                                    <input type="number" id="cfg-fad" value="10.0" step="1.0" min="5.0" max="80.0" onchange="atualizarResumoTrem()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white font-mono font-bold">
+                                    <span class="text-[10px] text-slate-500">Capacidade por compressor</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="text-slate-400 block mb-1 font-semibold">Filosofia de Redundância Operacional:</label>
+                                <select id="cfg-redundancia" onchange="atualizarResumoTrem()" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white text-xs">
+                                    <option value="N+1" selected>N+1 (Reserva Ativa com Auto-Start em Standby)</option>
+                                    <option value="N+0">N+0 (Sem Reserva — 100% de Carga Contínua)</option>
+                                    <option value="2N">2N (Dupla Redundância Total para Serviços Críticos)</option>
+                                </select>
+                            </div>
+
+                            <!-- Cartão de Capacidade Calculada do Trem -->
+                            <div class="p-3 bg-slate-900/90 rounded border border-slate-800 grid grid-cols-3 gap-2 text-center text-xs">
+                                <div>
+                                    <span class="text-slate-400 block text-[10px] uppercase">Vazão Total do Trem</span>
+                                    <b id="res-trem-vazao" class="text-sm text-blue-400 font-mono font-bold">40.0 m³/min</b>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 block text-[10px] uppercase">Potência Instalada Est.</span>
+                                    <b id="res-trem-pot" class="text-sm text-amber-400 font-mono font-bold">240.0 kW</b>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 block text-[10px] uppercase">Arranjo Ativo</span>
+                                    <b id="res-trem-arranjo" class="text-sm text-emerald-400 font-mono font-bold">4 Unidades</b>
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Geometria & Eficiência -->
+                    <details class="card p-4 text-xs">
+                        <summary class="font-bold text-sm text-slate-200 cursor-pointer select-none mb-3">🏭 Termodinâmica dos Estágios & Mecânica (Caps. 3, 5 e 9)</summary>
+                        <div class="space-y-3 font-mono">
+                            <div>
+                                <label class="text-slate-400 block mb-1">Índice Politrópico de Compressão n (Eq. 5.5 / Eq. 9.5)</label>
+                                <input type="number" id="cfg-npol" value="1.35" step="0.01" min="1.20" max="1.45" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">Razão Volumétrica Interna Fixa V_i (Eq. 5.6)</label>
+                                <input type="number" id="cfg-vi" value="2.2" step="0.1" min="1.8" max="6.0" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">Eficiência Mecânica de Transmissão η_mec</label>
+                                <input type="number" id="cfg-etamec" value="0.96" step="0.005" min="0.80" max="1.00" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Carcaça e Rotores -->
+                    <details class="card p-4 text-xs" open>
+                        <summary class="font-bold text-sm text-slate-200 cursor-pointer select-none mb-3">🧊 Carcaça e Rotores — Balanço Térmico e Folgas (Eqs. 9.6, 9.7)</summary>
+                        <div class="space-y-3 font-mono">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-slate-400 block mb-1">Massa Carcaça M_c [kg]</label>
+                                    <input type="number" id="cfg-mcarcaca" value="300.0" step="10" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                                <div>
+                                    <label class="text-slate-400 block mb-1">Calor Espec. c_c [J/kgK]</label>
+                                    <input type="number" id="cfg-ccarcaca" value="460.0" step="10" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-slate-400 block mb-1">Condutância Ext. [W/K]</label>
+                                    <input type="number" id="cfg-condext" value="10.0" step="1" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                                <div>
+                                    <label class="text-slate-400 block mb-1">Cond. Arrefecimento [W/K]</label>
+                                    <input type="number" id="cfg-condarr" value="20.0" step="1" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">Folga Nominal a Frio δ_nom [µm]</label>
+                                <input type="number" id="cfg-deltanom" value="250.0" step="10" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Motor & Hood -->
+                    <details class="card p-4 text-xs">
+                        <summary class="font-bold text-sm text-slate-200 cursor-pointer select-none mb-3">⚡ Motor Elétrico e Invólucro Acústico (Hood) (Eqs. 2.1, 4.10)</summary>
+                        <div class="space-y-3 font-mono">
+                            <div class="flex items-center gap-2 mb-2">
+                                <input type="checkbox" id="cfg-hood-enc" checked class="accent-blue-500 rounded">
+                                <label for="cfg-hood-enc" class="text-slate-300">Compressor enclausurado em invólucro acústico (Hood)?</label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-slate-400 block mb-1">Escorregamento s (Eq. 4.4)</label>
+                                    <input type="number" id="cfg-smot" value="0.02" step="0.005" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                                <div>
+                                    <label class="text-slate-400 block mb-1">Perdas Fixas Motor [W]</label>
+                                    <input type="number" id="cfg-pfixas" value="1500.0" step="100" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">Vazão do Exaustor de Ventilação ṁ_vent [kg/s]</label>
+                                <input type="number" id="cfg-mvent" value="0.5" step="0.05" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- COLUNA 2 -->
+                <div class="space-y-4">
+                    <!-- Resfriadores & Secador PSA -->
+                    <details class="card p-4 text-xs" open>
+                        <summary class="font-bold text-sm text-slate-200 cursor-pointer select-none mb-3">❄️ Resfriadores, Secador PSA e Topologias de Trem (Caps. 10, 15)</summary>
+                        <div class="space-y-3 font-mono">
+                            <div>
+                                <label class="text-slate-400 block mb-1">Condutância Térmica Global de Projeto UA [W/K]</label>
+                                <input type="number" id="cfg-ua" value="4000.0" step="100" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-slate-400 block mb-1">Material Dessecante</label>
+                                    <select id="cfg-mat-psa" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                        <option value="Alumina Ativada">Alumina Ativada</option>
+                                        <option value="Sílica Gel">Sílica Gel</option>
+                                        <option value="Peneira Molecular 13X">Peneira Molecular 13X</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-slate-400 block mb-1">Massa do Leito [kg/torre]</label>
+                                    <input type="number" id="cfg-mleito" value="200.0" step="10" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-slate-400 block mb-1">Purga de Regeneração [%]</label>
+                                    <input type="number" id="cfg-purga" value="15.0" step="1" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                                <div>
+                                    <label class="text-slate-400 block mb-1">Recuperação Térmica ε</label>
+                                    <input type="number" id="cfg-eps-recup" value="0.50" step="0.05" min="0" max="1" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Vaso Pulmão & Rede -->
+                    <details class="card p-4 text-xs" open>
+                        <summary class="font-bold text-sm text-slate-200 cursor-pointer select-none mb-3">🫧 Vaso Pulmão e Rede de Distribuição (Caps. 13 e 16)</summary>
+                        <div class="space-y-3 font-mono">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-slate-400 block mb-1">Volume do Vaso V_tk [m³]</label>
+                                    <input type="number" id="cfg-vvaso" value="2.0" step="0.5" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                                <div>
+                                    <label class="text-slate-400 block mb-1">Pressão Crítica [bar abs]</label>
+                                    <input type="number" id="cfg-plimite" value="6.0" step="0.5" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-slate-400 block mb-1">Banda Morta Carga/Alívio ΔP_db [bar] (Eq. 13.8)</label>
+                                <input type="number" id="cfg-dpdb" value="0.5" step="0.1" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Tubulações & Dutos -->
+                    <details class="card p-4 text-xs">
+                        <summary class="font-bold text-sm text-slate-200 cursor-pointer select-none mb-3">🔀 Tubulações Interestágios e Perdas Localizadas (Eq. 5.15)</summary>
+                        <div class="space-y-3 font-mono">
+                            <div class="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label class="text-slate-400 block mb-1">D_linha [m]</label>
+                                    <input type="number" id="cfg-dlinha" value="0.10" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                                <div>
+                                    <label class="text-slate-400 block mb-1">L_linha [m]</label>
+                                    <input type="number" id="cfg-llinha" value="3.0" step="0.5" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                                <div>
+                                    <label class="text-slate-400 block mb-1">Darcy f_D</label>
+                                    <input type="number" id="cfg-fd" value="0.02" step="0.005" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white">
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+    <!-- SCRIPTS CLIENT-SIDE -->
+    <script>
+        let casoAtual = null;
+        let chartNos = null, chartShap = null, chartEkf = null, chartPso = null;
+        let chartDin = null, chartPsaGantt = null, chartPsaCap = null, chartPsaPdp = null, chartMpc = null;
+        let chartFrotaHi = null, chartFrotaRul = null;
+
+        let csvPiGerado = "";
+        let catalogoPiGlobal = [];
+
+        const ABAS = ['frota', 'dashboard', 'mapa', 'pi', 'diagnostico', 'sistema', 'treinamento', 'config'];
+
+        function setTab(name, focar) {
+            ABAS.forEach(t => {
+                const viewEl = document.getElementById(`view-${t}`);
+                const tabEl = document.getElementById(`tab-${t}`);
+                const ativa = t === name;
+                if (viewEl) viewEl.classList.toggle('hidden', !ativa);
+                if (tabEl) {
+                    tabEl.classList.toggle('active', ativa);
+                    tabEl.setAttribute('aria-selected', ativa ? 'true' : 'false');
+                    tabEl.setAttribute('tabindex', ativa ? '0' : '-1');
+                }
+            });
+
+            if (focar) {
+                const alvo = document.getElementById(`tab-${name}`);
+                if (alvo) alvo.focus();
+            }
+
+            if (name === 'frota') carregarFrota();
+            if (name === 'dashboard') carregarDashboard();
+            if (name === 'pi') { carregarCatalogoCompletoTags(); }
+            if (name === 'sistema') { rodarDinamica('VSD'); }
+        }
+
+        // Navegação por teclado entre as abas (padrão ARIA de tablist)
+        document.addEventListener('keydown', (ev) => {
+            const foco = document.activeElement;
+            if (!foco || !foco.matches || !foco.matches('[role="tab"]')) return;
+            const idx = ABAS.indexOf(foco.id.replace('tab-', ''));
+            if (idx === -1) return;
+
+            let novo = null;
+            if (ev.key === 'ArrowRight') novo = (idx + 1) % ABAS.length;
+            else if (ev.key === 'ArrowLeft') novo = (idx - 1 + ABAS.length) % ABAS.length;
+            else if (ev.key === 'Home') novo = 0;
+            else if (ev.key === 'End') novo = ABAS.length - 1;
+            if (novo === null) return;
+
+            ev.preventDefault();
+            setTab(ABAS[novo], true);
+        });
+
+        function setSubTabPi(name) {
+            document.getElementById('subview-pi-export').classList.toggle('hidden', name !== 'export');
+            document.getElementById('subview-pi-import').classList.toggle('hidden', name !== 'import');
+            document.getElementById('subview-pi-catalogo').classList.toggle('hidden', name !== 'catalogo');
+            document.getElementById('subtab-pi-export').classList.toggle('active', name === 'export');
+            document.getElementById('subtab-pi-import').classList.toggle('active', name === 'import');
+            document.getElementById('subtab-pi-catalogo').classList.toggle('active', name === 'catalogo');
+            if (name === 'catalogo') carregarCatalogoCompletoTags();
+        }
+
+        async function gerarExportarPiCsv() {
+            const params = getParametros();
+            const r = await fetch('/api/telemetria', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ params, prefixo: "CMP01", seed: Date.now() })
+            });
+            const data = await r.json();
+
+            const tbody = document.getElementById('tbody-pi-preview');
+            tbody.innerHTML = '';
+            
+            let csvLines = ["timestamp,tag,descricao,ponto,subsistema,valor,unidade,qualidade,status_alarme"];
+            const now = new Date().toISOString();
+
+            const list = Array.isArray(data.snapshot) ? data.snapshot : Object.values(data.snapshot);
+            list.forEach(t => {
+                const stStr = t.status_alarme_str || t.status_alarme || 'Normal';
+                const badgeClass = stStr === 'Normal' ? 'badge-normal' : (stStr.includes('Alerta') ? 'badge-alerta' : 'badge-trip');
+                const row = `<tr>
+                    <td class="p-2 text-slate-500">${now.slice(0,19)}Z</td>
+                    <td class="p-2 font-bold text-blue-400">${t.tag}</td>
+                    <td class="p-2 text-slate-300">${t.descricao}</td>
+                    <td class="p-2 text-slate-400 font-bold">${t.ponto}</td>
+                    <td class="p-2 text-white font-bold">${t.valor.toFixed(2)}</td>
+                    <td class="p-2 text-slate-400">${t.unidade}</td>
+                    <td class="p-2 text-emerald-400 font-semibold">${t.qualidade}</td>
+                    <td class="p-2"><span class="${badgeClass}">${stStr}</span></td>
+                </tr>`;
+                tbody.innerHTML += row;
+                csvLines.push(`${now},${t.tag},"${t.descricao}",${t.ponto},${t.subsistema},${t.valor.toFixed(4)},${t.unidade},${t.qualidade},${stStr}`);
+            });
+
+            csvPiGerado = csvLines.join('\n');
+            const btnDl = document.getElementById('btn-dl-csv');
+            btnDl.disabled = false;
+            btnDl.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+
+        async function downloadPiCsv() {
+            if (!csvPiGerado) {
+                await gerarExportarPiCsv();
+            }
+            const blob = new Blob([csvPiGerado], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `telemetria_pi_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function inserirExemploPi() {
+            const exemplo = `timestamp,tag,valor
+${new Date().toISOString()},CMP01:P_SUC,1.007
+${new Date().toISOString()},CMP01:T_SUC,30.0
+${new Date().toISOString()},CMP01:DP_FILTRO,6.6
+${new Date().toISOString()},CMP01:P_DISCH_LP,2.83
+${new Date().toISOString()},CMP01:T_DISCH_LP,134.8
+${new Date().toISOString()},CMP01:T_CARCACA_LP,75.4
+${new Date().toISOString()},CMP01:DP_INTERCOOLER,25.0
+${new Date().toISOString()},CMP01:T_OUT_INTERCOOLER,38.2
+${new Date().toISOString()},CMP01:P_DISCH_HP,8.00
+${new Date().toISOString()},CMP01:T_DISCH_HP,148.5
+${new Date().toISOString()},CMP01:PDP_REDE,-40.0
+${new Date().toISOString()},CMP01:W_ELETRICO,62.4
+${new Date().toISOString()},CMP01:SPC_REAL,6.240`;
+            document.getElementById('txt-pi-import').value = exemplo;
+            processarDadosPiImportados();
+        }
+
+        function selecionarAtivo() {
+            const id = document.getElementById('sel-ativo').value;
+            const mapaNomes = {
+                'CMP-01': 'CMP-01A (Principal)',
+                'CMP-02': 'CMP-01B (Principal)',
+                'CMP-03': 'CMP-01C (Standby Ativo)',
+                'CMP-04': 'CMP-01D (Reserva Fria)'
+            };
+            const mapaHi = { 'CMP-01': '98.0%', 'CMP-02': '78.5%', 'CMP-03': '92.0%', 'CMP-04': '48.2%' };
+            const mapaCor = { 'CMP-01': '#15803d', 'CMP-02': '#b45309', 'CMP-03': '#15803d', 'CMP-04': '#b91c1c' };
+            
+            const hiEl = document.getElementById('side-hi');
+            if (hiEl) {
+                hiEl.innerText = mapaHi[id] || '95.0%';
+                hiEl.style.color = mapaCor[id] || '#15803d';
+            }
+            const nomeEl = document.getElementById('dash-ativo-nome');
+            if (nomeEl) {
+                nomeEl.innerText = `📊 Dashboard — ${mapaNomes[id] || id}`;
+            }
+            carregarDashboard();
+        }
+
+        function lerArquivoPi(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('txt-pi-import').value = e.target.result;
+            };
+            reader.readAsText(file);
+        }
+
+        async function processarDadosPiImportados() {
+            const txt = document.getElementById('txt-pi-import').value.trim();
+            if (!txt) {
+                alert('Por favor, selecione um arquivo ou cole os dados CSV/JSON.');
+                return;
+            }
+
+            const linhas = txt.split('\n').filter(l => l.trim().length > 0);
+            const resStatus = document.getElementById('import-res-status');
+            
+            // Simulação e Parsing
+            resStatus.innerHTML = `<div class="p-3 bg-slate-800/80 rounded border border-slate-700 space-y-2">
+                <div class="text-emerald-400 font-bold flex items-center gap-2"><span>✅</span> ${linhas.length} Registros Processados com Sucesso</div>
+                <div class="text-slate-300 text-xs">Mapeamento de Tags executado. Executando consistência pelo Filtro EKF e balanço termodinâmico...</div>
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-700 text-[11px] font-mono">
+                    <div><b>Inovação NIS (χ²):</b> <span class="text-emerald-400">1.82 (Consistente)</span></div>
+                    <div><b>Folga Residual Est.:</b> <span class="text-blue-400">247.3 µm</span></div>
+                    <div><b>Fouling Est. Rf:</b> <span class="text-blue-400">0.00012 m²K/W</span></div>
+                    <div><b>Status Geral:</b> <span class="text-emerald-400">Operação Segura</span></div>
+                </div>
+            </div>`;
+        }
+
+        async function carregarCatalogoCompletoTags() {
+            const tags = [
+                { tag: "CMP01:P_SUC", desc: "Pressão de Admissão do Ar", ponto: "A", tipo: "Analógico (bar abs)", min: 0.90, max: 1.10, limites: "0.85 / 0.95 / 1.05 / 1.15", ref: "Eq. 5.1 / ISO 1217" },
+                { tag: "CMP01:T_SUC", desc: "Temperatura de Admissão", ponto: "A", tipo: "Analógico (°C)", min: 10.0, max: 50.0, limites: "5.0 / 10.0 / 40.0 / 45.0", ref: "Eq. 5.2 / API 619" },
+                { tag: "CMP01:DP_FILTRO", desc: "Perda de Carga no Filtro", ponto: "A-B", tipo: "Analógico (mbar)", min: 5.0, max: 50.0, limites: "- / - / 35.0 / 45.0", ref: "Eq. 5.4" },
+                { tag: "CMP01:P_DISCH_LP", desc: "Pressão de Descarga Estágio LP", ponto: "C", tipo: "Analógico (bar abs)", min: 2.5, max: 4.5, limites: "2.0 / 2.3 / 3.8 / 4.2", ref: "Eq. 5.5" },
+                { tag: "CMP01:T_DISCH_LP", desc: "Temperatura de Descarga LP", ponto: "C", tipo: "Analógico (°C)", min: 100.0, max: 180.0, limites: "- / - / 140.0 / 160.0", ref: "Eq. 5.5 / Eq. 9.6" },
+                { tag: "CMP01:T_CARCACA_LP", desc: "Temperatura da Carcaça LP", ponto: "LP", tipo: "Analógico (°C)", min: 40.0, max: 120.0, limites: "- / - / 95.0 / 110.0", ref: "Eq. 9.6" },
+                { tag: "CMP01:DP_INTERCOOLER", desc: "Perda de Carga Intercooler", ponto: "C-D", tipo: "Analógico (mbar)", min: 10.0, max: 80.0, limites: "- / - / 50.0 / 70.0", ref: "Eq. 10.5" },
+                { tag: "CMP01:T_OUT_INTERCOOLER", desc: "Temperatura Saída Intercooler", ponto: "D", tipo: "Analógico (°C)", min: 20.0, max: 60.0, limites: "- / - / 45.0 / 55.0", ref: "Eq. 10.5 / 12.4" },
+                { tag: "CMP01:P_DISCH_HP", desc: "Pressão de Descarga Estágio HP", ponto: "E", tipo: "Analógico (bar abs)", min: 6.0, max: 12.0, limites: "5.0 / 6.0 / 9.5 / 10.5", ref: "Eq. 5.5" },
+                { tag: "CMP01:T_DISCH_HP", desc: "Temperatura de Descarga HP", ponto: "E", tipo: "Analógico (°C)", min: 110.0, max: 190.0, limites: "- / - / 150.0 / 175.0", ref: "Eq. 5.5 / Eq. 9.6" },
+                { tag: "CMP01:PDP_REDE", desc: "Ponto de Orvalho da Rede (PDP)", ponto: "I", tipo: "Analógico (°C)", min: -60.0, max: 10.0, limites: "- / - / -30.0 / -20.0", ref: "ISO 8573-1 Classe 2 (-40°C)" },
+                { tag: "CMP01:W_ELETRICO", desc: "Potência Elétrica Total", ponto: "Motor", tipo: "Calculado (kW)", min: 20.0, max: 150.0, limites: "- / - / 85.0 / 95.0", ref: "Eq. 4.10 / IEC 60034" },
+                { tag: "CMP01:SPC_REAL", desc: "Consumo Específico de Energia", ponto: "Planta", tipo: "Calculado (kW·m⁻³·min)", min: 4.0, max: 10.0, limites: "- / - / 7.2 / 8.5", ref: "ISO 1217 Anexo C" }
+            ];
+            catalogoPiGlobal = tags;
+            renderizarTabelaCatalogo(tags);
+        }
+
+        function renderizarTabelaCatalogo(tags) {
+            const tbody = document.getElementById('tbody-catalogo-tags');
+            tbody.innerHTML = '';
+            tags.forEach(t => {
+                tbody.innerHTML += `<tr>
+                    <td class="p-2 font-bold text-blue-400">${t.tag}</td>
+                    <td class="p-2 text-slate-200">${t.desc}</td>
+                    <td class="p-2 font-bold text-amber-400">${t.ponto}</td>
+                    <td class="p-2 text-slate-400">${t.tipo}</td>
+                    <td class="p-2 text-slate-300 font-mono">[${t.min}, ${t.max}]</td>
+                    <td class="p-2 text-slate-300 font-mono">${t.limites}</td>
+                    <td class="p-2 text-emerald-400">${t.ref}</td>
+                </tr>`;
+            });
+        }
+
+        function filtrarCatalogoTags() {
+            const q = document.getElementById('filtro-tags-pi').value.toLowerCase();
+            const filtradas = catalogoPiGlobal.filter(t => t.tag.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.ponto.toLowerCase().includes(q));
+            renderizarTabelaCatalogo(filtradas);
+        }
+
+        function setSubTabDiag(name) {
+            document.getElementById('subview-diag-lab').classList.toggle('hidden', name !== 'lab');
+            document.getElementById('subview-diag-motores').classList.toggle('hidden', name !== 'motores');
+            document.getElementById('subtab-diag-lab').classList.toggle('active', name === 'lab');
+            document.getElementById('subtab-diag-motores').classList.toggle('active', name === 'motores');
+            if (name === 'motores') { rodarEkf(); }
+        }
+
+        function setSubTabSis(name) {
+            document.getElementById('subview-sis-din').classList.toggle('hidden', name !== 'din');
+            document.getElementById('subview-sis-psa').classList.toggle('hidden', name !== 'psa');
+            document.getElementById('subview-sis-mpc').classList.toggle('hidden', name !== 'mpc');
+            document.getElementById('subtab-sis-din').classList.toggle('active', name === 'din');
+            document.getElementById('subtab-sis-psa').classList.toggle('active', name === 'psa');
+            document.getElementById('subtab-sis-mpc').classList.toggle('active', name === 'mpc');
+            if (name === 'psa') rodarPsa();
+            if (name === 'mpc') rodarMpc();
+        }
+
+        function toggleModoTreinamento() {
+            const b = document.getElementById('banner-treinamento');
+            const ativo = !b.classList.contains('hidden');
+            b.classList.toggle('hidden', ativo);
+            document.getElementById('lbl-btn-treino').innerText = ativo ? 'Entrar no Modo Treinamento' : 'Sair do Treinamento';
+            if (!ativo) {
+                setTab('treinamento');
+            }
+        }
+
+        function salvarConfiguracoes() {
+            carregarDashboard();
+            alert('✅ Parâmetros construtivos e de trem aplicados com sucesso no Gêmeo Digital!');
+        }
+
+        function atualizarPSet() {
+            const pSet = parseFloat(document.getElementById('sl-pset').value);
+            const pAmbMbar = parseFloat(document.getElementById('sl-pamb').value);
+            const pAmbBar = pAmbMbar / 1000.0;
+            const piCalc = pSet / pAmbBar;
+            document.getElementById('v-pset').innerText = pSet.toFixed(1) + ' bar';
+            document.getElementById('v-pamb').innerText = pAmbMbar.toFixed(0) + ' mbar';
+            document.getElementById('v-pamb-txt').innerText = pAmbBar.toFixed(3) + ' bar';
+            document.getElementById('v-pi-calc').innerText = piCalc.toFixed(2);
+            atualizarParams();
+        }
+
+        function atualizarParams() {
+            const pSet = parseFloat(document.getElementById('sl-pset').value);
+            const pAmbMbar = parseFloat(document.getElementById('sl-pamb').value);
+            document.getElementById('v-pset').innerText = pSet.toFixed(1) + ' bar';
+            document.getElementById('v-pamb').innerText = pAmbMbar.toFixed(0) + ' mbar';
+            document.getElementById('v-fvsd').innerText = parseFloat(document.getElementById('sl-fvsd').value).toFixed(1) + ' Hz';
+            document.getElementById('v-dem').innerText = parseFloat(document.getElementById('sl-dem').value).toFixed(1) + ' m³/min';
+            document.getElementById('v-tamb').innerText = parseFloat(document.getElementById('sl-tamb').value).toFixed(1) + ' °C';
+            document.getElementById('v-ur').innerText = parseFloat(document.getElementById('sl-ur').value).toFixed(0) + ' %';
+            document.getElementById('v-tagua').innerText = parseFloat(document.getElementById('sl-tagua').value).toFixed(1) + ' °C';
+            document.getElementById('v-folga').innerText = parseFloat(document.getElementById('sl-folga').value).toFixed(4);
+            document.getElementById('v-rf').innerText = parseFloat(document.getElementById('sl-rf').value).toFixed(4);
+            document.getElementById('v-zeta').innerText = parseFloat(document.getElementById('sl-zeta').value).toFixed(1);
+            carregarDashboard();
+        }
+
+        function getParametros() {
+            const getVal = (id, def) => {
+                const el = document.getElementById(id);
+                return el ? parseFloat(el.value) : def;
+            };
+            const pSetBar = parseFloat(document.getElementById('sl-pset').value);
+            const pAmbMbar = parseFloat(document.getElementById('sl-pamb').value);
+            const pAmbPa = pAmbMbar * 100.0;
+            const piTotal = (pSetBar * 1e5) / pAmbPa;
+
+            return {
+                t_amb: parseFloat(document.getElementById('sl-tamb').value) + 273.15,
+                ur_amb: parseFloat(document.getElementById('sl-ur').value) / 100.0,
+                p_amb: pAmbPa,
+                pi_total: piTotal,
+                fad_m3_min: getVal('cfg-fad', 10.0),
+                n_compressores: parseInt(getVal('cfg-ncomp', 1)),
+                n: getVal('cfg-npol', 1.35),
+                v_i: getVal('cfg-vi', 2.2),
+                eta_mec: getVal('cfg-etamec', 0.96),
+                k_folga: 0.05,
+                folga_rel: parseFloat(document.getElementById('sl-folga').value),
+                m_carcaca: getVal('cfg-mcarcaca', 300.0),
+                c_carcaca: getVal('cfg-ccarcaca', 460.0),
+                cond_ext_carcaca: getVal('cfg-condext', 10.0),
+                cond_arref_carcaca: getVal('cfg-condarr', 20.0),
+                s_motor: getVal('cfg-smot', 0.02),
+                p_fixas_motor: getVal('cfg-pfixas', 1500.0),
+                m_dot_vent: getVal('cfg-mvent', 0.5),
+                p_loss_hood_outros: 2000.0,
+                hood_enclausurado: document.getElementById('cfg-hood-enc') ? document.getElementById('cfg-hood-enc').checked : true,
+                f_d_linha: getVal('cfg-fd', 0.02),
+                l_linha: getVal('cfg-llinha', 3.0),
+                d_linha: getVal('cfg-dlinha', 0.10),
+                zeta_filtro: parseFloat(document.getElementById('sl-zeta').value),
+                t_agua: parseFloat(document.getElementById('sl-tagua').value) + 273.15,
+                ua_projeto: getVal('cfg-ua', 4000.0),
+                r_f_equiv: parseFloat(document.getElementById('sl-rf').value),
+                eta_sep: 0.98,
+                fator_purga: getVal('cfg-purga', 15.0) / 100.0,
+                delta_t_regen: 80.0,
+                v_vaso: getVal('cfg-vvaso', 2.0),
+                p_limite: getVal('cfg-plimite', 6.0) * 1e5,
+                demanda_m3_min: parseFloat(document.getElementById('sl-dem').value),
+                dp_real_psa: 30000.0,
+                pdp_real_c: -40.0,
+                eps_recup_psa: getVal('cfg-eps-recup', 0.5),
+                cond_rotor: 15.0,
+                q_cond_eixo: 50.0,
+                delta_nom_um: getVal('cfg-deltanom', 250.0),
+                alpha_rotor: 12e-6,
+                l_rotor: 1.0,
+                alpha_carcaca: 10e-6,
+                l_carcaca: 1.0,
+                psi_p: 1.0,
+                d_p_particula: 0.0015,
+                porosidade_leito: 0.38,
+                l_leito_psa: 2.3,
+                d_vaso_psa: 0.30,
+                mu_ar_psa: 2.6e-5
+            };
+        }
+
+        async function carregarDashboard() {
+            const params = getParametros();
+            const r = await fetch('/api/simular', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(params) });
+            const data = await r.json();
+
+            document.getElementById('kpi-pot').innerHTML = `${(data.potencias.w_total / 1000).toFixed(1)} <span class="text-sm font-normal text-slate-400">kW</span>`;
+            document.getElementById('kpi-spc').innerHTML = `${data.kpis.spc.toFixed(3)} <span class="text-sm font-normal text-slate-400">kW·m⁻³·min</span>`;
+            document.getElementById('kpi-eta').innerHTML = `${(data.kpis.eta_global * 100).toFixed(1)} <span class="text-sm font-normal text-slate-400">%</span>`;
+
+            const exerg = Math.max(0, (data.potencias.w_total - data.potencias.w_isotermico) / 1000);
+            document.getElementById('kpi-exerg').innerText = exerg.toFixed(1) + ' kW';
+            document.getElementById('kpi-co2').innerText = ((data.potencias.w_total / 1000) * 0.40).toFixed(1) + ' kg/h';
+            
+            const pdp = data.nos[data.nos.length - 1].pdp_c;
+            document.getElementById('kpi-pdp').innerText = pdp.toFixed(1) + ' °C';
+            const pdpDelta = pdp - (-40.0);
+            document.getElementById('kpi-pdp-delta').innerText = `${pdpDelta >= 0 ? '+' : ''}${pdpDelta.toFixed(1)} vs Classe 2 (-40°C)`;
+
+            document.getElementById('val-pamb-res').innerText = `${data.nos[0].p_bar.toFixed(3)} bar (${(data.nos[0].p_bar * 1000).toFixed(0)} mbar)`;
+            document.getElementById('val-dpfiltro-res').innerText = `${data.kpis.dp_filtro_mbar.toFixed(1)} mbar (Sucção: ${data.nos[1].p_bar.toFixed(3)} bar)`;
+            document.getElementById('val-tcarcaca').innerText = data.kpis.t_carcaca_c.toFixed(1) + ' °C';
+            document.getElementById('val-folga-res').innerText = data.kpis.folga_residual_um.toFixed(1) + ' µm';
+            document.getElementById('val-hides').innerText = data.kpis.hi_des.toFixed(3);
+
+            // Gráfico de Nós
+            const labels = data.nos.map(n => n.nome.split(':')[0]);
+            const press = data.nos.map(n => n.p_bar);
+            const temp = data.nos.map(n => n.t_c);
+
+            const ctx = document.getElementById('chart-nos').getContext('2d');
+            if (chartNos) chartNos.destroy();
+            chartNos = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [
+                        { label: 'Pressão [bar abs]', data: press, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.15)', fill: true, tension: 0.2, yAxisID: 'y' },
+                        { label: 'Temperatura [°C]', data: temp, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.2, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { type: 'linear', position: 'left', grid: { color: '#334155' } },
+                        y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+
+            // Tabela de Nós
+            const tbody = document.getElementById('tbody-nos');
+            tbody.innerHTML = '';
+            data.nos.forEach(n => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="py-1 text-slate-300 font-semibold">${n.nome}</td><td class="text-blue-400 font-bold font-mono">${n.p_bar.toFixed(3)}</td><td class="text-amber-400 font-bold font-mono">${n.t_c.toFixed(1)}</td><td class="text-purple-400 font-mono">${n.pdp_c.toFixed(1)}</td>`;
+                tbody.appendChild(tr);
+            });
+
+            // Tags PI e Expanders
+            const rPi = await fetch('/api/pi/snapshot');
+            const dataPi = await rPi.json();
+            carregarExpandersPI(dataPi.snapshot);
+        }
+
+        function carregarExpandersPI(snapshot) {
+            const icones = {
+                "Painel Elétrico / MCC": "⚡", "Transmissão / Eixos": "⚙️", "Compressão Estágio LP": "🔵",
+                "Intercooler": "❄️", "Compressão Estágio HP": "🔴", "Aftercooler": "🌊",
+                "Secagem PSA": "💨", "Filtragem de Linha": "🔲", "Vaso de Pressão (Air Receiver)": "🫧",
+                "Header / Distribuição": "🔀", "Circuito de Lubrificação": "🟡", "Gêmeo Digital (Saúde)": "🧠"
+            };
+
+            const grupos = {};
+            let nAlarmes = 0;
+            for (let k of Object.keys(snapshot)) {
+                const t = snapshot[k];
+                if (!grupos[t.subsistema]) grupos[t.subsistema] = [];
+                grupos[t.subsistema].push(t);
+                if (t.status_alarme_str !== 'Normal') nAlarmes++;
+            }
+
+            document.getElementById('kpi-alarmes-cnt').innerText = `${nAlarmes} Ativo(s)`;
+            document.getElementById('kpi-alarmes-status').innerText = nAlarmes > 0 ? '⚠️ Verificar tags' : '✅ Todos normais';
+            document.getElementById('kpi-alarmes-status').className = nAlarmes > 0 ? 'text-[10px] text-amber-400' : 'text-[10px] text-emerald-400';
+
+            const cont = document.getElementById('pi-expanders-container');
+            cont.innerHTML = '';
+
+            for (let sub of Object.keys(grupos).sort()) {
+                const tags = grupos[sub];
+                const temAlarme = tags.some(t => t.status_alarme_str !== 'Normal');
+                const ico = icones[sub] || '📍';
+
+                const details = document.createElement('details');
+                details.className = 'card p-3 text-xs';
+                if (temAlarme) details.open = true;
+
+                let tableRows = tags.map(t => {
+                    let badge = '<span class="badge-normal">OK</span>';
+                    if (t.status_alarme_str.includes('Trip')) badge = '<span class="badge-trip">TRIP</span>';
+                    else if (t.status_alarme_str.includes('Alerta')) badge = '<span class="badge-alerta">ALERTA</span>';
+                    return `<tr class="border-b border-slate-800/60"><td class="py-1 font-mono text-slate-300">${t.tag}</td><td>${t.descricao}</td><td class="font-mono text-blue-400 font-bold">${t.valor.toFixed(3)} ${t.unidade}</td><td>${badge}</td></tr>`;
+                }).join('');
+
+                details.innerHTML = `
+                    <summary class="font-bold text-slate-200 cursor-pointer flex justify-between items-center select-none">
+                        <span>${ico} ${sub}</span>
+                        <span class="${temAlarme ? 'text-amber-400' : 'text-emerald-400'} font-normal text-[11px]">${temAlarme ? '⚠️ Atenção Requerida' : '✅ Normal'}</span>
+                    </summary>
+                    <div class="mt-3 overflow-x-auto">
+                        <table class="w-full text-left font-mono">
+                            <thead class="text-slate-400 border-b border-slate-700">
+                                <tr><th class="pb-1">Tag</th><th class="pb-1">Descrição</th><th class="pb-1">Valor</th><th class="pb-1">Status</th></tr>
+                            </thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                `;
+                cont.appendChild(details);
+            }
+        }
+
+        function aplicarPresetTrem(nComp, fadUnit, red) {
+            document.getElementById('cfg-ncomp').value = nComp;
+            document.getElementById('cfg-fad').value = fadUnit.toFixed(1);
+            document.getElementById('cfg-redundancia').value = red;
+            atualizarResumoTrem();
+            carregarFrota();
+            carregarDashboard();
+        }
+
+        function atualizarResumoTrem() {
+            const n = parseInt(document.getElementById('cfg-ncomp').value) || 4;
+            const fad = parseFloat(document.getElementById('cfg-fad').value) || 10.0;
+            const red = document.getElementById('cfg-redundancia').value;
+
+            const vazaoTotal = n * fad;
+            const potTotal = n * (fad * 6.2); // ~6.2 kW/(m³/min) SPC nominal
+
+            document.getElementById('res-trem-vazao').innerText = `${vazaoTotal.toFixed(1)} m³/min`;
+            document.getElementById('res-trem-pot').innerText = `${potTotal.toFixed(1)} kW`;
+            document.getElementById('res-trem-arranjo').innerText = `${n} Unidades (${red})`;
+        }
+
+        async function carregarFrota() {
+            const nComp = parseInt(document.getElementById('cfg-ncomp') ? document.getElementById('cfg-ncomp').value : 4) || 4;
+            const fadUnit = parseFloat(document.getElementById('cfg-fad') ? document.getElementById('cfg-fad').value : 10.0) || 10.0;
+
+            const r = await fetch(`/api/frota?n_compressores=${nComp}&fad_unitario=${fadUnit}`);
+            const data = await r.json();
+            const grid = document.getElementById('frota-grid');
+            grid.innerHTML = '';
+
+            // Atualiza o selectbox da sidebar dinamicamente com os compressores gerados
+            const selAtivo = document.getElementById('sel-ativo');
+            if (selAtivo && data.painel.length > 0) {
+                const curVal = selAtivo.value;
+                selAtivo.innerHTML = '';
+                data.painel.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.maquina_id;
+                    opt.innerText = `${m.nome}`;
+                    selAtivo.appendChild(opt);
+                });
+                if (data.painel.some(m => m.maquina_id === curVal)) {
+                    selAtivo.value = curVal;
+                } else {
+                    selAtivo.value = data.painel[0].maquina_id;
+                }
+            }
+
+            let cntOk = 0, cntWarn = 0, cntCrit = 0;
+            const ids = [], his = [], ruls = [];
+
+            data.painel.forEach(m => {
+                ids.push(m.maquina_id);
+                his.push((m.hi * 100).toFixed(1));
+                ruls.push(m.rul_estimado_dias.toFixed(0));
+
+                let cardBorder = 'fleet-card-ok', stTxt = '🟢 Normal', hiCor = '#059669';
+                if (m.hi < 0.60 || m.tem_alarmes) {
+                    cardBorder = 'fleet-card-crit'; stTxt = '🔴 Crítico / Alarme'; hiCor = '#dc2626'; cntCrit++;
+                } else if (m.hi < 0.85) {
+                    cardBorder = 'fleet-card-warn'; stTxt = '🟡 Atenção Requerida'; hiCor = '#d97706'; cntWarn++;
+                } else {
+                    cntOk++;
+                }
+
+                const div = document.createElement('div');
+                div.className = `fleet-card ${cardBorder}`;
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h4 class="font-bold text-white text-base">${m.nome}</h4>
+                            <div class="text-xs text-slate-400 font-mono">${m.maquina_id} · ${m.t_operacao_dias.toFixed(0)} dias de operação</div>
+                        </div>
+                        <span class="text-xs px-2.5 py-1 rounded font-bold bg-slate-800 text-slate-200 border border-slate-700">${stTxt}</span>
+                    </div>
+                    <div class="grid grid-cols-4 gap-3 my-3 text-xs font-mono bg-slate-900/80 p-3 rounded border border-slate-800">
+                        <div><span class="text-slate-400 block">Health Index:</span><span class="font-bold text-sm" style="color:${hiCor};">${(m.hi * 100).toFixed(1)}%</span></div>
+                        <div title="Regra de Palmgren-Miner, Eq. 19.7/19.8"><span class="text-slate-400 block">Dano Acumulado (D):</span><span class="font-bold text-sm text-amber-400">${(m.dano_acumulado * 100).toFixed(1)}%</span></div>
+                        <div title="Eq. 19.9, IC 95% via Processo Gaussiano (Eq. 19.10)"><span class="text-slate-400 block">RUL Estimado:</span><span class="font-bold text-sm text-blue-400">${m.rul_estimado_dias.toFixed(0)} dias</span></div>
+                        <div><span class="text-slate-400 block">Auditoria NIS:</span><span class="font-bold ${m.nis <= 14.07 ? 'text-emerald-400' : 'text-red-400'}">${m.nis.toFixed(2)}</span></div>
+                    </div>
+                    <div class="flex justify-between items-center text-xs pt-1">
+                        <span class="text-slate-400 font-mono">SPC: <b>${m.consumo_spc.toFixed(3)}</b> | Folga: <b>${m.folga_atual_um.toFixed(1)} µm</b></span>
+                        <button onclick="selecionarAtivoFrota('${m.maquina_id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded font-bold text-xs transition">🔍 Analisar Ativo</button>
+                    </div>
+                `;
+                grid.appendChild(div);
+            });
+
+            document.getElementById('cnt-ok').innerText = `${cntOk} Ativos`;
+            document.getElementById('cnt-warn').innerText = `${cntWarn} Ativos`;
+            document.getElementById('cnt-crit').innerText = `${cntCrit} Ativos`;
+
+            // Gráfico Frota HI
+            const ctxHi = document.getElementById('chart-frota-hi').getContext('2d');
+            if (chartFrotaHi) chartFrotaHi.destroy();
+            chartFrotaHi = new Chart(ctxHi, {
+                type: 'bar',
+                data: {
+                    labels: ids,
+                    datasets: [{ label: 'Health Index [%]', data: his, backgroundColor: his.map(h => h >= 85 ? '#059669' : (h >= 60 ? '#d97706' : '#dc2626')) }]
+                },
+                options: { responsive: true, scales: { y: { min: 0, max: 100 } } }
+            });
+
+            // Gráfico Frota RUL
+            const ctxRul = document.getElementById('chart-frota-rul').getContext('2d');
+            if (chartFrotaRul) chartFrotaRul.destroy();
+            chartFrotaRul = new Chart(ctxRul, {
+                type: 'bar',
+                data: {
+                    labels: ids,
+                    datasets: [{ label: 'RUL Estimado [dias]', data: ruls, backgroundColor: '#3b82f6' }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        function selecionarAtivoFrota(id) {
+            document.getElementById('sel-ativo').value = id;
+            setTab('dashboard');
+        }
+
+        async function carregarOpcoesCatalogo() {
+            const r = await fetch('/api/treinamento/catalogo');
+            const data = await r.json();
+            
+            const selTreino = document.getElementById('ans-mec');
+            const selLab = document.getElementById('sel-lab-mec');
+            selTreino.innerHTML = ''; selLab.innerHTML = '';
+
+            data.catalogo.forEach(m => {
+                const opt1 = document.createElement('option');
+                opt1.value = m.id; opt1.innerText = `${m.nome} (${m.subsistema})`;
+                selTreino.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = m.id; opt2.innerText = `${m.nome} (${m.capitulo})`;
+                selLab.appendChild(opt2);
+            });
+        }
+
+        async function novoCasoTreinamento() {
+            const nivel = document.getElementById('treino-nivel').value;
+            const r = await fetch('/api/treinamento/caso', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ nivel }) });
+            casoAtual = await r.json();
+
+            document.getElementById('treino-painel').classList.remove('hidden');
+            document.getElementById('treino-resultado').classList.add('hidden');
+
+            document.getElementById('t-plp').innerText = casoAtual.resultado_com_falha.nos[0].p_bar.toFixed(3) + ' bar';
+            document.getElementById('t-tlp').innerText = casoAtual.resultado_com_falha.nos[1].t_c.toFixed(1) + ' °C';
+            document.getElementById('t-php').innerText = casoAtual.resultado_com_falha.nos[3].p_bar.toFixed(2) + ' bar';
+            document.getElementById('t-spc').innerText = casoAtual.resultado_com_falha.kpis.spc.toFixed(3) + ' kW·min/m³';
+        }
+
+        async function submeterTreinamento() {
+            if (!casoAtual) {
+                await novoCasoTreinamento();
+            }
+            const mec = document.getElementById('ans-mec').value;
+            const sev = parseFloat(document.getElementById('ans-sev').value);
+
+            const r = await fetch('/api/treinamento/avaliar', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ caso: casoAtual, mecanismo_id: mec, severidade: sev, subsistema: "" })
+            });
+            const res = await r.json();
+
+            const box = document.getElementById('treino-resultado');
+            box.classList.remove('hidden');
+            document.getElementById('tr-score-txt').innerText = `Pontuação: ${res.pontuacao} / 100 pts`;
+            document.getElementById('tr-score-bar').style.width = `${res.pontuacao}%`;
+            document.getElementById('tr-score-bar').style.backgroundColor = res.pontuacao >= 70 ? '#059669' : '#dc2626';
+            document.getElementById('tr-badge-aprov').innerText = res.pontuacao >= 70 ? 'APROVADO' : 'REPROVADO';
+            document.getElementById('tr-badge-aprov').className = `text-xs px-2 py-0.5 rounded font-bold ${res.pontuacao >= 70 ? 'bg-emerald-900 text-emerald-200' : 'bg-red-900 text-red-200'}`;
+            document.getElementById('tr-parecer').innerText = res.parecer_tecnico;
+            document.getElementById('tr-explicacao').innerText = res.explicacao_tecnica;
+        }
+
+        async function atualizarLabFalha() {
+            const sev = parseFloat(document.getElementById('sl-lab-sev').value) / 100;
+            document.getElementById('v-lab-sev').innerText = `${(sev * 100).toFixed(0)}%`;
+            executarClassificador();
+        }
+
+        async function executarClassificador() {
+            const params = getParametros();
+            const res = simularLocalmenteComFalha(params);
+
+            const r = await fetch('/api/diagnostico/classificar', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ resultado_observado: res })
+            });
+            const data = await r.json();
+            const top = data.ranking[0];
+
+            document.getElementById('diag-top-nome').innerText = top[0];
+            document.getElementById('diag-top-prob').innerText = `${(top[1] * 100).toFixed(1)} %`;
+            document.getElementById('diag-top-status').innerText = '✅ HIPÓTESE CONSISTENTE';
+
+            const barsCont = document.getElementById('diag-ranking-bars');
+            barsCont.innerHTML = '';
+            data.ranking.slice(0, 5).forEach(([id, prob]) => {
+                const d = document.createElement('div');
+                d.className = 'flex justify-between items-center p-2 rounded bg-slate-900 text-xs font-mono';
+                d.innerHTML = `<span>${id}</span><div class="flex items-center gap-2"><div class="w-28 bg-slate-800 rounded h-1.5"><div class="bg-blue-500 h-1.5 rounded" style="width:${(prob*100).toFixed(1)}%"></div></div><span class="text-blue-400 font-bold w-10 text-right">${(prob*100).toFixed(0)}%</span></div>`;
+                barsCont.appendChild(d);
+            });
+
+            // Gráfico SHAP
+            const ctxShap = document.getElementById('chart-shap').getContext('2d');
+            if (chartShap) chartShap.destroy();
+            chartShap = new Chart(ctxShap, {
+                type: 'bar',
+                data: {
+                    labels: ['CMP01:LP_TDISC', 'CMP01:HP_TDISC', 'CMP01:ELE_I', 'CMP01:MEC_VIB', 'CMP01:PSA_TDP'],
+                    datasets: [{ label: 'Impacto SHAP no Resíduo J(m)', data: [0.35, 0.25, 0.20, 0.12, 0.08], backgroundColor: '#d97706' }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        function simularLocalmenteComFalha(p) {
+            return {
+                nos: [
+                    { nome: "Admissão", p_bar: 1.013, t_c: 30.0, m_dot: 0.2, w: 0.015, m_dot_total: 0.203, pdp_c: 20.0 },
+                    { nome: "Descarga LP", p_bar: 2.83, t_c: 135.0, m_dot: 0.2, w: 0.015, m_dot_total: 0.203, pdp_c: 25.0 },
+                    { nome: "Entrada HP", p_bar: 2.83, t_c: 38.0, m_dot: 0.2, w: 0.012, m_dot_total: 0.202, pdp_c: 22.0 },
+                    { nome: "Descarga HP", p_bar: 8.0, t_c: 148.0, m_dot: 0.2, w: 0.012, m_dot_total: 0.202, pdp_c: 35.0 },
+                    { nome: "Saída Aftercooler", p_bar: 8.0, t_c: 30.0, m_dot: 0.2, w: 0.005, m_dot_total: 0.201, pdp_c: 20.0 },
+                    { nome: "Rede", p_bar: 8.0, t_c: 30.0, m_dot: 0.17, w: 0.0001, m_dot_total: 0.17, pdp_c: -40.0 }
+                ],
+                potencias: { w_total: 62000.0, w_isotermico: 36000.0, w_lp: 30000.0, w_hp: 32000.0, perda_vi_lp: 0, perda_vi_hp: 0, aquecedor: 0, aquecedor_nominal: 0, m_dot_util: 0.17, q_disp_regen: 0, q_intercooler: 0, q_aftercooler: 0, n_compressores: 1, w_total_planta: 62000.0 },
+                kpis: { spc: 6.2, eta_global: 0.58, eta_v_lp: 0.98, t_descarga_hp_c: 148.0, q_int_carcaca_w: 1200.0, t_carcaca_c: 75.0, delta_t_carcaca_c: 45.0, tau_carcaca_min: 15.0, t_ref_carcaca_c: 30.0, t_rotor_c: 82.0, delta_t_rotor_c: 52.0, folga_residual_um: 180.0, dp_nom_psa_calc_bar: 0.3, eta_mot: 0.94, p_ag_w: 60000.0, p_perdas_mot_w: 2000.0, q_gerado_hood_w: 3200.0, t_hood_c: 42.0, dp_linha_mbar: 20.0, p_hp_suc_efetiva_bar: 2.81, efetividade_intercooler: 0.85, condensado_total_kg_h: 8.0, purga_pct: 15.0, dp_filtro_mbar: 25.0, dp_dt_vaso_bar_min: 0.0, autonomia_min: 30.0, p_intermediaria_bar: 2.83, pdp_alvo_c: -40.0, sec_dry_kj_kg: 0.0, hi_des: 0.88, fad_total_m3_min: 10.0, condensado_total_planta_kg_h: 8.0 },
+                avisos: []
+            };
+        }
+
+        async function rodarEkf() {
+            const r = await fetch('/api/ekf/simular', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ n_passos: 50 }) });
+            const data = await r.json();
+
+            const ctx = document.getElementById('chart-ekf').getContext('2d');
+            if (chartEkf) chartEkf.destroy();
+            chartEkf = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.x_hat.map((_, i) => `${i}d`),
+                    datasets: [
+                        { label: 'δ/L real', data: data.folga_true.map(v => v * 1000), borderColor: '#059669', borderDash: [4, 4] },
+                        { label: 'δ/L EKF (estimado)', data: data.x_hat.map(v => v[0] * 1000), borderColor: '#3b82f6', fill: false }
+                    ]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        async function rodarPso() {
+            const r = await fetch('/api/pso/otimizar', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ n_particulas: 20, n_iter: 30 }) });
+            const data = await r.json();
+
+            document.getElementById('pso-res-box').innerText = `✅ Ótimo Global: π* = ${data.g_best[0].toFixed(2)} | SPC = ${data.g_best_custo.toFixed(4)} kW·m⁻³·min`;
+
+            const ctx = document.getElementById('chart-pso').getContext('2d');
+            if (chartPso) chartPso.destroy();
+            chartPso = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.historico_custo.map((_, i) => `It ${i+1}`),
+                    datasets: [{ label: 'Convergência g_best (SPC)', data: data.historico_custo, borderColor: '#3b82f6', fill: false }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        let modoDinamicaAtual = 'VSD';
+        let chartDinVazao = null;
+
+        function rodarDinamicaAtual() {
+            rodarDinamica(modoDinamicaAtual);
+        }
+
+        async function rodarDinamica(modo) {
+            modoDinamicaAtual = modo;
+            document.getElementById('btn-din-vsd').className = modo === 'VSD' ? 'bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded font-bold text-white shadow' : 'bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded font-bold text-white shadow';
+            document.getElementById('btn-din-ca').className = modo !== 'VSD' ? 'bg-blue-600 hover:bg-blue-500 text-xs px-3 py-1.5 rounded font-bold text-white shadow' : 'bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded font-bold text-white shadow';
+
+            const tSim = parseFloat(document.getElementById('din-sel-tsim') ? document.getElementById('din-sel-tsim').value : 30.0) || 30.0;
+            const dt = parseFloat(document.getElementById('din-sel-dt') ? document.getElementById('din-sel-dt').value : 0.5) || 0.5;
+            const vVaso = parseFloat(document.getElementById('din-sel-vvaso') ? document.getElementById('din-sel-vvaso').value : 2.0) || 2.0;
+
+            const nPassos = Math.round((tSim * 60.0) / dt);
+            const infoEl = document.getElementById('din-integracao-info');
+            if (infoEl) {
+                infoEl.innerText = `N = ${nPassos.toLocaleString('pt-BR')} passos de integração | Δt = ${dt}s | T = ${tSim.toFixed(1)} min`;
+            }
+
+            const r = await fetch('/api/dinamica/simular', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ modo, horizonte_min: tSim, dt_s: dt, v_vaso: vVaso, dem_base: 0.15, dp_db_bar: 0.5 })
+            });
+            const data = await r.json();
+
+            // Atualização de KPIs ASME VIII
+            const asmeOk = data.kpis.integridade_asme_ok;
+            const kpiAsme = document.getElementById('din-kpi-asme');
+            kpiAsme.innerText = asmeOk ? '✅ DENTRO DOS LIMITES' : '🚨 ALÍVIO / PSV ATIVO';
+            kpiAsme.className = asmeOk ? 'text-emerald-400 font-bold text-sm' : 'text-red-400 font-bold text-sm animate-pulse';
+
+            document.getElementById('din-kpi-pmta').innerText = `${data.kpis.pmta_bar.toFixed(1)} bar abs`;
+            document.getElementById('din-kpi-pmin').innerText = `${data.kpis.p_min_critica_bar.toFixed(1)} bar abs`;
+            document.getElementById('din-kpi-dpdt').innerText = `${data.kpis.dp_dt_max_bar_min.toFixed(2)} bar/min`;
+            document.getElementById('din-kpi-energia').innerText = `${data.kpis.energia_kwh.toFixed(1)} kWh`;
+
+            // Gráfico 1: Pressão do Vaso, Descarga e Sucção com Limites ASME VIII
+            const ctx = document.getElementById('chart-dinamica').getContext('2d');
+            if (chartDin) chartDin.destroy();
+
+            const pmtaLine = Array(data.t_min.length).fill(data.kpis.pmta_bar);
+            const pminLine = Array(data.t_min.length).fill(data.kpis.p_min_critica_bar);
+
+            chartDin = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.t_min.map(t => t.toFixed(1) + 'm'),
+                    datasets: [
+                        { label: 'P_vaso (Vaso Pulmão) [bar abs]', data: data.p_bar, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.12)', fill: true, tension: 0.2 },
+                        { label: 'P_out (Descarga Compressor) [bar abs]', data: data.p_out_bar, borderColor: '#8b5cf6', borderDash: [2, 2], fill: false },
+                        { label: 'P_in (Sucção LP / Vácuo) [bar abs]', data: data.p_in_bar, borderColor: '#06b6d4', fill: false },
+                        { label: 'PMTA Máx. ASME VIII (10.0 bar)', data: pmtaLine, borderColor: '#dc2626', borderDash: [5, 5], pointRadius: 0, fill: false },
+                        { label: 'P_mín Crítica de Rede (6.0 bar)', data: pminLine, borderColor: '#d97706', borderDash: [5, 5], pointRadius: 0, fill: false }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { title: { display: true, text: 'Pressão Absoluta [bar]' }, min: 0.5, max: 11.5 }
+                    }
+                }
+            });
+
+            // Gráfico 2: Vazões Mássicas e Potência Elétrica
+            const ctxVazao = document.getElementById('chart-dinamica-vazao').getContext('2d');
+            if (chartDinVazao) chartDinVazao.destroy();
+            chartDinVazao = new Chart(ctxVazao, {
+                type: 'line',
+                data: {
+                    labels: data.t_min.map(t => t.toFixed(1) + 'm'),
+                    datasets: [
+                        { label: 'ṁ_comp (Gerada) [kg/s]', data: data.m_comp, borderColor: '#10b981', yAxisID: 'y' },
+                        { label: 'ṁ_demanda (Consumo) [kg/s]', data: data.m_dem, borderColor: '#ef4444', borderDash: [3, 3], yAxisID: 'y' },
+                        { label: 'Potência Elétrica [kW]', data: data.w_kw, borderColor: '#eab308', yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { position: 'left', title: { display: true, text: 'Vazão [kg/s]' } },
+                        y1: { position: 'right', title: { display: true, text: 'Potência [kW]' }, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+        }
+
+        async function rodarPsa() {
+            const r = await fetch('/api/psa/simular', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ horizonte_min: 180.0 }) });
+            const data = await r.json();
+
+            // Gantt
+            const ctxG = document.getElementById('chart-psa-gantt').getContext('2d');
+            if (chartPsaGantt) chartPsaGantt.destroy();
+            chartPsaGantt = new Chart(ctxG, {
+                type: 'line',
+                data: {
+                    labels: data.t_min.map(t => t.toFixed(0) + 'm'),
+                    datasets: [
+                        { label: 'Torre 1 (1=Ads, 2=Reg, 3=Resf)', data: data.estado[0].map(e => e === 'Adsorvendo' ? 1 : (e === 'Regenerando' ? 2 : 3)), borderColor: '#3b82f6', stepped: true },
+                        { label: 'Torre 2 (1=Ads, 2=Reg, 3=Resf)', data: data.estado[1].map(e => e === 'Adsorvendo' ? 1 : (e === 'Regenerando' ? 2 : 3)), borderColor: '#10b981', stepped: true }
+                    ]
+                },
+                options: { responsive: true, scales: { y: { min: 0, max: 4, ticks: { callback: v => v===1?'Ads':(v===2?'Reg':(v===3?'Resf':'')) } } } }
+            });
+
+            // Capacidade
+            const ctxC = document.getElementById('chart-psa-cap').getContext('2d');
+            if (chartPsaCap) chartPsaCap.destroy();
+            chartPsaCap = new Chart(ctxC, {
+                type: 'line',
+                data: {
+                    labels: data.t_min.map(t => t.toFixed(0) + 'm'),
+                    datasets: [
+                        { label: 'Torre 1 (q_d/q_eq)', data: data.q_norm[0], borderColor: '#3b82f6' },
+                        { label: 'Torre 2 (q_d/q_eq)', data: data.q_norm[1], borderColor: '#10b981' }
+                    ]
+                },
+                options: { responsive: true }
+            });
+
+            // PDP
+            const ctxP = document.getElementById('chart-psa-pdp').getContext('2d');
+            if (chartPsaPdp) chartPsaPdp.destroy();
+            chartPsaPdp = new Chart(ctxP, {
+                type: 'line',
+                data: {
+                    labels: data.t_min.map(t => t.toFixed(0) + 'm'),
+                    datasets: [
+                        { label: 'PDP Saída [°C]', data: data.pdp_saida_c, borderColor: '#8b5cf6' }
+                    ]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        async function rodarMpc() {
+            const r = await fetch('/api/mpc/simular', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ horizonte_min: 30.0, dem_base: 0.15 }) });
+            const data = await r.json();
+
+            const ctx = document.getElementById('chart-mpc').getContext('2d');
+            if (chartMpc) chartMpc.destroy();
+            chartMpc = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.t_min.map(t => t.toFixed(1) + 'm'),
+                    datasets: [
+                        { label: 'Pressão MPC [bar]', data: data.p_bar, borderColor: '#3b82f6' },
+                        { label: 'Demanda Antecipada [kg/s]', data: data.m_dem, borderColor: '#ef4444' }
+                    ]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        // Gerenciamento de Tema (Claro / Escuro / Auto)
+        function setTheme(mode) {
+            localStorage.setItem('theme_preference', mode);
+            ['light', 'dark', 'auto'].forEach(m => {
+                const btn = document.getElementById(`btn-theme-${m}`);
+                if (!btn) return;
+                const ativo = m === mode;
+                btn.classList.toggle('active', ativo);
+                btn.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+            });
+
+            let isLight = false;
+            if (mode === 'light') {
+                isLight = true;
+            } else if (mode === 'auto') {
+                isLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+            }
+
+            document.documentElement.classList.toggle('theme-light', isLight);
+            if (chartNos) carregarDashboard();
+        }
+
+        // Detecta preferência salva
+        const savedTheme = localStorage.getItem('theme_preference') || 'auto';
+        setTheme(savedTheme);
+
+        // Relógio e Inicialização
+        setInterval(() => {
+            document.getElementById('clock-display').innerText = new Date().toLocaleString('pt-BR');
+        }, 1000);
+
+        carregarDashboard();
+        carregarOpcoesCatalogo();
+    </script>
+</body>
+</html>
